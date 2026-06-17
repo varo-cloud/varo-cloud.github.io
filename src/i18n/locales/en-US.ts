@@ -9,6 +9,7 @@ export default {
   },
   nav: {
     models: 'Models',
+    pricing: 'Pricing',
     apiKeys: 'API Keys',
     billing: 'Billing',
     docs: 'Docs',
@@ -30,6 +31,10 @@ export default {
     apiKeys: {
       title: 'API Keys',
       placeholder: 'Create and manage your API keys.',
+    },
+    pricing: {
+      title: 'Pricing',
+      placeholder: 'View pricing plans for each model.',
     },
     billing: {
       title: 'Billing',

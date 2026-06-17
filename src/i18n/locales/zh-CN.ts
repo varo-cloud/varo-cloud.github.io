@@ -9,6 +9,7 @@ export default {
   },
   nav: {
     models: '模型',
+    pricing: '价格',
     apiKeys: 'API 密钥',
     billing: '账单',
     docs: '文档',
@@ -30,6 +31,10 @@ export default {
     apiKeys: {
       title: 'API 密钥',
       placeholder: '创建和管理您的 API 密钥。',
+    },
+    pricing: {
+      title: '价格',
+      placeholder: '查看各模型的定价方案。',
     },
     billing: {
       title: '账单',

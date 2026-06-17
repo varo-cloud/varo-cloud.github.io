@@ -18,6 +18,7 @@ const activeKey = computed(() => {
 
 const menuOptions = computed<MenuOption[]>(() => [
   { label: t('nav.models'), key: 'models' },
+  { label: t('nav.pricing'), key: 'pricing' },
   { label: t('nav.apiKeys'), key: 'api-keys' },
   { label: t('nav.billing'), key: 'billing' },
   { label: t('nav.docs'), key: 'docs' },

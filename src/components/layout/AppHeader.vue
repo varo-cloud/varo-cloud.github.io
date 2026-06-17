@@ -21,6 +21,7 @@ const userStore = useUserStore()
 
 const navItems = computed(() => [
   { label: t('nav.models'), name: 'models' },
+  { label: t('nav.pricing'), name: 'pricing' },
   { label: t('nav.apiKeys'), name: 'api-keys' },
   { label: t('nav.billing'), name: 'billing' },
   { label: t('nav.docs'), name: 'docs' },

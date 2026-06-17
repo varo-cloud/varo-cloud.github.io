@@ -19,6 +19,11 @@ const router = createRouter({
           component: () => import('@/views/models/ModelDetailView.vue'),
         },
         {
+          path: 'pricing',
+          name: 'pricing',
+          component: () => import('@/views/pricing/PricingView.vue'),
+        },
+        {
           path: 'api-keys',
           name: 'api-keys',
           meta: { requiresAuth: true },
