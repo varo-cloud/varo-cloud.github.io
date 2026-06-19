@@ -36,10 +36,15 @@ a {
   --bg-page: #f8fafc;
   --bg-header: rgba(255, 255, 255, 0.92);
   --bg-footer: #ffffff;
+  --bg-card: #ffffff;
   --bg-hover: rgba(15, 23, 42, 0.06);
+  --bg-filter-active: rgba(15, 23, 42, 0.04);
+  --bg-tag: rgba(99, 102, 241, 0.1);
   --text-primary: #0f172a;
   --text-secondary: #475569;
   --text-muted: #94a3b8;
+  --text-tag: #4338ca;
+  --text-accent: #4f46e5;
   --border-color: #e2e8f0;
 }
 
@@ -48,10 +53,15 @@ a {
     --bg-page: #0b1220;
     --bg-header: rgba(15, 23, 42, 0.92);
     --bg-footer: #0f172a;
+    --bg-card: #111827;
     --bg-hover: rgba(255, 255, 255, 0.08);
+    --bg-filter-active: rgba(255, 255, 255, 0.06);
+    --bg-tag: rgba(129, 140, 248, 0.16);
     --text-primary: #f8fafc;
     --text-secondary: #cbd5e1;
     --text-muted: #64748b;
+    --text-tag: #c7d2fe;
+    --text-accent: #a5b4fc;
     --border-color: #1e293b;
   }
 }

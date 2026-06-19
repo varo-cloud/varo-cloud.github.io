@@ -5,19 +5,18 @@ import { useI18n } from 'vue-i18n'
 import {
   NButton,
   NDropdown,
-  NSelect,
   NSpace,
   NTag,
 } from 'naive-ui'
-import type { LocaleType } from '@/i18n'
-import { useAppStore } from '@/stores/app'
 import { useUserStore } from '@/stores/user'
+import VaroCloudLogo from '@/components/common/VaroCloudLogo.vue'
 
 const route = useRoute()
 const router = useRouter()
 const { t } = useI18n()
-const appStore = useAppStore()
 const userStore = useUserStore()
+
+const isTransparent = computed(() => route.meta.transparentHeader === true)
 
 const navItems = computed(() => [
   { label: t('nav.models'), name: 'models' },
@@ -26,11 +25,6 @@ const navItems = computed(() => [
   { label: t('nav.billing'), name: 'billing' },
   { label: t('nav.docs'), name: 'docs' },
 ])
-
-const localeOptions = [
-  { label: 'English', value: 'en-US' },
-  { label: '中文', value: 'zh-CN' },
-]
 
 const userMenuOptions = computed(() => [
   {
@@ -57,10 +51,6 @@ function goTo(name: string) {
   router.push({ name })
 }
 
-function handleLocaleChange(value: string) {
-  appStore.setLocale(value as LocaleType)
-}
-
 function handleUserMenuSelect(key: string) {
   if (key === 'logout') {
     userStore.logout()
@@ -74,19 +64,14 @@ onMounted(() => {
 </script>
 
 <template>
-  <header class="app-header">
+  <header
+    class="app-header"
+    :class="{ 'app-header--transparent': isTransparent }"
+  >
     <div class="app-header__inner">
       <div class="app-header__left">
-        <button
-          class="app-header__menu-btn md:hidden"
-          type="button"
-          aria-label="Open menu"
-          @click="appStore.openMobileNav()"
-        >
-          <span class="app-header__menu-icon" aria-hidden="true" />
-        </button>
-        <RouterLink to="/" class="app-header__logo">
-          {{ t('common.appName') }}
+        <RouterLink to="/" class="app-header__logo" :aria-label="t('common.appName')">
+          <VaroCloudLogo :variant="isTransparent ? 'dark' : 'light'" />
         </RouterLink>
         <nav class="app-header__nav hidden md:flex">
           <button
@@ -107,23 +92,31 @@ onMounted(() => {
           {{ t('common.balance') }}: {{ balanceLabel }}
         </NTag>
 
-        <NSelect
-          :value="appStore.locale"
-          :options="localeOptions"
-          size="small"
-          class="app-header__locale"
-          @update:value="handleLocaleChange"
-        />
-
         <template v-if="userStore.isLoggedIn">
           <NDropdown
             :options="userMenuOptions"
             @select="handleUserMenuSelect"
           >
-            <NButton quaternary>
+            <NButton quaternary :class="{ 'app-header__user-btn--light': isTransparent }">
               {{ userStore.profile?.name ?? userStore.profile?.email }}
             </NButton>
           </NDropdown>
+        </template>
+        <template v-else-if="isTransparent">
+          <button
+            type="button"
+            class="app-header__login-link"
+            @click="router.push({ name: 'auth' })"
+          >
+            {{ t('common.login') }}
+          </button>
+          <button
+            type="button"
+            class="app-header__signup-btn"
+            @click="router.push({ name: 'auth' })"
+          >
+            {{ t('pages.models.heroSignup') }}
+          </button>
         </template>
         <NButton v-else type="primary" @click="router.push({ name: 'auth' })">
           {{ t('common.login') }}
@@ -138,9 +131,18 @@ onMounted(() => {
   position: sticky;
   top: 0;
   z-index: 100;
-  border-bottom: 1px solid var(--border-color);
+  height: 80px;
+  border-bottom: none;
   background: var(--bg-header);
   backdrop-filter: blur(8px);
+}
+
+.app-header--transparent {
+  position: relative;
+  border-bottom: none;
+  background: transparent;
+  backdrop-filter: none;
+  color: #ebf4fb;
 }
 
 .app-header__inner {
@@ -148,9 +150,14 @@ onMounted(() => {
   align-items: center;
   justify-content: space-between;
   gap: 16px;
+  height: 100%;
   max-width: 1200px;
   margin: 0 auto;
-  padding: 12px 16px;
+  padding: 0 16px;
+}
+
+.app-header--transparent .app-header__inner {
+  max-width: 1360px;
 }
 
 .app-header__left {
@@ -160,46 +167,36 @@ onMounted(() => {
   min-width: 0;
 }
 
-.app-header__menu-btn {
+.app-header__logo {
   display: inline-flex;
   align-items: center;
-  justify-content: center;
-  padding: 4px;
-  border: none;
-  background: transparent;
-  color: inherit;
-  cursor: pointer;
-}
-
-.app-header__menu-icon {
-  display: block;
-  width: 20px;
-  height: 2px;
-  background: currentColor;
-  box-shadow: 0 -6px 0 currentColor, 0 6px 0 currentColor;
-}
-
-.app-header__logo {
-  font-size: 16px;
-  font-weight: 700;
   color: inherit;
   text-decoration: none;
-  white-space: nowrap;
+  line-height: 0;
 }
 
 .app-header__nav {
-  gap: 4px;
+  gap: 24px;
   margin-left: 8px;
 }
 
 .app-header__nav-item {
-  padding: 6px 12px;
+  padding: 6px 0;
   border: none;
-  border-radius: 6px;
+  border-radius: 0;
   background: transparent;
   color: var(--text-secondary);
   cursor: pointer;
   font-size: 14px;
+  font-weight: 600;
+}
+
+.app-header--transparent .app-header__nav-item {
+  color: #9b9dab;
+}
+
+.app-header--transparent .app-header__nav-item.is-active {
+  color: #ebf4fb;
 }
 
 .app-header__nav-item.is-active,
@@ -208,25 +205,54 @@ onMounted(() => {
   background: var(--bg-hover);
 }
 
+.app-header--transparent .app-header__nav-item:hover {
+  color: #ebf4fb;
+  background: transparent;
+}
+
 .app-header__right {
   flex-shrink: 0;
 }
 
-.app-header__locale {
-  width: 110px;
+.app-header__login-link {
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: #ebf4fb;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.app-header__signup-btn {
+  height: 36px;
+  padding: 0 20px;
+  border: none;
+  border-radius: 8px;
+  background: #fff;
+  color: #222;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.app-header__signup-btn:hover {
+  background: #f5f5f5;
 }
 
 @media (max-width: 767px) {
   .app-header__inner {
-    padding: 10px 12px;
+    padding: 0 12px;
   }
 
   .app-header__logo {
-    font-size: 14px;
+    transform: scale(0.9);
+    transform-origin: left center;
   }
 
-  .app-header__locale {
-    width: 96px;
+  .app-header__signup-btn {
+    padding: 0 12px;
+    font-size: 13px;
   }
 }
 </style>

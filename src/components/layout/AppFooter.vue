@@ -7,12 +7,31 @@ const { t } = useI18n()
 <template>
   <footer class="app-footer">
     <div class="app-footer__inner">
-      <nav class="app-footer__links">
+      <nav class="app-footer__links" :aria-label="t('footer.navLabel')">
         <RouterLink to="/terms">{{ t('footer.terms') }}</RouterLink>
         <RouterLink to="/privacy">{{ t('footer.privacy') }}</RouterLink>
-        <a href="mailto:support@example.com">{{ t('footer.contact') }}</a>
       </nav>
-      <p class="app-footer__copy">© {{ new Date().getFullYear() }} AI Video Platform</p>
+
+      <div class="app-footer__social">
+        <a
+          class="app-footer__social-link"
+          href="https://x.com"
+          target="_blank"
+          rel="noopener noreferrer"
+          :aria-label="t('footer.twitter')"
+        >
+          <img src="/assets/footer/twitter.svg" alt="" aria-hidden="true" />
+        </a>
+        <a
+          class="app-footer__social-link"
+          href="https://t.me"
+          target="_blank"
+          rel="noopener noreferrer"
+          :aria-label="t('footer.telegram')"
+        >
+          <img src="/assets/footer/telegram.svg" alt="" aria-hidden="true" />
+        </a>
+      </div>
     </div>
   </footer>
 </template>
@@ -20,43 +39,76 @@ const { t } = useI18n()
 <style scoped>
 .app-footer {
   margin-top: auto;
-  border-top: 1px solid var(--border-color);
-  background: var(--bg-footer);
+  background: #0d0913;
 }
 
 .app-footer__inner {
-  max-width: 1200px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  max-width: 1360px;
+  height: 60px;
   margin: 0 auto;
-  padding: 24px 16px;
+  padding: 0 16px;
 }
 
 .app-footer__links {
   display: flex;
-  flex-wrap: wrap;
-  gap: 12px 24px;
-  margin-bottom: 12px;
+  align-items: center;
+  gap: 24px;
 }
 
 .app-footer__links a {
-  color: var(--text-secondary);
-  font-size: 14px;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 14px;
+  color: #808080;
   text-decoration: none;
+  transition: color 0.15s ease;
 }
 
-.app-footer__links a:hover {
-  color: var(--text-primary);
+.app-footer__links a:hover,
+.app-footer__links a.router-link-active {
+  color: #e0e0e0;
 }
 
-.app-footer__copy {
-  margin: 0;
-  color: var(--text-muted);
-  font-size: 13px;
+.app-footer__social {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.app-footer__social-link {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 24px;
+  height: 24px;
+  opacity: 0.9;
+  transition: opacity 0.15s ease;
+}
+
+.app-footer__social-link:hover {
+  opacity: 1;
+}
+
+.app-footer__social-link img {
+  display: block;
+  width: 100%;
+  height: 100%;
 }
 
 @media (max-width: 767px) {
+  .app-footer__inner {
+    height: auto;
+    min-height: 60px;
+    padding: 16px;
+    flex-wrap: wrap;
+  }
+
   .app-footer__links {
-    flex-direction: column;
-    gap: 8px;
+    gap: 16px;
   }
 }
 </style>

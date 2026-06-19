@@ -11,6 +11,7 @@ const router = createRouter({
         {
           path: '',
           name: 'models',
+          meta: { fullBleed: true, transparentHeader: true },
           component: () => import('@/views/models/ModelsView.vue'),
         },
         {

@@ -1,13 +1,448 @@
 <script setup lang="ts">
+import { computed, onMounted, ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import PagePlaceholder from '@/components/common/PagePlaceholder.vue'
+import { NEmpty, NSpin } from 'naive-ui'
+import { fetchModels } from '@/api/models'
+import ModelCard from '@/components/models/ModelCard.vue'
+import type { Model } from '@/types'
 
+const PAGE_SIZE = 8
+
+const router = useRouter()
 const { t } = useI18n()
+
+const models = ref<Model[]>([])
+const loading = ref(true)
+const error = ref<string | null>(null)
+const activeTab = ref<'latest' | 'favourite' | 'recent'>('latest')
+const searchQuery = ref('')
+const visibleCount = ref(PAGE_SIZE)
+
+const tabOptions = computed(() => [
+  { key: 'latest' as const, label: t('pages.models.tabs.latest') },
+  { key: 'favourite' as const, label: t('pages.models.tabs.favourite') },
+  { key: 'recent' as const, label: t('pages.models.tabs.recent') },
+])
+
+const filteredModels = computed(() => {
+  const query = searchQuery.value.trim().toLowerCase()
+
+  let list = models.value
+  if (activeTab.value === 'favourite' || activeTab.value === 'recent') {
+    list = []
+  }
+
+  if (!query) return list
+
+  return list.filter((model) => {
+    const name = model.displayName ?? model.name
+    return (
+      name.toLowerCase().includes(query) ||
+      model.provider.toLowerCase().includes(query) ||
+      model.description.toLowerCase().includes(query)
+    )
+  })
+})
+
+const visibleModels = computed(() => filteredModels.value.slice(0, visibleCount.value))
+
+const hasMore = computed(() => visibleCount.value < filteredModels.value.length)
+
+async function loadModels() {
+  loading.value = true
+  error.value = null
+
+  try {
+    models.value = await fetchModels()
+  } catch {
+    error.value = t('pages.models.loadError')
+  } finally {
+    loading.value = false
+  }
+}
+
+function switchTab(key: 'latest' | 'favourite' | 'recent') {
+  activeTab.value = key
+  visibleCount.value = PAGE_SIZE
+}
+
+function loadMore() {
+  visibleCount.value += PAGE_SIZE
+}
+
+function goToAuth() {
+  router.push({ name: 'auth' })
+}
+
+function goToDocs() {
+  router.push({ name: 'docs' })
+}
+
+onMounted(() => {
+  loadModels()
+})
 </script>
 
 <template>
-  <PagePlaceholder
-    :title="t('pages.models.title')"
-    :description="t('pages.models.placeholder')"
-  />
+  <div class="models-page">
+    <section class="models-hero" aria-labelledby="models-hero-title">
+      <img
+        class="models-hero__bg"
+        src="/assets/models/hero-bg.jpg"
+        alt=""
+        aria-hidden="true"
+      />
+      <div class="models-hero__overlay" aria-hidden="true" />
+
+      <div class="models-hero__content">
+        <h1 id="models-hero-title" class="models-hero__title">
+          {{ t('pages.models.heroTitleLine1') }}<br />{{ t('pages.models.heroTitleLine2') }}
+        </h1>
+        <p class="models-hero__subtitle">
+          {{ t('pages.models.heroSubtitle') }}
+        </p>
+        <div class="models-hero__actions">
+          <button type="button" class="models-hero__btn models-hero__btn--primary" @click="goToAuth">
+            {{ t('pages.models.heroCtaPrimary') }}
+          </button>
+          <button type="button" class="models-hero__btn models-hero__btn--secondary" @click="goToDocs">
+            {{ t('pages.models.heroCtaSecondary') }}
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <section class="models-list">
+      <div class="models-list__inner">
+        <div class="models-toolbar">
+          <div class="models-tabs" role="tablist" :aria-label="t('pages.models.filterLabel')">
+            <button
+              v-for="tab in tabOptions"
+              :key="tab.key"
+              type="button"
+              role="tab"
+              class="models-tab"
+              :class="{ 'is-active': activeTab === tab.key }"
+              :aria-selected="activeTab === tab.key"
+              @click="switchTab(tab.key)"
+            >
+              {{ tab.label }}
+              <span v-if="activeTab === tab.key" class="models-tab__indicator" />
+            </button>
+          </div>
+
+          <label class="models-search">
+            <img src="/assets/models/search.svg" alt="" aria-hidden="true" />
+            <input
+              v-model="searchQuery"
+              type="search"
+              :placeholder="t('pages.models.searchPlaceholder')"
+            />
+          </label>
+        </div>
+
+        <div v-if="loading" class="models-state">
+          <NSpin size="large" />
+        </div>
+
+        <div v-else-if="error" class="models-state">
+          <NEmpty :description="error">
+            <template #extra>
+              <button type="button" class="models-retry" @click="loadModels">
+                {{ t('pages.models.retry') }}
+              </button>
+            </template>
+          </NEmpty>
+        </div>
+
+        <div v-else-if="visibleModels.length === 0" class="models-state">
+          <NEmpty :description="t('pages.models.empty')" />
+        </div>
+
+        <div v-else class="models-grid">
+          <ModelCard
+            v-for="model in visibleModels"
+            :key="model.id"
+            :model="model"
+          />
+        </div>
+
+        <div v-if="hasMore && !loading" class="models-more">
+          <button type="button" class="models-more__btn" @click="loadMore">
+            {{ t('pages.models.viewMore') }}
+          </button>
+        </div>
+      </div>
+    </section>
+  </div>
 </template>
+
+<style scoped>
+.models-page {
+  background: #fff;
+}
+
+.models-hero {
+  position: relative;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 724px;
+  overflow: hidden;
+}
+
+.models-hero__bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  pointer-events: none;
+}
+
+.models-hero__overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.15);
+  pointer-events: none;
+}
+
+.models-hero__content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 36px;
+  max-width: 738px;
+  padding: 120px 24px 80px;
+  text-align: center;
+}
+
+.models-hero__title {
+  margin: 0;
+  font-size: clamp(36px, 5vw, 56px);
+  font-weight: 800;
+  line-height: 1.14;
+  color: #fff;
+}
+
+.models-hero__subtitle {
+  margin: 0;
+  max-width: 640px;
+  font-size: clamp(16px, 2.5vw, 20px);
+  font-weight: 600;
+  line-height: 1.2;
+  color: rgba(255, 255, 255, 0.5);
+}
+
+.models-hero__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: center;
+  gap: 12px;
+}
+
+.models-hero__btn {
+  height: 40px;
+  padding: 0 24px;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 16px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.models-hero__btn--primary {
+  background: #06b6d4;
+  color: #fff;
+}
+
+.models-hero__btn--primary:hover {
+  background: #0891b2;
+}
+
+.models-hero__btn--secondary {
+  background: #fff;
+  color: #222;
+}
+
+.models-hero__btn--secondary:hover {
+  background: #f5f5f5;
+}
+
+.models-list {
+  background: #fff;
+}
+
+.models-list__inner {
+  max-width: 1360px;
+  margin: 0 auto;
+  padding: 20px 16px 64px;
+}
+
+.models-toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.models-tabs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 24px;
+}
+
+.models-tab {
+  position: relative;
+  padding: 10px 0 14px;
+  border: none;
+  background: transparent;
+  color: #9b9dab;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 16px;
+  cursor: pointer;
+}
+
+.models-tab.is-active {
+  color: #222;
+}
+
+.models-tab__indicator {
+  position: absolute;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  height: 3px;
+  border-radius: 2px;
+  background: #06b6d4;
+}
+
+.models-search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  width: min(100%, 308px);
+  height: 36px;
+  padding: 0 16px;
+  border-radius: 30px;
+  background: #f5f5f5;
+}
+
+.models-search img {
+  width: 20px;
+  height: 20px;
+  flex-shrink: 0;
+  opacity: 0.6;
+}
+
+.models-search input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  color: #222;
+  font-size: 14px;
+  line-height: 14px;
+  outline: none;
+}
+
+.models-search input::placeholder {
+  color: #9b9dab;
+}
+
+.models-grid {
+  display: grid;
+  grid-template-columns: repeat(1, minmax(0, 1fr));
+  gap: 24px;
+}
+
+.models-state {
+  display: flex;
+  justify-content: center;
+  padding: 64px 0;
+}
+
+.models-retry {
+  padding: 8px 16px;
+  border: 1px solid #e8e8e8;
+  border-radius: 8px;
+  background: #fff;
+  color: #222;
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.models-more {
+  display: flex;
+  justify-content: center;
+  margin-top: 40px;
+}
+
+.models-more__btn {
+  height: 36px;
+  padding: 0 36px;
+  border: none;
+  border-radius: 8px;
+  background: #f5f5f5;
+  color: #222;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.models-more__btn:hover {
+  background: #ebebeb;
+}
+
+@media (min-width: 640px) {
+  .models-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (min-width: 1024px) {
+  .models-grid {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+  }
+
+  .models-list__inner {
+    padding-inline: 24px;
+  }
+}
+
+@media (min-width: 1280px) {
+  .models-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 767px) {
+  .models-hero {
+    min-height: 520px;
+  }
+
+  .models-hero__content {
+    gap: 24px;
+    padding-top: 96px;
+    padding-bottom: 48px;
+  }
+
+  .models-toolbar {
+    flex-direction: column;
+    align-items: stretch;
+  }
+
+  .models-search {
+    width: 100%;
+  }
+}
+</style>

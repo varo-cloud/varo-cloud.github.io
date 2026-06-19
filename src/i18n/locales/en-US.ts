@@ -1,6 +1,6 @@
 export default {
   common: {
-    appName: 'AI Video Platform',
+    appName: 'Varo.cloud',
     designPending: 'Design pending — content will be added after design delivery.',
     balance: 'Balance',
     login: 'Log in',
@@ -15,14 +15,44 @@ export default {
     docs: 'Docs',
   },
   footer: {
+    navLabel: 'Footer',
     terms: 'Terms of Service',
     privacy: 'Privacy Policy',
-    contact: 'Contact',
+    twitter: 'X (Twitter)',
+    telegram: 'Telegram',
   },
   pages: {
     models: {
       title: 'Models',
       placeholder: 'Explore available video generation models.',
+      heroTitleLine1: 'The fastest way to',
+      heroTitleLine2: 'generate video with AI',
+      heroSubtitle: "One API for the world's best video models. Pay per output — in USD.",
+      heroCtaPrimary: 'Star Free-$3 Credit',
+      heroCtaSecondary: 'View Docs',
+      heroSignup: 'Star Free',
+      filterLabel: 'Filter models',
+      searchPlaceholder: 'Search',
+      from: 'From',
+      tryModel: 'Try it',
+      favourite: 'Add to favourites',
+      loadError: 'Failed to load models. Please try again.',
+      retry: 'Retry',
+      empty: 'No models match your filters.',
+      viewMore: 'View More',
+      tabs: {
+        latest: 'Latest Models',
+        favourite: 'Favourite Models',
+        recent: 'Recently Used',
+      },
+      capabilityBadge: {
+        'text-to-video': 'Text → Video',
+        'image-to-video': 'Image → Video',
+      },
+      capabilities: {
+        'text-to-video': 'Text to Video',
+        'image-to-video': 'Image to Video',
+      },
     },
     modelDetail: {
       title: 'Model Detail',

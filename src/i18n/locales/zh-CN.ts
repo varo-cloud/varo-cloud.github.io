@@ -1,6 +1,6 @@
 export default {
   common: {
-    appName: 'AI 视频平台',
+    appName: 'Varo.cloud',
     designPending: '设计稿待交付 — 页面内容将在设计完成后填充。',
     balance: '余额',
     login: '登录',
@@ -15,14 +15,44 @@ export default {
     docs: '文档',
   },
   footer: {
+    navLabel: '页脚',
     terms: '服务条款',
     privacy: '隐私政策',
-    contact: '联系我们',
+    twitter: 'X (Twitter)',
+    telegram: 'Telegram',
   },
   pages: {
     models: {
       title: '模型',
       placeholder: '浏览可用的视频生成模型。',
+      heroTitleLine1: '最快的方式',
+      heroTitleLine2: '用 AI 生成视频',
+      heroSubtitle: '一个 API 接入全球最佳视频模型，按输出计费，美元结算。',
+      heroCtaPrimary: '免费开始 · $3 体验金',
+      heroCtaSecondary: '查看文档',
+      heroSignup: '免费开始',
+      filterLabel: '筛选模型',
+      searchPlaceholder: '搜索',
+      from: '起价',
+      tryModel: '立即体验',
+      favourite: '加入收藏',
+      loadError: '模型加载失败，请重试。',
+      retry: '重试',
+      empty: '没有符合筛选条件的模型。',
+      viewMore: '查看更多',
+      tabs: {
+        latest: '最新模型',
+        favourite: '收藏模型',
+        recent: '最近使用',
+      },
+      capabilityBadge: {
+        'text-to-video': '文本 → 视频',
+        'image-to-video': '图片 → 视频',
+      },
+      capabilities: {
+        'text-to-video': '文生视频',
+        'image-to-video': '图生视频',
+      },
     },
     modelDetail: {
       title: '模型详情',

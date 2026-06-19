@@ -6,7 +6,6 @@ import i18n from '@/i18n'
 
 export const useAppStore = defineStore('app', () => {
   const locale = ref<LocaleType>(getStoredLocale())
-  const mobileNavOpen = ref(false)
 
   function setLocale(next: LocaleType) {
     locale.value = next
@@ -14,19 +13,8 @@ export const useAppStore = defineStore('app', () => {
     i18n.global.locale.value = next
   }
 
-  function openMobileNav() {
-    mobileNavOpen.value = true
-  }
-
-  function closeMobileNav() {
-    mobileNavOpen.value = false
-  }
-
   return {
     locale,
-    mobileNavOpen,
     setLocale,
-    openMobileNav,
-    closeMobileNav,
   }
 })

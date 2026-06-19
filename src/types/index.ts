@@ -7,10 +7,15 @@ export interface ApiResponse<T> {
 export interface Model {
   id: string
   name: string
+  displayName?: string
   provider: string
   capabilities: string[]
   startingPriceUsd: number
+  originalPriceUsd?: number
+  priceDetail?: string
+  discountPercent?: number
   description: string
+  thumbnailUrl?: string
 }
 
 export interface ModelDetail extends Model {
