@@ -78,18 +78,18 @@ export interface ApiKey {
   id: string
   name: string
   keyMasked: string
-  createdAt: string
+  createdAt: number
   status: ApiKeyStatus
   totalCalls: number
   totalSpendUsd: number
-  lastUsedAt: string | null
+  lastUsedAt: number | null
 }
 
 export interface CreateApiKeyResult {
   id: string
   name: string
   key: string
-  createdAt: string
+  createdAt: number
 }
 
 export type TransactionType = 'topup' | 'usage'
@@ -99,11 +99,53 @@ export interface Transaction {
   type: TransactionType
   amountUsd: number
   description: string
-  createdAt: string
+  createdAt: number
 }
 
 export interface BalanceInfo {
   balanceUsd: number
+}
+
+export interface BillingAutoTopUp {
+  enabled: boolean
+  thresholdUsd: number
+  topUpAmountUsd: number
+}
+
+export interface BillingSummary {
+  balanceUsd: number
+  spentThisMonthUsd: number
+  spentChangePercent: number
+  autoTopUp: BillingAutoTopUp
+}
+
+export interface TopUpPreset {
+  amountUsd: number
+  bonusPercent?: number
+  usageHint: string
+}
+
+export type PaymentMethodId = 'stripe' | 'paypal' | 'npay' | 'alipay'
+
+export interface CreateTopUpPayload {
+  amountUsd: number
+  paymentMethod: PaymentMethodId
+}
+
+export interface UpdateAutoTopUpPayload {
+  enabled: boolean
+  thresholdUsd: number
+  topUpAmountUsd: number
+}
+
+export type BillingRecordStyle = 'api' | 'topup' | 'bonus'
+
+export interface BillingRecord {
+  id: string
+  style: BillingRecordStyle
+  key: string
+  amountUsd: number
+  createdAt: number
 }
 
 export type PricingCategory = 'image-video' | 'language' | 'serverless'

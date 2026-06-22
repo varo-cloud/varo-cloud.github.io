@@ -1,26 +1,48 @@
 import type { MockMethod } from 'vite-plugin-mock'
 import { success } from './_util'
 
-let apiKeys = [
+const MAY_12_2026 = Date.parse('2026-05-12T10:00:00Z')
+const TWO_MINUTES_AGO = Date.now() - 2 * 60 * 1000
+
+let apiKeys: Array<{
+  id: string
+  name: string
+  keyMasked: string
+  createdAt: number
+  status: 'active' | 'revoked'
+  totalCalls: number
+  totalSpendUsd: number
+  lastUsedAt: number | null
+}> = [
   {
     id: 'key-1',
-    name: 'Production',
+    name: 'production',
     keyMasked: '******BneyZM',
-    createdAt: '2026-05-01T10:00:00Z',
-    status: 'active' as const,
-    totalCalls: 1284,
-    totalSpendUsd: 42.5,
-    lastUsedAt: '2026-06-15T18:30:00Z',
+    createdAt: MAY_12_2026,
+    status: 'active',
+    totalCalls: 14208,
+    totalSpendUsd: 84.21,
+    lastUsedAt: TWO_MINUTES_AGO,
   },
   {
     id: 'key-2',
-    name: 'Development',
+    name: 'staging',
     keyMasked: '******xK9pQ2',
-    createdAt: '2026-05-20T08:00:00Z',
-    status: 'active' as const,
-    totalCalls: 56,
-    totalSpendUsd: 3.2,
-    lastUsedAt: '2026-06-10T12:00:00Z',
+    createdAt: MAY_12_2026,
+    status: 'active',
+    totalCalls: 14208,
+    totalSpendUsd: 84.21,
+    lastUsedAt: TWO_MINUTES_AGO,
+  },
+  {
+    id: 'key-3',
+    name: 'development',
+    keyMasked: '******mN4vR8',
+    createdAt: MAY_12_2026,
+    status: 'revoked',
+    totalCalls: 14208,
+    totalSpendUsd: 84.21,
+    lastUsedAt: TWO_MINUTES_AGO,
   },
 ]
 
@@ -34,11 +56,12 @@ export default [
     url: '/api/api-keys',
     method: 'post',
     response: ({ body }: { body: { name: string } }) => {
+      const createdAt = Date.now()
       const newKey = {
-        id: `key-${Date.now()}`,
+        id: `key-${createdAt}`,
         name: body.name || 'Untitled',
         key: `wsk_live_${Math.random().toString(36).slice(2, 18)}`,
-        createdAt: new Date().toISOString(),
+        createdAt,
       }
       apiKeys = [
         {

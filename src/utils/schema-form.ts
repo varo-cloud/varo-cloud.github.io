@@ -72,7 +72,7 @@ export function resolveWidget(key: string, property: SchemaProperty): SchemaWidg
       property.maximum !== undefined &&
       key === 'duration'
     ) {
-      return 'slider'
+      return 'number'
     }
     if (property.enum?.length || key === 'duration') return 'select'
     return 'number'

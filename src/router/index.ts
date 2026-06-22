@@ -29,13 +29,13 @@ const router = createRouter({
         {
           path: 'api-keys',
           name: 'api-keys',
-          meta: { requiresAuth: true },
+          meta: { requiresAuth: true, fullBleed: true },
           component: () => import('@/views/api-keys/ApiKeysView.vue'),
         },
         {
           path: 'billing',
           name: 'billing',
-          meta: { requiresAuth: true },
+          meta: { requiresAuth: true, fullBleed: true },
           component: () => import('@/views/billing/BillingView.vue'),
         },
         {

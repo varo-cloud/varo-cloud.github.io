@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import SchemaFieldLabel from '../SchemaFieldLabel.vue'
+import NumberStepperInput from '@/components/common/NumberStepperInput.vue'
 
 const model = defineModel<number>({ required: true })
 
@@ -9,6 +10,7 @@ defineProps<{
   description?: string
   minimum?: number
   maximum?: number
+  step?: number
 }>()
 </script>
 
@@ -19,28 +21,11 @@ defineProps<{
       :required="required"
       :description="description"
     />
-    <input
-      v-model.number="model"
-      type="number"
-      class="number-field__input"
+    <NumberStepperInput
+      v-model="model"
       :min="minimum"
       :max="maximum"
+      :step="step ?? 1"
     />
   </div>
 </template>
-
-<style scoped>
-.number-field__input {
-  width: 100%;
-  height: 40px;
-  padding: 0 12px;
-  border: none;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.06);
-  font-family: inherit;
-  font-size: 14px;
-  font-weight: 500;
-  color: #ebf4fb;
-  outline: none;
-}
-</style>

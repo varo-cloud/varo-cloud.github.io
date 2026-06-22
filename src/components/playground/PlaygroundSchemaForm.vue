@@ -107,6 +107,7 @@ function lastImageHint(key: string): string | undefined {
         :description="field.property.description"
         :minimum="field.property.minimum"
         :maximum="field.property.maximum"
+        :step="field.property.step"
       />
 
       <MultiAudioUploaderField
