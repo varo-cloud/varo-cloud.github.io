@@ -63,7 +63,7 @@ function goTopUp() {
       </button>
     </div>
 
-    <div class="input-panel__form">
+    <div class="input-panel__form scrollbar-subtle">
       <PlaygroundSchemaForm v-model="formValues" :schema="schema" />
     </div>
 
@@ -159,7 +159,6 @@ function goTopUp() {
 .input-panel__form {
   flex: 1;
   overflow-y: auto;
-  padding-right: 4px;
   margin-bottom: 20px;
 }
 

@@ -38,16 +38,23 @@ const originalPriceLabel = computed(() => {
 })
 
 function goToDetail() {
+  if (userStore.isLoggedIn) {
+    modelPrefs.recordVisit(props.model.id)
+  }
   router.push({ name: 'model-detail', params: { id: props.model.id } })
 }
 
-function toggleFavourite(event: Event) {
+async function toggleFavourite(event: Event) {
   event.stopPropagation()
   if (!userStore.isLoggedIn) {
     router.push({ name: 'auth' })
     return
   }
-  modelPrefs.toggleFavourite(props.model.id)
+  try {
+    await modelPrefs.toggleFavourite(props.model.id)
+  } catch {
+    // keep optimistic UI rolled back in store
+  }
 }
 </script>
 
@@ -66,9 +73,29 @@ function toggleFavourite(event: Event) {
         class="model-card__fav"
         :class="{ 'is-active': isFavourite }"
         :aria-label="t('pages.models.favourite')"
+        :aria-pressed="isFavourite"
         @click="toggleFavourite"
       >
-        <img :src="assetUrl('/assets/models/heart.svg')" alt="" aria-hidden="true" />
+        <svg
+          class="model-card__heart"
+          width="20"
+          height="20"
+          viewBox="0 0 20 20"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+          aria-hidden="true"
+        >
+          <path
+            v-if="isFavourite"
+            d="M10 17.1138L16.359 10.7448C17.937 8.97775 17.8787 6.26875 16.1822 4.56775C14.485 2.8675 11.7625 2.815 10 4.39675C8.23375 2.81275 5.5165 2.86975 3.81775 4.56775C2.122 6.26425 2.06275 8.97775 3.64075 10.7448L10 17.1138Z"
+            fill="currentColor"
+          />
+          <path
+            v-else
+            d="M10.0007 4.39675C11.7625 2.815 14.485 2.8675 16.1822 4.56775C17.8787 6.26875 17.9372 8.97775 16.3592 10.7448L9.99925 17.1138L3.64075 10.7448C2.06275 8.97775 2.122 6.26425 3.81775 4.56775C5.5165 2.86975 8.23375 2.81275 10.0007 4.39675V4.39675ZM15.1202 5.6275C13.9952 4.501 12.1802 4.45525 11.0027 5.51275L10.0015 6.41125L8.9995 5.5135C7.81825 4.4545 6.007 4.501 4.879 5.629C3.7615 6.7465 3.70525 8.53525 4.735 9.71725L10 14.9905L15.265 9.718C16.2955 8.53525 16.2392 6.74875 15.1202 5.6275V5.6275Z"
+            fill="currentColor"
+          />
+        </svg>
       </button>
 
       <div v-if="capabilityBadge" class="model-card__badge">
@@ -160,13 +187,17 @@ function toggleFavourite(event: Event) {
   cursor: pointer;
 }
 
-.model-card__fav img {
-  width: 20px;
-  height: 20px;
+.model-card__heart {
+  display: block;
+  color: #fff;
 }
 
 .model-card__fav.is-active {
   background: rgba(0, 0, 0, 0.55);
+}
+
+.model-card__fav.is-active .model-card__heart {
+  color: #ef4444;
 }
 
 .model-card__badge {

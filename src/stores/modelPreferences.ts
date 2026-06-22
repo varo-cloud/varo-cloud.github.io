@@ -1,48 +1,24 @@
 import { defineStore } from 'pinia'
 import { computed, ref, watch } from 'vue'
+import {
+  addModelFavourite,
+  fetchModelPreferences,
+  recordModelVisit,
+  removeModelFavourite,
+} from '@/api/modelPreferences'
+import type { ModelRecentEntry } from '@/types'
 import { useUserStore } from './user'
-
-const MAX_RECENT = 50
-const STORAGE_PREFIX = 'model-preferences'
-
-interface RecentEntry {
-  id: string
-  visitedAt: number
-}
-
-interface ModelPreferencesData {
-  favourites: string[]
-  recent: RecentEntry[]
-}
-
-function storageKey(userId: string) {
-  return `${STORAGE_PREFIX}:${userId}`
-}
-
-function loadPreferences(userId: string): ModelPreferencesData {
-  try {
-    const raw = localStorage.getItem(storageKey(userId))
-    if (!raw) return { favourites: [], recent: [] }
-    return JSON.parse(raw) as ModelPreferencesData
-  } catch {
-    return { favourites: [], recent: [] }
-  }
-}
-
-function savePreferences(userId: string, prefs: ModelPreferencesData) {
-  localStorage.setItem(storageKey(userId), JSON.stringify(prefs))
-}
 
 export const useModelPreferencesStore = defineStore('modelPreferences', () => {
   const userStore = useUserStore()
   const favourites = ref<string[]>([])
-  const recent = ref<RecentEntry[]>([])
+  const recent = ref<ModelRecentEntry[]>([])
+  const syncing = ref(false)
 
   const favouriteIds = computed(() => favourites.value)
   const recentIds = computed(() => recent.value.map((entry) => entry.id))
 
-  function syncFromStorage(userId: string) {
-    const prefs = loadPreferences(userId)
+  function applyPreferences(prefs: { favourites: string[]; recent: ModelRecentEntry[] }) {
     favourites.value = prefs.favourites
     recent.value = prefs.recent
   }
@@ -52,41 +28,70 @@ export const useModelPreferencesStore = defineStore('modelPreferences', () => {
     recent.value = []
   }
 
-  function persist() {
-    const userId = userStore.profile?.id
-    if (!userId) return
-    savePreferences(userId, {
-      favourites: favourites.value,
-      recent: recent.value,
-    })
+  async function syncFromApi() {
+    if (!userStore.isLoggedIn) {
+      clear()
+      return
+    }
+
+    syncing.value = true
+    try {
+      const prefs = await fetchModelPreferences()
+      applyPreferences(prefs)
+    } catch {
+      clear()
+    } finally {
+      syncing.value = false
+    }
   }
 
   function isFavourite(modelId: string) {
     return favourites.value.includes(modelId)
   }
 
-  function toggleFavourite(modelId: string) {
-    if (!userStore.profile?.id) return
-    if (isFavourite(modelId)) {
+  async function toggleFavourite(modelId: string) {
+    if (!userStore.isLoggedIn) return
+
+    const wasFavourite = isFavourite(modelId)
+    const previousFavourites = [...favourites.value]
+
+    if (wasFavourite) {
       favourites.value = favourites.value.filter((id) => id !== modelId)
     } else {
       favourites.value = [...favourites.value, modelId]
     }
-    persist()
+
+    try {
+      const prefs = wasFavourite
+        ? await removeModelFavourite(modelId)
+        : await addModelFavourite(modelId)
+      applyPreferences(prefs)
+    } catch {
+      favourites.value = previousFavourites
+      throw new Error('Failed to update favourite')
+    }
   }
 
-  function recordVisit(modelId: string) {
-    if (!userStore.profile?.id) return
+  async function recordVisit(modelId: string) {
+    if (!userStore.isLoggedIn) return
+
+    const previousRecent = [...recent.value]
     const filtered = recent.value.filter((entry) => entry.id !== modelId)
-    recent.value = [{ id: modelId, visitedAt: Date.now() }, ...filtered].slice(0, MAX_RECENT)
-    persist()
+    recent.value = [{ id: modelId, visitedAt: Date.now() }, ...filtered]
+
+    try {
+      const prefs = await recordModelVisit(modelId)
+      applyPreferences(prefs)
+    } catch {
+      recent.value = previousRecent
+    }
   }
 
   watch(
-    () => userStore.profile?.id,
-    (userId) => {
-      if (userId) {
-        syncFromStorage(userId)
+    () => userStore.isLoggedIn,
+    (loggedIn) => {
+      if (loggedIn) {
+        syncFromApi()
       } else {
         clear()
       }
@@ -99,8 +104,10 @@ export const useModelPreferencesStore = defineStore('modelPreferences', () => {
     recent,
     favouriteIds,
     recentIds,
+    syncing,
     isFavourite,
     toggleFavourite,
     recordVisit,
+    syncFromApi,
   }
 })

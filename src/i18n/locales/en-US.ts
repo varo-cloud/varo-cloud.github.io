@@ -44,7 +44,7 @@ export default {
       retry: 'Retry',
       empty: 'No models match your filters.',
       emptyFavourite: 'No favourite models yet. Tap the heart on a model card to save it here.',
-      emptyRecent: 'No recently used models yet. Visit a model detail page to see it here.',
+      emptyRecent: 'No recently used models yet. Click a model card to see it here.',
       viewMore: 'View More',
       tabs: {
         latest: 'Latest Models',

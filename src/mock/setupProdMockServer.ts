@@ -6,6 +6,7 @@ import { toProdMockUrl } from '@/utils/apiBaseUrl'
 import apiKeysMock from '../../mock/api-keys'
 import authMock from '../../mock/auth'
 import billingMock from '../../mock/billing'
+import modelPreferencesMock from '../../mock/model-preferences'
 import modelsMock from '../../mock/models'
 import pricingMock from '../../mock/pricing'
 
@@ -13,6 +14,7 @@ const mockModules: MockMethod[] = [
   ...authMock,
   ...apiKeysMock,
   ...modelsMock,
+  ...modelPreferencesMock,
   ...billingMock,
   ...pricingMock,
 ]

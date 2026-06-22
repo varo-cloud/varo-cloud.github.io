@@ -49,6 +49,16 @@ export interface FetchModelsParams {
   q?: string
 }
 
+export interface ModelRecentEntry {
+  id: string
+  visitedAt: number
+}
+
+export interface ModelPreferences {
+  favourites: string[]
+  recent: ModelRecentEntry[]
+}
+
 export interface UserProfile {
   id: string
   email: string
