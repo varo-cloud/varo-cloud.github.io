@@ -1,7 +1,9 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import { useModelPreferencesStore } from '@/stores/modelPreferences'
+import { useUserStore } from '@/stores/user'
 import { assetUrl } from '@/utils/assetUrl'
 import type { Model } from '@/types'
 
@@ -11,7 +13,10 @@ const props = defineProps<{
 
 const router = useRouter()
 const { t } = useI18n()
-const isFavourite = ref(false)
+const userStore = useUserStore()
+const modelPrefs = useModelPreferencesStore()
+
+const isFavourite = computed(() => modelPrefs.isFavourite(props.model.id))
 
 const displayName = computed(() => props.model.displayName ?? props.model.name)
 
@@ -38,7 +43,11 @@ function goToDetail() {
 
 function toggleFavourite(event: Event) {
   event.stopPropagation()
-  isFavourite.value = !isFavourite.value
+  if (!userStore.isLoggedIn) {
+    router.push({ name: 'auth' })
+    return
+  }
+  modelPrefs.toggleFavourite(props.model.id)
 }
 </script>
 

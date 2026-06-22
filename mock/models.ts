@@ -420,6 +420,18 @@ export default [
     },
   },
   {
+    url: '/api/models/batch',
+    method: 'get',
+    response: ({ query }: { query: Record<string, string> }) => {
+      const ids = (query.ids ?? '').split(',').filter(Boolean)
+      const items = ids
+        .map((id) => models.find((item) => item.id === id))
+        .filter((item): item is (typeof models)[number] => Boolean(item))
+
+      return success(items)
+    },
+  },
+  {
     url: '/api/models/:id',
     method: 'get',
     response: ({ query }: { query: Record<string, string> }) => {

@@ -43,6 +43,8 @@ export default {
       loadError: '模型加载失败，请重试。',
       retry: '重试',
       empty: '没有符合筛选条件的模型。',
+      emptyFavourite: '暂无收藏模型。点击模型卡片上的爱心即可收藏。',
+      emptyRecent: '暂无最近使用的模型。访问模型详情页后会显示在这里。',
       viewMore: '查看更多',
       tabs: {
         latest: '最新模型',

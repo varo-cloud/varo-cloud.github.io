@@ -3,8 +3,10 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { NEmpty, NSpin } from 'naive-ui'
-import { fetchModels } from '@/api/models'
+import { fetchModels, fetchModelsByIds } from '@/api/models'
 import ModelCard from '@/components/models/ModelCard.vue'
+import { useModelPreferencesStore } from '@/stores/modelPreferences'
+import { useUserStore } from '@/stores/user'
 import { assetUrl } from '@/utils/assetUrl'
 import type { Model } from '@/types'
 
@@ -14,6 +16,8 @@ const SEARCH_DEBOUNCE_MS = 300
 const router = useRouter()
 const route = useRoute()
 const { t } = useI18n()
+const userStore = useUserStore()
+const modelPrefs = useModelPreferencesStore()
 
 const models = ref<Model[]>([])
 const total = ref(0)
@@ -25,13 +29,53 @@ const searchQuery = ref('')
 
 let searchDebounceTimer: ReturnType<typeof setTimeout> | undefined
 
-const tabOptions = computed(() => [
-  { key: 'latest' as const, label: t('pages.models.tabs.latest') },
-  { key: 'favourite' as const, label: t('pages.models.tabs.favourite') },
-  { key: 'recent' as const, label: t('pages.models.tabs.recent') },
-])
+const tabOptions = computed(() => {
+  const options = [{ key: 'latest' as const, label: t('pages.models.tabs.latest') }]
+  if (!userStore.isLoggedIn) return options
+
+  return [
+    ...options,
+    { key: 'favourite' as const, label: t('pages.models.tabs.favourite') },
+    { key: 'recent' as const, label: t('pages.models.tabs.recent') },
+  ]
+})
 
 const hasMore = computed(() => activeTab.value === 'latest' && models.value.length < total.value)
+
+const emptyDescription = computed(() => {
+  if (activeTab.value === 'favourite') return t('pages.models.emptyFavourite')
+  if (activeTab.value === 'recent') return t('pages.models.emptyRecent')
+  return t('pages.models.empty')
+})
+
+function sortByIdOrder(items: Model[], ids: string[]) {
+  const order = new Map(ids.map((id, index) => [id, index]))
+  return [...items].sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0))
+}
+
+async function loadSavedModels(tab: 'favourite' | 'recent') {
+  loading.value = true
+  loadingMore.value = false
+  error.value = null
+  models.value = []
+  total.value = 0
+
+  const ids = tab === 'favourite' ? modelPrefs.favouriteIds : modelPrefs.recentIds
+  if (ids.length === 0) {
+    loading.value = false
+    return
+  }
+
+  try {
+    const items = await fetchModelsByIds(ids)
+    models.value = sortByIdOrder(items, ids)
+    total.value = models.value.length
+  } catch {
+    error.value = t('pages.models.loadError')
+  } finally {
+    loading.value = false
+  }
+}
 
 async function loadModels(append = false) {
   if (activeTab.value !== 'latest') return
@@ -69,12 +113,8 @@ async function loadModels(append = false) {
 function switchTab(key: 'latest' | 'favourite' | 'recent') {
   activeTab.value = key
 
-  if (key !== 'latest') {
-    models.value = []
-    total.value = 0
-    error.value = null
-    loading.value = false
-    loadingMore.value = false
+  if (key === 'favourite' || key === 'recent') {
+    loadSavedModels(key)
     return
   }
 
@@ -102,6 +142,27 @@ watch(searchQuery, () => {
     loadModels()
   }, SEARCH_DEBOUNCE_MS)
 })
+
+watch(
+  () => userStore.isLoggedIn,
+  (loggedIn) => {
+    if (!loggedIn && activeTab.value !== 'latest') {
+      activeTab.value = 'latest'
+      loadModels()
+    }
+  },
+)
+
+watch(
+  () => [modelPrefs.favouriteIds, modelPrefs.recentIds],
+  () => {
+    if (activeTab.value === 'favourite') {
+      loadSavedModels('favourite')
+    } else if (activeTab.value === 'recent') {
+      loadSavedModels('recent')
+    }
+  },
+)
 
 onMounted(() => {
   const q = route.query.q
@@ -160,7 +221,7 @@ onMounted(() => {
             </button>
           </div>
 
-          <label class="models-search">
+          <label v-if="activeTab === 'latest'" class="models-search">
             <img :src="assetUrl('/assets/models/search.svg')" alt="" aria-hidden="true" />
             <input
               v-model="searchQuery"
@@ -185,7 +246,7 @@ onMounted(() => {
         </div>
 
         <div v-else-if="models.length === 0" class="models-state">
-          <NEmpty :description="t('pages.models.empty')" />
+          <NEmpty :description="emptyDescription" />
         </div>
 
         <div v-else class="models-grid">

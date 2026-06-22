@@ -8,6 +8,7 @@ import ModelDetailHeader from '@/components/models/ModelDetailHeader.vue'
 import PlaygroundInputPanel from '@/components/playground/PlaygroundInputPanel.vue'
 import PlaygroundOutputPanel from '@/components/playground/PlaygroundOutputPanel.vue'
 import { useUserStore } from '@/stores/user'
+import { useModelPreferencesStore } from '@/stores/modelPreferences'
 import { assetUrl } from '@/utils/assetUrl'
 import type { ModelDetail } from '@/types'
 import type { SchemaFormValues } from '@/types/schema'
@@ -15,6 +16,7 @@ import type { SchemaFormValues } from '@/types/schema'
 const route = useRoute()
 const { t } = useI18n()
 const userStore = useUserStore()
+const modelPrefs = useModelPreferencesStore()
 
 const model = ref<ModelDetail | null>(null)
 const loading = ref(true)
@@ -35,6 +37,9 @@ async function loadModel(id: string) {
 
   try {
     model.value = await fetchModelDetail(id)
+    if (model.value && userStore.isLoggedIn) {
+      modelPrefs.recordVisit(model.value.id)
+    }
   } catch {
     error.value = t('pages.modelDetail.loadError')
     model.value = null
