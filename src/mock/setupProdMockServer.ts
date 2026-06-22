@@ -1,5 +1,6 @@
 import type { MockMethod } from 'vite-plugin-mock'
 import { match as matchPath, pathToRegexp } from 'path-to-regexp'
+import { toProdMockUrl } from '@/utils/apiBaseUrl'
 import apiKeysMock from '../../mock/api-keys'
 import authMock from '../../mock/auth'
 import billingMock from '../../mock/billing'
@@ -120,10 +121,12 @@ export async function setupProdMockServer(): Promise<void> {
       Mock.setup({ timeout })
     }
 
+    const mockUrl = toProdMockUrl(url)
+
     Mock.mock(
-      pathToRegexp(url, undefined, { end: false }),
+      pathToRegexp(mockUrl, undefined, { end: false }),
       method || 'get',
-      createRequestHandler(url, response),
+      createRequestHandler(mockUrl, response),
     )
   }
 }

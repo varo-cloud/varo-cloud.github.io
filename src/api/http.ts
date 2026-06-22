@@ -1,10 +1,11 @@
 import axios from 'axios'
 import type { ApiResponse } from '@/types'
+import { apiBaseUrl } from '@/utils/apiBaseUrl'
 
 const TOKEN_KEY = 'auth_token'
 
 export const http = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || '/api',
+  baseURL: apiBaseUrl(),
   timeout: 15000,
 })
 
