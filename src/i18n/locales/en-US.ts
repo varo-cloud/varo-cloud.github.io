@@ -7,6 +7,10 @@ export default {
     login: 'Log in',
     logout: 'Log out',
     language: 'Language',
+    deposit: 'Deposit',
+  },
+  header: {
+    searchModels: 'Search Models',
   },
   nav: {
     models: 'Models',
@@ -61,6 +65,7 @@ export default {
       inputTitle: 'Input',
       from: 'From',
       run: 'Run',
+      startForFree: 'Start for Free',
       reset: 'Reset form',
       credits: 'Credits',
       topUp: 'Top Up',

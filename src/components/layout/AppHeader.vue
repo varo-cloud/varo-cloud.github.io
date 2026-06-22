@@ -1,28 +1,31 @@
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import {
-  NButton,
-  NDropdown,
-  NSpace,
-  NTag,
-} from 'naive-ui'
+import { NDropdown } from 'naive-ui'
 import { useUserStore } from '@/stores/user'
 import VaroCloudLogo from '@/components/common/VaroCloudLogo.vue'
+import AppIcon from '@/components/common/AppIcon.vue'
+import { setStoredLocale, type LocaleType } from '@/i18n'
 
 const route = useRoute()
 const router = useRouter()
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const userStore = useUserStore()
+
+const headerSearch = ref('')
 
 const isTransparent = computed(() => route.meta.transparentHeader === true)
 
 const navItems = computed(() => [
   { label: t('nav.models'), name: 'models' },
   { label: t('nav.pricing'), name: 'pricing' },
-  { label: t('nav.apiKeys'), name: 'api-keys' },
-  { label: t('nav.billing'), name: 'billing' },
+  ...(userStore.isLoggedIn
+    ? [
+        { label: t('nav.apiKeys'), name: 'api-keys' },
+        { label: t('nav.billing'), name: 'billing' },
+      ]
+    : []),
   { label: t('nav.docs'), name: 'docs' },
 ])
 
@@ -33,11 +36,21 @@ const userMenuOptions = computed(() => [
   },
 ])
 
+const languageMenuOptions = computed(() => [
+  { label: 'English', key: 'en-US' },
+  { label: '简体中文', key: 'zh-CN' },
+])
+
 const balanceLabel = computed(() => {
   if (!userStore.isLoggedIn) return null
   const value = userStore.balanceUsd
   if (value === null) return '—'
   return `$${value.toFixed(2)}`
+})
+
+const userInitial = computed(() => {
+  const name = userStore.profile?.name ?? userStore.profile?.email ?? ''
+  return name.charAt(0).toUpperCase() || '?'
 })
 
 function isActive(name: string) {
@@ -57,6 +70,28 @@ function handleUserMenuSelect(key: string) {
     router.push({ name: 'models' })
   }
 }
+
+function handleLanguageSelect(key: string) {
+  const nextLocale = key as LocaleType
+  locale.value = nextLocale
+  setStoredLocale(nextLocale)
+}
+
+function submitHeaderSearch() {
+  const q = headerSearch.value.trim()
+  router.push({
+    name: 'models',
+    query: q ? { q } : {},
+  })
+}
+
+watch(
+  () => route.query.q,
+  (q) => {
+    headerSearch.value = typeof q === 'string' ? q : ''
+  },
+  { immediate: true },
+)
 
 onMounted(() => {
   userStore.loadProfile()
@@ -87,21 +122,66 @@ onMounted(() => {
         </nav>
       </div>
 
-      <NSpace align="center" :size="12" class="app-header__right">
-        <NTag v-if="userStore.isLoggedIn && balanceLabel" type="info" round>
-          {{ t('common.balance') }}: {{ balanceLabel }}
-        </NTag>
+      <div
+        v-if="userStore.isLoggedIn"
+        class="app-header__center hidden lg:block"
+      >
+        <label class="app-header__search">
+          <AppIcon name="search" class="app-header__search-icon" />
+          <input
+            v-model="headerSearch"
+            type="search"
+            class="app-header__search-input"
+            :placeholder="t('header.searchModels')"
+            @keydown.enter.prevent="submitHeaderSearch"
+          />
+        </label>
+      </div>
+
+      <div class="app-header__right">
+        <NDropdown
+          trigger="click"
+          :options="languageMenuOptions"
+          @select="handleLanguageSelect"
+        >
+          <button
+            type="button"
+            class="app-header__icon-btn"
+            :class="{ 'app-header__icon-btn--light': !isTransparent && !userStore.isLoggedIn }"
+            :aria-label="t('common.language')"
+          >
+            <AppIcon name="globe" />
+          </button>
+        </NDropdown>
 
         <template v-if="userStore.isLoggedIn">
+          <div class="app-header__wallet-group">
+            <div class="app-header__wallet-balance" :title="t('common.balance')">
+              <AppIcon name="wallet" />
+              <span>{{ balanceLabel }}</span>
+            </div>
+            <button
+              type="button"
+              class="app-header__wallet-deposit"
+              @click="goTo('billing')"
+            >
+              <AppIcon name="deposit" />
+              <span>{{ t('common.deposit') }}</span>
+            </button>
+          </div>
+
           <NDropdown
+            trigger="click"
             :options="userMenuOptions"
             @select="handleUserMenuSelect"
           >
-            <NButton quaternary :class="{ 'app-header__user-btn--light': isTransparent }">
-              {{ userStore.profile?.name ?? userStore.profile?.email }}
-            </NButton>
+            <button type="button" class="app-header__user-trigger">
+              <span class="app-header__avatar">{{ userInitial }}</span>
+              <AppIcon name="chevron-down" />
+            </button>
           </NDropdown>
         </template>
+
         <template v-else-if="isTransparent">
           <button
             type="button"
@@ -110,18 +190,16 @@ onMounted(() => {
           >
             {{ t('common.login') }}
           </button>
-          <button
-            type="button"
-            class="app-header__signup-btn"
-            @click="router.push({ name: 'auth' })"
-          >
-            {{ t('pages.models.heroSignup') }}
-          </button>
         </template>
-        <NButton v-else type="primary" @click="router.push({ name: 'auth' })">
+        <button
+          v-else
+          type="button"
+          class="app-header__login-btn"
+          @click="router.push({ name: 'auth' })"
+        >
           {{ t('common.login') }}
-        </NButton>
-      </NSpace>
+        </button>
+      </div>
     </div>
   </header>
 </template>
@@ -165,6 +243,14 @@ onMounted(() => {
   align-items: center;
   gap: 12px;
   min-width: 0;
+  flex-shrink: 0;
+}
+
+.app-header__center {
+  flex: 1;
+  min-width: 0;
+  max-width: 360px;
+  margin: 0 24px;
 }
 
 .app-header__logo {
@@ -211,7 +297,119 @@ onMounted(() => {
 }
 
 .app-header__right {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   flex-shrink: 0;
+}
+
+.app-header__search {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 36px;
+  padding: 0 12px;
+  border-radius: 8px;
+  background: #13131c;
+  cursor: text;
+}
+
+.app-header__search-icon {
+  flex-shrink: 0;
+  opacity: 0.6;
+}
+
+.app-header__search-input {
+  width: 100%;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  color: #ebf4fb;
+  font-size: 14px;
+  line-height: 1;
+  outline: none;
+}
+
+.app-header__search-input::placeholder {
+  color: #fff;
+  opacity: 0.2;
+}
+
+.app-header__icon-btn,
+.app-header__user-trigger {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  height: 36px;
+  padding: 0 12px;
+  border: none;
+  border-radius: 8px;
+  background: #13131c;
+  color: #ebf4fb;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.app-header__icon-btn {
+  width: 36px;
+  padding: 0;
+}
+
+.app-header__icon-btn--light {
+  background: var(--bg-hover);
+  color: var(--text-secondary);
+}
+
+.app-header__icon-btn:hover,
+.app-header__user-trigger:hover,
+.app-header__wallet-deposit:hover {
+  opacity: 0.85;
+}
+
+.app-header__wallet-group {
+  display: flex;
+  gap: 1px;
+}
+
+.app-header__wallet-balance,
+.app-header__wallet-deposit {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  height: 36px;
+  padding: 0 8px;
+  border: none;
+  background: #13131c;
+  color: #ebf4fb;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.app-header__wallet-balance {
+  border-radius: 8px 0 0 8px;
+}
+
+.app-header__wallet-deposit {
+  border-radius: 0 8px 8px 0;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.app-header__avatar {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  background: #ff9c39;
+  color: #13131c;
+  font-size: 13px;
+  font-weight: 700;
+  line-height: 1;
 }
 
 .app-header__login-link {
@@ -224,20 +422,24 @@ onMounted(() => {
   cursor: pointer;
 }
 
-.app-header__signup-btn {
+.app-header__login-link:hover {
+  opacity: 0.85;
+}
+
+.app-header__login-btn {
   height: 36px;
   padding: 0 20px;
   border: none;
   border-radius: 8px;
-  background: #fff;
-  color: #222;
+  background: var(--text-accent);
+  color: #fff;
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
 }
 
-.app-header__signup-btn:hover {
-  background: #f5f5f5;
+.app-header__login-btn:hover {
+  opacity: 0.9;
 }
 
 @media (max-width: 767px) {
@@ -250,9 +452,12 @@ onMounted(() => {
     transform-origin: left center;
   }
 
-  .app-header__signup-btn {
-    padding: 0 12px;
-    font-size: 13px;
+  .app-header__wallet-deposit span {
+    display: none;
+  }
+
+  .app-header__wallet-deposit {
+    padding: 0 8px;
   }
 }
 </style>

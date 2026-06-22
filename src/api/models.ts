@@ -1,8 +1,8 @@
 import { http, unwrap } from './http'
-import type { Model, ModelDetail } from '@/types'
+import type { FetchModelsParams, ModelDetail, ModelsPage } from '@/types'
 
-export function fetchModels() {
-  return unwrap<Model[]>(http.get('/models'))
+export function fetchModels(params?: FetchModelsParams) {
+  return unwrap<ModelsPage>(http.get('/models', { params }))
 }
 
 export function fetchModelDetail(id: string) {

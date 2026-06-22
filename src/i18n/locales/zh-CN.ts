@@ -7,6 +7,10 @@ export default {
     login: '登录',
     logout: '退出登录',
     language: '语言',
+    deposit: '充值',
+  },
+  header: {
+    searchModels: '搜索模型',
   },
   nav: {
     models: '模型',
@@ -61,6 +65,7 @@ export default {
       inputTitle: 'Input',
       from: 'From',
       run: 'Run',
+      startForFree: '免费开始',
       reset: '重置表单',
       credits: 'Credits',
       topUp: 'Top Up',

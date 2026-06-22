@@ -4,6 +4,7 @@ import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import type { InputSchema, SchemaFormValues } from '@/types/schema'
 import { createDefaultFormValues } from '@/utils/schema-form'
+import { useUserStore } from '@/stores/user'
 import PlaygroundSchemaForm from './PlaygroundSchemaForm.vue'
 
 const props = defineProps<{
@@ -19,6 +20,7 @@ const emit = defineEmits<{
 
 const router = useRouter()
 const { t } = useI18n()
+const userStore = useUserStore()
 
 const formValues = ref<SchemaFormValues>(createDefaultFormValues(props.schema))
 const batchSize = ref(1)
@@ -28,11 +30,19 @@ const formattedOriginal = computed(() =>
   props.originalPriceUsd ? `$${props.originalPriceUsd.toFixed(2)}` : null,
 )
 
+const runLabel = computed(() =>
+  userStore.isLoggedIn ? t('pages.modelDetail.run') : t('pages.modelDetail.startForFree'),
+)
+
 function resetForm() {
   formValues.value = createDefaultFormValues(props.schema)
 }
 
 function handleRun() {
+  if (!userStore.isLoggedIn) {
+    router.push({ name: 'auth' })
+    return
+  }
   emit('run', { ...formValues.value })
 }
 
@@ -70,15 +80,29 @@ function goTopUp() {
         </svg>
       </button>
 
-      <button type="button" class="input-panel__run" @click="handleRun">
-        <span class="input-panel__run-label">{{ t('pages.modelDetail.run') }}</span>
-        <span class="input-panel__run-price">
-          {{ formattedPrice }}
-          <span v-if="formattedOriginal" class="input-panel__run-original">{{ formattedOriginal }}</span>
-        </span>
-        <span class="input-panel__run-divider" aria-hidden="true" />
-        <span class="input-panel__run-batch">{{ batchSize }}x</span>
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+      <button
+        type="button"
+        class="input-panel__run"
+        :class="{ 'input-panel__run--cta': !userStore.isLoggedIn }"
+        @click="handleRun"
+      >
+        <span class="input-panel__run-label">{{ runLabel }}</span>
+        <template v-if="userStore.isLoggedIn">
+          <span class="input-panel__run-price">
+            {{ formattedPrice }}
+            <span v-if="formattedOriginal" class="input-panel__run-original">{{ formattedOriginal }}</span>
+          </span>
+          <span class="input-panel__run-divider" aria-hidden="true" />
+          <span class="input-panel__run-batch">{{ batchSize }}x</span>
+        </template>
+        <svg
+          v-if="userStore.isLoggedIn"
+          width="16"
+          height="16"
+          viewBox="0 0 16 16"
+          fill="none"
+          aria-hidden="true"
+        >
           <path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" />
         </svg>
       </button>
@@ -172,6 +196,10 @@ function goTopUp() {
   color: #fff;
   cursor: pointer;
   font-family: inherit;
+}
+
+.input-panel__run--cta {
+  justify-content: center;
 }
 
 .input-panel__run-label {

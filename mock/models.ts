@@ -233,7 +233,7 @@ const klingI2vSchema: InputSchema = {
   },
 }
 
-const models = [
+const baseModels = [
   {
     id: 'seedance-i2v',
     name: 'Seedance 2.0 Image-to-Video',
@@ -309,11 +309,114 @@ const models = [
   },
 ]
 
+const VARIANT_PROVIDERS = [
+  'ByteDance',
+  'Kuaishou',
+  'OpenAI',
+  'Google',
+  'Luma',
+  'Runway',
+  'Minimax',
+  'Hunyuan',
+]
+
+const VARIANT_FAMILIES = [
+  'Seedance 2.0',
+  'Kling 2.6',
+  'Veo 2',
+  'Sora',
+  'Gen-3',
+  'Dream Machine',
+  'Hailuo',
+  'Wan 2.1',
+  'Pika 2.0',
+  'Stable Video',
+]
+
+const VARIANT_TEMPLATES = [
+  {
+    capability: 'text-to-video' as const,
+    suffix: 'Text-to-Video',
+    schema: seedance20T2vSchema,
+  },
+  {
+    capability: 'image-to-video' as const,
+    suffix: 'Image-to-Video',
+    schema: seedanceI2vSchema,
+  },
+]
+
+function buildModelCatalog() {
+  const catalog = [...baseModels]
+  let index = 0
+
+  while (catalog.length < 48) {
+    const provider = VARIANT_PROVIDERS[index % VARIANT_PROVIDERS.length]
+    const family = VARIANT_FAMILIES[index % VARIANT_FAMILIES.length]
+    const template = VARIANT_TEMPLATES[index % VARIANT_TEMPLATES.length]
+    const variant = Math.floor(index / VARIANT_TEMPLATES.length) % 3
+    const priceBase = 0.4 + (index % 12) * 0.04
+    const perRun = Number((priceBase * 0.2).toFixed(2))
+    const slug = family.toLowerCase().replace(/\s+/g, '-').replace(/\./g, '')
+
+    catalog.push({
+      id: `model-${index + 1}`,
+      name: `${family} ${template.suffix}${variant > 0 ? ` v${variant + 1}` : ''}`,
+      displayName: family,
+      provider,
+      modelPath: `${provider.toLowerCase()}/${slug}/${template.capability}`,
+      capabilities: [template.capability],
+      startingPriceUsd: Number(priceBase.toFixed(2)),
+      originalPriceUsd: Number((priceBase * 1.2).toFixed(3)),
+      perRunPriceUsd: perRun,
+      runsPerTenUsd: Math.max(1, Math.floor(10 / perRun)),
+      priceDetail: `${4 + (index % 8)}s · ${['480p', '720p', '1080p'][index % 3]}`,
+      discountPercent: index % 4 === 0 ? undefined : [20, 25, 30][index % 3],
+      isHot: index % 7 === 0,
+      description: `${family} ${template.capability.replace(/-/g, ' ')} generation powered by ${provider}.`,
+      thumbnailUrl:
+        index % 3 === 0 ? '/assets/model-detail/model-thumb.jpg' : '/assets/models/card-thumb.jpg',
+      inputSchema: template.schema,
+    })
+    index += 1
+  }
+
+  return catalog
+}
+
+const models = buildModelCatalog()
+
+function filterModels(query: string) {
+  const q = query.trim().toLowerCase()
+  if (!q) return models
+
+  return models.filter((model) => {
+    const name = (model.displayName ?? model.name).toLowerCase()
+    return (
+      name.includes(q) ||
+      model.provider.toLowerCase().includes(q) ||
+      model.description.toLowerCase().includes(q)
+    )
+  })
+}
+
 export default [
   {
     url: '/api/models',
     method: 'get',
-    response: () => success(models),
+    response: ({ query }: { query: Record<string, string> }) => {
+      const offset = Math.max(0, Number(query.offset) || 0)
+      const limit = Math.min(100, Math.max(1, Number(query.limit) || 20))
+      const filtered = filterModels(query.q ?? '')
+      const items = filtered.slice(offset, offset + limit)
+
+      return success({
+        items,
+        total: filtered.length,
+        offset,
+        limit,
+      })
+    },
   },
   {
     url: '/api/models/:id',

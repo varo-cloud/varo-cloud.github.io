@@ -36,6 +36,19 @@ export interface ModelDetail extends Model {
   runsPerTenUsd?: number
 }
 
+export interface ModelsPage {
+  items: Model[]
+  total: number
+  offset: number
+  limit: number
+}
+
+export interface FetchModelsParams {
+  offset?: number
+  limit?: number
+  q?: string
+}
+
 export interface UserProfile {
   id: string
   email: string

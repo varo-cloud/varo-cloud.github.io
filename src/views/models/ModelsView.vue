@@ -1,23 +1,28 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
-import { useRouter } from 'vue-router'
+import { computed, onMounted, ref, watch } from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { NEmpty, NSpin } from 'naive-ui'
 import { fetchModels } from '@/api/models'
 import ModelCard from '@/components/models/ModelCard.vue'
 import type { Model } from '@/types'
 
-const PAGE_SIZE = 8
+const PAGE_SIZE = 20
+const SEARCH_DEBOUNCE_MS = 300
 
 const router = useRouter()
+const route = useRoute()
 const { t } = useI18n()
 
 const models = ref<Model[]>([])
+const total = ref(0)
 const loading = ref(true)
+const loadingMore = ref(false)
 const error = ref<string | null>(null)
 const activeTab = ref<'latest' | 'favourite' | 'recent'>('latest')
 const searchQuery = ref('')
-const visibleCount = ref(PAGE_SIZE)
+
+let searchDebounceTimer: ReturnType<typeof setTimeout> | undefined
 
 const tabOptions = computed(() => [
   { key: 'latest' as const, label: t('pages.models.tabs.latest') },
@@ -25,50 +30,59 @@ const tabOptions = computed(() => [
   { key: 'recent' as const, label: t('pages.models.tabs.recent') },
 ])
 
-const filteredModels = computed(() => {
-  const query = searchQuery.value.trim().toLowerCase()
+const hasMore = computed(() => activeTab.value === 'latest' && models.value.length < total.value)
 
-  let list = models.value
-  if (activeTab.value === 'favourite' || activeTab.value === 'recent') {
-    list = []
+async function loadModels(append = false) {
+  if (activeTab.value !== 'latest') return
+
+  if (append) {
+    loadingMore.value = true
+  } else {
+    loading.value = true
+    models.value = []
+    total.value = 0
   }
-
-  if (!query) return list
-
-  return list.filter((model) => {
-    const name = model.displayName ?? model.name
-    return (
-      name.toLowerCase().includes(query) ||
-      model.provider.toLowerCase().includes(query) ||
-      model.description.toLowerCase().includes(query)
-    )
-  })
-})
-
-const visibleModels = computed(() => filteredModels.value.slice(0, visibleCount.value))
-
-const hasMore = computed(() => visibleCount.value < filteredModels.value.length)
-
-async function loadModels() {
-  loading.value = true
   error.value = null
 
   try {
-    models.value = await fetchModels()
+    const page = await fetchModels({
+      offset: append ? models.value.length : 0,
+      limit: PAGE_SIZE,
+      q: searchQuery.value.trim() || undefined,
+    })
+
+    models.value = append ? [...models.value, ...page.items] : page.items
+    total.value = page.total
   } catch {
     error.value = t('pages.models.loadError')
+    if (!append) {
+      models.value = []
+      total.value = 0
+    }
   } finally {
     loading.value = false
+    loadingMore.value = false
   }
 }
 
 function switchTab(key: 'latest' | 'favourite' | 'recent') {
   activeTab.value = key
-  visibleCount.value = PAGE_SIZE
+
+  if (key !== 'latest') {
+    models.value = []
+    total.value = 0
+    error.value = null
+    loading.value = false
+    loadingMore.value = false
+    return
+  }
+
+  loadModels()
 }
 
 function loadMore() {
-  visibleCount.value += PAGE_SIZE
+  if (!hasMore.value || loadingMore.value || loading.value) return
+  loadModels(true)
 }
 
 function goToAuth() {
@@ -79,7 +93,20 @@ function goToDocs() {
   router.push({ name: 'docs' })
 }
 
+watch(searchQuery, () => {
+  if (activeTab.value !== 'latest') return
+
+  if (searchDebounceTimer) clearTimeout(searchDebounceTimer)
+  searchDebounceTimer = setTimeout(() => {
+    loadModels()
+  }, SEARCH_DEBOUNCE_MS)
+})
+
 onMounted(() => {
+  const q = route.query.q
+  if (typeof q === 'string' && q) {
+    searchQuery.value = q
+  }
   loadModels()
 })
 </script>
@@ -149,27 +176,32 @@ onMounted(() => {
         <div v-else-if="error" class="models-state">
           <NEmpty :description="error">
             <template #extra>
-              <button type="button" class="models-retry" @click="loadModels">
+              <button type="button" class="models-retry" @click="loadModels()">
                 {{ t('pages.models.retry') }}
               </button>
             </template>
           </NEmpty>
         </div>
 
-        <div v-else-if="visibleModels.length === 0" class="models-state">
+        <div v-else-if="models.length === 0" class="models-state">
           <NEmpty :description="t('pages.models.empty')" />
         </div>
 
         <div v-else class="models-grid">
           <ModelCard
-            v-for="model in visibleModels"
+            v-for="model in models"
             :key="model.id"
             :model="model"
           />
         </div>
 
         <div v-if="hasMore && !loading" class="models-more">
-          <button type="button" class="models-more__btn" @click="loadMore">
+          <button
+            type="button"
+            class="models-more__btn"
+            :disabled="loadingMore"
+            @click="loadMore"
+          >
             {{ t('pages.models.viewMore') }}
           </button>
         </div>
@@ -388,19 +420,27 @@ onMounted(() => {
 }
 
 .models-more__btn {
-  height: 36px;
-  padding: 0 36px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 36px;
   border: none;
   border-radius: 8px;
   background: #f5f5f5;
   color: #222;
   font-size: 14px;
   font-weight: 500;
+  line-height: 16px;
   cursor: pointer;
 }
 
-.models-more__btn:hover {
+.models-more__btn:hover:not(:disabled) {
   background: #ebebeb;
+}
+
+.models-more__btn:disabled {
+  cursor: wait;
+  opacity: 0.7;
 }
 
 @media (min-width: 640px) {
