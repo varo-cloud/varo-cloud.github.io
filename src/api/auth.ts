@@ -1,18 +1,12 @@
-import { http, clearToken, setToken, unwrap } from './http'
+import { http, clearToken, unwrap } from './http'
 import type { AuthResult, LoginPayload, RegisterPayload, UserProfile } from '@/types'
 
 export function login(payload: LoginPayload) {
-  return unwrap<AuthResult>(http.post('/auth/login', payload)).then((result) => {
-    setToken(result.token)
-    return result
-  })
+  return unwrap<AuthResult>(http.post('/auth/login', payload))
 }
 
 export function register(payload: RegisterPayload) {
-  return unwrap<AuthResult>(http.post('/auth/register', payload)).then((result) => {
-    setToken(result.token)
-    return result
-  })
+  return unwrap<AuthResult>(http.post('/auth/register', payload))
 }
 
 export function fetchUserProfile() {

@@ -9,6 +9,7 @@ body,
 #app {
   margin: 0;
   min-height: 100%;
+  background: var(--bg-page);
 }
 
 body {
@@ -33,37 +34,19 @@ a {
 }
 
 :root {
-  --bg-page: #f8fafc;
-  --bg-header: rgba(255, 255, 255, 0.92);
-  --bg-footer: #ffffff;
-  --bg-card: #ffffff;
-  --bg-hover: rgba(15, 23, 42, 0.06);
-  --bg-filter-active: rgba(15, 23, 42, 0.04);
-  --bg-tag: rgba(99, 102, 241, 0.1);
-  --text-primary: #0f172a;
-  --text-secondary: #475569;
-  --text-muted: #94a3b8;
-  --text-tag: #4338ca;
-  --text-accent: #4f46e5;
-  --border-color: #e2e8f0;
-}
-
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg-page: #0b1220;
-    --bg-header: rgba(15, 23, 42, 0.92);
-    --bg-footer: #0f172a;
-    --bg-card: #111827;
-    --bg-hover: rgba(255, 255, 255, 0.08);
-    --bg-filter-active: rgba(255, 255, 255, 0.06);
-    --bg-tag: rgba(129, 140, 248, 0.16);
-    --text-primary: #f8fafc;
-    --text-secondary: #cbd5e1;
-    --text-muted: #64748b;
-    --text-tag: #c7d2fe;
-    --text-accent: #a5b4fc;
-    --border-color: #1e293b;
-  }
+  --bg-page: #0a0a0e;
+  --bg-header: rgba(10, 10, 14, 0.92);
+  --bg-footer: #0d0913;
+  --bg-card: #13131c;
+  --bg-hover: rgba(255, 255, 255, 0.06);
+  --bg-filter-active: rgba(255, 255, 255, 0.04);
+  --bg-tag: rgba(6, 182, 212, 0.1);
+  --text-primary: #ebf4fb;
+  --text-secondary: #9b9dab;
+  --text-muted: #808080;
+  --text-tag: #06b6d4;
+  --text-accent: #06b6d4;
+  --border-color: rgba(255, 255, 255, 0.1);
 }
 
 @media (max-width: 767px) {

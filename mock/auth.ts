@@ -12,9 +12,9 @@ export default [
   {
     url: '/api/auth/login',
     method: 'post',
-    response: ({ body }: { body: { email: string; password: string } }) => {
-      if (!body.email || !body.password) {
-        return fail('Email and password are required')
+    response: ({ body }: { body: { email: string; password?: string } }) => {
+      if (!body.email) {
+        return fail('Email is required')
       }
       return success({
         token: `mock_token_${Date.now()}`,

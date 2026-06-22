@@ -5,6 +5,7 @@ const ICONS = {
   deposit: '/assets/icons/deposit.svg',
   'chevron-down': '/assets/icons/chevron-down.svg',
   search: '/assets/icons/search.svg',
+  close: '/assets/icons/close.svg',
 } as const
 
 export type AppIconName = keyof typeof ICONS

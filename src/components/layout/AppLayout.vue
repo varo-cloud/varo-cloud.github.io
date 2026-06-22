@@ -26,6 +26,8 @@ const isFullBleed = computed(() => route.meta.fullBleed === true)
   display: flex;
   flex-direction: column;
   min-height: 100vh;
+  background: var(--bg-page);
+  color: var(--text-primary);
 }
 
 .app-layout__main {

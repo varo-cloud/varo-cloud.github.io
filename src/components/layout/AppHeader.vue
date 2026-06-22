@@ -15,8 +15,6 @@ const userStore = useUserStore()
 
 const headerSearch = ref('')
 
-const isTransparent = computed(() => route.meta.transparentHeader === true)
-
 const navItems = computed(() => [
   { label: t('nav.models'), name: 'models' },
   { label: t('nav.pricing'), name: 'pricing' },
@@ -99,14 +97,11 @@ onMounted(() => {
 </script>
 
 <template>
-  <header
-    class="app-header"
-    :class="{ 'app-header--transparent': isTransparent }"
-  >
+  <header class="app-header">
     <div class="app-header__inner">
       <div class="app-header__left">
         <RouterLink to="/" class="app-header__logo" :aria-label="t('common.appName')">
-          <VaroCloudLogo :variant="isTransparent ? 'dark' : 'light'" />
+          <VaroCloudLogo variant="dark" />
         </RouterLink>
         <nav class="app-header__nav hidden md:flex">
           <button
@@ -147,7 +142,6 @@ onMounted(() => {
           <button
             type="button"
             class="app-header__icon-btn"
-            :class="{ 'app-header__icon-btn--light': !isTransparent && !userStore.isLoggedIn }"
             :aria-label="t('common.language')"
           >
             <AppIcon name="globe" />
@@ -182,19 +176,10 @@ onMounted(() => {
           </NDropdown>
         </template>
 
-        <template v-else-if="isTransparent">
-          <button
-            type="button"
-            class="app-header__login-link"
-            @click="router.push({ name: 'auth' })"
-          >
-            {{ t('common.login') }}
-          </button>
-        </template>
         <button
           v-else
           type="button"
-          class="app-header__login-btn"
+          class="app-header__login-link"
           @click="router.push({ name: 'auth' })"
         >
           {{ t('common.login') }}
@@ -210,16 +195,9 @@ onMounted(() => {
   top: 0;
   z-index: 100;
   height: 80px;
-  border-bottom: none;
-  background: var(--bg-header);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  background: rgba(10, 10, 14, 0.3);
   backdrop-filter: blur(8px);
-}
-
-.app-header--transparent {
-  position: relative;
-  border-bottom: none;
-  background: transparent;
-  backdrop-filter: none;
   color: #ebf4fb;
 }
 
@@ -229,13 +207,9 @@ onMounted(() => {
   justify-content: space-between;
   gap: 16px;
   height: 100%;
-  max-width: 1200px;
+  max-width: 1360px;
   margin: 0 auto;
   padding: 0 16px;
-}
-
-.app-header--transparent .app-header__inner {
-  max-width: 1360px;
 }
 
 .app-header__left {
@@ -271,27 +245,17 @@ onMounted(() => {
   border: none;
   border-radius: 0;
   background: transparent;
-  color: var(--text-secondary);
+  color: #9b9dab;
   cursor: pointer;
   font-size: 14px;
   font-weight: 600;
 }
 
-.app-header--transparent .app-header__nav-item {
-  color: #9b9dab;
-}
-
-.app-header--transparent .app-header__nav-item.is-active {
+.app-header__nav-item.is-active {
   color: #ebf4fb;
 }
 
-.app-header__nav-item.is-active,
 .app-header__nav-item:hover {
-  color: var(--text-primary);
-  background: var(--bg-hover);
-}
-
-.app-header--transparent .app-header__nav-item:hover {
   color: #ebf4fb;
   background: transparent;
 }
@@ -354,11 +318,6 @@ onMounted(() => {
 .app-header__icon-btn {
   width: 36px;
   padding: 0;
-}
-
-.app-header__icon-btn--light {
-  background: var(--bg-hover);
-  color: var(--text-secondary);
 }
 
 .app-header__icon-btn:hover,
@@ -424,22 +383,6 @@ onMounted(() => {
 
 .app-header__login-link:hover {
   opacity: 0.85;
-}
-
-.app-header__login-btn {
-  height: 36px;
-  padding: 0 20px;
-  border: none;
-  border-radius: 8px;
-  background: var(--text-accent);
-  color: #fff;
-  font-size: 14px;
-  font-weight: 500;
-  cursor: pointer;
-}
-
-.app-header__login-btn:hover {
-  opacity: 0.9;
 }
 
 @media (max-width: 767px) {
