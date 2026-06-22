@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import { useLocaleRouter } from '@/composables/useLocaleRouter'
 import { useMessage } from 'naive-ui'
 import { login } from '@/api/auth'
 import { useUserStore } from '@/stores/user'
@@ -11,7 +12,7 @@ import AppIcon from '@/components/common/AppIcon.vue'
 import { assetUrl } from '@/utils/assetUrl'
 
 const route = useRoute()
-const router = useRouter()
+const { push, replace, localePath } = useLocaleRouter()
 const { t } = useI18n()
 const message = useMessage()
 const userStore = useUserStore()
@@ -22,10 +23,10 @@ const error = ref<string | null>(null)
 
 function closeAuth() {
   if (window.history.length > 1) {
-    router.back()
+    window.history.back()
     return
   }
-  router.push({ name: 'models' })
+  push({ name: 'models' })
 }
 
 async function handleLogin() {
@@ -42,7 +43,7 @@ async function handleLogin() {
     const result = await login({ email: value, password: '' })
     userStore.establishSession(result.token, result.user)
     const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : null
-    router.push(redirect || { name: 'models' })
+    push(redirect || { name: 'models' })
   } catch {
     error.value = t('pages.auth.loginError')
   } finally {
@@ -57,7 +58,7 @@ function handleGoogleLogin() {
 onMounted(() => {
   if (userStore.isLoggedIn) {
     const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : null
-    router.replace(redirect || { name: 'models' })
+    replace(redirect || { name: 'models' })
   }
 })
 </script>
@@ -122,9 +123,9 @@ onMounted(() => {
 
           <p class="auth-card__terms">
             {{ t('pages.auth.termsPrefix') }}
-            <RouterLink to="/terms">{{ t('footer.terms') }}</RouterLink>
+            <RouterLink :to="localePath('/terms')">{{ t('footer.terms') }}</RouterLink>
             {{ t('pages.auth.termsAnd') }}
-            <RouterLink to="/privacy">{{ t('footer.privacy') }}</RouterLink>.
+            <RouterLink :to="localePath('/privacy')">{{ t('footer.privacy') }}</RouterLink>.
           </p>
         </form>
       </div>

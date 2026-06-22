@@ -1,16 +1,18 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
 import { assetUrl } from '@/utils/assetUrl'
+import { useLocaleRouter } from '@/composables/useLocaleRouter'
 
 const { t } = useI18n()
+const { localePath } = useLocaleRouter()
 </script>
 
 <template>
   <footer class="app-footer">
     <div class="app-footer__inner">
       <nav class="app-footer__links" :aria-label="t('footer.navLabel')">
-        <RouterLink to="/terms">{{ t('footer.terms') }}</RouterLink>
-        <RouterLink to="/privacy">{{ t('footer.privacy') }}</RouterLink>
+        <RouterLink :to="localePath('/terms')">{{ t('footer.terms') }}</RouterLink>
+        <RouterLink :to="localePath('/privacy')">{{ t('footer.privacy') }}</RouterLink>
       </nav>
 
       <div class="app-footer__social">

@@ -177,6 +177,15 @@ export interface PricingItem {
   mediaType: PricingMediaType
 }
 
+export type UploadKind = 'image' | 'video' | 'audio'
+
+export interface UploadResult {
+  url: string
+  filename: string
+  mimeType: string
+  size: number
+}
+
 export type GenerationStatus = 'idle' | 'queued' | 'processing' | 'completed' | 'failed'
 
 export interface PlaygroundGenerationResult {

@@ -1,16 +1,17 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { NDropdown } from 'naive-ui'
 import { useUserStore } from '@/stores/user'
 import VaroCloudLogo from '@/components/common/VaroCloudLogo.vue'
 import AppIcon from '@/components/common/AppIcon.vue'
-import { setStoredLocale, type LocaleType } from '@/i18n'
+import { useLocaleRouter } from '@/composables/useLocaleRouter'
+import type { LocaleType } from '@/i18n'
 
 const route = useRoute()
-const router = useRouter()
-const { t, locale } = useI18n()
+const { push, localePath, switchLocale } = useLocaleRouter()
+const { t } = useI18n()
 const userStore = useUserStore()
 
 const headerSearch = ref('')
@@ -59,25 +60,23 @@ function isActive(name: string) {
 }
 
 function goTo(name: string) {
-  router.push({ name })
+  push({ name })
 }
 
 function handleUserMenuSelect(key: string) {
   if (key === 'logout') {
     userStore.logout()
-    router.push({ name: 'models' })
+    push({ name: 'models' })
   }
 }
 
 function handleLanguageSelect(key: string) {
-  const nextLocale = key as LocaleType
-  locale.value = nextLocale
-  setStoredLocale(nextLocale)
+  switchLocale(key as LocaleType)
 }
 
 function submitHeaderSearch() {
   const q = headerSearch.value.trim()
-  router.push({
+  push({
     name: 'models',
     query: q ? { q } : {},
   })
@@ -100,7 +99,7 @@ onMounted(() => {
   <header class="app-header">
     <div class="app-header__inner">
       <div class="app-header__left">
-        <RouterLink to="/" class="app-header__logo" :aria-label="t('common.appName')">
+        <RouterLink :to="localePath('/')" class="app-header__logo" :aria-label="t('common.appName')">
           <VaroCloudLogo variant="dark" />
         </RouterLink>
         <nav class="app-header__nav hidden md:flex">
@@ -180,7 +179,7 @@ onMounted(() => {
           v-else
           type="button"
           class="app-header__login-link"
-          @click="router.push({ name: 'auth' })"
+          @click="push({ name: 'auth' })"
         >
           {{ t('common.login') }}
         </button>

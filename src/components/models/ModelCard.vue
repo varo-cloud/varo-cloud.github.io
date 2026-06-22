@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
-import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import { useLocaleRouter } from '@/composables/useLocaleRouter'
 import { useModelPreferencesStore } from '@/stores/modelPreferences'
 import { useUserStore } from '@/stores/user'
 import { assetUrl } from '@/utils/assetUrl'
@@ -11,7 +11,7 @@ const props = defineProps<{
   model: Model
 }>()
 
-const router = useRouter()
+const { push } = useLocaleRouter()
 const { t } = useI18n()
 const userStore = useUserStore()
 const modelPrefs = useModelPreferencesStore()
@@ -41,13 +41,13 @@ function goToDetail() {
   if (userStore.isLoggedIn) {
     modelPrefs.recordVisit(props.model.id)
   }
-  router.push({ name: 'model-detail', params: { id: props.model.id } })
+  push({ name: 'model-detail', params: { id: props.model.id } })
 }
 
 async function toggleFavourite(event: Event) {
   event.stopPropagation()
   if (!userStore.isLoggedIn) {
-    router.push({ name: 'auth' })
+    push({ name: 'auth' })
     return
   }
   try {

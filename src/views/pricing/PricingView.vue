@@ -1,14 +1,14 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
-import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import { useLocaleRouter } from '@/composables/useLocaleRouter'
 import { NEmpty, NSpin } from 'naive-ui'
 import { fetchPricing } from '@/api/pricing'
 import PricingTableRow from '@/components/pricing/PricingTableRow.vue'
 import { assetUrl } from '@/utils/assetUrl'
 import type { PricingCategory, PricingItem, PricingMediaType } from '@/types'
 
-const router = useRouter()
+const { push } = useLocaleRouter()
 const { t } = useI18n()
 
 const items = ref<PricingItem[]>([])
@@ -68,7 +68,7 @@ function switchMediaType(key: PricingMediaType) {
 }
 
 function goToModel(id: string) {
-  router.push({ name: 'model-detail', params: { id } })
+  push({ name: 'model-detail', params: { id } })
 }
 
 onMounted(() => {

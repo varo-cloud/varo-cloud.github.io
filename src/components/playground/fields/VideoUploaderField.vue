@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref } from 'vue'
 import SchemaFieldLabel from '../SchemaFieldLabel.vue'
+import { useMediaUpload } from '@/composables/useMediaUpload'
 
 const model = defineModel<string>({ required: true })
 
@@ -12,63 +13,38 @@ defineProps<{
 }>()
 
 const fileInput = ref<HTMLInputElement | null>(null)
-const previewUrl = ref<string | null>(null)
 const isDragging = ref(false)
 
-function openPicker() {
-  fileInput.value?.click()
-}
+const { previewUrl, uploading, uploadError, applyFile, clearMedia, onUrlInput } = useMediaUpload({
+  model,
+  kind: 'video',
+  mimePrefix: 'video/',
+})
 
-function setPreviewFromValue(val: string) {
-  if (val.startsWith('http') || val.startsWith('blob:')) {
-    previewUrl.value = val
-  } else if (!val) {
-    previewUrl.value = null
-  }
+function openPicker() {
+  if (uploading.value) return
+  fileInput.value?.click()
 }
 
 function onFileChange(event: Event) {
   const input = event.target as HTMLInputElement
   const file = input.files?.[0]
   if (!file) return
-
-  if (previewUrl.value?.startsWith('blob:')) {
-    URL.revokeObjectURL(previewUrl.value)
-  }
-  previewUrl.value = URL.createObjectURL(file)
-  model.value = previewUrl.value
+  void applyFile(file)
+  input.value = ''
 }
 
 function onDrop(event: DragEvent) {
   isDragging.value = false
   const file = event.dataTransfer?.files?.[0]
-  if (!file || !file.type.startsWith('video/')) return
-
-  if (previewUrl.value?.startsWith('blob:')) {
-    URL.revokeObjectURL(previewUrl.value)
-  }
-  previewUrl.value = URL.createObjectURL(file)
-  model.value = previewUrl.value
+  if (!file) return
+  void applyFile(file)
 }
 
 function clearVideo() {
-  if (previewUrl.value?.startsWith('blob:')) {
-    URL.revokeObjectURL(previewUrl.value)
-  }
-  previewUrl.value = null
-  model.value = ''
+  clearMedia()
   if (fileInput.value) fileInput.value.value = ''
 }
-
-function onUrlInput() {
-  setPreviewFromValue(model.value)
-}
-
-watch(
-  () => model.value,
-  (val) => setPreviewFromValue(val),
-  { immediate: true },
-)
 </script>
 
 <template>
@@ -83,7 +59,10 @@ watch(
 
     <div
       class="video-field__box"
-      :class="{ 'video-field__box--dragging': isDragging }"
+      :class="{
+        'video-field__box--dragging': isDragging,
+        'video-field__box--uploading': uploading,
+      }"
       @dragenter.prevent="isDragging = true"
       @dragover.prevent="isDragging = true"
       @dragleave.prevent="isDragging = false"
@@ -96,10 +75,17 @@ watch(
           type="text"
           class="video-field__url"
           placeholder="https://static.wavespeed.ai/examples/567920"
+          :disabled="uploading"
           @input="onUrlInput"
           @click.stop
         />
-        <button type="button" class="video-field__upload-btn" aria-label="Upload video" @click.stop="openPicker">
+        <button
+          type="button"
+          class="video-field__upload-btn"
+          aria-label="Upload video"
+          :disabled="uploading"
+          @click.stop="openPicker"
+        >
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
             <path
               d="M4 14l3.5-3.5 2.5 2.5L14 9l2 2v3H4v-1.5zM14 6a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"
@@ -110,7 +96,11 @@ watch(
         <input ref="fileInput" type="file" accept="video/*" hidden @change="onFileChange" />
       </div>
 
-      <p class="video-field__drop-hint">Drag &amp; drop or click to upload</p>
+      <p class="video-field__drop-hint">
+        {{ uploading ? $t('pages.modelDetail.upload.uploading') : 'Drag & drop or click to upload' }}
+      </p>
+
+      <p v-if="uploadError" class="video-field__error">{{ uploadError }}</p>
 
       <div v-if="previewUrl || model" class="video-field__preview-row">
         <div class="video-field__preview-wrap">
@@ -123,7 +113,13 @@ watch(
             preload="metadata"
           />
         </div>
-        <button type="button" class="video-field__clear" aria-label="Remove video" @click.stop="clearVideo">
+        <button
+          type="button"
+          class="video-field__clear"
+          aria-label="Remove video"
+          :disabled="uploading"
+          @click.stop="clearVideo"
+        >
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
             <path d="M5 5l10 10M15 5L5 15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
           </svg>
@@ -147,6 +143,11 @@ watch(
   background: rgba(255, 255, 255, 0.04);
 }
 
+.video-field__box--uploading {
+  opacity: 0.75;
+  cursor: wait;
+}
+
 .video-field__url-row {
   display: flex;
   align-items: center;
@@ -168,6 +169,10 @@ watch(
   line-height: 14px;
 }
 
+.video-field__url:disabled {
+  opacity: 0.6;
+}
+
 .video-field__url::placeholder {
   opacity: 0.2;
   color: #fff;
@@ -185,10 +190,22 @@ watch(
   flex-shrink: 0;
 }
 
+.video-field__upload-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
 .video-field__drop-hint {
   margin: 8px 0 0;
   font-size: 12px;
   color: #9b9dab;
+  line-height: 14px;
+}
+
+.video-field__error {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: #f87171;
   line-height: 14px;
 }
 
@@ -224,5 +241,10 @@ watch(
   background: none;
   color: #9b9dab;
   cursor: pointer;
+}
+
+.video-field__clear:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 </style>

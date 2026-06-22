@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
-import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import { useLocaleRouter } from '@/composables/useLocaleRouter'
 import { NSpin, useDialog, useMessage } from 'naive-ui'
 import AppIcon from '@/components/common/AppIcon.vue'
 import ApiKeyTableRow from '@/components/api-keys/ApiKeyTableRow.vue'
@@ -9,7 +9,7 @@ import { assetUrl } from '@/utils/assetUrl'
 import { createApiKey, deleteApiKey, fetchApiKeys } from '@/api/api-keys'
 import type { ApiKey } from '@/types'
 
-const router = useRouter()
+const { push } = useLocaleRouter()
 const { t } = useI18n()
 const message = useMessage()
 const dialog = useDialog()
@@ -109,7 +109,7 @@ function handleDeleteKey(id: string) {
 }
 
 function goToDocs() {
-  router.push({ name: 'docs' })
+  push({ name: 'docs' })
 }
 
 onMounted(loadKeys)

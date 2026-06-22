@@ -1,21 +1,29 @@
 <script setup lang="ts">
-import { ref, watch } from 'vue'
+import { ref } from 'vue'
 import SchemaFieldLabel from '../SchemaFieldLabel.vue'
+import { useMediaUpload } from '@/composables/useMediaUpload'
 
 const model = defineModel<string>({ required: true })
 
-const props = defineProps<{
+defineProps<{
   label: string
   required?: boolean
   description?: string
   hint?: string
   compact?: boolean
+  showLabel?: boolean
 }>()
 
 const fileInput = ref<HTMLInputElement | null>(null)
-const previewUrl = ref<string | null>(null)
+
+const { previewUrl, uploading, uploadError, applyFile, clearMedia, onUrlInput } = useMediaUpload({
+  model,
+  kind: 'image',
+  mimePrefix: 'image/',
+})
 
 function openPicker() {
+  if (uploading.value) return
   fileInput.value?.click()
 }
 
@@ -23,60 +31,43 @@ function onFileChange(event: Event) {
   const input = event.target as HTMLInputElement
   const file = input.files?.[0]
   if (!file) return
-
-  if (previewUrl.value?.startsWith('blob:')) {
-    URL.revokeObjectURL(previewUrl.value)
-  }
-  previewUrl.value = URL.createObjectURL(file)
-  model.value = previewUrl.value
+  void applyFile(file)
+  input.value = ''
 }
-
-function clearImage() {
-  if (previewUrl.value?.startsWith('blob:')) {
-    URL.revokeObjectURL(previewUrl.value)
-  }
-  previewUrl.value = null
-  model.value = ''
-}
-
-function onUrlInput() {
-  if (model.value.startsWith('http')) {
-    previewUrl.value = model.value
-  } else if (!model.value) {
-    previewUrl.value = null
-  }
-}
-
-watch(
-  () => model.value,
-  (val) => {
-    if (val?.startsWith('http')) {
-      previewUrl.value = val
-    }
-  },
-  { immediate: true },
-)
 </script>
 
 <template>
   <div class="image-field" :class="{ 'image-field--compact': compact }">
     <SchemaFieldLabel
+      v-if="showLabel !== false"
       :label="label"
       :required="required"
       :description="description"
       :counter="model ? '1' : '0'"
     />
 
-    <div class="image-field__box" :class="{ 'image-field__box--compact': compact }">
+    <div
+      class="image-field__box"
+      :class="{
+        'image-field__box--compact': compact,
+        'image-field__box--uploading': uploading,
+      }"
+    >
       <div class="image-field__url-row">
         <input
           v-model="model"
           type="text"
           class="image-field__url"
           placeholder="https://example.com/image.png"
+          :disabled="uploading"
           @input="onUrlInput"
         />
-        <button type="button" class="image-field__upload-btn" @click="openPicker">
+        <button
+          type="button"
+          class="image-field__upload-btn"
+          :disabled="uploading"
+          @click="openPicker"
+        >
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
             <path
               d="M4 14l3.5-3.5 2.5 2.5L14 9l2 2v3H4v-1.5zM14 6a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"
@@ -87,16 +78,26 @@ watch(
         <input ref="fileInput" type="file" accept="image/*" hidden @change="onFileChange" />
       </div>
 
-      <p class="image-field__drop-hint">Drag &amp; drop or click to upload</p>
+      <p class="image-field__drop-hint">
+        {{ uploading ? $t('pages.modelDetail.upload.uploading') : 'Drag & drop or click to upload' }}
+      </p>
+
+      <p v-if="uploadError" class="image-field__error">{{ uploadError }}</p>
 
       <div v-if="previewUrl || model" class="image-field__preview-wrap">
         <img
-          v-if="previewUrl || model.startsWith('http')"
+          v-if="previewUrl || model.startsWith('http') || model.startsWith('/')"
           :src="previewUrl || model"
           alt=""
           class="image-field__preview"
         />
-        <button type="button" class="image-field__clear" aria-label="Remove image" @click="clearImage">
+        <button
+          type="button"
+          class="image-field__clear"
+          aria-label="Remove image"
+          :disabled="uploading"
+          @click="clearMedia"
+        >
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
             <path d="M5 5l10 10M15 5L5 15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
           </svg>
@@ -118,6 +119,10 @@ watch(
 
 .image-field__box--compact {
   min-height: 88px;
+}
+
+.image-field__box--uploading {
+  opacity: 0.75;
 }
 
 .image-field__url-row {
@@ -144,6 +149,10 @@ watch(
   min-width: 0;
 }
 
+.image-field__url:disabled {
+  opacity: 0.6;
+}
+
 .image-field__url::placeholder {
   opacity: 0.2;
   color: #fff;
@@ -160,10 +169,22 @@ watch(
   cursor: pointer;
 }
 
+.image-field__upload-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
 .image-field__drop-hint {
   margin: 8px 0 0;
   font-size: 12px;
   color: #9b9dab;
+  line-height: 14px;
+}
+
+.image-field__error {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: #f87171;
   line-height: 14px;
 }
 
@@ -192,6 +213,11 @@ watch(
   background: none;
   color: #9b9dab;
   cursor: pointer;
+}
+
+.image-field__clear:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .image-field__hint {

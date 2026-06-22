@@ -95,6 +95,11 @@ export default {
         completed: 'Completed',
         failed: 'Failed',
       },
+      upload: {
+        uploading: '上传中…',
+        failed: '上传失败，请重试。',
+        invalidType: '不支持的文件类型。',
+      },
     },
     apiKeys: {
       title: 'API 密钥',

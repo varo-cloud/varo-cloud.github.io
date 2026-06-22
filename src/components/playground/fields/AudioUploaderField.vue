@@ -1,6 +1,7 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, ref, watch } from 'vue'
+import { computed, ref } from 'vue'
 import SchemaFieldLabel from '../SchemaFieldLabel.vue'
+import { useMediaUpload } from '@/composables/useMediaUpload'
 
 const model = defineModel<string>({ required: true })
 
@@ -13,12 +14,17 @@ defineProps<{
 
 const fileInput = ref<HTMLInputElement | null>(null)
 const audioEl = ref<HTMLAudioElement | null>(null)
-const previewUrl = ref<string | null>(null)
 const isDragging = ref(false)
 const isPlaying = ref(false)
 const isMuted = ref(false)
 const currentTime = ref(0)
 const duration = ref(0)
+
+const { previewUrl, uploading, uploadError, applyFile, clearMedia, onUrlInput } = useMediaUpload({
+  model,
+  kind: 'audio',
+  mimePrefix: 'audio/',
+})
 
 const hasAudio = computed(() => Boolean(previewUrl.value || model.value))
 
@@ -35,15 +41,8 @@ function formatTime(seconds: number): string {
 }
 
 function openPicker() {
+  if (uploading.value) return
   fileInput.value?.click()
-}
-
-function setPreviewFromValue(val: string) {
-  if (val.startsWith('http') || val.startsWith('blob:')) {
-    previewUrl.value = val
-  } else if (!val) {
-    previewUrl.value = null
-  }
 }
 
 function resetPlayback() {
@@ -52,47 +51,38 @@ function resetPlayback() {
   duration.value = 0
 }
 
-function applyFile(file: File) {
-  if (!file.type.startsWith('audio/')) return
-
-  if (previewUrl.value?.startsWith('blob:')) {
-    URL.revokeObjectURL(previewUrl.value)
-  }
+async function handleFile(file: File) {
   resetPlayback()
-  previewUrl.value = URL.createObjectURL(file)
-  model.value = previewUrl.value
+  await applyFile(file)
 }
 
 function onFileChange(event: Event) {
   const input = event.target as HTMLInputElement
   const file = input.files?.[0]
   if (!file) return
-  applyFile(file)
+  void handleFile(file)
+  input.value = ''
 }
 
 function onDrop(event: DragEvent) {
   isDragging.value = false
   const file = event.dataTransfer?.files?.[0]
   if (!file) return
-  applyFile(file)
+  void handleFile(file)
 }
 
 function clearAudio() {
   if (audioEl.value) {
     audioEl.value.pause()
   }
-  if (previewUrl.value?.startsWith('blob:')) {
-    URL.revokeObjectURL(previewUrl.value)
-  }
-  previewUrl.value = null
-  model.value = ''
+  clearMedia()
   resetPlayback()
   if (fileInput.value) fileInput.value.value = ''
 }
 
-function onUrlInput() {
+function onUrlInputWithReset() {
   resetPlayback()
-  setPreviewFromValue(model.value)
+  onUrlInput()
 }
 
 function onLoadedMetadata() {
@@ -132,21 +122,6 @@ function onProgressClick(event: MouseEvent) {
   audioEl.value.currentTime = ratio * duration.value
   currentTime.value = audioEl.value.currentTime
 }
-
-watch(
-  () => model.value,
-  (val) => {
-    resetPlayback()
-    setPreviewFromValue(val)
-  },
-  { immediate: true },
-)
-
-onBeforeUnmount(() => {
-  if (previewUrl.value?.startsWith('blob:')) {
-    URL.revokeObjectURL(previewUrl.value)
-  }
-})
 </script>
 
 <template>
@@ -161,7 +136,10 @@ onBeforeUnmount(() => {
 
     <div
       class="audio-field__box"
-      :class="{ 'audio-field__box--dragging': isDragging }"
+      :class="{
+        'audio-field__box--dragging': isDragging,
+        'audio-field__box--uploading': uploading,
+      }"
       @dragenter.prevent="isDragging = true"
       @dragover.prevent="isDragging = true"
       @dragleave.prevent="isDragging = false"
@@ -174,10 +152,17 @@ onBeforeUnmount(() => {
           type="text"
           class="audio-field__url"
           placeholder="https://static.wavespeed.ai/examples/5679"
-          @input="onUrlInput"
+          :disabled="uploading"
+          @input="onUrlInputWithReset"
           @click.stop
         />
-        <button type="button" class="audio-field__icon-btn" aria-label="Upload audio" @click.stop="openPicker">
+        <button
+          type="button"
+          class="audio-field__icon-btn"
+          aria-label="Upload audio"
+          :disabled="uploading"
+          @click.stop="openPicker"
+        >
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
             <path
               d="M4 14l3.5-3.5 2.5 2.5L14 9l2 2v3H4v-1.5zM14 6a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"
@@ -202,7 +187,11 @@ onBeforeUnmount(() => {
         <input ref="fileInput" type="file" accept="audio/*" hidden @change="onFileChange" />
       </div>
 
-      <p class="audio-field__drop-hint">Drag &amp; drop or click to upload</p>
+      <p class="audio-field__drop-hint">
+        {{ uploading ? $t('pages.modelDetail.upload.uploading') : 'Drag & drop or click to upload' }}
+      </p>
+
+      <p v-if="uploadError" class="audio-field__error">{{ uploadError }}</p>
 
       <div v-if="hasAudio" class="audio-field__player-row">
         <div class="audio-field__player">
@@ -257,7 +246,13 @@ onBeforeUnmount(() => {
           </button>
         </div>
 
-        <button type="button" class="audio-field__clear" aria-label="Remove audio" @click.stop="clearAudio">
+        <button
+          type="button"
+          class="audio-field__clear"
+          aria-label="Remove audio"
+          :disabled="uploading"
+          @click.stop="clearAudio"
+        >
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
             <path d="M5 5l10 10M15 5L5 15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
           </svg>
@@ -281,6 +276,11 @@ onBeforeUnmount(() => {
   background: rgba(255, 255, 255, 0.04);
 }
 
+.audio-field__box--uploading {
+  opacity: 0.75;
+  cursor: wait;
+}
+
 .audio-field__url-row {
   display: flex;
   align-items: center;
@@ -302,6 +302,10 @@ onBeforeUnmount(() => {
   line-height: 14px;
 }
 
+.audio-field__url:disabled {
+  opacity: 0.6;
+}
+
 .audio-field__url::placeholder {
   opacity: 0.2;
   color: #fff;
@@ -319,10 +323,22 @@ onBeforeUnmount(() => {
   flex-shrink: 0;
 }
 
+.audio-field__icon-btn:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
 .audio-field__drop-hint {
   margin: 8px 0 0;
   font-size: 12px;
   color: #9b9dab;
+  line-height: 14px;
+}
+
+.audio-field__error {
+  margin: 8px 0 0;
+  font-size: 12px;
+  color: #f87171;
   line-height: 14px;
 }
 
@@ -394,5 +410,10 @@ onBeforeUnmount(() => {
   color: #9b9dab;
   cursor: pointer;
   flex-shrink: 0;
+}
+
+.audio-field__clear:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 </style>

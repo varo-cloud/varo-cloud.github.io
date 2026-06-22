@@ -2,6 +2,7 @@
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import { useLocaleRouter } from '@/composables/useLocaleRouter'
 import { NSpin } from 'naive-ui'
 import { fetchModelDetail } from '@/api/models'
 import ModelDetailHeader from '@/components/models/ModelDetailHeader.vue'
@@ -14,6 +15,7 @@ import type { GenerationStatus, ModelDetail, PlaygroundGenerationResult } from '
 import type { SchemaFormValues } from '@/types/schema'
 
 const route = useRoute()
+const { localePath } = useLocaleRouter()
 const { t } = useI18n()
 const userStore = useUserStore()
 const modelPrefs = useModelPreferencesStore()
@@ -164,7 +166,7 @@ onUnmounted(() => {
 
     <div v-else-if="error || !model" class="model-detail-page__state">
       <p>{{ error || t('pages.modelDetail.notFound') }}</p>
-      <RouterLink to="/" class="model-detail-page__back">
+      <RouterLink :to="localePath('/')" class="model-detail-page__back">
         {{ t('pages.modelDetail.backToModels') }}
       </RouterLink>
     </div>

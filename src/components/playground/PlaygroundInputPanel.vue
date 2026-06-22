@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, ref, useId, watch } from 'vue'
-import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import { useLocaleRouter } from '@/composables/useLocaleRouter'
 import { NTooltip } from 'naive-ui'
 import type { InputSchema, SchemaFormValues } from '@/types/schema'
 import { createDefaultFormValues } from '@/utils/schema-form'
@@ -24,7 +24,7 @@ const emit = defineEmits<{
   run: [values: SchemaFormValues, batchSize: number]
 }>()
 
-const router = useRouter()
+const { push } = useLocaleRouter()
 const { t } = useI18n()
 const userStore = useUserStore()
 
@@ -62,14 +62,14 @@ function resetForm() {
 function handleRun() {
   if (isRunDisabled.value) return
   if (!userStore.isLoggedIn) {
-    router.push({ name: 'auth' })
+    push({ name: 'auth' })
     return
   }
   emit('run', { ...formValues.value }, batchSize.value)
 }
 
 function goTopUp() {
-  router.push({ name: 'billing' })
+  push({ name: 'billing' })
 }
 
 function updateBatchPanelPosition() {

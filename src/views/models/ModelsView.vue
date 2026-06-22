@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue'
-import { useRoute, useRouter } from 'vue-router'
+import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import { useLocaleRouter } from '@/composables/useLocaleRouter'
 import { NEmpty, NSpin } from 'naive-ui'
 import { fetchModels, fetchModelsByIds } from '@/api/models'
 import ModelCard from '@/components/models/ModelCard.vue'
@@ -13,8 +14,8 @@ import type { Model } from '@/types'
 const PAGE_SIZE = 20
 const SEARCH_DEBOUNCE_MS = 300
 
-const router = useRouter()
 const route = useRoute()
+const { push } = useLocaleRouter()
 const { t } = useI18n()
 const userStore = useUserStore()
 const modelPrefs = useModelPreferencesStore()
@@ -127,11 +128,11 @@ function loadMore() {
 }
 
 function goToAuth() {
-  router.push({ name: 'auth' })
+  push({ name: 'auth' })
 }
 
 function goToDocs() {
-  router.push({ name: 'docs' })
+  push({ name: 'docs' })
 }
 
 watch(searchQuery, () => {

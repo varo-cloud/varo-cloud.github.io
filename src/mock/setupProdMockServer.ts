@@ -9,6 +9,7 @@ import billingMock from '../../mock/billing'
 import modelPreferencesMock from '../../mock/model-preferences'
 import modelsMock from '../../mock/models'
 import pricingMock from '../../mock/pricing'
+import uploadMock from '../../mock/upload'
 
 const mockModules: MockMethod[] = [
   ...authMock,
@@ -17,6 +18,7 @@ const mockModules: MockMethod[] = [
   ...modelPreferencesMock,
   ...billingMock,
   ...pricingMock,
+  ...uploadMock,
 ]
 
 function joinUrl(base: string, path: string): string {

@@ -95,6 +95,11 @@ export default {
         completed: 'Completed',
         failed: 'Failed',
       },
+      upload: {
+        uploading: 'Uploading…',
+        failed: 'Upload failed. Please try again.',
+        invalidType: 'Unsupported file type.',
+      },
     },
     apiKeys: {
       title: 'API Keys',
