@@ -1,11 +1,13 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, nextTick, onBeforeUnmount, ref, useId, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import type { InputSchema, SchemaFormValues } from '@/types/schema'
 import { createDefaultFormValues } from '@/utils/schema-form'
 import { useUserStore } from '@/stores/user'
 import PlaygroundSchemaForm from './PlaygroundSchemaForm.vue'
+
+const BATCH_SIZE_OPTIONS = [1, 2, 3, 4] as const
 
 const props = defineProps<{
   schema?: InputSchema
@@ -15,8 +17,10 @@ const props = defineProps<{
   generating?: boolean
 }>()
 
+const batchSize = defineModel<number>('batchSize', { default: 1 })
+
 const emit = defineEmits<{
-  run: [values: SchemaFormValues]
+  run: [values: SchemaFormValues, batchSize: number]
 }>()
 
 const router = useRouter()
@@ -24,11 +28,20 @@ const { t } = useI18n()
 const userStore = useUserStore()
 
 const formValues = ref<SchemaFormValues>(createDefaultFormValues(props.schema))
-const batchSize = ref(1)
+const batchOpen = ref(false)
+const batchTriggerRef = ref<HTMLElement | null>(null)
+const batchPanelRef = ref<HTMLElement | null>(null)
+const batchPanelStyle = ref({ top: '0px', left: '0px', width: '0px' })
+const batchPanelId = useId()
 
-const formattedPrice = computed(() => `$${props.priceUsd.toFixed(2)}`)
+const totalPriceUsd = computed(() => props.priceUsd * batchSize.value)
+const totalOriginalPriceUsd = computed(() =>
+  props.originalPriceUsd != null ? props.originalPriceUsd * batchSize.value : null,
+)
+
+const formattedPrice = computed(() => `$${totalPriceUsd.value.toFixed(2)}`)
 const formattedOriginal = computed(() =>
-  props.originalPriceUsd ? `$${props.originalPriceUsd.toFixed(2)}` : null,
+  totalOriginalPriceUsd.value != null ? `$${totalOriginalPriceUsd.value.toFixed(2)}` : null,
 )
 
 const runLabel = computed(() =>
@@ -45,12 +58,60 @@ function handleRun() {
     router.push({ name: 'auth' })
     return
   }
-  emit('run', { ...formValues.value })
+  emit('run', { ...formValues.value }, batchSize.value)
 }
 
 function goTopUp() {
   router.push({ name: 'billing' })
 }
+
+function updateBatchPanelPosition() {
+  const el = batchTriggerRef.value
+  if (!el) return
+
+  const rect = el.getBoundingClientRect()
+  batchPanelStyle.value = {
+    top: `${rect.bottom + 4}px`,
+    left: `${rect.left}px`,
+    width: `${Math.max(rect.width, 72)}px`,
+  }
+}
+
+function toggleBatchOpen() {
+  if (props.generating) return
+  batchOpen.value = !batchOpen.value
+}
+
+function selectBatchSize(size: number) {
+  batchSize.value = size
+  batchOpen.value = false
+}
+
+function onDocumentPointerDown(event: PointerEvent) {
+  const target = event.target as Node
+  if (batchTriggerRef.value?.contains(target) || batchPanelRef.value?.contains(target)) return
+  batchOpen.value = false
+}
+
+watch(batchOpen, (isOpen) => {
+  if (!isOpen) {
+    window.removeEventListener('resize', updateBatchPanelPosition)
+    window.removeEventListener('scroll', updateBatchPanelPosition, true)
+    document.removeEventListener('pointerdown', onDocumentPointerDown)
+    return
+  }
+
+  nextTick(updateBatchPanelPosition)
+  window.addEventListener('resize', updateBatchPanelPosition)
+  window.addEventListener('scroll', updateBatchPanelPosition, true)
+  document.addEventListener('pointerdown', onDocumentPointerDown)
+})
+
+onBeforeUnmount(() => {
+  window.removeEventListener('resize', updateBatchPanelPosition)
+  window.removeEventListener('scroll', updateBatchPanelPosition, true)
+  document.removeEventListener('pointerdown', onDocumentPointerDown)
+})
 </script>
 
 <template>
@@ -79,33 +140,92 @@ function goTopUp() {
         </svg>
       </button>
 
-      <button
-        type="button"
-        class="input-panel__run"
-        :class="{ 'input-panel__run--cta': !userStore.isLoggedIn }"
-        :disabled="generating"
-        @click="handleRun"
+      <div
+        class="input-panel__run-wrap"
+        :class="{ 'input-panel__run-wrap--cta': !userStore.isLoggedIn, 'input-panel__run-wrap--disabled': generating }"
       >
-        <span class="input-panel__run-label">{{ runLabel }}</span>
-        <template v-if="userStore.isLoggedIn">
-          <span class="input-panel__run-price">
-            {{ formattedPrice }}
-            <span v-if="formattedOriginal" class="input-panel__run-original">{{ formattedOriginal }}</span>
-          </span>
-          <span class="input-panel__run-divider" aria-hidden="true" />
-          <span class="input-panel__run-batch">{{ batchSize }}x</span>
-        </template>
-        <svg
-          v-if="userStore.isLoggedIn"
-          width="16"
-          height="16"
-          viewBox="0 0 16 16"
-          fill="none"
-          aria-hidden="true"
+        <button
+          type="button"
+          class="input-panel__run"
+          :class="{ 'input-panel__run--cta': !userStore.isLoggedIn }"
+          :disabled="generating"
+          @click="handleRun"
         >
-          <path d="M6 4l4 4-4 4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" />
-        </svg>
-      </button>
+          <span class="input-panel__run-label">{{ runLabel }}</span>
+          <template v-if="userStore.isLoggedIn">
+            <span class="input-panel__run-price">
+              {{ formattedPrice }}
+              <span v-if="formattedOriginal" class="input-panel__run-original">{{ formattedOriginal }}</span>
+            </span>
+          </template>
+        </button>
+
+        <template v-if="userStore.isLoggedIn">
+          <span class="input-panel__run-divider" aria-hidden="true" />
+          <button
+            ref="batchTriggerRef"
+            type="button"
+            class="input-panel__run-batch"
+            :disabled="generating"
+            :aria-expanded="batchOpen"
+            :aria-controls="batchPanelId"
+            @click.stop="toggleBatchOpen"
+          >
+            <span>{{ batchSize }}x</span>
+            <svg
+              class="input-panel__run-batch-chevron"
+              :class="{ 'input-panel__run-batch-chevron--open': batchOpen }"
+              width="16"
+              height="16"
+              viewBox="0 0 16 16"
+              fill="none"
+              aria-hidden="true"
+            >
+              <path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" />
+            </svg>
+          </button>
+        </template>
+      </div>
+
+      <Teleport to="body">
+        <div
+          v-if="batchOpen"
+          :id="batchPanelId"
+          ref="batchPanelRef"
+          class="input-panel__batch-panel"
+          :style="batchPanelStyle"
+          role="listbox"
+        >
+          <button
+            v-for="size in BATCH_SIZE_OPTIONS"
+            :key="size"
+            type="button"
+            class="input-panel__batch-option"
+            :class="{ 'input-panel__batch-option--selected': size === batchSize }"
+            role="option"
+            :aria-selected="size === batchSize"
+            @click.stop="selectBatchSize(size)"
+          >
+            <span>{{ size }}x</span>
+            <svg
+              v-if="size === batchSize"
+              width="14"
+              height="14"
+              viewBox="0 0 14 14"
+              fill="none"
+              aria-hidden="true"
+            >
+              <path
+                d="M2.5 7l3 3 6-6"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+          </button>
+        </div>
+      </Teleport>
     </div>
 
     <div class="input-panel__credits">
@@ -190,32 +310,51 @@ function goTopUp() {
   background: rgba(255, 255, 255, 0.22);
 }
 
+.input-panel__run-wrap {
+  flex: 1;
+  display: flex;
+  align-items: stretch;
+  min-width: 0;
+  height: 40px;
+  border-radius: 8px;
+  background: #06b6d4;
+  transition: background 0.15s ease;
+}
+
+.input-panel__run-wrap:not(.input-panel__run-wrap--disabled):hover {
+  background: #0891b2;
+}
+
+.input-panel__run-wrap:not(.input-panel__run-wrap--disabled):active {
+  background: #0e7490;
+}
+
+.input-panel__run-wrap--disabled {
+  opacity: 0.6;
+}
+
+.input-panel__run-wrap--cta .input-panel__run {
+  border-radius: 8px;
+  justify-content: center;
+}
+
 .input-panel__run {
   flex: 1;
   display: flex;
   align-items: center;
   gap: 8px;
-  height: 40px;
+  min-width: 0;
+  height: 100%;
   padding: 0 12px;
   border: none;
-  border-radius: 8px;
-  background: #06b6d4;
+  border-radius: 8px 0 0 8px;
+  background: transparent;
   color: #fff;
   cursor: pointer;
   font-family: inherit;
-  transition: background 0.15s ease;
-}
-
-.input-panel__run:hover:not(:disabled) {
-  background: #0891b2;
-}
-
-.input-panel__run:active:not(:disabled) {
-  background: #0e7490;
 }
 
 .input-panel__run:disabled {
-  opacity: 0.6;
   cursor: not-allowed;
 }
 
@@ -241,15 +380,40 @@ function goTopUp() {
 }
 
 .input-panel__run-divider {
+  flex-shrink: 0;
   width: 1px;
+  align-self: center;
   height: 20px;
-  margin-left: auto;
   background: rgba(255, 255, 255, 0.2);
 }
 
 .input-panel__run-batch {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+  height: 100%;
+  padding: 0 10px 0 8px;
+  border: none;
+  border-radius: 0 8px 8px 0;
+  background: transparent;
+  font-family: inherit;
   font-size: 16px;
   font-weight: 500;
+  color: #fff;
+  cursor: pointer;
+}
+
+.input-panel__run-batch:disabled {
+  cursor: not-allowed;
+}
+
+.input-panel__run-batch-chevron {
+  transition: transform 0.15s ease;
+}
+
+.input-panel__run-batch-chevron--open {
+  transform: rotate(180deg);
 }
 
 .input-panel__credits {
@@ -274,5 +438,55 @@ function goTopUp() {
   color: #06b6d4;
   cursor: pointer;
   font-family: inherit;
+}
+</style>
+
+<style>
+.input-panel__batch-panel {
+  position: fixed;
+  z-index: 9999;
+  padding: 12px;
+  border: 0.5px solid #2d2d38;
+  border-radius: 8px;
+  background: #13131c;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  font-family:
+    Inter,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    'Helvetica Neue',
+    Arial,
+    sans-serif;
+}
+
+.input-panel__batch-option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 0;
+  border: none;
+  background: transparent;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 14px;
+  color: #ebf4fb;
+  cursor: pointer;
+  text-align: left;
+}
+
+.input-panel__batch-option:hover {
+  opacity: 0.85;
+}
+
+.input-panel__batch-option--selected {
+  color: #06b6d4;
 }
 </style>

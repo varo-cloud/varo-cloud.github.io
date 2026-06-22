@@ -6,8 +6,8 @@ import GenerationStatusDisplay from './GenerationStatusDisplay.vue'
 import type { GenerationStatus, PlaygroundGenerationResult } from '@/types'
 
 const props = defineProps<{
-  outputUrl?: string | null
-  result?: PlaygroundGenerationResult | null
+  outputUrls?: string[]
+  results?: PlaygroundGenerationResult[]
   status?: GenerationStatus
   progress?: number
   estimatedSeconds?: number
@@ -39,12 +39,33 @@ const isGenerating = computed(
 )
 
 const showOutput = computed(
-  () => props.status === 'completed' && props.result != null,
+  () => props.status === 'completed' && (props.results?.length ?? 0) > 0,
 )
 
-const formattedJson = computed(() =>
-  props.result ? JSON.stringify(props.result, null, 2) : '',
-)
+const outputCount = computed(() => props.outputUrls?.length ?? 0)
+
+const gridClass = computed(() => {
+  const count = outputCount.value
+  if (count <= 1) return 'output-panel__grid--1'
+  if (count === 2) return 'output-panel__grid--2'
+  if (count === 3) return 'output-panel__grid--3'
+  return 'output-panel__grid--4'
+})
+
+const formattedJson = computed(() => {
+  if (!props.results?.length) return ''
+  if (props.results.length === 1) {
+    return JSON.stringify(props.results[0], null, 2)
+  }
+  return JSON.stringify(
+    {
+      object: 'list',
+      data: props.results,
+    },
+    null,
+    2,
+  )
+})
 
 function toggleCodeView() {
   if (!showOutput.value) return
@@ -93,12 +114,19 @@ watch(
       class="output-panel__body"
       :class="{ 'output-panel__body--centered': !showOutput }"
     >
-      <img
+      <div
         v-if="showOutput && viewMode === 'preview'"
-        :src="outputUrl!"
-        alt=""
-        class="output-panel__preview"
-      />
+        class="output-panel__grid"
+        :class="gridClass"
+      >
+        <img
+          v-for="(url, index) in outputUrls"
+          :key="`${url}-${index}`"
+          :src="url"
+          alt=""
+          class="output-panel__preview"
+        />
+      </div>
       <pre
         v-else-if="showOutput && viewMode === 'json'"
         class="output-panel__json"
@@ -199,11 +227,45 @@ watch(
   min-height: 400px;
 }
 
+.output-panel__grid {
+  display: grid;
+  gap: 8px;
+  width: 100%;
+}
+
+.output-panel__grid--1 {
+  grid-template-columns: 1fr;
+}
+
+.output-panel__grid--2 {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.output-panel__grid--3 {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+.output-panel__grid--3 .output-panel__preview:last-child {
+  grid-column: 1 / -1;
+  justify-self: center;
+  width: calc(50% - 4px);
+}
+
+.output-panel__grid--4 {
+  grid-template-columns: repeat(2, 1fr);
+}
+
 .output-panel__preview {
   width: 100%;
   max-height: 500px;
   object-fit: contain;
   border-radius: 8px;
+}
+
+.output-panel__grid--2 .output-panel__preview,
+.output-panel__grid--3 .output-panel__preview,
+.output-panel__grid--4 .output-panel__preview {
+  max-height: 320px;
 }
 
 .output-panel__json {

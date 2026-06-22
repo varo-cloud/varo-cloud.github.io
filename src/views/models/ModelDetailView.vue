@@ -22,8 +22,9 @@ const model = ref<ModelDetail | null>(null)
 const loading = ref(true)
 const error = ref<string | null>(null)
 const activeTab = ref<'playground' | 'api'>('playground')
-const outputUrl = ref<string | null>(null)
-const generationResult = ref<PlaygroundGenerationResult | null>(null)
+const outputUrls = ref<string[]>([])
+const generationResults = ref<PlaygroundGenerationResult[]>([])
+const batchSize = ref(1)
 const generationStatus = ref<GenerationStatus>('idle')
 const generationProgress = ref(0)
 const estimatedSeconds = 40
@@ -55,14 +56,15 @@ function resetGeneration() {
   clearGenerationTimers()
   generationStatus.value = 'idle'
   generationProgress.value = 0
-  outputUrl.value = null
-  generationResult.value = null
+  outputUrls.value = []
+  generationResults.value = []
 }
 
-function buildGenerationResult(url: string): PlaygroundGenerationResult {
+function buildGenerationResult(url: string, index: number): PlaygroundGenerationResult {
   const currentModel = model.value
+  const unitPrice = currentModel?.perRunPriceUsd ?? currentModel?.startingPriceUsd ?? 0
   return {
-    id: `gen_${Date.now()}`,
+    id: `gen_${Date.now()}_${index}`,
     object: 'generation',
     status: 'completed',
     model: currentModel?.modelPath ?? '',
@@ -72,17 +74,17 @@ function buildGenerationResult(url: string): PlaygroundGenerationResult {
       url,
     },
     usage: {
-      cost_usd: currentModel?.perRunPriceUsd ?? currentModel?.startingPriceUsd ?? 0,
+      cost_usd: unitPrice,
     },
   }
 }
 
-function simulateGeneration() {
+function simulateGeneration(count: number) {
   clearGenerationTimers()
   generationStatus.value = 'queued'
   generationProgress.value = 0
-  outputUrl.value = null
-  generationResult.value = null
+  outputUrls.value = []
+  generationResults.value = []
 
   generationTimers.push(
     setTimeout(() => {
@@ -104,10 +106,11 @@ function simulateGeneration() {
       generationTimers.push(
         setTimeout(() => {
           const url = assetUrl('/assets/model-detail/sample-output.jpg')
+          const urls = Array.from({ length: count }, () => url)
           generationStatus.value = 'completed'
           generationProgress.value = 100
-          outputUrl.value = url
-          generationResult.value = buildGenerationResult(url)
+          outputUrls.value = urls
+          generationResults.value = urls.map((item, index) => buildGenerationResult(item, index))
         }, durationMs),
       )
     }, 800),
@@ -132,8 +135,8 @@ async function loadModel(id: string) {
   }
 }
 
-function handleRun(_values: SchemaFormValues) {
-  simulateGeneration()
+function handleRun(_values: SchemaFormValues, count: number) {
+  simulateGeneration(count)
 }
 
 watch(
@@ -202,6 +205,7 @@ onUnmounted(() => {
       <div v-if="activeTab === 'playground'" class="model-detail-page__playground">
         <PlaygroundInputPanel
           v-if="model.inputSchema"
+          v-model:batch-size="batchSize"
           :schema="model.inputSchema"
           :price-usd="model.startingPriceUsd"
           :original-price-usd="model.originalPriceUsd"
@@ -210,8 +214,8 @@ onUnmounted(() => {
           @run="handleRun"
         />
         <PlaygroundOutputPanel
-          :output-url="outputUrl"
-          :result="generationResult"
+          :output-urls="outputUrls"
+          :results="generationResults"
           :status="generationStatus"
           :progress="generationProgress"
           :estimated-seconds="estimatedSeconds"
