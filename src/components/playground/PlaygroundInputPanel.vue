@@ -2,6 +2,7 @@
 import { computed, nextTick, onBeforeUnmount, ref, useId, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import { NTooltip } from 'naive-ui'
 import type { InputSchema, SchemaFormValues } from '@/types/schema'
 import { createDefaultFormValues } from '@/utils/schema-form'
 import { useUserStore } from '@/stores/user'
@@ -48,12 +49,18 @@ const runLabel = computed(() =>
   userStore.isLoggedIn ? t('pages.modelDetail.run') : t('pages.modelDetail.startForFree'),
 )
 
+const isInsufficientBalance = computed(
+  () => userStore.isLoggedIn && props.creditsUsd < totalPriceUsd.value,
+)
+
+const isRunDisabled = computed(() => props.generating || isInsufficientBalance.value)
+
 function resetForm() {
   formValues.value = createDefaultFormValues(props.schema)
 }
 
 function handleRun() {
-  if (props.generating) return
+  if (isRunDisabled.value) return
   if (!userStore.isLoggedIn) {
     router.push({ name: 'auth' })
     return
@@ -140,52 +147,62 @@ onBeforeUnmount(() => {
         </svg>
       </button>
 
-      <div
-        class="input-panel__run-wrap"
-        :class="{ 'input-panel__run-wrap--cta': !userStore.isLoggedIn, 'input-panel__run-wrap--disabled': generating }"
-      >
-        <button
-          type="button"
-          class="input-panel__run"
-          :class="{ 'input-panel__run--cta': !userStore.isLoggedIn }"
-          :disabled="generating"
-          @click="handleRun"
-        >
-          <span class="input-panel__run-label">{{ runLabel }}</span>
-          <template v-if="userStore.isLoggedIn">
-            <span class="input-panel__run-price">
-              {{ formattedPrice }}
-              <span v-if="formattedOriginal" class="input-panel__run-original">{{ formattedOriginal }}</span>
-            </span>
-          </template>
-        </button>
-
-        <template v-if="userStore.isLoggedIn">
-          <span class="input-panel__run-divider" aria-hidden="true" />
-          <button
-            ref="batchTriggerRef"
-            type="button"
-            class="input-panel__run-batch"
-            :disabled="generating"
-            :aria-expanded="batchOpen"
-            :aria-controls="batchPanelId"
-            @click.stop="toggleBatchOpen"
-          >
-            <span>{{ batchSize }}x</span>
-            <svg
-              class="input-panel__run-batch-chevron"
-              :class="{ 'input-panel__run-batch-chevron--open': batchOpen }"
-              width="16"
-              height="16"
-              viewBox="0 0 16 16"
-              fill="none"
-              aria-hidden="true"
+      <NTooltip trigger="hover" placement="top" :disabled="!isInsufficientBalance">
+        <template #trigger>
+          <span class="input-panel__run-wrap-trigger">
+            <div
+              class="input-panel__run-wrap"
+              :class="{
+                'input-panel__run-wrap--cta': !userStore.isLoggedIn,
+                'input-panel__run-wrap--disabled': isRunDisabled,
+              }"
             >
-              <path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" />
-            </svg>
-          </button>
+              <button
+                type="button"
+                class="input-panel__run"
+                :class="{ 'input-panel__run--cta': !userStore.isLoggedIn }"
+                :disabled="isRunDisabled"
+                @click="handleRun"
+              >
+                <span class="input-panel__run-label">{{ runLabel }}</span>
+                <template v-if="userStore.isLoggedIn">
+                  <span class="input-panel__run-price">
+                    {{ formattedPrice }}
+                    <span v-if="formattedOriginal" class="input-panel__run-original">{{ formattedOriginal }}</span>
+                  </span>
+                </template>
+              </button>
+
+              <template v-if="userStore.isLoggedIn">
+                <span class="input-panel__run-divider" aria-hidden="true" />
+                <button
+                  ref="batchTriggerRef"
+                  type="button"
+                  class="input-panel__run-batch"
+                  :disabled="generating"
+                  :aria-expanded="batchOpen"
+                  :aria-controls="batchPanelId"
+                  @click.stop="toggleBatchOpen"
+                >
+                  <span>{{ batchSize }}x</span>
+                  <svg
+                    class="input-panel__run-batch-chevron"
+                    :class="{ 'input-panel__run-batch-chevron--open': batchOpen }"
+                    width="16"
+                    height="16"
+                    viewBox="0 0 16 16"
+                    fill="none"
+                    aria-hidden="true"
+                  >
+                    <path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" />
+                  </svg>
+                </button>
+              </template>
+            </div>
+          </span>
         </template>
-      </div>
+        {{ t('pages.modelDetail.insufficientBalance') }}
+      </NTooltip>
 
       <Teleport to="body">
         <div
@@ -287,6 +304,12 @@ onBeforeUnmount(() => {
   flex-shrink: 0;
 }
 
+.input-panel__run-wrap-trigger {
+  flex: 1;
+  display: flex;
+  min-width: 0;
+}
+
 .input-panel__reset {
   flex-shrink: 0;
   width: 60px;
@@ -312,6 +335,7 @@ onBeforeUnmount(() => {
 
 .input-panel__run-wrap {
   flex: 1;
+  width: 100%;
   display: flex;
   align-items: stretch;
   min-width: 0;

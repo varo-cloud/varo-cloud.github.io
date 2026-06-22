@@ -72,6 +72,7 @@ export default {
       reset: 'Reset form',
       credits: 'Credits',
       topUp: 'Top Up',
+      insufficientBalance: 'Insufficient balance to run. Please top up your credits.',
       myGenerations: 'My Generations',
       code: 'Code',
       codeNoResult: 'Run the model to view the API response JSON.',

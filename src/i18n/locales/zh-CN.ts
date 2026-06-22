@@ -72,6 +72,7 @@ export default {
       reset: '重置表单',
       credits: 'Credits',
       topUp: 'Top Up',
+      insufficientBalance: '余额不足，无法生成。请充值后再试。',
       myGenerations: 'My Generations',
       code: 'Code',
       codeNoResult: '运行模型后可查看 API 返回的 JSON。',

@@ -5,7 +5,7 @@ const mockUser = {
   id: 'user-1',
   email: 'demo@example.com',
   name: 'Demo User',
-  balanceUsd: 68.13,
+  balanceUsd: 2.13,
 }
 
 export default [
