@@ -31,8 +31,25 @@ export function revokeRefreshToken(refreshToken: string) {
   return unwrap<LogoutResult>(http.post('/auth/logout', { refresh_token: refreshToken }))
 }
 
+interface ApiUserProfile {
+  id: string
+  email: string
+  name?: string
+  balance: number
+}
+
+function mapUserProfile(raw: ApiUserProfile): UserProfile {
+  const localPart = raw.email.split('@')[0] ?? 'user'
+  return {
+    id: raw.id,
+    email: raw.email,
+    name: raw.name ?? localPart,
+    balance: raw.balance,
+  }
+}
+
 export function fetchUserProfile() {
-  return unwrap<UserProfile>(http.get('/user/profile'))
+  return unwrap<ApiUserProfile>(http.get('/user/profile')).then(mapUserProfile)
 }
 
 export function persistTokenPair(tokens: TokenPair) {

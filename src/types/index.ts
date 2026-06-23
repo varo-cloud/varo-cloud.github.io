@@ -63,7 +63,8 @@ export interface UserProfile {
   id: string
   email: string
   name: string
-  balanceUsd: number
+  /** Credits balance — maps from API field `balance` */
+  balance: number
 }
 
 export interface OtpRequestPayload {
@@ -119,16 +120,25 @@ export interface CreateApiKeyResult {
 
 export type TransactionType = 'topup' | 'usage'
 
+export type TopUpTransactionStatus = 'pending' | 'completed' | 'failed' | 'expired'
+
 export interface Transaction {
   id: string
   type: TransactionType
   amountUsd: number
   description: string
   createdAt: number
+  status?: TopUpTransactionStatus
+  creditsGranted?: number
+  paymentMethod?: PaymentMethodId
+  paymentDetail?: string | null
+  packageId?: string | null
+  completedAt?: number | null
+  receiptUrl?: string | null
 }
 
 export interface BalanceInfo {
-  balanceUsd: number
+  balance: number
 }
 
 export interface BillingAutoTopUp {
@@ -138,8 +148,8 @@ export interface BillingAutoTopUp {
 }
 
 export interface BillingSummary {
-  balanceUsd: number
-  spentThisMonthUsd: number
+  balance: number
+  spentThisMonthCredits: number
   spentChangePercent: number
   autoTopUp: BillingAutoTopUp
 }
@@ -148,6 +158,24 @@ export interface TopUpPreset {
   amountUsd: number
   bonusPercent?: number
   usageHint: string
+}
+
+export type CreditPackageId = 'starter' | 'pro' | 'business'
+
+export interface CreditPackage {
+  id: CreditPackageId
+  priceUsd: number
+  credits: number
+}
+
+export interface CreateCheckoutPayload {
+  package: CreditPackageId
+  successUrl: string
+  cancelUrl: string
+}
+
+export interface CheckoutSessionResult {
+  checkoutUrl: string
 }
 
 export type PaymentMethodId = 'stripe' | 'paypal' | 'npay' | 'alipay'

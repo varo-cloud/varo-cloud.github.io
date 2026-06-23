@@ -1,5 +1,6 @@
 import type { MockMethod } from 'vite-plugin-mock'
 import type { UserProfile } from '@/types'
+import { getAccountBalanceUsd } from './account-balance'
 import { fail, success } from './_util'
 
 const OTP_TTL_MS = 10 * 60 * 1000
@@ -69,7 +70,7 @@ function getOrCreateUser(email: string): UserProfile {
     id: `user-${Date.now()}`,
     email: normalized,
     name: localPart,
-    balanceUsd: 0,
+    balance: 0,
   }
   users.set(normalized, user)
   return user
@@ -192,7 +193,11 @@ export default [
 
       for (const user of users.values()) {
         if (user.id === userId) {
-          return success(user)
+          return success({
+            id: user.id,
+            email: user.email,
+            balance: Math.round(getAccountBalanceUsd() * 100),
+          })
         }
       }
 
