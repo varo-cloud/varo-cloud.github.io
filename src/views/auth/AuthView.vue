@@ -188,10 +188,7 @@ onUnmounted(() => {
     <main class="auth-page__main">
       <div class="auth-card">
         <div class="auth-card__header">
-          <div class="auth-card__heading">
-            <h1 class="auth-card__title">{{ t('pages.auth.welcome') }}</h1>
-            <p class="auth-card__subtitle">{{ t('pages.auth.subtitle') }}</p>
-          </div>
+          <h1 class="auth-card__title">{{ t('pages.auth.welcome') }}</h1>
           <button
             type="button"
             class="auth-card__close"
@@ -350,20 +347,6 @@ onUnmounted(() => {
   justify-content: space-between;
   gap: 16px;
   margin-bottom: 16px;
-}
-
-.auth-card__heading {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.auth-card__subtitle {
-  margin: 0;
-  font-size: 14px;
-  font-weight: 400;
-  line-height: 1.4;
-  color: #9b9dab;
 }
 
 .auth-card__turnstile {
