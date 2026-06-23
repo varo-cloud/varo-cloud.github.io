@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useLocaleRouter } from '@/composables/useLocaleRouter'
@@ -9,11 +9,12 @@ import { useUserStore } from '@/stores/user'
 import AppHeader from '@/components/layout/AppHeader.vue'
 import AppFooter from '@/components/layout/AppFooter.vue'
 import AppIcon from '@/components/common/AppIcon.vue'
+import TurnstileWidget from '@/components/auth/TurnstileWidget.vue'
 import { assetUrl } from '@/utils/assetUrl'
 
 const route = useRoute()
 const { push, replace, localePath } = useLocaleRouter()
-const { t } = useI18n()
+const { t, locale } = useI18n()
 const message = useMessage()
 const userStore = useUserStore()
 
@@ -22,8 +23,53 @@ const otpCode = ref('')
 const loading = ref(false)
 const error = ref<string | null>(null)
 const resendCooldown = ref(0)
+const turnstileToken = ref<string | null>(null)
+const turnstileReady = ref(false)
+const turnstileFailed = ref(false)
+const turnstileWidgetRef = ref<InstanceType<typeof TurnstileWidget> | null>(null)
 
 let resendTimer: ReturnType<typeof setInterval> | null = null
+
+const turnstileLanguage = computed(() => (locale.value === 'zh-CN' ? 'zh-CN' : 'en'))
+
+const turnstileStatus = computed(() => {
+  if (turnstileFailed.value) return t('pages.auth.turnstileError')
+  if (turnstileToken.value) return ''
+  if (!turnstileReady.value) return t('pages.auth.turnstilePreparing')
+  return t('pages.auth.turnstilePreparing')
+})
+
+const isHumanVerified = computed(() => Boolean(turnstileToken.value))
+
+function handleTurnstileVerified(token: string) {
+  turnstileToken.value = token
+  turnstileFailed.value = false
+  if (error.value === t('pages.auth.turnstileRequired') || error.value === t('pages.auth.turnstileExpired')) {
+    error.value = null
+  }
+}
+
+function handleTurnstileReady() {
+  turnstileReady.value = true
+}
+
+function handleTurnstileExpired() {
+  turnstileToken.value = null
+  error.value = t('pages.auth.turnstileExpired')
+  turnstileWidgetRef.value?.reset()
+}
+
+function handleTurnstileError() {
+  turnstileFailed.value = true
+  turnstileToken.value = null
+  error.value = t('pages.auth.turnstileError')
+}
+
+function ensureHumanVerified(): boolean {
+  if (turnstileToken.value) return true
+  error.value = t('pages.auth.turnstileRequired')
+  return false
+}
 
 function startResendCooldown(seconds = 60) {
   resendCooldown.value = seconds
@@ -53,6 +99,8 @@ function resolveErrorMessage(err: unknown, fallback: string): string {
 }
 
 async function handleRequestOtp() {
+  if (!ensureHumanVerified()) return
+
   const value = email.value.trim()
   if (!value) {
     error.value = t('pages.auth.emailRequired')
@@ -75,6 +123,8 @@ async function handleRequestOtp() {
 }
 
 async function handleLogin() {
+  if (!ensureHumanVerified()) return
+
   const value = email.value.trim()
   const code = otpCode.value.trim()
 
@@ -110,10 +160,12 @@ async function handleLogin() {
 }
 
 function handleGoogleLogin() {
+  if (!ensureHumanVerified()) return
   message.info(t('pages.auth.googleComingSoon'))
 }
 
 function handleGithubLogin() {
+  if (!ensureHumanVerified()) return
   message.info(t('pages.auth.githubComingSoon'))
 }
 
@@ -136,7 +188,10 @@ onUnmounted(() => {
     <main class="auth-page__main">
       <div class="auth-card">
         <div class="auth-card__header">
-          <h1 class="auth-card__title">{{ t('pages.auth.welcome') }}</h1>
+          <div class="auth-card__heading">
+            <h1 class="auth-card__title">{{ t('pages.auth.welcome') }}</h1>
+            <p class="auth-card__subtitle">{{ t('pages.auth.subtitle') }}</p>
+          </div>
           <button
             type="button"
             class="auth-card__close"
@@ -147,7 +202,20 @@ onUnmounted(() => {
           </button>
         </div>
 
-        <form class="auth-card__form" @submit.prevent="handleLogin">
+        <div class="auth-card__turnstile">
+          <TurnstileWidget
+            ref="turnstileWidgetRef"
+            theme="dark"
+            :language="turnstileLanguage"
+            @verified="handleTurnstileVerified"
+            @ready="handleTurnstileReady"
+            @expired="handleTurnstileExpired"
+            @error="handleTurnstileError"
+          />
+          <p v-if="turnstileStatus" class="auth-card__turnstile-status">{{ turnstileStatus }}</p>
+        </div>
+
+        <form class="auth-card__form" :class="{ 'auth-card__form--locked': !isHumanVerified }" @submit.prevent="handleLogin">
           <label class="auth-field" :class="{ 'auth-field--error': error }">
             <span class="auth-field__label">{{ t('pages.auth.emailLabel') }}</span>
             <input
@@ -156,7 +224,7 @@ onUnmounted(() => {
               class="auth-field__input auth-field__input--email"
               :placeholder="t('pages.auth.emailPlaceholder')"
               autocomplete="email"
-              :disabled="loading"
+              :disabled="loading || !isHumanVerified"
               @input="error = null"
             />
           </label>
@@ -173,13 +241,13 @@ onUnmounted(() => {
                 class="auth-field__input auth-field__input--code"
                 :placeholder="t('pages.auth.codePlaceholder')"
                 autocomplete="one-time-code"
-                :disabled="loading"
+                :disabled="loading || !isHumanVerified"
                 @input="error = null"
               />
               <button
                 type="button"
                 class="auth-field__get-code"
-                :disabled="loading || resendCooldown > 0"
+                :disabled="loading || resendCooldown > 0 || !isHumanVerified"
                 @click="handleRequestOtp"
               >
                 {{
@@ -193,7 +261,7 @@ onUnmounted(() => {
 
           <p v-if="error" class="auth-field__error auth-field__error--standalone">{{ error }}</p>
 
-          <button type="submit" class="auth-card__submit" :disabled="loading">
+          <button type="submit" class="auth-card__submit" :disabled="loading || !isHumanVerified">
             {{ t('pages.auth.loginButton') }}
           </button>
 
@@ -208,7 +276,7 @@ onUnmounted(() => {
             <button
               type="button"
               class="auth-card__social auth-card__social--google"
-              :disabled="loading"
+              :disabled="loading || !isHumanVerified"
               @click="handleGoogleLogin"
             >
               <img
@@ -224,7 +292,7 @@ onUnmounted(() => {
           <button
             type="button"
             class="auth-card__social auth-card__social--github"
-            :disabled="loading"
+            :disabled="loading || !isHumanVerified"
             @click="handleGithubLogin"
           >
             <img
@@ -281,7 +349,41 @@ onUnmounted(() => {
   align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
+  margin-bottom: 16px;
+}
+
+.auth-card__heading {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.auth-card__subtitle {
+  margin: 0;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 1.4;
+  color: #9b9dab;
+}
+
+.auth-card__turnstile {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
   margin-bottom: 24px;
+}
+
+.auth-card__turnstile-status {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.4;
+  text-align: center;
+  color: #808080;
+}
+
+.auth-card__form--locked {
+  opacity: 0.72;
 }
 
 .auth-card__title {
