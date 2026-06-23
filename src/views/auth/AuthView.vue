@@ -11,15 +11,12 @@ import AppFooter from '@/components/layout/AppFooter.vue'
 import AppIcon from '@/components/common/AppIcon.vue'
 import { assetUrl } from '@/utils/assetUrl'
 
-type AuthStep = 'email' | 'otp'
-
 const route = useRoute()
 const { push, replace, localePath } = useLocaleRouter()
 const { t } = useI18n()
 const message = useMessage()
 const userStore = useUserStore()
 
-const step = ref<AuthStep>('email')
 const email = ref('')
 const otpCode = ref('')
 const loading = ref(false)
@@ -48,12 +45,6 @@ function closeAuth() {
   push({ name: 'models' })
 }
 
-function backToEmail() {
-  step.value = 'email'
-  otpCode.value = ''
-  error.value = null
-}
-
 function resolveErrorMessage(err: unknown, fallback: string): string {
   if (err instanceof Error && err.message) {
     return err.message
@@ -73,7 +64,6 @@ async function handleRequestOtp() {
 
   try {
     await requestOtp({ email: value })
-    step.value = 'otp'
     otpCode.value = ''
     startResendCooldown()
     message.success(t('pages.auth.otpSent'))
@@ -84,9 +74,14 @@ async function handleRequestOtp() {
   }
 }
 
-async function handleVerifyOtp() {
+async function handleLogin() {
   const value = email.value.trim()
   const code = otpCode.value.trim()
+
+  if (!value) {
+    error.value = t('pages.auth.emailRequired')
+    return
+  }
 
   if (!code) {
     error.value = t('pages.auth.codeRequired')
@@ -114,16 +109,12 @@ async function handleVerifyOtp() {
   }
 }
 
-function handleSubmit() {
-  if (step.value === 'email') {
-    void handleRequestOtp()
-    return
-  }
-  void handleVerifyOtp()
-}
-
 function handleGoogleLogin() {
   message.info(t('pages.auth.googleComingSoon'))
+}
+
+function handleGithubLogin() {
+  message.info(t('pages.auth.githubComingSoon'))
 }
 
 onMounted(() => {
@@ -156,67 +147,54 @@ onUnmounted(() => {
           </button>
         </div>
 
-        <form class="auth-card__form" @submit.prevent="handleSubmit">
-          <label class="auth-field" :class="{ 'auth-field--error': error && step === 'email' }">
+        <form class="auth-card__form" @submit.prevent="handleLogin">
+          <label class="auth-field" :class="{ 'auth-field--error': error }">
             <span class="auth-field__label">{{ t('pages.auth.emailLabel') }}</span>
             <input
               v-model="email"
               type="email"
-              class="auth-field__input"
+              class="auth-field__input auth-field__input--email"
               :placeholder="t('pages.auth.emailPlaceholder')"
               autocomplete="email"
-              :disabled="loading || step === 'otp'"
+              :disabled="loading"
               @input="error = null"
             />
           </label>
 
-          <template v-if="step === 'otp'">
-            <label class="auth-field" :class="{ 'auth-field--error': error }">
-              <span class="auth-field__label">{{ t('pages.auth.codeLabel') }}</span>
+          <label class="auth-field" :class="{ 'auth-field--error': error }">
+            <span class="auth-field__label">{{ t('pages.auth.codeLabel') }}</span>
+            <div class="auth-field__input-wrap">
               <input
                 v-model="otpCode"
                 type="text"
                 inputmode="numeric"
                 pattern="[0-9]*"
                 maxlength="6"
-                class="auth-field__input auth-field__input--otp"
+                class="auth-field__input auth-field__input--code"
                 :placeholder="t('pages.auth.codePlaceholder')"
                 autocomplete="one-time-code"
                 :disabled="loading"
                 @input="error = null"
               />
-              <p v-if="error" class="auth-field__error">{{ error }}</p>
-            </label>
-
-            <p class="auth-card__hint">{{ t('pages.auth.otpHint') }}</p>
-
-            <div class="auth-card__resend">
               <button
                 type="button"
-                class="auth-card__resend-btn"
+                class="auth-field__get-code"
                 :disabled="loading || resendCooldown > 0"
                 @click="handleRequestOtp"
               >
                 {{
                   resendCooldown > 0
                     ? t('pages.auth.resendIn', { seconds: resendCooldown })
-                    : t('pages.auth.resendCode')
+                    : t('pages.auth.getCodeButton')
                 }}
               </button>
-              <button type="button" class="auth-card__back-btn" :disabled="loading" @click="backToEmail">
-                {{ t('pages.auth.changeEmail') }}
-              </button>
             </div>
-          </template>
+          </label>
 
-          <p v-else-if="error" class="auth-field__error auth-field__error--standalone">{{ error }}</p>
+          <p v-if="error" class="auth-field__error auth-field__error--standalone">{{ error }}</p>
 
           <button type="submit" class="auth-card__submit" :disabled="loading">
-            {{
-              step === 'email'
-                ? t('pages.auth.sendCodeButton')
-                : t('pages.auth.verifyButton')
-            }}
+            {{ t('pages.auth.loginButton') }}
           </button>
 
           <div class="auth-card__divider" aria-hidden="true">
@@ -225,19 +203,37 @@ onUnmounted(() => {
             <span class="auth-card__divider-line" />
           </div>
 
+          <div class="auth-card__social-wrap">
+            <span class="auth-card__last-used">{{ t('pages.auth.lastUsed') }}</span>
+            <button
+              type="button"
+              class="auth-card__social auth-card__social--google"
+              :disabled="loading"
+              @click="handleGoogleLogin"
+            >
+              <img
+                :src="assetUrl('/assets/icons/google.svg')"
+                alt=""
+                aria-hidden="true"
+                class="auth-card__social-icon"
+              />
+              <span>{{ t('pages.auth.googleLogin') }}</span>
+            </button>
+          </div>
+
           <button
             type="button"
-            class="auth-card__google"
+            class="auth-card__social auth-card__social--github"
             :disabled="loading"
-            @click="handleGoogleLogin"
+            @click="handleGithubLogin"
           >
             <img
-              :src="assetUrl('/assets/icons/google.svg')"
+              :src="assetUrl('/assets/icons/github.svg')"
               alt=""
               aria-hidden="true"
-              class="auth-card__google-icon"
+              class="auth-card__social-icon"
             />
-            <span>{{ t('pages.auth.googleLogin') }}</span>
+            <span>{{ t('pages.auth.githubLogin') }}</span>
           </button>
 
           <p class="auth-card__terms">
@@ -339,6 +335,10 @@ onUnmounted(() => {
   color: #ebf4fb;
 }
 
+.auth-field__input-wrap {
+  position: relative;
+}
+
 .auth-field__input {
   width: 100%;
   height: 48px;
@@ -354,20 +354,20 @@ onUnmounted(() => {
   transition: border-color 0.15s ease, background 0.15s ease;
 }
 
-.auth-field__input--otp {
-  font-size: 20px;
-  letter-spacing: 0.3em;
-  text-align: center;
+.auth-field__input--email {
+  border-color: #06b6d4;
+}
+
+.auth-field__input--code {
+  padding-right: 108px;
 }
 
 .auth-field__input::placeholder {
   color: #808080;
-  letter-spacing: normal;
 }
 
 .auth-field__input:focus {
   border-color: #06b6d4;
-  background: rgba(255, 255, 255, 0.06);
 }
 
 .auth-field__input:disabled {
@@ -379,6 +379,31 @@ onUnmounted(() => {
   border-color: #f87171;
 }
 
+.auth-field__get-code {
+  position: absolute;
+  top: 50%;
+  right: 12px;
+  transform: translateY(-50%);
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: #06b6d4;
+  font-size: 14px;
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
+}
+
+.auth-field__get-code:hover:not(:disabled) {
+  opacity: 0.85;
+}
+
+.auth-field__get-code:disabled {
+  color: #808080;
+  cursor: not-allowed;
+}
+
 .auth-field__error {
   margin: 0;
   font-size: 12px;
@@ -388,50 +413,6 @@ onUnmounted(() => {
 
 .auth-field__error--standalone {
   margin-top: -12px;
-}
-
-.auth-card__hint {
-  margin: -12px 0 0;
-  font-size: 12px;
-  line-height: 1.5;
-  color: #808080;
-}
-
-.auth-card__resend {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 12px;
-  margin-top: -12px;
-}
-
-.auth-card__resend-btn,
-.auth-card__back-btn {
-  padding: 0;
-  border: none;
-  background: transparent;
-  font-size: 13px;
-  line-height: 1.2;
-  cursor: pointer;
-  transition: opacity 0.15s ease;
-}
-
-.auth-card__resend-btn {
-  color: #06b6d4;
-}
-
-.auth-card__back-btn {
-  color: #9b9dab;
-}
-
-.auth-card__resend-btn:hover:not(:disabled),
-.auth-card__back-btn:hover:not(:disabled) {
-  opacity: 0.85;
-}
-
-.auth-card__resend-btn:disabled {
-  color: #808080;
-  cursor: not-allowed;
 }
 
 .auth-card__submit {
@@ -476,17 +457,35 @@ onUnmounted(() => {
   color: #808080;
 }
 
-.auth-card__google {
+.auth-card__social-wrap {
+  position: relative;
+}
+
+.auth-card__last-used {
+  position: absolute;
+  top: 0;
+  left: 0;
+  z-index: 1;
+  display: inline-flex;
+  align-items: center;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 8px 0 8px 0;
+  background: #06b6d4;
+  color: #ebf4fb;
+  font-size: 10px;
+  line-height: 1;
+  white-space: nowrap;
+}
+
+.auth-card__social {
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 8px;
   width: 100%;
   height: 48px;
-  border: 1px solid #06b6d4;
   border-radius: 8px;
-  background: rgba(22, 218, 235, 0.1);
-  color: #e0e0e0;
   font-size: 14px;
   font-weight: 500;
   line-height: 1;
@@ -494,16 +493,32 @@ onUnmounted(() => {
   transition: opacity 0.15s ease, background 0.15s ease;
 }
 
-.auth-card__google:hover:not(:disabled) {
+.auth-card__social--google {
+  border: 1px solid #06b6d4;
+  background: rgba(22, 218, 235, 0.1);
+  color: #e0e0e0;
+}
+
+.auth-card__social--google:hover:not(:disabled) {
   background: rgba(22, 218, 235, 0.16);
 }
 
-.auth-card__google:disabled {
+.auth-card__social--github {
+  border: 1px solid #9b9dab;
+  background: transparent;
+  color: #e0e0e0;
+}
+
+.auth-card__social--github:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.auth-card__social:disabled {
   opacity: 0.6;
   cursor: not-allowed;
 }
 
-.auth-card__google-icon {
+.auth-card__social-icon {
   width: 16px;
   height: 16px;
   flex-shrink: 0;
@@ -539,6 +554,14 @@ onUnmounted(() => {
 
   .auth-card__title {
     font-size: 20px;
+  }
+
+  .auth-field__input--code {
+    padding-right: 96px;
+  }
+
+  .auth-field__get-code {
+    font-size: 13px;
   }
 }
 </style>

@@ -16,6 +16,9 @@ const userStore = useUserStore()
 
 const headerSearch = ref('')
 const isScrolled = ref(false)
+const userMenuOpen = ref(false)
+
+let userMenuCloseTimer: ReturnType<typeof setTimeout> | null = null
 
 const usesTransparentHeader = computed(() => route.meta.transparentHeader === true)
 const isHeaderSolid = computed(() => !usesTransparentHeader.value || isScrolled.value)
@@ -37,10 +40,10 @@ const navItems = computed(() => [
 ])
 
 const userMenuOptions = computed(() => [
-  {
-    label: t('common.logout'),
-    key: 'logout',
-  },
+  { label: t('common.deposit'), key: 'deposit', icon: 'deposit' as const },
+  { label: t('nav.apiKeys'), key: 'api-keys', icon: 'code-box' as const },
+  { label: t('header.myBilling'), key: 'billing', icon: 'file-paper' as const },
+  { label: t('header.signOut'), key: 'logout', icon: 'logout' as const },
 ])
 
 const languageMenuOptions = computed(() => [
@@ -60,6 +63,41 @@ const userInitial = computed(() => {
   return name.charAt(0).toUpperCase() || '?'
 })
 
+const displayEmail = computed(() => {
+  const email = userStore.profile?.email ?? ''
+  const at = email.indexOf('@')
+  if (at <= 0) return email
+  const local = email.slice(0, at)
+  const domain = email.slice(at)
+  if (local.length <= 5) return email
+  return `${local.slice(0, 3)}...${local.slice(-2)}${domain}`
+})
+
+const displayUserId = computed(() => userStore.profile?.id ?? '—')
+
+function openUserMenu() {
+  if (userMenuCloseTimer) {
+    clearTimeout(userMenuCloseTimer)
+    userMenuCloseTimer = null
+  }
+  userMenuOpen.value = true
+}
+
+function scheduleCloseUserMenu() {
+  if (userMenuCloseTimer) clearTimeout(userMenuCloseTimer)
+  userMenuCloseTimer = setTimeout(() => {
+    userMenuOpen.value = false
+    userMenuCloseTimer = null
+  }, 120)
+}
+
+function cancelCloseUserMenu() {
+  if (userMenuCloseTimer) {
+    clearTimeout(userMenuCloseTimer)
+    userMenuCloseTimer = null
+  }
+}
+
 function isActive(name: string) {
   if (name === 'models') {
     return route.name === 'models' || route.name === 'model-detail'
@@ -72,10 +110,17 @@ function goTo(name: string) {
 }
 
 function handleUserMenuSelect(key: string) {
+  userMenuOpen.value = false
+
   if (key === 'logout') {
     void userStore.logout().then(() => {
       push({ name: 'models' })
     })
+    return
+  }
+
+  if (key === 'deposit' || key === 'billing' || key === 'api-keys') {
+    goTo(key === 'deposit' ? 'billing' : key)
   }
 }
 
@@ -114,6 +159,7 @@ onMounted(() => {
 
 onUnmounted(() => {
   window.removeEventListener('scroll', updateScrollState)
+  if (userMenuCloseTimer) clearTimeout(userMenuCloseTimer)
 })
 </script>
 
@@ -188,16 +234,51 @@ onUnmounted(() => {
             </button>
           </div>
 
-          <NDropdown
-            trigger="click"
-            :options="userMenuOptions"
-            @select="handleUserMenuSelect"
+          <div
+            class="app-header__user-menu"
+            @mouseenter="openUserMenu"
+            @mouseleave="scheduleCloseUserMenu"
           >
-            <button type="button" class="app-header__user-trigger">
+            <button
+              type="button"
+              class="app-header__user-trigger"
+              :aria-expanded="userMenuOpen"
+              aria-haspopup="menu"
+            >
               <span class="app-header__avatar">{{ userInitial }}</span>
               <AppIcon name="chevron-down" />
             </button>
-          </NDropdown>
+
+            <div
+              v-show="userMenuOpen"
+              class="app-header__user-dropdown"
+              @mouseenter="cancelCloseUserMenu"
+              @mouseleave="scheduleCloseUserMenu"
+            >
+              <div class="app-header__user-dropdown-header">
+                <div class="app-header__user-email">
+                  <span :title="userStore.profile?.email">{{ displayEmail }}</span>
+                </div>
+                <p class="app-header__user-id">
+                  {{ t('header.userId', { id: displayUserId }) }}
+                </p>
+              </div>
+
+              <div class="app-header__user-dropdown-items" role="menu">
+                <button
+                  v-for="item in userMenuOptions"
+                  :key="item.key"
+                  type="button"
+                  class="app-header__user-dropdown-item"
+                  role="menuitem"
+                  @click="handleUserMenuSelect(item.key)"
+                >
+                  <AppIcon :name="item.icon" />
+                  <span>{{ item.label }}</span>
+                </button>
+              </div>
+            </div>
+          </div>
         </template>
 
         <button
@@ -359,6 +440,72 @@ onUnmounted(() => {
 .app-header__user-trigger:hover,
 .app-header__wallet-deposit:hover {
   opacity: 0.85;
+}
+
+.app-header__user-menu {
+  position: relative;
+}
+
+.app-header__user-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 200;
+  width: 280px;
+  padding: 20px;
+  border-radius: 8px;
+  background: #1c1c20;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+}
+
+.app-header__user-dropdown-header {
+  margin-bottom: 18px;
+}
+
+.app-header__user-email {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  color: #ebf4fb;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 16px;
+}
+
+.app-header__user-id {
+  margin: 8px 0 0;
+  color: #9b9dab;
+  font-size: 14px;
+  line-height: 14px;
+}
+
+.app-header__user-dropdown-items {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.app-header__user-dropdown-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  height: 40px;
+  padding: 0 20px;
+  margin: 0 -20px;
+  width: calc(100% + 40px);
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  color: #e0e0e0;
+  font-size: 14px;
+  line-height: 1;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.app-header__user-dropdown-item:hover {
+  background: rgba(255, 255, 255, 0.06);
 }
 
 .app-header__wallet-group {
