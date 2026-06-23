@@ -66,20 +66,35 @@ export interface UserProfile {
   balanceUsd: number
 }
 
-export interface AuthResult {
-  token: string
-  user: UserProfile
+export interface OtpRequestPayload {
+  email: string
 }
 
-export interface LoginPayload {
-  email: string
-  password: string
+export interface OtpRequestResult {
+  sent: boolean
 }
 
-export interface RegisterPayload {
+export interface OtpVerifyPayload {
   email: string
-  password: string
-  name: string
+  code: string
+}
+
+export interface TokenPair {
+  access_token: string
+  refresh_token: string
+  token_type: 'bearer'
+}
+
+export interface RefreshTokenPayload {
+  refresh_token: string
+}
+
+export interface LogoutPayload {
+  refresh_token: string
+}
+
+export interface LogoutResult {
+  revoked: boolean
 }
 
 export type ApiKeyStatus = 'active' | 'revoked'

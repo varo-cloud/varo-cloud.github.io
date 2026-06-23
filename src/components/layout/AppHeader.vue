@@ -65,8 +65,9 @@ function goTo(name: string) {
 
 function handleUserMenuSelect(key: string) {
   if (key === 'logout') {
-    userStore.logout()
-    push({ name: 'models' })
+    void userStore.logout().then(() => {
+      push({ name: 'models' })
+    })
   }
 }
 
