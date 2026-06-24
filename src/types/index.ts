@@ -102,19 +102,29 @@ export type ApiKeyStatus = 'active' | 'revoked'
 
 export interface ApiKey {
   id: string
+  /** User-defined label; maps from API `name` when present, else falls back to `prefix` */
   name: string
+  /** Masked key prefix for display; maps from API `prefix` */
   keyMasked: string
+  /** Unix ms; maps from API `created_at` */
   createdAt: number
+  /** Maps from API `is_active` */
   status: ApiKeyStatus
+  /** Per-key call count; backend field TBD — defaults to 0 */
   totalCalls: number
+  /** Per-key spend; backend field TBD — defaults to 0 */
   totalSpendUsd: number
+  /** Unix ms; maps from API `last_used_at` — defaults to null */
   lastUsedAt: number | null
 }
 
 export interface CreateApiKeyResult {
   id: string
+  /** Client-side name; backend create response does not include `name` yet */
   name: string
+  /** Full key; maps from API `key` — shown only once */
   key: string
+  /** Unix ms; maps from API `created_at` */
   createdAt: number
 }
 
