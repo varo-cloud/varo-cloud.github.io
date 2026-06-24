@@ -222,13 +222,19 @@ export type PricingMediaType = 'video' | 'image' | 'llm'
 
 export interface PricingItem {
   id: string
+  /** Maps from API field `model_id` */
   modelId?: string
   name: string
+  /** Maps from API field `standard_price_usd` */
   standardPriceUsd: number
+  /** Maps from API field `starting_price_usd` */
   startingPriceUsd: number
+  /** Maps from API field `price_unit` */
   priceUnit: string
+  /** Maps from API field `discount_percent` */
   discountPercent?: number
   category: PricingCategory
+  /** Maps from API field `media_type` */
   mediaType: PricingMediaType
 }
 
