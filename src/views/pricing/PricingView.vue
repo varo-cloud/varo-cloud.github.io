@@ -1,12 +1,12 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useLocaleRouter } from '@/composables/useLocaleRouter'
 import { NEmpty, NSpin } from 'naive-ui'
 import { fetchPricing } from '@/api/pricing'
 import PricingTableRow from '@/components/pricing/PricingTableRow.vue'
 import { assetUrl } from '@/utils/assetUrl'
-import type { PricingCategory, PricingItem, PricingMediaType } from '@/types'
+import type { PricingItem } from '@/types'
 
 const { push } = useLocaleRouter()
 const { t } = useI18n()
@@ -14,32 +14,6 @@ const { t } = useI18n()
 const items = ref<PricingItem[]>([])
 const loading = ref(true)
 const error = ref<string | null>(null)
-const activeCategory = ref<PricingCategory>('image-video')
-const activeMediaType = ref<PricingMediaType>('video')
-
-const categoryTabs = computed(() => [
-  { key: 'image-video' as const, label: t('pages.pricing.categories.imageVideo') },
-  { key: 'language' as const, label: t('pages.pricing.categories.language') },
-  { key: 'serverless' as const, label: t('pages.pricing.categories.serverless') },
-])
-
-const mediaTypeOptions = computed(() => [
-  { key: 'video' as const, label: t('pages.pricing.mediaTypes.video') },
-  { key: 'image' as const, label: t('pages.pricing.mediaTypes.image') },
-  { key: 'llm' as const, label: t('pages.pricing.mediaTypes.llm') },
-])
-
-const showMediaToggle = computed(() => activeCategory.value === 'image-video')
-
-const filteredItems = computed(() => {
-  return items.value.filter((item) => {
-    if (item.category !== activeCategory.value) return false
-    if (activeCategory.value === 'image-video') {
-      return item.mediaType === activeMediaType.value
-    }
-    return true
-  })
-})
 
 async function loadPricing() {
   loading.value = true
@@ -52,19 +26,6 @@ async function loadPricing() {
   } finally {
     loading.value = false
   }
-}
-
-function switchCategory(key: PricingCategory) {
-  activeCategory.value = key
-  if (key === 'language') {
-    activeMediaType.value = 'llm'
-  } else if (key === 'image-video') {
-    activeMediaType.value = 'video'
-  }
-}
-
-function switchMediaType(key: PricingMediaType) {
-  activeMediaType.value = key
 }
 
 function goToModel(id: string) {
@@ -99,41 +60,6 @@ onMounted(() => {
 
     <section class="pricing-content">
       <div class="pricing-content__inner">
-        <div class="pricing-toolbar">
-          <div class="pricing-tabs" role="tablist" :aria-label="t('pages.pricing.categoryLabel')">
-            <button
-              v-for="tab in categoryTabs"
-              :key="tab.key"
-              type="button"
-              role="tab"
-              class="pricing-tab"
-              :class="{ 'is-active': activeCategory === tab.key }"
-              :aria-selected="activeCategory === tab.key"
-              @click="switchCategory(tab.key)"
-            >
-              {{ tab.label }}
-            </button>
-          </div>
-
-          <div
-            v-if="showMediaToggle"
-            class="pricing-media-toggle"
-            role="group"
-            :aria-label="t('pages.pricing.mediaTypeLabel')"
-          >
-            <button
-              v-for="option in mediaTypeOptions"
-              :key="option.key"
-              type="button"
-              class="pricing-media-toggle__btn"
-              :class="{ 'is-active': activeMediaType === option.key }"
-              @click="switchMediaType(option.key)"
-            >
-              {{ option.label }}
-            </button>
-          </div>
-        </div>
-
         <div class="pricing-table">
           <div class="pricing-table__header">
             <span>{{ t('pages.pricing.columns.model') }}</span>
@@ -157,13 +83,13 @@ onMounted(() => {
             </NEmpty>
           </div>
 
-          <div v-else-if="filteredItems.length === 0" class="pricing-state">
+          <div v-else-if="items.length === 0" class="pricing-state">
             <NEmpty :description="t('pages.pricing.empty')" />
           </div>
 
           <div v-else class="pricing-table__body">
             <PricingTableRow
-              v-for="item in filteredItems"
+              v-for="item in items"
               :key="item.id"
               :item="item"
               @view="goToModel"
@@ -244,63 +170,6 @@ onMounted(() => {
   padding: 20px 16px 64px;
 }
 
-.pricing-toolbar {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  justify-content: space-between;
-  gap: 16px;
-  margin-bottom: 20px;
-}
-
-.pricing-tabs {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 24px;
-}
-
-.pricing-tab {
-  padding: 0;
-  border: none;
-  background: transparent;
-  color: #9b9dab;
-  font-size: 16px;
-  font-weight: 600;
-  line-height: 16px;
-  cursor: pointer;
-}
-
-.pricing-tab.is-active {
-  color: #222;
-}
-
-.pricing-media-toggle {
-  display: inline-flex;
-  align-items: stretch;
-  height: 36px;
-  border: 1px solid #eee;
-  border-radius: 8px;
-  background: #fff;
-  overflow: hidden;
-}
-
-.pricing-media-toggle__btn {
-  min-width: 80px;
-  padding: 0 16px;
-  border: none;
-  background: transparent;
-  color: #9b9dab;
-  font-size: 14px;
-  font-weight: 400;
-  line-height: 16px;
-  cursor: pointer;
-}
-
-.pricing-media-toggle__btn.is-active {
-  background: #06b6d4;
-  color: #fff;
-}
-
 .pricing-table {
   border: 1px solid #d7d7d7;
   border-radius: 8px 8px 0 0;
@@ -356,15 +225,6 @@ onMounted(() => {
   .pricing-table__header {
     display: none;
   }
-
-  .pricing-toolbar {
-    flex-direction: column;
-    align-items: stretch;
-  }
-
-  .pricing-media-toggle {
-    align-self: flex-start;
-  }
 }
 
 @media (max-width: 767px) {
@@ -376,11 +236,6 @@ onMounted(() => {
     gap: 20px;
     padding-top: 96px;
     padding-bottom: 48px;
-  }
-
-  .pricing-media-toggle__btn {
-    min-width: 72px;
-    padding-inline: 12px;
   }
 }
 </style>

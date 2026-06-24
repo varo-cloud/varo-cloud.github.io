@@ -7,7 +7,7 @@
 
 ## 设计原则
 
-1. **功能以前端为准**：分类 Tab、媒体类型筛选、标准价/起价/折扣展示、跳转模型详情。
+1. **功能以前端为准**：全量价目表展示、标准价/起价/折扣、跳转模型详情（无分类 Tab 筛选）。
 2. **金额只暴露 USD**：不返回 `credits`、`credits_per_second`；内部换算由后端完成（参见 [`billing-backend-gaps.md`](./billing-backend-gaps.md)）。
 3. **命名**：响应字段使用 **snake_case**；枚举值与前端一致（kebab-case / 小写）。
 4. **公开接口**：定价页无需登录，建议与 `GET /api/billing/packages` 一样**无需 JWT**。
@@ -22,7 +22,7 @@
 
 **认证：** 无（公开）
 
-**请求参数：** 无（筛选由前端根据 `category` / `media_type` 完成）
+**请求参数：** 无（前端全量展示，不做筛选）
 
 **响应 200**
 
@@ -35,9 +35,9 @@
       "id": "veo-31-lite-i2v",
       "model_id": "seedance-i2v",
       "name": "Veo 3.1 Lite Image-to-video",
-      "standard_price_usd": 0.086,
-      "starting_price_usd": 0.086,
-      "price_unit": "/s video",
+      "standard_price_usd": 0.1,
+      "starting_price_usd": 0.084,
+      "price_unit": "per_second",
       "discount_percent": 15,
       "category": "image-video",
       "media_type": "video"
@@ -45,18 +45,18 @@
     {
       "id": "flux-pro-image",
       "name": "Flux Pro Image",
-      "standard_price_usd": 0.04,
-      "starting_price_usd": 0.04,
-      "price_unit": "/Pic",
+      "standard_price_usd": 0.07,
+      "starting_price_usd": 0.07,
+      "price_unit": "per_image",
       "category": "image-video",
       "media_type": "image"
     },
     {
       "id": "gpt-4o",
       "name": "GPT-4o",
-      "standard_price_usd": 0.005,
-      "starting_price_usd": 0.005,
-      "price_unit": "/1K tokens",
+      "standard_price_usd": 5,
+      "starting_price_usd": 5,
+      "price_unit": "per_million_tokens",
       "category": "language",
       "media_type": "llm"
     },
@@ -65,7 +65,7 @@
       "name": "A100 80GB",
       "standard_price_usd": 2.49,
       "starting_price_usd": 2.49,
-      "price_unit": "/hr",
+      "price_unit": "per_hour",
       "category": "serverless",
       "media_type": "llm"
     }
@@ -84,25 +84,27 @@
 | `name` | string | ✅ | 展示名称 |
 | `standard_price_usd` | number | ✅ | 标准单价（USD） |
 | `starting_price_usd` | number | ✅ | 起价（USD），表格「Price」列加粗展示 |
-| `price_unit` | string | ✅ | 单位后缀，原样拼接在价格后，如 `/s video`、`/Pic`、`/1K tokens`、`/hr` |
+| `price_unit` | string | ✅ | 计费单位枚举，见下表 |
 | `discount_percent` | number | 可选 | 折扣百分比整数，如 `15` 表示 `-15%`；无折扣可省略或 `null` |
-| `category` | string | ✅ | `image-video` \| `language` \| `serverless` |
-| `media_type` | string | ✅ | `video` \| `image` \| `llm` |
+| `category` | string | 可选 | 保留供后台分类；前端不再筛选 |
+| `media_type` | string | 可选 | 保留供后台分类；前端不再筛选 |
 
-#### 枚举与前端筛选逻辑
+#### `price_unit` 枚举
 
-| `category` | 前端 Tab | 是否显示媒体切换 |
-|---|---|---|
-| `image-video` | Image & Video Models | 是（`video` / `image` / `llm`） |
-| `language` | Language Models | 否 |
-| `serverless` | Serverless GPU | 否 |
+前端按枚举值做 i18n 展示，**不要**返回自由文本单位。
 
-前端筛选规则：
+| `price_unit` | 适用场景 | 中文展示 | 英文展示 | 价格示例 |
+|---|---|---|---|---|
+| `per_second` | 视频 | `/秒` | `/s` | `$0.10 /秒` |
+| `per_image` | 图像 | `/图像` | `/image` | `$0.07 /图像` |
+| `per_million_tokens` | 语言模型（输入） | `/M` | `/M` | `$5 /M` |
+| `per_hour` | Serverless GPU | `/小时` | `/hr` | `$2.49 /小时` |
 
-```text
-item.category === activeCategory
-且当 activeCategory === 'image-video' 时，还需 item.media_type === activeMediaType
-```
+语言模型行展示「输入价格」标签；视频/图像行展示「起价」标签。
+
+#### 列表排序
+
+后端按运营配置的排序权重返回即可；前端不做分类过滤。
 
 #### 金额计算建议（后端内部）
 
@@ -164,7 +166,7 @@ def credits_to_usd(credits: float) -> float:
 - [ ] 响应使用统一包装 `{ code, message, data }`
 - [ ] 所有金额字段为 `_usd` 后缀的 `number`，禁止返回 credits
 - [ ] 字段 snake_case：`model_id`、`standard_price_usd`、`starting_price_usd`、`price_unit`、`discount_percent`、`media_type`
-- [ ] `category` / `media_type` 枚举值与上文一致
+- [ ] `category` / `media_type` 为可选字段（前端不筛选，可省略）
 - [ ] `model_id` 有值时对应 `GET /api/models/{model_id}` 可访问的模型
 - [ ] 无折扣条目省略 `discount_percent` 或返回 `null`，前端显示 `--`
 - [ ] （可选）按 `X-Locale` 返回本地化 `name`

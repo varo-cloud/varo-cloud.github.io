@@ -220,6 +220,9 @@ export type PricingCategory = 'image-video' | 'language' | 'serverless'
 
 export type PricingMediaType = 'video' | 'image' | 'llm'
 
+/** Maps from API field `price_unit` */
+export type PricingPriceUnit = 'per_second' | 'per_image' | 'per_million_tokens' | 'per_hour'
+
 export interface PricingItem {
   id: string
   /** Maps from API field `model_id` */
@@ -229,13 +232,13 @@ export interface PricingItem {
   standardPriceUsd: number
   /** Maps from API field `starting_price_usd` */
   startingPriceUsd: number
-  /** Maps from API field `price_unit` */
-  priceUnit: string
+  priceUnit: PricingPriceUnit
   /** Maps from API field `discount_percent` */
   discountPercent?: number
-  category: PricingCategory
-  /** Maps from API field `media_type` */
-  mediaType: PricingMediaType
+  /** Maps from API field `category` — optional, not used for UI filtering */
+  category?: PricingCategory
+  /** Maps from API field `media_type` — optional, not used for UI filtering */
+  mediaType?: PricingMediaType
 }
 
 export type UploadKind = 'image' | 'video' | 'audio'

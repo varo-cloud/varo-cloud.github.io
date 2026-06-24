@@ -154,22 +154,17 @@ export default {
       heroTitle: 'Image & Video Models',
       heroSubtitle:
         'State-of-the-art generation with models from WaveSpeed, OpenAI, Google, and more.',
-      categoryLabel: 'Pricing categories',
-      mediaTypeLabel: 'Media type',
       startFrom: 'Start from',
+      inputPrice: 'Input price',
       view: 'View',
       loadError: 'Failed to load pricing. Please try again.',
       retry: 'Retry',
-      empty: 'No pricing items match your filters.',
-      categories: {
-        imageVideo: 'Image & Video Models',
-        language: 'Language Models',
-        serverless: 'Serverless GPU',
-      },
-      mediaTypes: {
-        video: 'Video',
-        image: 'Image',
-        llm: 'LLM',
+      empty: 'No pricing items available.',
+      priceUnits: {
+        per_second: '/s',
+        per_image: '/image',
+        per_million_tokens: '/M',
+        per_hour: '/hr',
       },
       columns: {
         model: 'Model',

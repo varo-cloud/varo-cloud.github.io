@@ -1,6 +1,12 @@
 <script setup lang="ts">
+import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { PricingItem } from '@/types'
+import {
+  formatPricingUsd,
+  pricingLabelI18nKey,
+  pricingUnitI18nKey,
+} from '@/utils/pricing'
 
 const props = defineProps<{
   item: PricingItem
@@ -12,10 +18,10 @@ const emit = defineEmits<{
 
 const { t } = useI18n()
 
-function formatPrice(value: number) {
-  const fixed = value.toFixed(3)
-  return `$${fixed.replace(/(\.\d*?)0+$/, '$1').replace(/\.$/, '')}`
-}
+const unitLabel = computed(() => t(pricingUnitI18nKey(props.item.priceUnit)))
+const priceLabel = computed(() => t(`pages.pricing.${pricingLabelI18nKey(props.item.priceUnit)}`))
+const standardPrice = computed(() => formatPricingUsd(props.item.standardPriceUsd, props.item.priceUnit))
+const startingPrice = computed(() => formatPricingUsd(props.item.startingPriceUsd, props.item.priceUnit))
 
 function handleView() {
   emit('view', props.item.modelId ?? props.item.id)
@@ -28,12 +34,12 @@ function handleView() {
       {{ item.name }}
     </div>
     <div class="pricing-row__cell pricing-row__cell--standard">
-      {{ formatPrice(item.standardPriceUsd) }}
+      {{ standardPrice }}<span class="pricing-row__unit">{{ unitLabel }}</span>
     </div>
     <div class="pricing-row__cell pricing-row__cell--price">
-      <span class="pricing-row__price-label">{{ t('pages.pricing.startFrom') }}</span>
+      <span class="pricing-row__price-label">{{ priceLabel }}</span>
       <span class="pricing-row__price-value">
-        <strong>{{ formatPrice(item.startingPriceUsd) }}</strong>{{ item.priceUnit }}
+        <strong>{{ startingPrice }}</strong><span class="pricing-row__unit">{{ unitLabel }}</span>
       </span>
     </div>
     <div class="pricing-row__cell pricing-row__cell--discount">
@@ -77,6 +83,12 @@ function handleView() {
 
 .pricing-row__cell--standard {
   white-space: nowrap;
+}
+
+.pricing-row__unit {
+  margin-left: 2px;
+  color: #9b9dab;
+  font-weight: 400;
 }
 
 .pricing-row__cell--price {

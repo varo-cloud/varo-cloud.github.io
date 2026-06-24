@@ -22,25 +22,7 @@
 ### 数据加载
 
 - 挂载时调用 `fetchPricing()` → `GET /api/pricing`
-- 一次拉取全量列表，**分类 / 媒体类型筛选在前端完成**（无查询参数）
-
-### 分类 Tab（`category`）
-
-| 前端值 | 展示文案（en-US） |
-|---|---|
-| `image-video` | Image & Video Models |
-| `language` | Language Models |
-| `serverless` | Serverless GPU |
-
-### 媒体类型切换（`mediaType`，仅 `image-video` 分类显示）
-
-| 前端值 | 展示文案 |
-|---|---|
-| `video` | Video |
-| `image` | Image |
-| `llm` | LLM |
-
-切换到 `language` 时自动将媒体类型设为 `llm`；`serverless` 分类不显示媒体切换器。
+- 一次拉取全量列表，**直接展示所有条目**（无分类筛选、无查询参数）
 
 ### 表格列
 
@@ -48,7 +30,7 @@
 |---|---|---|
 | Model | `name` | 模型/产品名称 |
 | Standard Price (USD) | `standardPriceUsd` | 标准单价，格式 `$0.086`（最多 3 位小数，去尾零） |
-| Price | `startingPriceUsd` + `priceUnit` | 展示为「Start from **$0.086**/s video」 |
+| Price | `startingPriceUsd` + `priceUnit` | 视频/图像：「起价 **$0.10**/秒」；语言模型：「输入价格 **$5**/M」 |
 | Discount | `discountPercent` | 有值时显示 `-15%` 徽章，无值显示 `--` |
 | View | `modelId ?? id` | 跳转模型详情页 `models/:id` |
 
@@ -70,14 +52,14 @@ interface PricingItem {
   name: string
   standardPriceUsd: number
   startingPriceUsd: number
-  priceUnit: string
+  priceUnit: PricingPriceUnit
   discountPercent?: number
-  category: 'image-video' | 'language' | 'serverless'
-  mediaType: 'video' | 'image' | 'llm'
+  category?: 'image-video' | 'language' | 'serverless'
+  mediaType?: 'video' | 'image' | 'llm'
 }
 ```
 
-当前 `src/api/pricing.ts` **未做 snake_case 映射**，Mock 直接返回 camelCase。联调时应与项目其他 API 层一致：后端返回 snake_case，前端 API 层映射为 camelCase。
+当前 `src/api/pricing.ts` 已做 snake_case 映射。`category` / `mediaType` 若后端返回会映射入库，但**页面不再用于筛选**。
 
 建议后端响应字段（snake_case）：
 
@@ -88,10 +70,10 @@ interface PricingItem {
 | `name` | `name` | string | ✅ |
 | `standardPriceUsd` | `standard_price_usd` | number | ✅ USD，最多 3 位小数 |
 | `startingPriceUsd` | `starting_price_usd` | number | ✅ USD |
-| `priceUnit` | `price_unit` | string | ✅ 如 `/s video`、`/Pic`、`/1K tokens`、`/hr` |
+| `priceUnit` | `price_unit` | string | ✅ 枚举：`per_second` \| `per_image` \| `per_million_tokens` \| `per_hour` |
 | `discountPercent` | `discount_percent` | number | 可选，整数百分比 |
-| `category` | `category` | string | ✅ 枚举见上 |
-| `mediaType` | `media_type` | string | ✅ 枚举见上 |
+| `category` | `category` | string | 可选，前端不再筛选 |
+| `mediaType` | `media_type` | string | 可选，前端不再筛选 |
 
 **金额原则：** 与 [`billing-backend-gaps.md`](./billing-backend-gaps.md) 一致，控制台/定价相关接口只暴露 USD，不返回 `credits` 或 `credits_per_second`。
 
@@ -148,7 +130,7 @@ interface PricingItem {
 | 接口 | `GET /api/models`（分页 + 搜索） | `GET /api/pricing`（全量） |
 | 目的 | 浏览、收藏、进入 Playground | 按分类查看标准价/折扣价 |
 | 数据粒度 | 一个模型一条 | 一个定价 SKU 一条（可重复模型名） |
-| 筛选 | 服务端 `q` + 前端 Tab | 前端 `category` + `mediaType` |
+| 筛选 | 服务端 `q` + 前端 Tab | 无（全量展示） |
 
 两页数据有交集（均可跳转模型详情），但**不应强行合并为一个接口**。
 

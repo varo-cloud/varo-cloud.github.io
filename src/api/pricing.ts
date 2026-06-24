@@ -1,5 +1,5 @@
 import { http, unwrap } from './http'
-import type { PricingCategory, PricingItem, PricingMediaType } from '@/types'
+import type { PricingCategory, PricingItem, PricingMediaType, PricingPriceUnit } from '@/types'
 
 interface ApiPricingItem {
   id: string
@@ -7,10 +7,10 @@ interface ApiPricingItem {
   name: string
   standard_price_usd: number
   starting_price_usd: number
-  price_unit: string
+  price_unit: PricingPriceUnit
   discount_percent?: number | null
-  category: PricingCategory
-  media_type: PricingMediaType
+  category?: PricingCategory
+  media_type?: PricingMediaType
 }
 
 function mapPricingItem(raw: ApiPricingItem): PricingItem {
