@@ -69,6 +69,8 @@ export interface UserProfile {
 
 export interface OtpRequestPayload {
   email: string
+  /** Cloudflare Turnstile token from widget — backend field `turnstile_token` */
+  turnstile_token: string
 }
 
 export interface OtpRequestResult {
@@ -78,6 +80,8 @@ export interface OtpRequestResult {
 export interface OtpVerifyPayload {
   email: string
   code: string
+  /** Cloudflare Turnstile token from widget — backend field `turnstile_token` */
+  turnstile_token: string
 }
 
 export interface TokenPair {

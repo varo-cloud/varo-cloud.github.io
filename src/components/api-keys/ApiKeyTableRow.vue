@@ -2,7 +2,7 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import AppIcon from '@/components/common/AppIcon.vue'
-import { formatRelativeTimestamp, formatTimestamp } from '@/utils/time'
+import { formatTimestamp } from '@/utils/time'
 import type { ApiKey } from '@/types'
 
 const props = defineProps<{
@@ -16,12 +16,12 @@ const emit = defineEmits<{
 const { t, locale } = useI18n()
 
 const createdLabel = computed(() =>
-  formatTimestamp(props.item.createdAt, locale.value, 'date'),
+  formatTimestamp(props.item.createdAt, locale.value, 'compactDatetime'),
 )
 
 const lastUsedLabel = computed(() => {
   if (props.item.lastUsedAt == null) return t('pages.apiKeys.neverUsed')
-  return formatRelativeTimestamp(props.item.lastUsedAt, locale.value)
+  return formatTimestamp(props.item.lastUsedAt, locale.value, 'compactDatetime')
 })
 
 const callsSpendLabel = computed(() => {

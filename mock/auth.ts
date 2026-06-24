@@ -90,6 +90,10 @@ function issueTokenPair(userId: string) {
   }
 }
 
+function isValidTurnstileToken(token: string | undefined): boolean {
+  return typeof token === 'string' && token.trim().length > 0
+}
+
 function checkOtpRateLimit(email: string): boolean {
   const now = Date.now()
   const entry = otpRateStore.get(email)
@@ -111,8 +115,12 @@ export default [
   {
     url: '/api/auth/request-otp',
     method: 'post',
-    response: ({ body }: { body: { email?: string } }) => {
+    response: ({ body }: { body: { email?: string; turnstile_token?: string } }) => {
       const email = normalizeEmail(body.email ?? '')
+
+      if (!isValidTurnstileToken(body.turnstile_token)) {
+        return fail('Human verification failed. Please try again.', 400)
+      }
 
       if (!isValidEmail(email)) {
         return fail('Invalid email address', 422)
@@ -138,9 +146,13 @@ export default [
   {
     url: '/api/auth/verify-otp',
     method: 'post',
-    response: ({ body }: { body: { email?: string; code?: string } }) => {
+    response: ({ body }: { body: { email?: string; code?: string; turnstile_token?: string } }) => {
       const email = normalizeEmail(body.email ?? '')
       const code = (body.code ?? '').trim()
+
+      if (!isValidTurnstileToken(body.turnstile_token)) {
+        return fail('Human verification failed. Please try again.', 400)
+      }
 
       if (!isValidEmail(email)) {
         return fail('Invalid email address', 422)

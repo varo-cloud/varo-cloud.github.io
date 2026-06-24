@@ -26,11 +26,13 @@
 ### 注册 / 登录（同一流程）
 
 ```
-1. POST /api/auth/request-otp   { email }            -> 发送 6 位验证码到邮箱
-2. 用户从邮件获取验证码（开发环境下验证码输出到服务器日志）
-3. POST /api/auth/verify-otp    { email, code }      -> 返回 access_token + refresh_token
+1. 用户在登录页完成 Cloudflare Turnstile 人机验证，获得一次性 `turnstile_token`
+2. POST /api/auth/request-otp   { email, turnstile_token }  -> 发送 6 位验证码到邮箱
+3. 用户从邮件获取验证码（开发环境下验证码输出到服务器日志）
+4. 用户再次完成 Turnstile 验证（token 单次有效），获得新的 `turnstile_token`
+5. POST /api/auth/verify-otp    { email, code, turnstile_token }  -> 返回 access_token + refresh_token
    首次登录的邮箱会自动创建账号（初始 credits 余额为 0）
-4. 用 access_token 调用控制台接口（Authorization: Bearer <access_token>）
+6. 用 access_token 调用控制台接口（Authorization: Bearer <access_token>）
 ```
 
 ### 维持会话
@@ -60,8 +62,16 @@ POST /api/auth/logout   { refresh_token }   -> 撤销该 refresh token
 
 **请求体**
 ```json
-{ "email": "user@example.com" }
+{
+  "email": "user@example.com",
+  "turnstile_token": "0.KBtT-rMY9..."
+}
 ```
+
+| 字段 | 类型 | 必填 | 说明 |
+|---|---|---|---|
+| `email` | string | 是 | 用户邮箱 |
+| `turnstile_token` | string | 是 | Cloudflare Turnstile 前端 widget 返回的一次性 token，后端须调用 [Siteverify API](https://developers.cloudflare.com/turnstile/get-started/server-side-validation/) 校验 |
 
 **响应 200**
 ```json
@@ -71,6 +81,7 @@ POST /api/auth/logout   { refresh_token }   -> 撤销该 refresh token
 **错误码**
 | 状态码 | 原因 |
 |---|---|
+| 400 | `turnstile_token` 缺失、无效、已过期或已使用 |
 | 422 | 邮箱格式不合法 |
 | 429 | 请求过于频繁（15 分钟内超过 3 次） |
 
@@ -86,9 +97,16 @@ POST /api/auth/logout   { refresh_token }   -> 撤销该 refresh token
 ```json
 {
   "email": "user@example.com",
-  "code": "123456"
+  "code": "123456",
+  "turnstile_token": "0.KBtT-rMY9..."
 }
 ```
+
+| 字段 | 类型 | 必填 | 说明 |
+|---|---|---|---|
+| `email` | string | 是 | 用户邮箱 |
+| `code` | string | 是 | 6 位验证码 |
+| `turnstile_token` | string | 是 | Cloudflare Turnstile token，须通过 Siteverify 校验 |
 
 **响应 200**
 ```json
@@ -102,7 +120,7 @@ POST /api/auth/logout   { refresh_token }   -> 撤销该 refresh token
 **错误码**
 | 状态码 | 原因 |
 |---|---|
-| 400 | 验证码无效、已过期或错误次数过多 |
+| 400 | 验证码无效、已过期或错误次数过多；或 `turnstile_token` 校验失败 |
 | 422 | 邮箱格式不合法 |
 
 ---
