@@ -11,6 +11,8 @@ import ImageUploaderField from './fields/ImageUploaderField.vue'
 import MultiImageUploaderField from './fields/MultiImageUploaderField.vue'
 import MultiVideoUploaderField from './fields/MultiVideoUploaderField.vue'
 import MultiAudioUploaderField from './fields/MultiAudioUploaderField.vue'
+import VideoUploaderField from './fields/VideoUploaderField.vue'
+import AudioUploaderField from './fields/AudioUploaderField.vue'
 import SelectField from './fields/SelectField.vue'
 import SliderField from './fields/SliderField.vue'
 import SwitchField from './fields/SwitchField.vue'
@@ -59,6 +61,22 @@ function lastImageHint(key: string): string | undefined {
         :description="field.property.description"
         :hint="lastImageHint(field.key)"
         :compact="field.key === 'last_image' || field.key === 'end_image'"
+      />
+
+      <VideoUploaderField
+        v-else-if="field.widget === 'video-uploader'"
+        v-model="model[field.key] as string"
+        :label="field.key"
+        :required="field.required"
+        :description="field.property.description"
+      />
+
+      <AudioUploaderField
+        v-else-if="field.widget === 'audio-uploader'"
+        v-model="model[field.key] as string"
+        :label="field.key"
+        :required="field.required"
+        :description="field.property.description"
       />
 
       <MultiImageUploaderField

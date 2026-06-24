@@ -8,6 +8,8 @@ export type SchemaWidget =
   | 'switch'
   | 'number'
   | 'image-uploader'
+  | 'video-uploader'
+  | 'audio-uploader'
   | 'multi-image-uploader'
   | 'multi-audio-uploader'
   | 'multi-video-uploader'
@@ -37,6 +39,8 @@ export interface InputSchema {
   properties: Record<string, SchemaProperty>
   required?: string[]
   'x-order-properties'?: string[]
+  /** Example output URL shown in Playground before the user runs the model */
+  example_url?: string
 }
 
 export interface ResolvedSchemaField {

@@ -1,5 +1,3 @@
-import type { InputSchema } from './schema'
-
 export type {
   InputSchema,
   SchemaFormValues,
@@ -39,8 +37,6 @@ export interface Model {
 export interface ModelDetail extends Model {
   /** Maps from API field `model_path` */
   modelPath: string
-  /** Maps from API field `input_schema` */
-  inputSchema: InputSchema
   /** Maps from API field `is_hot` */
   isHot?: boolean
   /** Maps from API field `per_run_price_usd` — total USD for default run config */

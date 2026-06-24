@@ -2,16 +2,24 @@
 import { computed, nextTick, onBeforeUnmount, ref, useId, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useLocaleRouter } from '@/composables/useLocaleRouter'
-import { NTooltip } from 'naive-ui'
+import { NTooltip, useMessage } from 'naive-ui'
 import type { InputSchema, SchemaFormValues } from '@/types/schema'
-import { createDefaultFormValues } from '@/utils/schema-form'
+import { createDefaultFormValues, validateSchemaForm } from '@/utils/schema-form'
+import {
+  buildInputViewSnippet,
+  buildJsonSnippet,
+  parseJsonInputDraft,
+  type PlaygroundInputViewMode,
+} from '@/utils/playground-request-snippets'
 import { useUserStore } from '@/stores/user'
+import PlaygroundInputViewSelect from './PlaygroundInputViewSelect.vue'
 import PlaygroundSchemaForm from './PlaygroundSchemaForm.vue'
 
 const BATCH_SIZE_OPTIONS = [1, 2, 3, 4] as const
 
 const props = defineProps<{
   schema?: InputSchema
+  modelPath: string
   priceUsd: number
   originalPriceUsd?: number
   balanceUsd: number
@@ -27,13 +35,27 @@ const emit = defineEmits<{
 const { push } = useLocaleRouter()
 const { t } = useI18n()
 const userStore = useUserStore()
+const message = useMessage()
 
+const inputViewMode = ref<PlaygroundInputViewMode>('form')
 const formValues = ref<SchemaFormValues>(createDefaultFormValues(props.schema))
+const jsonDraft = ref(buildJsonSnippet(props.modelPath, formValues.value))
+const jsonDraftDirty = ref(false)
+const validationError = ref<string | null>(null)
 const batchOpen = ref(false)
 const batchTriggerRef = ref<HTMLElement | null>(null)
 const batchPanelRef = ref<HTMLElement | null>(null)
 const batchPanelStyle = ref({ top: '0px', left: '0px', width: '0px' })
 const batchPanelId = useId()
+
+const isCodeViewMode = computed(() =>
+  inputViewMode.value === 'http' ||
+  inputViewMode.value === 'python' ||
+  inputViewMode.value === 'javascript',
+)
+
+const showResetButton = computed(() => inputViewMode.value === 'form')
+const showRunActions = computed(() => !isCodeViewMode.value)
 
 const totalPriceUsd = computed(() => props.priceUsd * batchSize.value)
 const totalOriginalPriceUsd = computed(() =>
@@ -55,12 +77,104 @@ const isInsufficientBalance = computed(
 
 const isRunDisabled = computed(() => props.generating || isInsufficientBalance.value)
 
+const codeSnippet = computed(() => {
+  if (inputViewMode.value === 'form' || inputViewMode.value === 'json') return ''
+  return buildInputViewSnippet(inputViewMode.value, props.modelPath, formValues.value)
+})
+
+function applyParsedJsonDraft() {
+  const parsed = parseJsonInputDraft(jsonDraft.value)
+  if (!parsed) return false
+
+  formValues.value = parsed.values
+  if (parsed.batchSize != null) {
+    batchSize.value = parsed.batchSize
+  }
+  return true
+}
+
+watch(
+  () => props.schema,
+  (schema) => {
+    formValues.value = createDefaultFormValues(schema)
+    jsonDraftDirty.value = false
+    jsonDraft.value = buildJsonSnippet(props.modelPath, formValues.value)
+    validationError.value = null
+  },
+)
+
+watch(
+  formValues,
+  (values) => {
+    if (inputViewMode.value === 'form' && !jsonDraftDirty.value) {
+      jsonDraft.value = buildJsonSnippet(props.modelPath, values)
+    }
+  },
+  { deep: true },
+)
+
+watch(
+  () => props.modelPath,
+  (modelPath) => {
+    if (!jsonDraftDirty.value) {
+      jsonDraft.value = buildJsonSnippet(modelPath, formValues.value)
+    }
+  },
+)
+
+watch(inputViewMode, (mode, previousMode) => {
+  validationError.value = null
+
+  if (mode === 'json') {
+    if (previousMode === 'form' || !jsonDraftDirty.value) {
+      jsonDraft.value = buildJsonSnippet(props.modelPath, formValues.value)
+      jsonDraftDirty.value = false
+    }
+    return
+  }
+
+  if (previousMode === 'json') {
+    applyParsedJsonDraft()
+  }
+})
+
+function syncFormValuesFromJsonDraft() {
+  if (applyParsedJsonDraft()) {
+    validationError.value = null
+    return true
+  }
+
+  return false
+}
+
+function onJsonDraftInput() {
+  jsonDraftDirty.value = true
+  validationError.value = null
+  applyParsedJsonDraft()
+}
+
 function resetForm() {
   formValues.value = createDefaultFormValues(props.schema)
+  jsonDraftDirty.value = false
+  jsonDraft.value = buildJsonSnippet(props.modelPath, formValues.value)
+  validationError.value = null
 }
 
 function handleRun() {
   if (isRunDisabled.value) return
+
+  if (inputViewMode.value === 'json' && !syncFormValuesFromJsonDraft()) {
+    validationError.value = t('pages.modelDetail.invalidJsonInput')
+    return
+  }
+
+  const missing = validateSchemaForm(props.schema, formValues.value)
+  if (missing.length > 0) {
+    validationError.value = t('pages.modelDetail.requiredFieldsMissing')
+    return
+  }
+  validationError.value = null
+
   if (!userStore.isLoggedIn) {
     push({ name: 'auth' })
     return
@@ -70,6 +184,17 @@ function handleRun() {
 
 function goTopUp() {
   push({ name: 'billing' })
+}
+
+async function copyCodeSnippet() {
+  if (!codeSnippet.value) return
+
+  try {
+    await navigator.clipboard.writeText(codeSnippet.value)
+    message.success(t('pages.modelDetail.codeCopied'))
+  } catch {
+    message.error(t('pages.modelDetail.copyFailed'))
+  }
 }
 
 function updateBatchPanelPosition() {
@@ -125,20 +250,34 @@ onBeforeUnmount(() => {
   <aside class="input-panel">
     <div class="input-panel__header">
       <h2 class="input-panel__title">{{ t('pages.modelDetail.inputTitle') }}</h2>
-      <button type="button" class="input-panel__from">
-        {{ t('pages.modelDetail.from') }}
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-          <path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" />
-        </svg>
-      </button>
+      <PlaygroundInputViewSelect v-model="inputViewMode" />
     </div>
 
     <div class="input-panel__form">
-      <PlaygroundSchemaForm v-model="formValues" :schema="schema" />
+      <PlaygroundSchemaForm
+        v-if="inputViewMode === 'form'"
+        v-model="formValues"
+        :schema="schema"
+      />
+      <textarea
+        v-else-if="inputViewMode === 'json'"
+        v-model="jsonDraft"
+        class="input-panel__json-editor scrollbar-subtle"
+        spellcheck="false"
+        @input="onJsonDraftInput"
+      />
+      <pre v-else class="input-panel__code scrollbar-subtle"><code>{{ codeSnippet }}</code></pre>
+      <p v-if="validationError" class="input-panel__validation-error">{{ validationError }}</p>
     </div>
 
-    <div class="input-panel__actions">
-      <button type="button" class="input-panel__reset" :aria-label="t('pages.modelDetail.reset')" @click="resetForm">
+    <div v-if="showRunActions" class="input-panel__actions">
+      <button
+        v-if="showResetButton"
+        type="button"
+        class="input-panel__reset"
+        :aria-label="t('pages.modelDetail.reset')"
+        @click="resetForm"
+      >
         <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
           <path
             d="M7.4395 7.6435L3.727 11.356L7.6225 15.2515H8.5V15.25H9.379L12.2125 12.4165L7.4395 7.6435V7.6435ZM8.5 6.583L13.273 11.356L15.394 9.23425L10.621 4.46125L8.5 6.583ZM11.5 15.25H16.75V16.75H10L7.0015 16.7515L2.13625 11.8863C1.99565 11.7456 1.91666 11.5549 1.91666 11.356C1.91666 11.1571 1.99565 10.9664 2.13625 10.8258L10.09 2.8705C10.1597 2.80077 10.2424 2.74545 10.3334 2.70771C10.4245 2.66996 10.5221 2.65054 10.6206 2.65054C10.7192 2.65054 10.8168 2.66996 10.9078 2.70771C10.9989 2.74545 11.0816 2.80077 11.1512 2.8705L16.9847 8.704C17.1254 8.84465 17.2043 9.03538 17.2043 9.23425C17.2043 9.43312 17.1254 9.62385 16.9847 9.7645L11.5 15.25Z"
@@ -245,7 +384,13 @@ onBeforeUnmount(() => {
       </Teleport>
     </div>
 
-    <div class="input-panel__balance">
+    <div v-else class="input-panel__actions">
+      <button type="button" class="input-panel__copy" @click="copyCodeSnippet">
+        {{ t('pages.modelDetail.copyCode') }}
+      </button>
+    </div>
+
+    <div v-if="userStore.isLoggedIn && showRunActions" class="input-panel__balance">
       <span>{{ t('pages.modelDetail.balance') }}</span>
       <span class="input-panel__balance-value">${{ balanceUsd.toFixed(2) }}</span>
       <button type="button" class="input-panel__topup" @click="goTopUp">
@@ -280,21 +425,53 @@ onBeforeUnmount(() => {
   color: #ebf4fb;
 }
 
-.input-panel__from {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  padding: 0;
-  border: none;
-  background: none;
-  font-size: 12px;
-  font-weight: 500;
-  color: #ebf4fb;
-  cursor: pointer;
-}
-
 .input-panel__form {
   margin-bottom: 20px;
+}
+
+.input-panel__json-editor,
+.input-panel__code {
+  width: 100%;
+  min-height: 280px;
+  max-height: 520px;
+  margin: 0;
+  padding: 16px;
+  overflow: auto;
+  border: 0.5px solid rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.35);
+  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+  font-size: 12px;
+  line-height: 1.6;
+  color: #c8d6e5;
+  text-align: left;
+  white-space: pre;
+  resize: vertical;
+}
+
+.input-panel__json-editor {
+  display: block;
+  outline: none;
+}
+
+.input-panel__json-editor:focus {
+  border-color: rgba(6, 182, 212, 0.45);
+}
+
+.input-panel__code {
+  white-space: pre-wrap;
+  word-break: break-word;
+  resize: none;
+}
+
+.input-panel__code code {
+  font-family: inherit;
+}
+
+.input-panel__validation-error {
+  margin: 12px 0 0;
+  font-size: 12px;
+  color: #f87171;
 }
 
 .input-panel__actions {
@@ -438,6 +615,29 @@ onBeforeUnmount(() => {
 
 .input-panel__run-batch-chevron--open {
   transform: rotate(180deg);
+}
+
+.input-panel__copy {
+  flex: 1;
+  width: 100%;
+  height: 40px;
+  border: none;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.1);
+  font-family: inherit;
+  font-size: 16px;
+  font-weight: 500;
+  color: #ebf4fb;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.input-panel__copy:hover {
+  background: rgba(255, 255, 255, 0.16);
+}
+
+.input-panel__copy:active {
+  background: rgba(255, 255, 255, 0.22);
 }
 
 .input-panel__balance {

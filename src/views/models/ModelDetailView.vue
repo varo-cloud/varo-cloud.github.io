@@ -5,6 +5,7 @@ import { useI18n } from 'vue-i18n'
 import { useLocaleRouter } from '@/composables/useLocaleRouter'
 import { NSpin } from 'naive-ui'
 import { fetchModelDetail } from '@/api/models'
+import { fetchModelInputSchema } from '@/api/modelSchema'
 import ModelDetailHeader from '@/components/models/ModelDetailHeader.vue'
 import PlaygroundInputPanel from '@/components/playground/PlaygroundInputPanel.vue'
 import PlaygroundOutputPanel from '@/components/playground/PlaygroundOutputPanel.vue'
@@ -12,7 +13,7 @@ import { useUserStore } from '@/stores/user'
 import { useModelPreferencesStore } from '@/stores/modelPreferences'
 import { assetUrl } from '@/utils/assetUrl'
 import type { GenerationStatus, ModelDetail, PlaygroundGenerationResult } from '@/types'
-import type { SchemaFormValues } from '@/types/schema'
+import type { InputSchema, SchemaFormValues } from '@/types/schema'
 
 const route = useRoute()
 const { localePath } = useLocaleRouter()
@@ -21,6 +22,7 @@ const userStore = useUserStore()
 const modelPrefs = useModelPreferencesStore()
 
 const model = ref<ModelDetail | null>(null)
+const inputSchema = ref<InputSchema | null>(null)
 const loading = ref(true)
 const error = ref<string | null>(null)
 const activeTab = ref<'playground' | 'api'>('playground')
@@ -123,15 +125,22 @@ async function loadModel(id: string) {
   loading.value = true
   error.value = null
   resetGeneration()
+  inputSchema.value = null
 
   try {
-    model.value = await fetchModelDetail(id)
-    if (model.value && userStore.isLoggedIn) {
-      modelPrefs.recordVisit(model.value.id)
+    const [detail, schema] = await Promise.all([
+      fetchModelDetail(id),
+      fetchModelInputSchema(id).catch(() => null),
+    ])
+    model.value = detail
+    inputSchema.value = schema
+    if (userStore.isLoggedIn) {
+      modelPrefs.recordVisit(detail.id)
     }
   } catch {
     error.value = t('pages.modelDetail.loadError')
     model.value = null
+    inputSchema.value = null
   } finally {
     loading.value = false
   }
@@ -206,9 +215,10 @@ onUnmounted(() => {
 
       <div v-if="activeTab === 'playground'" class="model-detail-page__playground">
         <PlaygroundInputPanel
-          v-if="model.inputSchema"
+          v-if="inputSchema"
           v-model:batch-size="batchSize"
-          :schema="model.inputSchema"
+          :schema="inputSchema"
+          :model-path="model.modelPath"
           :price-usd="model.perRunPriceUsd ?? model.startingPriceUsd"
           :original-price-usd="
             model.originalPriceUsd != null &&
@@ -221,6 +231,9 @@ onUnmounted(() => {
           :generating="isGenerating"
           @run="handleRun"
         />
+        <div v-else class="model-detail-page__schema-empty">
+          {{ t('pages.modelDetail.schemaUnavailable') }}
+        </div>
         <PlaygroundOutputPanel
           :output-urls="outputUrls"
           :results="generationResults"
@@ -229,6 +242,7 @@ onUnmounted(() => {
           :estimated-seconds="estimatedSeconds"
           :per-run-price-usd="model.perRunPriceUsd ?? model.startingPriceUsd"
           :runs-per-ten-usd="model.runsPerTenUsd"
+          :example-url="inputSchema?.example_url"
         />
       </div>
 
@@ -301,6 +315,19 @@ onUnmounted(() => {
   max-width: 1360px;
   margin: 0 auto;
   align-items: start;
+}
+
+.model-detail-page__schema-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 320px;
+  padding: 24px;
+  background: #13131c;
+  border: 0.5px solid #2d2d38;
+  border-radius: 16px;
+  color: #9b9dab;
+  font-size: 14px;
 }
 
 .model-detail-page__api {

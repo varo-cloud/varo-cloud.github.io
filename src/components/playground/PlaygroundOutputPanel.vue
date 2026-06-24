@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { NTooltip } from 'naive-ui'
 import GenerationStatusDisplay from './GenerationStatusDisplay.vue'
 import type { GenerationStatus, PlaygroundGenerationResult } from '@/types'
+import { resolveMediaPreviewKind } from '@/utils/mediaPreview'
 
 const props = defineProps<{
   outputUrls?: string[]
@@ -13,6 +14,7 @@ const props = defineProps<{
   estimatedSeconds?: number
   perRunPriceUsd?: number
   runsPerTenUsd?: number
+  exampleUrl?: string
 }>()
 
 const { t } = useI18n()
@@ -42,7 +44,17 @@ const showOutput = computed(
   () => props.status === 'completed' && (props.results?.length ?? 0) > 0,
 )
 
-const outputCount = computed(() => props.outputUrls?.length ?? 0)
+const showExample = computed(
+  () => !showOutput.value && !isGenerating.value && Boolean(props.exampleUrl),
+)
+
+const previewUrls = computed(() => {
+  if (showOutput.value) return props.outputUrls ?? []
+  if (showExample.value && props.exampleUrl) return [props.exampleUrl]
+  return []
+})
+
+const outputCount = computed(() => previewUrls.value.length)
 
 const gridClass = computed(() => {
   const count = outputCount.value
@@ -112,20 +124,36 @@ watch(
 
     <div
       class="output-panel__body"
-      :class="{ 'output-panel__body--centered': !showOutput }"
+      :class="{ 'output-panel__body--centered': !showOutput && !showExample && !isGenerating }"
     >
       <div
-        v-if="showOutput && viewMode === 'preview'"
+        v-if="previewUrls.length > 0 && viewMode === 'preview'"
         class="output-panel__grid"
         :class="gridClass"
       >
-        <img
-          v-for="(url, index) in outputUrls"
-          :key="`${url}-${index}`"
-          :src="url"
-          alt=""
-          class="output-panel__preview"
-        />
+        <template v-for="(url, index) in previewUrls" :key="`${url}-${index}`">
+          <video
+            v-if="resolveMediaPreviewKind(url) === 'video'"
+            :src="url"
+            class="output-panel__preview output-panel__preview--video"
+            controls
+            playsinline
+            loop
+            muted
+          />
+          <audio
+            v-else-if="resolveMediaPreviewKind(url) === 'audio'"
+            :src="url"
+            class="output-panel__preview output-panel__preview--audio"
+            controls
+          />
+          <img
+            v-else
+            :src="url"
+            alt=""
+            class="output-panel__preview"
+          />
+        </template>
       </div>
       <pre
         v-else-if="showOutput && viewMode === 'json'"
@@ -255,6 +283,19 @@ watch(
   grid-template-columns: repeat(2, 1fr);
 }
 
+.output-panel__preview--video {
+  width: 100%;
+  max-height: 500px;
+  border-radius: 8px;
+  background: #000;
+}
+
+.output-panel__preview--audio {
+  width: 100%;
+  margin-top: auto;
+  margin-bottom: auto;
+}
+
 .output-panel__preview {
   width: 100%;
   max-height: 500px;
@@ -265,6 +306,12 @@ watch(
 .output-panel__grid--2 .output-panel__preview,
 .output-panel__grid--3 .output-panel__preview,
 .output-panel__grid--4 .output-panel__preview {
+  max-height: 320px;
+}
+
+.output-panel__grid--2 .output-panel__preview--video,
+.output-panel__grid--3 .output-panel__preview--video,
+.output-panel__grid--4 .output-panel__preview--video {
   max-height: 320px;
 }
 

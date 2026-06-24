@@ -6,7 +6,6 @@ import type {
   ModelsPage,
   PricingPriceUnit,
 } from '@/types'
-import type { InputSchema } from '@/types/schema'
 
 interface ApiModel {
   id: string
@@ -25,7 +24,6 @@ interface ApiModel {
 
 interface ApiModelDetail extends ApiModel {
   model_path: string
-  input_schema: InputSchema
   is_hot?: boolean
   per_run_price_usd?: number | null
   runs_per_ten_usd?: number | null
@@ -59,7 +57,6 @@ function mapModelDetail(raw: ApiModelDetail): ModelDetail {
   return {
     ...mapModel(raw),
     modelPath: raw.model_path,
-    inputSchema: raw.input_schema,
     isHot: raw.is_hot,
     perRunPriceUsd: raw.per_run_price_usd ?? undefined,
     runsPerTenUsd: raw.runs_per_ten_usd ?? undefined,
