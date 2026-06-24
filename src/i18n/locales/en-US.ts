@@ -84,6 +84,7 @@ export default {
       insufficientBalance: 'Insufficient balance to run. Please top up your account.',
       schemaUnavailable: 'Input schema is unavailable for this model.',
       requiredFieldsMissing: 'Please fill in all required fields.',
+      fieldRequired: 'This field is required',
       invalidJsonInput: 'Invalid JSON. Please fix the input before running.',
       copyCode: 'Copy',
       codeCopied: 'Copied to clipboard.',

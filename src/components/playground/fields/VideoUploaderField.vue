@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import SchemaFieldLabel from '../SchemaFieldLabel.vue'
+import SchemaFieldError from '../SchemaFieldError.vue'
 import { useMediaUpload } from '@/composables/useMediaUpload'
 
 const model = defineModel<string>({ required: true })
@@ -10,6 +11,8 @@ defineProps<{
   required?: boolean
   description?: string
   showLabel?: boolean
+  invalid?: boolean
+  errorMessage?: string
 }>()
 
 const fileInput = ref<HTMLInputElement | null>(null)
@@ -48,13 +51,14 @@ function clearVideo() {
 </script>
 
 <template>
-  <div class="video-field">
+  <div class="video-field" :class="{ 'video-field--invalid': invalid }">
     <SchemaFieldLabel
       v-if="showLabel !== false && label"
       :label="label"
       :required="required"
       :description="description"
       :counter="model ? '1' : '0'"
+      :invalid="invalid"
     />
 
     <div
@@ -62,6 +66,7 @@ function clearVideo() {
       :class="{
         'video-field__box--dragging': isDragging,
         'video-field__box--uploading': uploading,
+        'video-field__box--invalid': invalid,
       }"
       @dragenter.prevent="isDragging = true"
       @dragover.prevent="isDragging = true"
@@ -126,6 +131,7 @@ function clearVideo() {
         </button>
       </div>
     </div>
+    <SchemaFieldError v-if="invalid && errorMessage" :message="errorMessage" />
   </div>
 </template>
 
@@ -136,6 +142,11 @@ function clearVideo() {
   background: #0a0a0e;
   padding: 8px;
   cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+
+.video-field__box--invalid {
+  border: 1px solid #f87171;
 }
 
 .video-field__box--dragging {

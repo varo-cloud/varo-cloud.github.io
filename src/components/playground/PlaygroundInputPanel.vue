@@ -44,6 +44,8 @@ const inputViewMode = ref<PlaygroundInputViewMode>('form')
 const jsonDraft = ref(buildPlaygroundJsonSnippet(props.modelId, formValues.value, batchSize.value))
 const jsonDraftDirty = ref(false)
 const validationError = ref<string | null>(null)
+const invalidFields = ref<string[]>([])
+const formPanelRef = ref<HTMLElement | null>(null)
 const batchOpen = ref(false)
 const batchTriggerRef = ref<HTMLElement | null>(null)
 const batchPanelRef = ref<HTMLElement | null>(null)
@@ -103,6 +105,7 @@ watch(
     jsonDraftDirty.value = false
     jsonDraft.value = buildPlaygroundJsonSnippet(props.modelId, formValues.value, batchSize.value)
     validationError.value = null
+    invalidFields.value = []
   },
 )
 
@@ -111,6 +114,11 @@ watch(
   (values) => {
     if (inputViewMode.value === 'form' && !jsonDraftDirty.value) {
       jsonDraft.value = buildPlaygroundJsonSnippet(props.modelId, values, batchSize.value)
+    }
+
+    if (invalidFields.value.length > 0) {
+      const stillMissing = new Set(validateSchemaForm(props.schema, values))
+      invalidFields.value = invalidFields.value.filter((key) => stillMissing.has(key))
     }
   },
   { deep: true },
@@ -133,6 +141,7 @@ watch(
 
 watch(inputViewMode, (mode, previousMode) => {
   validationError.value = null
+  invalidFields.value = []
 
   if (mode === 'json') {
     if (previousMode === 'form' || !jsonDraftDirty.value) {
@@ -171,6 +180,13 @@ function resetForm() {
   jsonDraftDirty.value = false
   jsonDraft.value = buildPlaygroundJsonSnippet(props.modelId, formValues.value, batchSize.value)
   validationError.value = null
+  invalidFields.value = []
+}
+
+async function scrollToFirstInvalidField() {
+  await nextTick()
+  const el = formPanelRef.value?.querySelector('[data-invalid-field]')
+  el?.scrollIntoView({ behavior: 'smooth', block: 'center' })
 }
 
 function handleRun() {
@@ -178,15 +194,24 @@ function handleRun() {
 
   if (inputViewMode.value === 'json' && !syncFormValuesFromJsonDraft()) {
     validationError.value = t('pages.modelDetail.invalidJsonInput')
+    invalidFields.value = []
     return
   }
 
   const missing = validateSchemaForm(props.schema, formValues.value)
   if (missing.length > 0) {
-    validationError.value = t('pages.modelDetail.requiredFieldsMissing')
+    if (inputViewMode.value === 'form') {
+      invalidFields.value = missing
+      validationError.value = null
+      scrollToFirstInvalidField()
+    } else {
+      invalidFields.value = []
+      validationError.value = t('pages.modelDetail.requiredFieldsMissing')
+    }
     return
   }
   validationError.value = null
+  invalidFields.value = []
 
   if (!userStore.isLoggedIn) {
     push({ name: 'auth' })
@@ -266,11 +291,12 @@ onBeforeUnmount(() => {
       <PlaygroundInputViewSelect v-model="inputViewMode" />
     </div>
 
-    <div class="input-panel__form">
+    <div ref="formPanelRef" class="input-panel__form">
       <PlaygroundSchemaForm
         v-if="inputViewMode === 'form'"
         v-model="formValues"
         :schema="schema"
+        :invalid-fields="invalidFields"
       />
       <textarea
         v-else-if="inputViewMode === 'json'"

@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, ref } from 'vue'
 import SchemaFieldLabel from '../SchemaFieldLabel.vue'
+import SchemaFieldError from '../SchemaFieldError.vue'
 import { useMediaUpload } from '@/composables/useMediaUpload'
 
 const model = defineModel<string>({ required: true })
@@ -10,6 +11,8 @@ defineProps<{
   required?: boolean
   description?: string
   showLabel?: boolean
+  invalid?: boolean
+  errorMessage?: string
 }>()
 
 const fileInput = ref<HTMLInputElement | null>(null)
@@ -125,13 +128,14 @@ function onProgressClick(event: MouseEvent) {
 </script>
 
 <template>
-  <div class="audio-field">
+  <div class="audio-field" :class="{ 'audio-field--invalid': invalid }">
     <SchemaFieldLabel
       v-if="showLabel !== false && label"
       :label="label"
       :required="required"
       :description="description"
       :counter="model ? '1' : '0'"
+      :invalid="invalid"
     />
 
     <div
@@ -139,6 +143,7 @@ function onProgressClick(event: MouseEvent) {
       :class="{
         'audio-field__box--dragging': isDragging,
         'audio-field__box--uploading': uploading,
+        'audio-field__box--invalid': invalid,
       }"
       @dragenter.prevent="isDragging = true"
       @dragover.prevent="isDragging = true"
@@ -259,6 +264,7 @@ function onProgressClick(event: MouseEvent) {
         </button>
       </div>
     </div>
+    <SchemaFieldError v-if="invalid && errorMessage" :message="errorMessage" />
   </div>
 </template>
 
@@ -269,6 +275,11 @@ function onProgressClick(event: MouseEvent) {
   background: #0a0a0e;
   padding: 8px;
   cursor: pointer;
+  transition: border-color 0.15s ease;
+}
+
+.audio-field__box--invalid {
+  border: 1px solid #f87171;
 }
 
 .audio-field__box--dragging {

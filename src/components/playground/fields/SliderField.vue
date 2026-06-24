@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import SchemaFieldLabel from '../SchemaFieldLabel.vue'
+import SchemaFieldError from '../SchemaFieldError.vue'
 
 const model = defineModel<number>({ required: true })
 
@@ -11,6 +12,8 @@ const props = defineProps<{
   minimum?: number
   maximum?: number
   step?: number
+  invalid?: boolean
+  errorMessage?: string
 }>()
 
 const min = computed(() => props.minimum ?? 0)
@@ -30,6 +33,7 @@ const percent = computed(() => {
       :label="label"
       :required="required"
       :description="description"
+      :invalid="invalid"
     />
 
     <div class="slider-field__control">
@@ -44,8 +48,11 @@ const percent = computed(() => {
           :step="step"
         />
       </div>
-      <div class="slider-field__value">{{ model }}</div>
+      <div class="slider-field__value" :class="{ 'slider-field__value--invalid': invalid }">
+        {{ model }}
+      </div>
     </div>
+    <SchemaFieldError v-if="invalid && errorMessage" :message="errorMessage" />
   </div>
 </template>
 
@@ -116,10 +123,16 @@ const percent = computed(() => {
   display: flex;
   align-items: center;
   justify-content: center;
+  border: 0.5px solid transparent;
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.06);
   font-size: 14px;
   font-weight: 500;
   color: #ebf4fb;
+  transition: border-color 0.15s ease;
+}
+
+.slider-field__value--invalid {
+  border-color: #f87171;
 }
 </style>

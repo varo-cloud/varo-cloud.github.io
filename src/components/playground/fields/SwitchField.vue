@@ -1,15 +1,19 @@
 <script setup lang="ts">
+import SchemaFieldError from '../SchemaFieldError.vue'
+
 const model = defineModel<boolean>({ required: true })
 
 defineProps<{
   label: string
   required?: boolean
   description?: string
+  invalid?: boolean
+  errorMessage?: string
 }>()
 </script>
 
 <template>
-  <div class="switch-field">
+  <div class="switch-field" :class="{ 'switch-field--invalid': invalid }">
     <div class="switch-field__content">
       <div class="switch-field__text">
         <span class="switch-field__label">{{ label }}</span>
@@ -26,6 +30,7 @@ defineProps<{
         <span class="switch-field__knob" />
       </button>
     </div>
+    <SchemaFieldError v-if="invalid && errorMessage" :message="errorMessage" />
   </div>
 </template>
 
@@ -36,6 +41,14 @@ defineProps<{
   justify-content: space-between;
   gap: 16px;
   min-height: 36px;
+  padding: 8px 12px;
+  border: 0.5px solid transparent;
+  border-radius: 8px;
+  transition: border-color 0.15s ease;
+}
+
+.switch-field--invalid .switch-field__content {
+  border-color: #f87171;
 }
 
 .switch-field__label {
@@ -44,6 +57,10 @@ defineProps<{
   font-weight: 500;
   color: #ebf4fb;
   line-height: 14px;
+}
+
+.switch-field--invalid .switch-field__label {
+  color: #f87171;
 }
 
 .switch-field__desc {

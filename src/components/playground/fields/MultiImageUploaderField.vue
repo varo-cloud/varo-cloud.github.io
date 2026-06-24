@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import SchemaFieldLabel from '../SchemaFieldLabel.vue'
+import SchemaFieldError from '../SchemaFieldError.vue'
 import ImageUploaderField from './ImageUploaderField.vue'
 
 const model = defineModel<string[]>({ required: true })
@@ -11,6 +12,8 @@ const props = defineProps<{
   description?: string
   minItems?: number
   maxItems?: number
+  invalid?: boolean
+  errorMessage?: string
 }>()
 
 const maxCount = computed(() => props.maxItems ?? 4)
@@ -50,12 +53,13 @@ function updateSlot(index: number, value: string) {
 </script>
 
 <template>
-  <div class="multi-image-field">
+  <div class="multi-image-field" :class="{ 'multi-image-field--invalid': invalid }">
     <SchemaFieldLabel
       :label="label"
       :required="required"
       :description="description"
       :counter="counter"
+      :invalid="invalid"
     />
 
     <div class="multi-image-field__list">
@@ -69,6 +73,7 @@ function updateSlot(index: number, value: string) {
         @update:model-value="updateSlot(index, $event)"
       />
     </div>
+    <SchemaFieldError v-if="invalid && errorMessage" :message="errorMessage" />
   </div>
 </template>
 

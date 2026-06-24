@@ -9,6 +9,7 @@ const props = withDefaults(
     max?: number
     step?: number
     size?: 'md' | 'sm'
+    invalid?: boolean
   }>(),
   {
     step: 1,
@@ -50,7 +51,10 @@ function onInput(event: Event) {
 </script>
 
 <template>
-  <div class="number-stepper" :class="`number-stepper--${size}`">
+  <div
+    class="number-stepper"
+    :class="[`number-stepper--${size}`, { 'number-stepper--invalid': invalid }]"
+  >
     <input
       :value="model"
       type="number"
@@ -95,9 +99,15 @@ function onInput(event: Event) {
   display: flex;
   align-items: stretch;
   width: 100%;
+  border: 0.5px solid transparent;
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.06);
   overflow: hidden;
+  transition: border-color 0.15s ease;
+}
+
+.number-stepper--invalid {
+  border-color: #f87171;
 }
 
 .number-stepper--md {

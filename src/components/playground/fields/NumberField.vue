@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import SchemaFieldLabel from '../SchemaFieldLabel.vue'
+import SchemaFieldError from '../SchemaFieldError.vue'
 import NumberStepperInput from '@/components/common/NumberStepperInput.vue'
 
 const model = defineModel<number>({ required: true })
@@ -11,6 +12,8 @@ defineProps<{
   minimum?: number
   maximum?: number
   step?: number
+  invalid?: boolean
+  errorMessage?: string
 }>()
 </script>
 
@@ -20,12 +23,15 @@ defineProps<{
       :label="label"
       :required="required"
       :description="description"
+      :invalid="invalid"
     />
     <NumberStepperInput
       v-model="model"
       :min="minimum"
       :max="maximum"
       :step="step ?? 1"
+      :invalid="invalid"
     />
+    <SchemaFieldError v-if="invalid && errorMessage" :message="errorMessage" />
   </div>
 </template>

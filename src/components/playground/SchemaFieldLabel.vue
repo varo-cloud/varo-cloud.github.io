@@ -6,11 +6,12 @@ defineProps<{
   required?: boolean
   description?: string
   counter?: string
+  invalid?: boolean
 }>()
 </script>
 
 <template>
-  <div class="schema-field-label">
+  <div class="schema-field-label" :class="{ 'schema-field-label--invalid': invalid }">
     <div class="schema-field-label__row">
       <span class="schema-field-label__text">
         {{ label }}<span v-if="required" class="schema-field-label__req">*</span>
@@ -52,6 +53,11 @@ defineProps<{
 
 .schema-field-label__req {
   color: #ebf4fb;
+}
+
+.schema-field-label--invalid .schema-field-label__text,
+.schema-field-label--invalid .schema-field-label__req {
+  color: #f87171;
 }
 
 .schema-field-label__info {
