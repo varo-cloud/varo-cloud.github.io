@@ -43,7 +43,7 @@ Body: { "model": "<api_model_id>", "prompt": "...", ...schema fields }
 1. **OpenAI SDK 为一等公民**：外部集成路径以 `/v1/*` + OpenAI Python/JS SDK 为准（与 `rest-api-zh.md` 一致），不仅支持裸 HTTP。
 2. **Playground 走控制台 JWT 路径**：网页内「Run」不强制用户粘贴 API Key；与外部 API 调用共用同一生成管线，但**调用方式必须可区分**（计费统计依赖此字段）。
 3. **输入以 Schema 为准**：Playground 表单字段来自 `GET /api/models/{id}/input-schema`；运行接口应接受 Schema 定义的 `snake_case` 字段集合（或等价 `input` 对象），而非仅 `prompt`。
-4. **金额对外只暴露 USD**：内部 credits 换算规则见 [`billing-backend-gaps.md`](./billing-backend-gaps.md)；Playground 预估价、扣费流水均用 `cost_usd` / `amount_usd`。
+4. **金额对外只暴露 USD**：内部 credits 换算规则见 [`billing-backend-gaps.md`](./billing-backend-gaps.md)；Playground 预估价、扣费流水均用 `cost_usd` / `amount_usd`。预估价通过 [`playground-pricing-backend-gaps.md`](./playground-pricing-backend-gaps.md) 的 Quote 接口按当前 input 计算，**禁止**前端自行套用公式。
 5. **模型双标识**：控制台展示 `model_path`（如 `bytedance/seedance-2.0/text-to-video`）；上游 / OpenAI 列表使用内部 `model` id（如 `dreamina-seedance-2-0-260128`）。后端负责映射。
 6. **路径与媒介类型解耦**：生成接口 URL **不得**包含 `video` / `image` / `audio` 等媒介字眼（如 ~~`/v1/videos/generations`~~）。统一使用 **`POST /v1/generations`**；由请求体 **`model`** 字段决定调用哪个模型及输出类型（视频、图像、音频等均由 Schema 与模型元数据决定）。
 

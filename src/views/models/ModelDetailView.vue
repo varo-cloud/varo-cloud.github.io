@@ -14,6 +14,7 @@ import { useUserStore } from '@/stores/user'
 import { useModelPreferencesStore } from '@/stores/modelPreferences'
 import { assetUrl } from '@/utils/assetUrl'
 import { createDefaultFormValues } from '@/utils/schema-form'
+import { usePlaygroundQuote } from '@/composables/usePlaygroundQuote'
 import type { GenerationStatus, ModelDetail, PlaygroundGenerationResult } from '@/types'
 import type { InputSchema, SchemaFormValues } from '@/types/schema'
 
@@ -42,6 +43,40 @@ const apiModelId = computed(() => {
   if (!model.value) return ''
   return model.value.apiModelId ?? model.value.modelPath.replace(/\//g, '-')
 })
+
+const fallbackUnitCostUsd = computed(() => {
+  if (!model.value) return 0
+  return model.value.perRunPriceUsd ?? model.value.startingPriceUsd ?? 0
+})
+
+const fallbackStandardUnitCostUsd = computed(() => {
+  const current = model.value
+  if (
+    !current ||
+    current.originalPriceUsd == null ||
+    current.perRunPriceUsd == null ||
+    !current.startingPriceUsd
+  ) {
+    return undefined
+  }
+
+  return (current.originalPriceUsd / current.startingPriceUsd) * current.perRunPriceUsd
+})
+
+const playgroundQuote = usePlaygroundQuote({
+  modelId: computed(() => model.value?.id ?? ''),
+  formValues,
+  batchSize,
+  fallbackUnitCostUsd,
+  fallbackStandardUnitCostUsd,
+  enabled: computed(() => Boolean(model.value?.id && inputSchema.value)),
+})
+
+const quoteCostUsd = playgroundQuote.costUsd
+const quoteStandardCostUsd = playgroundQuote.standardCostUsd
+const quoteLoading = playgroundQuote.loading
+const quoteUnitCostUsd = playgroundQuote.unitCostUsd
+const quoteRunsPerTenUsd = playgroundQuote.runsPerTenUsd
 
 const isGenerating = computed(
   () => generationStatus.value === 'queued' || generationStatus.value === 'processing',
@@ -72,9 +107,8 @@ function resetGeneration() {
   generationResults.value = []
 }
 
-function buildGenerationResult(url: string, index: number): PlaygroundGenerationResult {
+function buildGenerationResult(url: string, index: number, unitCostUsd: number): PlaygroundGenerationResult {
   const currentModel = model.value
-  const unitPrice = currentModel?.perRunPriceUsd ?? currentModel?.startingPriceUsd ?? 0
   return {
     id: `gen_${Date.now()}_${index}`,
     object: 'generation',
@@ -86,7 +120,7 @@ function buildGenerationResult(url: string, index: number): PlaygroundGeneration
       url,
     },
     usage: {
-      cost_usd: unitPrice,
+      cost_usd: unitCostUsd,
     },
   }
 }
@@ -122,7 +156,9 @@ function simulateGeneration(count: number) {
           generationStatus.value = 'completed'
           generationProgress.value = 100
           outputUrls.value = urls
-          generationResults.value = urls.map((item, index) => buildGenerationResult(item, index))
+          generationResults.value = urls.map((item, index) =>
+            buildGenerationResult(item, index, quoteUnitCostUsd.value),
+          )
         }, durationMs),
       )
     }, 800),
@@ -233,14 +269,9 @@ onUnmounted(() => {
           :schema="inputSchema"
           :model-id="model.id"
           :api-model-id="apiModelId"
-          :price-usd="model.perRunPriceUsd ?? model.startingPriceUsd"
-          :original-price-usd="
-            model.originalPriceUsd != null &&
-            model.perRunPriceUsd != null &&
-            model.startingPriceUsd
-              ? (model.originalPriceUsd / model.startingPriceUsd) * model.perRunPriceUsd
-              : model.originalPriceUsd
-          "
+          :cost-usd="quoteCostUsd"
+          :standard-cost-usd="quoteStandardCostUsd"
+          :quote-loading="quoteLoading"
           :balance-usd="balanceUsd"
           :generating="isGenerating"
           @run="handleRun"
@@ -254,8 +285,8 @@ onUnmounted(() => {
           :status="generationStatus"
           :progress="generationProgress"
           :estimated-seconds="estimatedSeconds"
-          :per-run-price-usd="model.perRunPriceUsd ?? model.startingPriceUsd"
-          :runs-per-ten-usd="model.runsPerTenUsd"
+          :per-run-price-usd="quoteUnitCostUsd"
+          :runs-per-ten-usd="quoteRunsPerTenUsd"
           :example-url="inputSchema?.example_url"
         />
       </div>

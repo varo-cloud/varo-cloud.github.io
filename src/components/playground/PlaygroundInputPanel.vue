@@ -21,8 +21,9 @@ const props = defineProps<{
   schema?: InputSchema
   modelId: string
   apiModelId: string
-  priceUsd: number
-  originalPriceUsd?: number
+  costUsd: number
+  standardCostUsd?: number
+  quoteLoading?: boolean
   balanceUsd: number
   generating?: boolean
 }>()
@@ -58,14 +59,9 @@ const isCodeViewMode = computed(() =>
 const showResetButton = computed(() => inputViewMode.value === 'form')
 const showRunActions = computed(() => !isCodeViewMode.value)
 
-const totalPriceUsd = computed(() => props.priceUsd * batchSize.value)
-const totalOriginalPriceUsd = computed(() =>
-  props.originalPriceUsd != null ? props.originalPriceUsd * batchSize.value : null,
-)
-
-const formattedPrice = computed(() => `$${totalPriceUsd.value.toFixed(2)}`)
+const formattedPrice = computed(() => `$${props.costUsd.toFixed(2)}`)
 const formattedOriginal = computed(() =>
-  totalOriginalPriceUsd.value != null ? `$${totalOriginalPriceUsd.value.toFixed(2)}` : null,
+  props.standardCostUsd != null ? `$${props.standardCostUsd.toFixed(2)}` : null,
 )
 
 const runLabel = computed(() =>
@@ -73,7 +69,7 @@ const runLabel = computed(() =>
 )
 
 const isInsufficientBalance = computed(
-  () => userStore.isLoggedIn && props.balanceUsd < totalPriceUsd.value,
+  () => userStore.isLoggedIn && props.balanceUsd < props.costUsd,
 )
 
 const isRunDisabled = computed(() => props.generating || isInsufficientBalance.value)
@@ -321,12 +317,13 @@ onBeforeUnmount(() => {
                 @click="handleRun"
               >
                 <span class="input-panel__run-label">{{ runLabel }}</span>
-                <template v-if="userStore.isLoggedIn">
-                  <span class="input-panel__run-price">
-                    {{ formattedPrice }}
-                    <span v-if="formattedOriginal" class="input-panel__run-original">{{ formattedOriginal }}</span>
-                  </span>
-                </template>
+                <span
+                  class="input-panel__run-price"
+                  :class="{ 'input-panel__run-price--loading': quoteLoading }"
+                >
+                  {{ formattedPrice }}
+                  <span v-if="formattedOriginal" class="input-panel__run-original">{{ formattedOriginal }}</span>
+                </span>
               </button>
 
               <template v-if="userStore.isLoggedIn">
@@ -588,6 +585,10 @@ onBeforeUnmount(() => {
 .input-panel__run-price {
   font-size: 16px;
   font-weight: 500;
+}
+
+.input-panel__run-price--loading {
+  opacity: 0.65;
 }
 
 .input-panel__run-original {

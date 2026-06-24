@@ -22,6 +22,8 @@
 
 Playground 与 API Tab **共享同一份 `formValues`**：用户在 Playground 改参数，切到 API Tab 时代码示例自动更新。
 
+**动态计价**见 [`playground-pricing-backend-gaps.md`](./playground-pricing-backend-gaps.md)：Run 按钮价格应通过 `POST /api/models/{id}/quote` 按当前 `input` 实时计算，**不要**仅使用静态 `per_run_price_usd`。
+
 ---
 
 ## 2. `GET /api/models/{id}` 需补充字段

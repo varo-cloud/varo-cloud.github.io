@@ -186,6 +186,10 @@ function toListItem(model: ModelCatalogEntry) {
 
 const models = buildModelCatalog()
 
+export function findCatalogModelById(id: string): ModelCatalogEntry | undefined {
+  return models.find((item) => item.id === id)
+}
+
 function filterModels(query: string) {
   const q = query.trim().toLowerCase()
   if (!q) return models

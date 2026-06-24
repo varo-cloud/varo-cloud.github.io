@@ -286,3 +286,32 @@ export interface PlaygroundGenerationResult {
     cost_usd: number
   }
 }
+
+export type PlaygroundBillingMode =
+  | 'output_duration'
+  | 'input_plus_output_duration'
+  | 'per_image'
+  | 'per_request'
+
+export interface PlaygroundQuoteBreakdown {
+  billing_mode: PlaygroundBillingMode
+  billed_seconds?: number
+  resolution?: string
+  rate_per_second_usd?: number
+  has_reference_videos?: boolean
+}
+
+export interface PlaygroundQuote {
+  cost_usd: number
+  standard_cost_usd?: number
+  discount_percent?: number
+  unit_cost_usd?: number
+  batch_size: number
+  runs_per_ten_usd?: number
+  breakdown?: PlaygroundQuoteBreakdown
+}
+
+export interface PlaygroundQuotePayload {
+  input: Record<string, unknown>
+  batch_size?: number
+}
