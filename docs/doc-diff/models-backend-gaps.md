@@ -17,6 +17,32 @@
 
 ---
 
+## 接口认证一览
+
+| 接口 | 方法 | 认证 | 说明 |
+|---|---|---|---|
+| `/api/models` | GET | **无（公开）** | 模型目录分页列表；未登录可浏览首页「Latest Models」 |
+| `/api/models/batch` | GET | **无（公开）** | 按 ID 批量取卡片字段；收藏/最近 Tab 拉卡片时用，**偏好 ID 仍来自 JWT 接口** |
+| `/api/user/model-preferences` | GET | **JWT** | 拉取当前用户收藏与最近访问 |
+| `/api/models/{model_id}/favourite` | POST | **JWT** | 添加收藏 |
+| `/api/models/{model_id}/favourite` | DELETE | **JWT** | 取消收藏 |
+| `/api/models/{model_id}/visit` | POST | **JWT** | 记录最近访问 |
+
+**JWT 格式：** `Authorization: Bearer <access_token>`（与项目其他控制台接口一致，见 [`rest-api-zh.md`](../api-doc/rest-api-zh.md) 认证方式章节）。
+
+**与原文档差异：** 当前 `rest-api-zh.md` 中 `GET /api/models` 标注为 **JWT 必填**，与前端需求不符；应改为**公开**，仅用户偏好相关 4 个接口保持 JWT。
+
+**未登录时的前端行为：**
+
+| 能力 | 是否可用 |
+|---|---|
+| 浏览 Latest Models、搜索、分页 | ✅ |
+| 查看收藏 / 最近 Tab | ❌（Tab 不展示） |
+| 点击爱心收藏 | ❌（跳转登录页） |
+| 进入模型详情 | ✅（但不调用 `visit`） |
+
+---
+
 ## P0 — 阻塞联调
 
 ### 1. 重写 `GET /api/models`（模型目录列表）
@@ -404,7 +430,8 @@ CREATE INDEX idx_recent_user_visited ON user_model_recent (user_id, visited_at D
 
 ## 联调检查清单
 
-- [ ] `GET /api/models` 公开、支持 `offset` / `limit` / `q`
+- [ ] 认证：`GET /api/models`、`GET /api/models/batch` **公开**；偏好 4 接口 **JWT**
+- [ ] `GET /api/models` 支持 `offset` / `limit` / `q`
 - [ ] 响应分页包装 `{ items, total, offset, limit }`
 - [ ] 列表项含 `starting_price_usd`、`price_unit`（必填枚举）
 - [ ] `standard_price_usd` 可选，用于划线价
