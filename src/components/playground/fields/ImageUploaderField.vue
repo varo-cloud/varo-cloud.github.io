@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import SchemaFieldLabel from '../SchemaFieldLabel.vue'
+import SchemaFieldError from '../SchemaFieldError.vue'
 import { useMediaUpload } from '@/composables/useMediaUpload'
 
 const model = defineModel<string>({ required: true })
@@ -12,6 +13,8 @@ defineProps<{
   hint?: string
   compact?: boolean
   showLabel?: boolean
+  invalid?: boolean
+  errorMessage?: string
 }>()
 
 const fileInput = ref<HTMLInputElement | null>(null)
@@ -37,13 +40,14 @@ function onFileChange(event: Event) {
 </script>
 
 <template>
-  <div class="image-field" :class="{ 'image-field--compact': compact }">
+  <div class="image-field" :class="{ 'image-field--compact': compact, 'image-field--invalid': invalid }">
     <SchemaFieldLabel
       v-if="showLabel !== false"
       :label="label"
       :required="required"
       :description="description"
       :counter="model ? '1' : '0'"
+      :invalid="invalid"
     />
 
     <div
@@ -51,6 +55,7 @@ function onFileChange(event: Event) {
       :class="{
         'image-field__box--compact': compact,
         'image-field__box--uploading': uploading,
+        'image-field__box--invalid': invalid,
       }"
     >
       <div class="image-field__url-row">
@@ -106,6 +111,7 @@ function onFileChange(event: Event) {
     </div>
 
     <p v-if="hint" class="image-field__hint">{{ hint }}</p>
+    <SchemaFieldError v-if="invalid && errorMessage" :message="errorMessage" />
   </div>
 </template>
 
@@ -115,6 +121,11 @@ function onFileChange(event: Event) {
   border-radius: 8px;
   background: #0a0a0e;
   padding: 8px;
+  transition: border-color 0.15s ease;
+}
+
+.image-field__box--invalid {
+  border: 1px solid #f87171;
 }
 
 .image-field__box--compact {

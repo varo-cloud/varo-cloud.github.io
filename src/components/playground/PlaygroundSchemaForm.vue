@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { computed, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
 import type { InputSchema, SchemaFormValues } from '@/types/schema'
 import {
   createDefaultFormValues,
@@ -11,6 +12,8 @@ import ImageUploaderField from './fields/ImageUploaderField.vue'
 import MultiImageUploaderField from './fields/MultiImageUploaderField.vue'
 import MultiVideoUploaderField from './fields/MultiVideoUploaderField.vue'
 import MultiAudioUploaderField from './fields/MultiAudioUploaderField.vue'
+import VideoUploaderField from './fields/VideoUploaderField.vue'
+import AudioUploaderField from './fields/AudioUploaderField.vue'
 import SelectField from './fields/SelectField.vue'
 import SliderField from './fields/SliderField.vue'
 import SwitchField from './fields/SwitchField.vue'
@@ -19,11 +22,18 @@ import SchemaFieldPlaceholder from './fields/SchemaFieldPlaceholder.vue'
 
 const props = defineProps<{
   schema?: InputSchema
+  invalidFields?: string[]
 }>()
 
 const model = defineModel<SchemaFormValues>({ required: true })
+const { t } = useI18n()
 
 const fields = computed(() => resolveSchemaFields(props.schema))
+const fieldErrorMessage = computed(() => t('pages.modelDetail.fieldRequired'))
+
+function isFieldInvalid(key: string): boolean {
+  return props.invalidFields?.includes(key) ?? false
+}
 
 watch(
   () => props.schema,
@@ -41,7 +51,12 @@ function lastImageHint(key: string): string | undefined {
 
 <template>
   <div class="schema-form">
-    <div v-for="field in fields" :key="field.key" class="schema-form__field">
+    <div
+      v-for="field in fields"
+      :key="field.key"
+      class="schema-form__field"
+      :data-invalid-field="isFieldInvalid(field.key) || undefined"
+    >
       <PromptField
         v-if="field.widget === 'textarea'"
         v-model="model[field.key] as string"
@@ -49,6 +64,8 @@ function lastImageHint(key: string): string | undefined {
         :required="field.required"
         :description="field.property.description"
         :rows="field.key === 'prompt' ? 10 : 4"
+        :invalid="isFieldInvalid(field.key)"
+        :error-message="fieldErrorMessage"
       />
 
       <ImageUploaderField
@@ -59,6 +76,28 @@ function lastImageHint(key: string): string | undefined {
         :description="field.property.description"
         :hint="lastImageHint(field.key)"
         :compact="field.key === 'last_image' || field.key === 'end_image'"
+        :invalid="isFieldInvalid(field.key)"
+        :error-message="fieldErrorMessage"
+      />
+
+      <VideoUploaderField
+        v-else-if="field.widget === 'video-uploader'"
+        v-model="model[field.key] as string"
+        :label="field.key"
+        :required="field.required"
+        :description="field.property.description"
+        :invalid="isFieldInvalid(field.key)"
+        :error-message="fieldErrorMessage"
+      />
+
+      <AudioUploaderField
+        v-else-if="field.widget === 'audio-uploader'"
+        v-model="model[field.key] as string"
+        :label="field.key"
+        :required="field.required"
+        :description="field.property.description"
+        :invalid="isFieldInvalid(field.key)"
+        :error-message="fieldErrorMessage"
       />
 
       <MultiImageUploaderField
@@ -69,6 +108,8 @@ function lastImageHint(key: string): string | undefined {
         :description="field.property.description"
         :min-items="field.property.minItems"
         :max-items="field.property.maxItems"
+        :invalid="isFieldInvalid(field.key)"
+        :error-message="fieldErrorMessage"
       />
 
       <SelectField
@@ -78,6 +119,8 @@ function lastImageHint(key: string): string | undefined {
         :required="field.required"
         :description="field.property.description"
         :options="getSelectOptions(field.property)"
+        :invalid="isFieldInvalid(field.key)"
+        :error-message="fieldErrorMessage"
       />
 
       <SliderField
@@ -89,6 +132,8 @@ function lastImageHint(key: string): string | undefined {
         :minimum="field.property.minimum"
         :maximum="field.property.maximum"
         :step="field.property.step"
+        :invalid="isFieldInvalid(field.key)"
+        :error-message="fieldErrorMessage"
       />
 
       <SwitchField
@@ -97,6 +142,8 @@ function lastImageHint(key: string): string | undefined {
         :label="field.key"
         :required="field.required"
         :description="field.property.description"
+        :invalid="isFieldInvalid(field.key)"
+        :error-message="fieldErrorMessage"
       />
 
       <NumberField
@@ -108,6 +155,8 @@ function lastImageHint(key: string): string | undefined {
         :minimum="field.property.minimum"
         :maximum="field.property.maximum"
         :step="field.property.step"
+        :invalid="isFieldInvalid(field.key)"
+        :error-message="fieldErrorMessage"
       />
 
       <MultiAudioUploaderField
@@ -118,6 +167,8 @@ function lastImageHint(key: string): string | undefined {
         :description="field.property.description"
         :min-items="field.property.minItems"
         :max-items="field.property.maxItems"
+        :invalid="isFieldInvalid(field.key)"
+        :error-message="fieldErrorMessage"
       />
 
       <MultiVideoUploaderField
@@ -128,6 +179,8 @@ function lastImageHint(key: string): string | undefined {
         :description="field.property.description"
         :min-items="field.property.minItems"
         :max-items="field.property.maxItems"
+        :invalid="isFieldInvalid(field.key)"
+        :error-message="fieldErrorMessage"
       />
 
       <SchemaFieldPlaceholder
@@ -137,6 +190,8 @@ function lastImageHint(key: string): string | undefined {
         :description="field.property.description"
         widget-name="UnknownWidget"
         :hint="$t('pages.modelDetail.placeholder.unknownWidget')"
+        :invalid="isFieldInvalid(field.key)"
+        :error-message="fieldErrorMessage"
       />
     </div>
   </div>

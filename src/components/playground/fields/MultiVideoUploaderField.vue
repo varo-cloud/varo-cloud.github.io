@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import SchemaFieldLabel from '../SchemaFieldLabel.vue'
+import SchemaFieldError from '../SchemaFieldError.vue'
 import VideoUploaderField from './VideoUploaderField.vue'
 
 const model = defineModel<string[]>({ required: true })
@@ -11,9 +12,11 @@ const props = defineProps<{
   description?: string
   minItems?: number
   maxItems?: number
+  invalid?: boolean
+  errorMessage?: string
 }>()
 
-const maxCount = computed(() => props.maxItems ?? 3)
+const maxCount = computed(() => props.maxItems ?? 4)
 
 const filledCount = computed(() => model.value.filter(Boolean).length)
 
@@ -50,12 +53,13 @@ function updateSlot(index: number, value: string) {
 </script>
 
 <template>
-  <div class="multi-video-field">
+  <div class="multi-video-field" :class="{ 'multi-video-field--invalid': invalid }">
     <SchemaFieldLabel
       :label="label"
       :required="required"
       :description="description"
       :counter="counter"
+      :invalid="invalid"
     />
 
     <div class="multi-video-field__list">
@@ -63,10 +67,12 @@ function updateSlot(index: number, value: string) {
         v-for="(item, index) in slots"
         :key="index"
         :model-value="item"
+        :label="label"
         :show-label="false"
         @update:model-value="updateSlot(index, $event)"
       />
     </div>
+    <SchemaFieldError v-if="invalid && errorMessage" :message="errorMessage" />
   </div>
 </template>
 

@@ -5,14 +5,18 @@ import { useI18n } from 'vue-i18n'
 import { useLocaleRouter } from '@/composables/useLocaleRouter'
 import { NSpin } from 'naive-ui'
 import { fetchModelDetail } from '@/api/models'
+import { fetchModelInputSchema } from '@/api/modelSchema'
 import ModelDetailHeader from '@/components/models/ModelDetailHeader.vue'
+import ModelApiTab from '@/components/models/ModelApiTab.vue'
 import PlaygroundInputPanel from '@/components/playground/PlaygroundInputPanel.vue'
 import PlaygroundOutputPanel from '@/components/playground/PlaygroundOutputPanel.vue'
 import { useUserStore } from '@/stores/user'
 import { useModelPreferencesStore } from '@/stores/modelPreferences'
 import { assetUrl } from '@/utils/assetUrl'
+import { createDefaultFormValues } from '@/utils/schema-form'
+import { usePlaygroundQuote } from '@/composables/usePlaygroundQuote'
 import type { GenerationStatus, ModelDetail, PlaygroundGenerationResult } from '@/types'
-import type { SchemaFormValues } from '@/types/schema'
+import type { InputSchema, SchemaFormValues } from '@/types/schema'
 
 const route = useRoute()
 const { localePath } = useLocaleRouter()
@@ -21,17 +25,58 @@ const userStore = useUserStore()
 const modelPrefs = useModelPreferencesStore()
 
 const model = ref<ModelDetail | null>(null)
+const inputSchema = ref<InputSchema | null>(null)
 const loading = ref(true)
 const error = ref<string | null>(null)
 const activeTab = ref<'playground' | 'api'>('playground')
 const outputUrls = ref<string[]>([])
 const generationResults = ref<PlaygroundGenerationResult[]>([])
 const batchSize = ref(1)
+const formValues = ref<SchemaFormValues>({})
 const generationStatus = ref<GenerationStatus>('idle')
 const generationProgress = ref(0)
 const estimatedSeconds = 40
 
-const creditsBalance = computed(() => userStore.balance ?? 0)
+const balanceUsd = computed(() => userStore.balanceUsd ?? 0)
+
+const apiModelId = computed(() => {
+  if (!model.value) return ''
+  return model.value.apiModelId ?? model.value.modelPath.replace(/\//g, '-')
+})
+
+const fallbackUnitCostUsd = computed(() => {
+  if (!model.value) return 0
+  return model.value.perRunPriceUsd ?? model.value.startingPriceUsd ?? 0
+})
+
+const fallbackStandardUnitCostUsd = computed(() => {
+  const current = model.value
+  if (
+    !current ||
+    current.originalPriceUsd == null ||
+    current.perRunPriceUsd == null ||
+    !current.startingPriceUsd
+  ) {
+    return undefined
+  }
+
+  return (current.originalPriceUsd / current.startingPriceUsd) * current.perRunPriceUsd
+})
+
+const playgroundQuote = usePlaygroundQuote({
+  modelId: computed(() => model.value?.id ?? ''),
+  formValues,
+  batchSize,
+  fallbackUnitCostUsd,
+  fallbackStandardUnitCostUsd,
+  enabled: computed(() => Boolean(model.value?.id && inputSchema.value)),
+})
+
+const quoteCostUsd = playgroundQuote.costUsd
+const quoteStandardCostUsd = playgroundQuote.standardCostUsd
+const quoteLoading = playgroundQuote.loading
+const quoteUnitCostUsd = playgroundQuote.unitCostUsd
+const quoteRunsPerTenUsd = playgroundQuote.runsPerTenUsd
 
 const isGenerating = computed(
   () => generationStatus.value === 'queued' || generationStatus.value === 'processing',
@@ -62,9 +107,8 @@ function resetGeneration() {
   generationResults.value = []
 }
 
-function buildGenerationResult(url: string, index: number): PlaygroundGenerationResult {
+function buildGenerationResult(url: string, index: number, unitCostUsd: number): PlaygroundGenerationResult {
   const currentModel = model.value
-  const unitPrice = currentModel?.perRunPriceUsd ?? currentModel?.startingPriceUsd ?? 0
   return {
     id: `gen_${Date.now()}_${index}`,
     object: 'generation',
@@ -76,7 +120,7 @@ function buildGenerationResult(url: string, index: number): PlaygroundGeneration
       url,
     },
     usage: {
-      cost_usd: unitPrice,
+      cost_usd: unitCostUsd,
     },
   }
 }
@@ -112,26 +156,39 @@ function simulateGeneration(count: number) {
           generationStatus.value = 'completed'
           generationProgress.value = 100
           outputUrls.value = urls
-          generationResults.value = urls.map((item, index) => buildGenerationResult(item, index))
+          generationResults.value = urls.map((item, index) =>
+            buildGenerationResult(item, index, quoteUnitCostUsd.value),
+          )
         }, durationMs),
       )
     }, 800),
   )
 }
 
+watch(inputSchema, (schema) => {
+  formValues.value = createDefaultFormValues(schema ?? undefined)
+})
+
 async function loadModel(id: string) {
   loading.value = true
   error.value = null
   resetGeneration()
+  inputSchema.value = null
 
   try {
-    model.value = await fetchModelDetail(id)
-    if (model.value && userStore.isLoggedIn) {
-      modelPrefs.recordVisit(model.value.id)
+    const [detail, schema] = await Promise.all([
+      fetchModelDetail(id),
+      fetchModelInputSchema(id).catch(() => null),
+    ])
+    model.value = detail
+    inputSchema.value = schema
+    if (userStore.isLoggedIn) {
+      modelPrefs.recordVisit(detail.id)
     }
   } catch {
     error.value = t('pages.modelDetail.loadError')
     model.value = null
+    inputSchema.value = null
   } finally {
     loading.value = false
   }
@@ -206,29 +263,46 @@ onUnmounted(() => {
 
       <div v-if="activeTab === 'playground'" class="model-detail-page__playground">
         <PlaygroundInputPanel
-          v-if="model.inputSchema"
+          v-if="inputSchema"
           v-model:batch-size="batchSize"
-          :schema="model.inputSchema"
-          :price-usd="model.startingPriceUsd"
-          :original-price-usd="model.originalPriceUsd"
-          :credits-usd="creditsBalance"
+          v-model:form-values="formValues"
+          :schema="inputSchema"
+          :model-id="model.id"
+          :api-model-id="apiModelId"
+          :cost-usd="quoteCostUsd"
+          :standard-cost-usd="quoteStandardCostUsd"
+          :quote-loading="quoteLoading"
+          :balance-usd="balanceUsd"
           :generating="isGenerating"
           @run="handleRun"
         />
+        <div v-else class="model-detail-page__schema-empty">
+          {{ t('pages.modelDetail.schemaUnavailable') }}
+        </div>
         <PlaygroundOutputPanel
           :output-urls="outputUrls"
           :results="generationResults"
           :status="generationStatus"
           :progress="generationProgress"
           :estimated-seconds="estimatedSeconds"
-          :per-run-price-usd="model.perRunPriceUsd ?? model.startingPriceUsd"
-          :runs-per-ten-usd="model.runsPerTenUsd"
+          :per-run-price-usd="quoteUnitCostUsd"
+          :runs-per-ten-usd="quoteRunsPerTenUsd"
+          :example-url="inputSchema?.example_url"
         />
       </div>
 
+      <ModelApiTab
+        v-else-if="inputSchema"
+        :schema="inputSchema"
+        :api-model-id="apiModelId"
+        :form-values="formValues"
+        :readme-md="model.readmeMd"
+        :faq="model.faq"
+      />
+
       <div v-else class="model-detail-page__api">
         <p class="model-detail-page__api-placeholder">
-          {{ t('pages.modelDetail.apiPlaceholder') }}
+          {{ t('pages.modelDetail.schemaUnavailable') }}
         </p>
       </div>
     </template>
@@ -297,19 +371,32 @@ onUnmounted(() => {
   align-items: start;
 }
 
+.model-detail-page__schema-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 320px;
+  padding: 24px;
+  background: #13131c;
+  border: 0.5px solid #2d2d38;
+  border-radius: 16px;
+  color: #9b9dab;
+  font-size: 14px;
+}
+
 .model-detail-page__api {
   max-width: 1360px;
   margin: 0 auto;
-  padding: 48px 24px;
-  background: #13131c;
-  border: 0.5px solid rgba(255, 255, 255, 0.1);
-  border-radius: 16px;
 }
 
 .model-detail-page__api-placeholder {
   margin: 0;
+  padding: 48px 24px;
   text-align: center;
   color: #9b9dab;
+  background: #13131c;
+  border: 0.5px solid rgba(255, 255, 255, 0.1);
+  border-radius: 16px;
 }
 
 @media (max-width: 1023px) {

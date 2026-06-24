@@ -10,6 +10,7 @@ const model = defineModel<string | number>({ required: true })
 
 const props = defineProps<{
   options: SelectDropdownOption[]
+  invalid?: boolean
 }>()
 
 const open = ref(false)
@@ -73,7 +74,10 @@ onBeforeUnmount(() => {
 </script>
 
 <template>
-  <div class="select-dropdown" :class="{ 'select-dropdown--open': open }">
+  <div
+    class="select-dropdown"
+    :class="{ 'select-dropdown--open': open, 'select-dropdown--invalid': invalid }"
+  >
     <button
       ref="triggerRef"
       type="button"
@@ -153,7 +157,7 @@ onBeforeUnmount(() => {
   width: 100%;
   height: 40px;
   padding: 0 36px 0 12px;
-  border: none;
+  border: 0.5px solid transparent;
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.06);
   font-family: inherit;
@@ -183,6 +187,10 @@ onBeforeUnmount(() => {
 
 .select-dropdown__chevron--open {
   transform: translateY(-50%) rotate(180deg);
+}
+
+.select-dropdown--invalid .select-dropdown__trigger {
+  border-color: #f87171;
 }
 </style>
 

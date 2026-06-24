@@ -32,10 +32,11 @@ function uploaderAccept(property: SchemaProperty): string {
   return property['x-ui-component-props']?.accept ?? ''
 }
 
-function isImageUploaderField(key: string, property: SchemaProperty): boolean {
-  if (property.type === 'array') return false
-  if (property['x-ui-component'] === 'uploader') return true
-  return property.type === 'string' && IMAGE_FIELD_KEYS.has(key)
+function resolveSingleUploaderWidget(property: SchemaProperty): SchemaWidget {
+  const accept = uploaderAccept(property)
+  if (accept.startsWith('video/')) return 'video-uploader'
+  if (accept.startsWith('audio/')) return 'audio-uploader'
+  return 'image-uploader'
 }
 
 function resolveMultiUploaderWidget(key: string, property: SchemaProperty): SchemaWidget | null {
@@ -57,7 +58,48 @@ function resolveMultiUploaderWidget(key: string, property: SchemaProperty): Sche
   return isUploaders ? 'placeholder' : null
 }
 
+function resolveWidgetFromUiComponent(
+  uiComponent: string | undefined,
+  key: string,
+  property: SchemaProperty,
+): SchemaWidget | null {
+  if (!uiComponent) return null
+
+  switch (uiComponent) {
+    case 'select':
+      return 'select'
+    case 'slider':
+      return 'slider'
+    case 'switch':
+      return 'switch'
+    case 'number':
+      return 'number'
+    case 'textarea':
+      return 'textarea'
+    case 'text':
+      return 'text'
+    case 'uploader':
+      if (property.type === 'array') {
+        return resolveMultiUploaderWidget(key, property) ?? 'placeholder'
+      }
+      return resolveSingleUploaderWidget(property)
+    case 'uploaders':
+      return resolveMultiUploaderWidget(key, property) ?? 'placeholder'
+    default:
+      return null
+  }
+}
+
+function isImageUploaderField(key: string, property: SchemaProperty): boolean {
+  if (property.type === 'array') return false
+  if (property['x-ui-component'] === 'uploader') return true
+  return property.type === 'string' && IMAGE_FIELD_KEYS.has(key)
+}
+
 export function resolveWidget(key: string, property: SchemaProperty): SchemaWidget {
+  const fromUi = resolveWidgetFromUiComponent(property['x-ui-component'], key, property)
+  if (fromUi) return fromUi
+
   const multiUploader = resolveMultiUploaderWidget(key, property)
   if (multiUploader) return multiUploader
   if (isImageUploaderField(key, property)) return 'image-uploader'
@@ -67,14 +109,7 @@ export function resolveWidget(key: string, property: SchemaProperty): SchemaWidg
   if (property.type === 'integer' || property.type === 'number') {
     if (key === 'seed') return 'number'
     if (property.enum?.length) return 'select'
-    if (
-      property.minimum !== undefined &&
-      property.maximum !== undefined &&
-      key === 'duration'
-    ) {
-      return 'number'
-    }
-    if (property.enum?.length || key === 'duration') return 'select'
+    if (property.minimum !== undefined && property.maximum !== undefined) return 'slider'
     return 'number'
   }
 
@@ -134,6 +169,8 @@ function defaultForProperty(key: string, property: SchemaProperty, widget: Schem
     case 'select':
       return property.enum?.[0] ?? ''
     case 'image-uploader':
+    case 'video-uploader':
+    case 'audio-uploader':
       return ''
     case 'multi-image-uploader':
     case 'multi-audio-uploader':
@@ -163,4 +200,34 @@ export function getSelectOptions(property: SchemaProperty): { label: string; val
     label: String(value),
     value,
   }))
+}
+
+export function validateSchemaForm(
+  schema: InputSchema | undefined,
+  values: SchemaFormValues,
+): string[] {
+  if (!schema) return []
+
+  const missing: string[] = []
+
+  for (const field of resolveSchemaFields(schema)) {
+    if (!field.required) continue
+
+    const value = values[field.key]
+    if (value === undefined || value === null) {
+      missing.push(field.key)
+      continue
+    }
+
+    if (typeof value === 'string' && !value.trim()) {
+      missing.push(field.key)
+      continue
+    }
+
+    if (Array.isArray(value) && value.length === 0) {
+      missing.push(field.key)
+    }
+  }
+
+  return missing
 }

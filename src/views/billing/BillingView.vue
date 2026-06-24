@@ -22,6 +22,7 @@ import { useLocaleRouter } from '@/composables/useLocaleRouter'
 import { useUserStore } from '@/stores/user'
 import { downloadCsv } from '@/utils/csv'
 import { assetUrl } from '@/utils/assetUrl'
+import { formatUsd } from '@/utils/currency'
 import { formatTimestamp } from '@/utils/time'
 import type {
   BillingRecord,
@@ -117,14 +118,6 @@ const historyEmpty = computed(() =>
     ? topUpTransactions.value.length === 0
     : billingRecords.value.length === 0,
 )
-
-function formatUsd(value: number) {
-  return `$${value.toFixed(2)}`
-}
-
-function formatCredits(value: number) {
-  return value.toLocaleString()
-}
 
 function packageLabel(id: CreditPackageId) {
   const key = `pages.billing.topUpDetail.packages.${id}`
@@ -473,9 +466,6 @@ onMounted(async () => {
                   />
                   <span class="billing-amount-option__amount">{{ packageLabel(pkg.id) }}</span>
                   <span class="billing-amount-option__price">{{ formatUsd(pkg.priceUsd) }}</span>
-                  <span class="billing-amount-option__hint">
-                    {{ t('pages.billing.creditsLabel', { count: pkg.credits }) }}
-                  </span>
                 </label>
               </div>
 
@@ -524,7 +514,7 @@ onMounted(async () => {
               </label>
 
               <label class="billing-field">
-                <span>{{ t('pages.billing.autoTopUpCredits') }}</span>
+                <span>{{ t('pages.billing.autoTopUpAmount') }}</span>
                 <NumberStepperInput v-model="autoTopUpAmountNumber" :min="1" :step="1" />
                 <span class="billing-field__hint">{{ autoTopUpSummaryLabel }}</span>
               </label>

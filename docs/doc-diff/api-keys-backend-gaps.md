@@ -26,10 +26,12 @@
   "id": "uuid",
   "name": "production",
   "prefix": "sk_live_1f78",
-  "created_at": "2026-06-11T11:56:41Z",
+  "created_at": 1749633401000,
   "is_active": true
 }
 ```
+
+> 时间字段统一为 **13 位 Unix 毫秒时间戳**（JSON `number`），详见 [`backend-global-adjustments.md`](./backend-global-adjustments.md) 第一节。
 
 **原因：** 页面「Name」列与创建弹窗均要求用户为 Key 指定可读名称（如 production / staging），便于区分多个 Key。当前只能用 `prefix` 回退显示，体验不足。
 
@@ -53,7 +55,7 @@
 |---|---|---|
 | `total_calls` | integer | 该 Key 累计 API 调用次数 |
 | `total_spend_credits` | integer | 该 Key 累计消耗 credits（建议用 credits 而非 USD，与计费体系一致） |
-| `last_used_at` | string (ISO8601) \| null | 最后一次使用时间 |
+| `last_used_at` | number (13 位毫秒) \| null | 最后一次使用时间；从未使用为 `null` |
 
 **建议方案 A（推荐）：** 在 `GET /api/api-keys` 列表响应中直接附带上述字段（聚合查询或冗余计数）。
 
@@ -94,15 +96,16 @@
 
 **现状：** `POST` 响应仅 `{ id, key, prefix, created_at }`。
 
-**建议：** 创建响应也返回 `name`，与列表字段一致，避免前端仅依赖本地状态。
+**建议：** 创建响应也返回 `name`，与列表字段一致，避免前端仅依赖本地状态。`created_at` 为 13 位毫秒时间戳。
 
 ---
 
 ## 联调检查清单
 
-- [ ] `GET /api/api-keys` 返回 `prefix`、`created_at`、`is_active`（snake_case）
+- [ ] `GET /api/api-keys` 返回 `prefix`、`created_at`（13 位毫秒）、`is_active`（snake_case）
 - [ ] `POST /api/api-keys` 接受并持久化 `name`
-- [ ] `POST` 响应 `key` 仅返回一次
+- [ ] `POST` 响应 `key` 仅返回一次；`created_at` 为 13 位毫秒
 - [ ] `DELETE /api/api-keys/{id}` 返回 `{ "revoked": true }`
-- [ ] （P1）列表含 `total_calls`、`total_spend_credits`、`last_used_at`
+- [ ] （P1）列表含 `total_calls`、`total_spend_credits`、`last_used_at`（13 位毫秒 \| null）
 - [ ] （P1）明确 revoked Key 是否在列表中返回
+- [ ] 所有时间字段禁止返回 ISO8601 字符串或 10 位秒级时间戳

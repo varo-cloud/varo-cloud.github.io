@@ -7,6 +7,7 @@ import { useUserStore } from '@/stores/user'
 import VaroCloudLogo from '@/components/common/VaroCloudLogo.vue'
 import AppIcon from '@/components/common/AppIcon.vue'
 import { useLocaleRouter } from '@/composables/useLocaleRouter'
+import { formatUsd } from '@/utils/currency'
 import type { LocaleType } from '@/i18n'
 
 const route = useRoute()
@@ -55,7 +56,7 @@ const balanceLabel = computed(() => {
   if (!userStore.isLoggedIn) return null
   const value = userStore.balance
   if (value === null) return '—'
-  return value.toLocaleString()
+  return formatUsd(value)
 })
 
 const userInitial = computed(() => {

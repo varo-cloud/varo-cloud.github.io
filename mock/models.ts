@@ -1,312 +1,100 @@
 import type { MockMethod } from 'vite-plugin-mock'
-import type { ModelDetail } from '../src/types'
-import type { InputSchema } from '../src/types/schema'
+import type { PricingPriceUnit } from '../src/types'
+import { resolveApiModelId, resolveModelDoc } from './model-docs'
 import { success } from './_util'
 
-const seedance20T2vSchema: InputSchema = {
-  type: 'object',
-  required: ['prompt'],
-  'x-order-properties': [
-    'prompt',
-    'reference_images',
-    'reference_videos',
-    'reference_audios',
-    'aspect_ratio',
-    'resolution',
-    'duration',
-    'enable_web_search',
-    'generate_audio',
-  ],
-  properties: {
-    prompt: {
-      type: 'string',
-      description: 'Describe the scene, action, camera movement, and mood for the video.',
-    },
-    reference_images: {
-      type: 'array',
-      description: 'Reference image URLs to guide visual style, characters, or scene composition.',
-      items: { type: 'string' },
-      maxItems: 9,
-      'x-ui-component': 'uploaders',
-      'x-ui-component-props': { accept: 'image/*' },
-    },
-    reference_videos: {
-      type: 'array',
-      description: 'Reference video URLs (total length must not exceed 15 seconds).',
-      items: { type: 'string' },
-      maxItems: 3,
-      'x-ui-component': 'uploaders',
-      'x-ui-component-props': { accept: 'video/*' },
-    },
-    reference_audios: {
-      type: 'array',
-      description: 'Reference audio URLs (total length must not exceed 15 seconds).',
-      items: { type: 'string' },
-      maxItems: 3,
-      'x-ui-component': 'uploaders',
-      'x-ui-component-props': { accept: 'audio/*' },
-    },
-    aspect_ratio: {
-      type: 'string',
-      description: 'The aspect ratio of the generated video.',
-      enum: ['16:9', '9:16', '4:3', '3:4', '1:1', '21:9'],
-      default: '16:9',
-      'x-ui-component': 'select',
-    },
-    resolution: {
-      type: 'string',
-      description: 'The output video resolution.',
-      enum: ['480p', '720p', '1080p'],
-      default: '720p',
-      'x-ui-component': 'select',
-    },
-    duration: {
-      type: 'integer',
-      description: 'The duration of the generated video in seconds (4-15s).',
-      minimum: 4,
-      maximum: 15,
-      step: 1,
-      default: 5,
-      'x-ui-component': 'slider',
-    },
-    enable_web_search: {
-      type: 'boolean',
-      description: 'Enable web search for real-time information.',
-      default: false,
-    },
-    generate_audio: {
-      type: 'boolean',
-      description: 'Whether to generate native audio synchronized with the output video. Defaults to true.',
-      default: true,
-    },
-  },
+interface ModelCatalogEntry {
+  id: string
+  name: string
+  display_name?: string
+  provider: string
+  model_path: string
+  capabilities: string[]
+  starting_price_usd: number
+  standard_price_usd?: number
+  price_unit: PricingPriceUnit
+  per_run_price_usd?: number
+  runs_per_ten_usd?: number
+  price_detail?: string
+  discount_percent?: number
+  is_hot?: boolean
+  description: string
+  thumbnail_url?: string
 }
 
-const seedanceI2vSchema: InputSchema = {
-  type: 'object',
-  required: ['image', 'prompt'],
-  'x-order-properties': [
-    'prompt',
-    'image',
-    'last_image',
-    'reference_images',
-    'aspect_ratio',
-    'duration',
-    'resolution',
-    'generate_audio',
-    'camera_fixed',
-    'seed',
-  ],
-  properties: {
-    prompt: {
-      type: 'string',
-      description: 'The positive prompt for the generation.',
-      default:
-        'Healing-style hand-drawn poster featuring three puppies playing with a ball on lush green grass, adorned with decorative elements such as birds and stars.',
-    },
-    image: {
-      type: 'string',
-      description: 'The starting image for image-to-video generation.',
-      default: 'https://static.wavespeed.ai/examples/567920',
-    },
-    last_image: {
-      type: 'string',
-      description: 'Optional tail frame image.',
-      'x-ui-component': 'uploader',
-    },
-    reference_images: {
-      type: 'array',
-      description: 'Reference images for style guidance.',
-      minItems: 1,
-      maxItems: 3,
-      items: { type: 'string' },
-      'x-ui-component': 'uploaders',
-    },
-    aspect_ratio: {
-      type: 'string',
-      description: 'The aspect ratio of the generated media.',
-      enum: ['21:9', '16:9', '4:3', '1:1', '3:4', '9:16'],
-      default: '16:9',
-      'x-ui-component': 'select',
-    },
-    duration: {
-      type: 'integer',
-      description: 'The duration of the generated media in seconds.',
-      minimum: 4,
-      maximum: 12,
-      step: 1,
-      default: 5,
-    },
-    resolution: {
-      type: 'string',
-      description: 'Video resolution.',
-      enum: ['480p', '720p', '1080p'],
-      default: '720p',
-    },
-    generate_audio: {
-      type: 'boolean',
-      description: 'Whether to generate audio.',
-      default: false,
-    },
-    camera_fixed: {
-      type: 'boolean',
-      description: 'Whether to fix the camera position.',
-      default: false,
-    },
-    seed: {
-      type: 'integer',
-      description: 'The random seed to use for the generation. -1 means random.',
-      default: -1,
-    },
-  },
-}
-
-const seedanceT2vSchema: InputSchema = {
-  type: 'object',
-  required: ['prompt'],
-  'x-order-properties': [
-    'prompt',
-    'aspect_ratio',
-    'duration',
-    'resolution',
-    'generate_audio',
-    'camera_fixed',
-    'seed',
-  ],
-  properties: {
-    prompt: {
-      type: 'string',
-      description: 'The positive prompt for the generation.',
-    },
-    aspect_ratio: {
-      type: 'string',
-      enum: ['21:9', '16:9', '4:3', '1:1', '3:4', '9:16'],
-      default: '16:9',
-    },
-    duration: {
-      type: 'integer',
-      minimum: 4,
-      maximum: 12,
-      step: 1,
-      default: 5,
-    },
-    resolution: {
-      type: 'string',
-      enum: ['480p', '720p', '1080p'],
-      default: '720p',
-    },
-    generate_audio: {
-      type: 'boolean',
-      default: true,
-      description: 'Whether to generate audio.',
-    },
-    camera_fixed: {
-      type: 'boolean',
-      default: false,
-      description: 'Whether to fix the camera position.',
-    },
-    seed: {
-      type: 'integer',
-      default: -1,
-    },
-  },
-}
-
-const klingI2vSchema: InputSchema = {
-  type: 'object',
-  required: ['prompt', 'image'],
-  'x-order-properties': ['prompt', 'image', 'duration', 'aspect_ratio', 'seed'],
-  properties: {
-    prompt: { type: 'string', description: 'Text prompt for generation.' },
-    image: { type: 'string', description: 'Reference image URL.' },
-    duration: {
-      type: 'integer',
-      enum: [5, 10],
-      default: 5,
-      description: 'Video duration in seconds.',
-    },
-    aspect_ratio: {
-      type: 'string',
-      enum: ['16:9', '9:16', '1:1'],
-      default: '16:9',
-    },
-    seed: { type: 'integer', default: -1 },
-  },
-}
-
-const baseModels = [
+const baseModels: ModelCatalogEntry[] = [
   {
     id: 'seedance-i2v',
     name: 'Seedance 2.0 Image-to-Video',
-    displayName: 'Seedance 2.0',
+    display_name: 'Seedance 2.0',
     provider: 'ByteDance',
-    modelPath: 'bytedance/seedance-v1.5-pro/image-to-video',
+    model_path: 'bytedance/seedance-v1.5-pro/image-to-video',
     capabilities: ['image-to-video'],
-    startingPriceUsd: 0.76,
-    originalPriceUsd: 0.89,
-    perRunPriceUsd: 0.15,
-    runsPerTenUsd: 66,
-    priceDetail: '5s · 720p',
-    discountPercent: 30,
-    isHot: true,
+    starting_price_usd: 0.084,
+    standard_price_usd: 0.1,
+    price_unit: 'per_second',
+    per_run_price_usd: 0.42,
+    runs_per_ten_usd: 23,
+    price_detail: '5s · 720p',
+    discount_percent: 16,
+    is_hot: true,
     description:
       'Hollywood-grade cinematic image-to-video generation with native audio sync at 480p or 720p. Animates a starting frame with natural-language motion prompts.',
-    thumbnailUrl: '/assets/model-detail/model-thumb.jpg',
-    inputSchema: seedanceI2vSchema,
+    thumbnail_url: '/assets/model-detail/model-thumb.jpg',
   },
   {
     id: 'seedance-t2v',
     name: 'Seedance 2.0 Text-to-Video',
-    displayName: 'Seedance 2.0',
+    display_name: 'Seedance 2.0',
     provider: 'ByteDance',
-    modelPath: 'bytedance/seedance-2.0/text-to-video',
+    model_path: 'bytedance/seedance-2.0/text-to-video',
     capabilities: ['text-to-video'],
-    startingPriceUsd: 0.6,
-    originalPriceUsd: 0.075,
-    perRunPriceUsd: 0.12,
-    runsPerTenUsd: 83,
-    priceDetail: '5s · 480p',
-    discountPercent: 30,
+    starting_price_usd: 0.072,
+    standard_price_usd: 0.09,
+    price_unit: 'per_second',
+    per_run_price_usd: 0.36,
+    runs_per_ten_usd: 27,
+    price_detail: '5s · 480p',
+    discount_percent: 20,
     description:
       'Hollywood-grade cinematic text-to-video generation with native audio sync. Supports reference images, videos, and audios for style and motion guidance.',
-    thumbnailUrl: '/assets/models/card-thumb.jpg',
-    inputSchema: seedance20T2vSchema,
+    thumbnail_url: '/assets/models/card-thumb.jpg',
   },
   {
     id: 'kling-t2v',
     name: 'Kling Text-to-Video',
-    displayName: 'Kling 2.6',
+    display_name: 'Kling 2.6',
     provider: 'Kuaishou',
-    modelPath: 'kwaivgi/kling-v2.6-pro/text-to-video',
+    model_path: 'kwaivgi/kling-v2.6-pro/text-to-video',
     capabilities: ['text-to-video'],
-    startingPriceUsd: 0.55,
-    originalPriceUsd: 0.07,
-    perRunPriceUsd: 0.11,
-    runsPerTenUsd: 90,
-    priceDetail: '5s · 720p',
-    discountPercent: 30,
+    starting_price_usd: 0.066,
+    standard_price_usd: 0.08,
+    price_unit: 'per_second',
+    per_run_price_usd: 0.33,
+    runs_per_ten_usd: 30,
+    price_detail: '5s · 720p',
+    discount_percent: 18,
     description:
       'High-quality text-to-video generation powered by Kling with cinematic motion control.',
-    thumbnailUrl: '/assets/models/card-thumb.jpg',
-    inputSchema: seedanceT2vSchema,
+    thumbnail_url: '/assets/models/card-thumb.jpg',
   },
   {
     id: 'kling-i2v',
     name: 'Kling Image-to-Video',
-    displayName: 'Kling 2.6',
+    display_name: 'Kling 2.6',
     provider: 'Kuaishou',
-    modelPath: 'kwaivgi/kling-v2.6-pro/image-to-video',
+    model_path: 'kwaivgi/kling-v2.6-pro/image-to-video',
     capabilities: ['image-to-video'],
-    startingPriceUsd: 0.55,
-    originalPriceUsd: 0.07,
-    perRunPriceUsd: 0.11,
-    runsPerTenUsd: 90,
-    priceDetail: '5s · 720p',
-    discountPercent: 30,
+    starting_price_usd: 0.066,
+    standard_price_usd: 0.08,
+    price_unit: 'per_second',
+    per_run_price_usd: 0.33,
+    runs_per_ten_usd: 30,
+    price_detail: '5s · 720p',
+    discount_percent: 18,
     description:
       'Transform reference images into smooth video clips with Kling image-to-video.',
-    thumbnailUrl: '/assets/models/card-thumb.jpg',
-    inputSchema: klingI2vSchema,
+    thumbnail_url: '/assets/models/card-thumb.jpg',
   },
 ]
 
@@ -338,17 +126,15 @@ const VARIANT_TEMPLATES = [
   {
     capability: 'text-to-video' as const,
     suffix: 'Text-to-Video',
-    schema: seedance20T2vSchema,
   },
   {
     capability: 'image-to-video' as const,
     suffix: 'Image-to-Video',
-    schema: seedanceI2vSchema,
   },
 ]
 
-function buildModelCatalog(): ModelDetail[] {
-  const catalog: ModelDetail[] = [...baseModels]
+function buildModelCatalog(): ModelCatalogEntry[] {
+  const catalog: ModelCatalogEntry[] = [...baseModels]
   let index = 0
 
   while (catalog.length < 48) {
@@ -356,28 +142,30 @@ function buildModelCatalog(): ModelDetail[] {
     const family = VARIANT_FAMILIES[index % VARIANT_FAMILIES.length]
     const template = VARIANT_TEMPLATES[index % VARIANT_TEMPLATES.length]
     const variant = Math.floor(index / VARIANT_TEMPLATES.length) % 3
-    const priceBase = 0.4 + (index % 12) * 0.04
-    const perRun = Number((priceBase * 0.2).toFixed(2))
+    const pricePerSecond = Number((0.04 + (index % 12) * 0.004).toFixed(3))
+    const standardPerSecond = Number((pricePerSecond * 1.2).toFixed(3))
+    const duration = 4 + (index % 8)
+    const perRun = Number((pricePerSecond * duration).toFixed(2))
     const slug = family.toLowerCase().replace(/\s+/g, '-').replace(/\./g, '')
 
     catalog.push({
       id: `model-${index + 1}`,
       name: `${family} ${template.suffix}${variant > 0 ? ` v${variant + 1}` : ''}`,
-      displayName: family,
+      display_name: family,
       provider,
-      modelPath: `${provider.toLowerCase()}/${slug}/${template.capability}`,
+      model_path: `${provider.toLowerCase()}/${slug}/${template.capability}`,
       capabilities: [template.capability],
-      startingPriceUsd: Number(priceBase.toFixed(2)),
-      originalPriceUsd: Number((priceBase * 1.2).toFixed(3)),
-      perRunPriceUsd: perRun,
-      runsPerTenUsd: Math.max(1, Math.floor(10 / perRun)),
-      priceDetail: `${4 + (index % 8)}s · ${['480p', '720p', '1080p'][index % 3]}`,
-      ...(index % 4 !== 0 ? { discountPercent: [20, 25, 30][index % 3] } : {}),
-      isHot: index % 7 === 0,
+      starting_price_usd: pricePerSecond,
+      standard_price_usd: standardPerSecond,
+      price_unit: 'per_second',
+      per_run_price_usd: perRun,
+      runs_per_ten_usd: Math.max(1, Math.floor(10 / perRun)),
+      price_detail: `${duration}s · ${['480p', '720p', '1080p'][index % 3]}`,
+      ...(index % 4 !== 0 ? { discount_percent: [20, 25, 30][index % 3] } : {}),
+      is_hot: index % 7 === 0,
       description: `${family} ${template.capability.replace(/-/g, ' ')} generation powered by ${provider}.`,
-      thumbnailUrl:
+      thumbnail_url:
         index % 3 === 0 ? '/assets/model-detail/model-thumb.jpg' : '/assets/models/card-thumb.jpg',
-      inputSchema: template.schema,
     })
     index += 1
   }
@@ -385,14 +173,29 @@ function buildModelCatalog(): ModelDetail[] {
   return catalog
 }
 
+function toListItem(model: ModelCatalogEntry) {
+  const {
+    model_path: _modelPath,
+    is_hot: _isHot,
+    per_run_price_usd: _perRun,
+    runs_per_ten_usd: _runs,
+    ...item
+  } = model
+  return item
+}
+
 const models = buildModelCatalog()
+
+export function findCatalogModelById(id: string): ModelCatalogEntry | undefined {
+  return models.find((item) => item.id === id)
+}
 
 function filterModels(query: string) {
   const q = query.trim().toLowerCase()
   if (!q) return models
 
   return models.filter((model) => {
-    const name = (model.displayName ?? model.name).toLowerCase()
+    const name = (model.display_name ?? model.name).toLowerCase()
     return (
       name.includes(q) ||
       model.provider.toLowerCase().includes(q) ||
@@ -409,10 +212,9 @@ export default [
       const offset = Math.max(0, Number(query.offset) || 0)
       const limit = Math.min(100, Math.max(1, Number(query.limit) || 20))
       const filtered = filterModels(query.q ?? '')
-      const items = filtered.slice(offset, offset + limit)
 
       return success({
-        items,
+        items: filtered.slice(offset, offset + limit).map(toListItem),
         total: filtered.length,
         offset,
         limit,
@@ -426,7 +228,8 @@ export default [
       const ids = (query.ids ?? '').split(',').filter(Boolean)
       const items = ids
         .map((id) => models.find((item) => item.id === id))
-        .filter((item): item is (typeof models)[number] => Boolean(item))
+        .filter((item): item is ModelCatalogEntry => Boolean(item))
+        .map(toListItem)
 
       return success(items)
     },
@@ -439,7 +242,14 @@ export default [
       if (!model) {
         return { code: 404, message: 'Model not found', data: null }
       }
-      return success(model)
+
+      const doc = resolveModelDoc(model.id)
+      return success({
+        ...model,
+        api_model_id: resolveApiModelId(model.id, model.model_path),
+        readme_md: doc.readme_md || null,
+        faq: doc.faq.length > 0 ? doc.faq : null,
+      })
     },
   },
 ] as MockMethod[]

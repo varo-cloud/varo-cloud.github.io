@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import SchemaFieldLabel from '../SchemaFieldLabel.vue'
+import SchemaFieldError from '../SchemaFieldError.vue'
 
 defineProps<{
   label: string
@@ -7,21 +8,25 @@ defineProps<{
   description?: string
   widgetName: string
   hint?: string
+  invalid?: boolean
+  errorMessage?: string
 }>()
 </script>
 
 <template>
-  <div class="schema-placeholder">
+  <div class="schema-placeholder" :class="{ 'schema-placeholder--invalid': invalid }">
     <SchemaFieldLabel
       :label="label"
       :required="required"
       :description="description"
+      :invalid="invalid"
     />
 
-    <div class="schema-placeholder__box">
+    <div class="schema-placeholder__box" :class="{ 'schema-placeholder__box--invalid': invalid }">
       <p class="schema-placeholder__title">{{ widgetName }}</p>
       <p v-if="hint" class="schema-placeholder__hint">{{ hint }}</p>
     </div>
+    <SchemaFieldError v-if="invalid && errorMessage" :message="errorMessage" />
   </div>
 </template>
 
@@ -37,6 +42,11 @@ defineProps<{
   border: 1px dashed rgba(155, 157, 171, 0.45);
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.02);
+  transition: border-color 0.15s ease;
+}
+
+.schema-placeholder__box--invalid {
+  border: 1px solid #f87171;
 }
 
 .schema-placeholder__title {

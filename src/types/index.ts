@@ -1,5 +1,3 @@
-import type { InputSchema } from './schema'
-
 export type {
   InputSchema,
   SchemaFormValues,
@@ -17,23 +15,45 @@ export interface ApiResponse<T> {
 export interface Model {
   id: string
   name: string
+  /** Maps from API field `display_name` */
   displayName?: string
   provider: string
   capabilities: string[]
+  /** Maps from API field `starting_price_usd` — unit rate in USD */
   startingPriceUsd: number
+  /** Maps from API field `standard_price_usd` — strikethrough reference price */
   originalPriceUsd?: number
+  /** Maps from API field `price_unit` */
+  priceUnit: PricingPriceUnit
+  /** Maps from API field `price_detail` — optional run context, e.g. "5s · 720p" */
   priceDetail?: string
+  /** Maps from API field `discount_percent` */
   discountPercent?: number
   description: string
+  /** Maps from API field `thumbnail_url` */
   thumbnailUrl?: string
 }
 
 export interface ModelDetail extends Model {
+  /** Maps from API field `model_path` */
   modelPath: string
-  inputSchema: InputSchema
+  /** Maps from API field `api_model_id` — used in external /v1/generations examples */
+  apiModelId?: string
+  /** Maps from API field `is_hot` */
   isHot?: boolean
+  /** Maps from API field `per_run_price_usd` — total USD for default run config */
   perRunPriceUsd?: number
+  /** Maps from API field `runs_per_ten_usd` */
   runsPerTenUsd?: number
+  /** Maps from API field `readme_md` — model README rendered in API tab */
+  readmeMd?: string
+  /** Maps from API field `faq` */
+  faq?: ModelFaqItem[]
+}
+
+export interface ModelFaqItem {
+  question: string
+  answer: string
 }
 
 export interface ModelsPage {
@@ -63,12 +83,14 @@ export interface UserProfile {
   id: string
   email: string
   name: string
-  /** Credits balance — maps from API field `balance` */
-  balance: number
+  /** USD balance — maps from API field `balance_usd` */
+  balanceUsd: number
 }
 
 export interface OtpRequestPayload {
   email: string
+  /** Cloudflare Turnstile token from widget — backend field `turnstile_token` */
+  turnstile_token: string
 }
 
 export interface OtpRequestResult {
@@ -78,6 +100,8 @@ export interface OtpRequestResult {
 export interface OtpVerifyPayload {
   email: string
   code: string
+  /** Cloudflare Turnstile token from widget — backend field `turnstile_token` */
+  turnstile_token: string
 }
 
 export interface TokenPair {
@@ -104,7 +128,7 @@ export interface ApiKey {
   id: string
   /** User-defined label; maps from API `name` when present, else falls back to `prefix` */
   name: string
-  /** Masked key prefix for display; maps from API `prefix` */
+  /** Masked key for display; `{prefix}******` from API `prefix` */
   keyMasked: string
   /** Unix ms; maps from API `created_at` */
   createdAt: number
@@ -139,7 +163,6 @@ export interface Transaction {
   description: string
   createdAt: number
   status?: TopUpTransactionStatus
-  creditsGranted?: number
   paymentMethod?: PaymentMethodId
   paymentDetail?: string | null
   packageId?: string | null
@@ -175,7 +198,6 @@ export type CreditPackageId = 'starter' | 'pro' | 'business'
 export interface CreditPackage {
   id: CreditPackageId
   priceUsd: number
-  credits: number
 }
 
 export interface CreateCheckoutPayload {
@@ -218,16 +240,25 @@ export type PricingCategory = 'image-video' | 'language' | 'serverless'
 
 export type PricingMediaType = 'video' | 'image' | 'llm'
 
+/** Maps from API field `price_unit` */
+export type PricingPriceUnit = 'per_second' | 'per_image' | 'per_million_tokens' | 'per_hour'
+
 export interface PricingItem {
   id: string
+  /** Maps from API field `model_id` */
   modelId?: string
   name: string
+  /** Maps from API field `standard_price_usd` */
   standardPriceUsd: number
+  /** Maps from API field `starting_price_usd` */
   startingPriceUsd: number
-  priceUnit: string
+  priceUnit: PricingPriceUnit
+  /** Maps from API field `discount_percent` */
   discountPercent?: number
-  category: PricingCategory
-  mediaType: PricingMediaType
+  /** Maps from API field `category` — optional, not used for UI filtering */
+  category?: PricingCategory
+  /** Maps from API field `media_type` — optional, not used for UI filtering */
+  mediaType?: PricingMediaType
 }
 
 export type UploadKind = 'image' | 'video' | 'audio'
@@ -254,4 +285,33 @@ export interface PlaygroundGenerationResult {
   usage?: {
     cost_usd: number
   }
+}
+
+export type PlaygroundBillingMode =
+  | 'output_duration'
+  | 'input_plus_output_duration'
+  | 'per_image'
+  | 'per_request'
+
+export interface PlaygroundQuoteBreakdown {
+  billing_mode: PlaygroundBillingMode
+  billed_seconds?: number
+  resolution?: string
+  rate_per_second_usd?: number
+  has_reference_videos?: boolean
+}
+
+export interface PlaygroundQuote {
+  cost_usd: number
+  standard_cost_usd?: number
+  discount_percent?: number
+  unit_cost_usd?: number
+  batch_size: number
+  runs_per_ten_usd?: number
+  breakdown?: PlaygroundQuoteBreakdown
+}
+
+export interface PlaygroundQuotePayload {
+  input: Record<string, unknown>
+  batch_size?: number
 }

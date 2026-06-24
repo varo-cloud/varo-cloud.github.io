@@ -1,30 +1,36 @@
 <script setup lang="ts">
+import { NTooltip } from 'naive-ui'
+
 defineProps<{
   label: string
   required?: boolean
   description?: string
   counter?: string
+  invalid?: boolean
 }>()
 </script>
 
 <template>
-  <div class="schema-field-label">
+  <div class="schema-field-label" :class="{ 'schema-field-label--invalid': invalid }">
     <div class="schema-field-label__row">
       <span class="schema-field-label__text">
         {{ label }}<span v-if="required" class="schema-field-label__req">*</span>
       </span>
-      <button
-        v-if="description"
-        type="button"
-        class="schema-field-label__info"
-        :title="description"
-        :aria-label="description"
-      >
-        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
-          <circle cx="6" cy="6" r="5" stroke="currentColor" stroke-width="1" />
-          <path d="M6 5.2V8.4M6 3.6V3.7" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" />
-        </svg>
-      </button>
+      <NTooltip v-if="description" trigger="hover" placement="top">
+        <template #trigger>
+          <button
+            type="button"
+            class="schema-field-label__info"
+            :aria-label="description"
+          >
+            <svg width="12" height="12" viewBox="0 0 12 12" fill="none" aria-hidden="true">
+              <circle cx="6" cy="6" r="5" stroke="currentColor" stroke-width="1" />
+              <path d="M6 5.2V8.4M6 3.6V3.7" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" />
+            </svg>
+          </button>
+        </template>
+        {{ description }}
+      </NTooltip>
       <span v-if="counter" class="schema-field-label__counter">{{ counter }}</span>
     </div>
   </div>
@@ -47,6 +53,11 @@ defineProps<{
 
 .schema-field-label__req {
   color: #ebf4fb;
+}
+
+.schema-field-label--invalid .schema-field-label__text,
+.schema-field-label--invalid .schema-field-label__req {
+  color: #f87171;
 }
 
 .schema-field-label__info {

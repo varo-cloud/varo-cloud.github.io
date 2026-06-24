@@ -82,6 +82,11 @@ function ensureHumanVerified(): boolean {
   return false
 }
 
+function resetTurnstile() {
+  turnstileToken.value = null
+  turnstileWidgetRef.value?.reset()
+}
+
 function startResendCooldown(seconds = 60) {
   resendCooldown.value = seconds
   if (resendTimer) clearInterval(resendTimer)
@@ -113,8 +118,13 @@ async function handleRequestOtp() {
   if (!ensureHumanVerified()) return
 
   const value = email.value.trim()
+  const token = turnstileToken.value
   if (!value) {
     error.value = t('pages.auth.emailRequired')
+    return
+  }
+  if (!token) {
+    error.value = t('pages.auth.turnstileRequired')
     return
   }
 
@@ -122,11 +132,13 @@ async function handleRequestOtp() {
   error.value = null
 
   try {
-    await requestOtp({ email: value })
+    await requestOtp({ email: value, turnstile_token: token })
+    resetTurnstile()
     otpCode.value = ''
     startResendCooldown()
     message.success(t('pages.auth.otpSent'))
   } catch (err) {
+    resetTurnstile()
     error.value = resolveErrorMessage(err, t('pages.auth.otpRequestError'))
   } finally {
     loading.value = false
@@ -138,6 +150,7 @@ async function handleLogin() {
 
   const value = email.value.trim()
   const code = otpCode.value.trim()
+  const token = turnstileToken.value
 
   if (!value) {
     error.value = t('pages.auth.emailRequired')
@@ -154,17 +167,23 @@ async function handleLogin() {
     return
   }
 
+  if (!token) {
+    error.value = t('pages.auth.turnstileRequired')
+    return
+  }
+
   loading.value = true
   error.value = null
 
   try {
-    const tokens = await verifyOtp({ email: value, code })
+    const tokens = await verifyOtp({ email: value, code, turnstile_token: token })
     rememberAuthMethod('email')
     userStore.establishSession(tokens)
     await userStore.loadProfile()
     const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : null
     push(redirect || { name: 'models' })
   } catch (err) {
+    resetTurnstile()
     error.value = resolveErrorMessage(err, t('pages.auth.verifyError'))
   } finally {
     loading.value = false
