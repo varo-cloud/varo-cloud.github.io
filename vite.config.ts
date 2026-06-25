@@ -17,8 +17,9 @@ function resolveAuthProxyTarget(env: Record<string, string>): string | null {
 
 export default defineConfig(({ command, mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
-  const authProxyTarget = resolveAuthProxyTarget(env)
-  const useRealAuthApi = Boolean(env.VITE_AUTH_API_BASE_URL?.trim())
+  const isDevServe = command === 'serve'
+  const authProxyTarget = isDevServe ? null : resolveAuthProxyTarget(env)
+  const useRealAuthApi = !isDevServe && Boolean(env.VITE_AUTH_API_BASE_URL?.trim())
 
   return {
     // 正式: /  |  测试 (staging.github.io 仓库): /staging.github.io/

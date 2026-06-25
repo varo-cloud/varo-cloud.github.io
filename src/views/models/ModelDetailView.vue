@@ -78,7 +78,6 @@ const quoteCostUsd = playgroundQuote.costUsd
 const quoteStandardCostUsd = playgroundQuote.standardCostUsd
 const quoteLoading = playgroundQuote.loading
 const quoteUnitCostUsd = playgroundQuote.unitCostUsd
-const quoteRunsPerTenUsd = playgroundQuote.runsPerTenUsd
 
 const isGenerating = computed(
   () => generationStatus.value === 'queued' || generationStatus.value === 'processing',
@@ -287,8 +286,6 @@ onUnmounted(() => {
           :status="generationStatus"
           :progress="generationProgress"
           :estimated-seconds="estimatedSeconds"
-          :per-run-price-usd="userStore.isLoggedIn ? quoteUnitCostUsd : undefined"
-          :runs-per-ten-usd="userStore.isLoggedIn ? quoteRunsPerTenUsd : undefined"
           :example-url="inputSchema?.example_url"
         />
       </div>
