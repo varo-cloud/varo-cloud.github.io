@@ -141,6 +141,11 @@ export default {
         uploading: '上传中…',
         failed: '上传失败，请重试。',
         invalidType: '不支持的文件类型。',
+        recordAudio: '录音',
+        stopRecording: '停止录音',
+        recording: '录音中…',
+        recordFailed: '无法访问麦克风，请检查权限。',
+        recordUnsupported: '当前浏览器不支持录音。',
       },
     },
     apiKeys: {

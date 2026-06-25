@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import SchemaFieldLabel from '../SchemaFieldLabel.vue'
 import SchemaFieldError from '../SchemaFieldError.vue'
+import AppIcon from '@/components/common/AppIcon.vue'
 import { useMediaUpload } from '@/composables/useMediaUpload'
 
 const model = defineModel<string>({ required: true })
@@ -91,12 +92,7 @@ function clearVideo() {
           :disabled="uploading"
           @click.stop="openPicker"
         >
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-            <path
-              d="M4 14l3.5-3.5 2.5 2.5L14 9l2 2v3H4v-1.5zM14 6a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"
-              fill="currentColor"
-            />
-          </svg>
+          <AppIcon name="image-add-line" :size="20" />
         </button>
         <input ref="fileInput" type="file" accept="video/*" hidden @change="onFileChange" />
       </div>

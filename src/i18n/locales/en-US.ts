@@ -142,6 +142,11 @@ export default {
         uploading: 'Uploading…',
         failed: 'Upload failed. Please try again.',
         invalidType: 'Unsupported file type.',
+        recordAudio: 'Record audio',
+        stopRecording: 'Stop recording',
+        recording: 'Recording…',
+        recordFailed: 'Could not access microphone. Please check permissions.',
+        recordUnsupported: 'Audio recording is not supported in this browser.',
       },
     },
     apiKeys: {

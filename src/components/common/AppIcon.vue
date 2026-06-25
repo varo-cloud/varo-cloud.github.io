@@ -12,6 +12,7 @@ const ICONS = {
   key: '/assets/icons/key.svg',
   add: '/assets/icons/add.svg',
   'image-add-line': '/assets/icons/image-add-line.svg',
+  microphone: '/assets/icons/microphone.svg',
   delete: '/assets/icons/delete.svg',
   edit: '/assets/icons/edit.svg',
   copy: '/assets/icons/copy.svg',
