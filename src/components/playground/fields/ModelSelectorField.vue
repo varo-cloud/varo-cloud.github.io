@@ -1,12 +1,15 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, ref, useId, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { NTooltip } from 'naive-ui'
 import AppIcon from '@/components/common/AppIcon.vue'
 import SchemaFieldLabel from '../SchemaFieldLabel.vue'
 
 export type ModelSelectorOption = {
   id: string
   label: string
+  capability?: string
+  description?: string
   isHot?: boolean
   isNew?: boolean
 }
@@ -30,9 +33,27 @@ const selectedOption = computed(() => props.options.find((item) => item.id === m
 
 const selectedLabel = computed(() => selectedOption.value?.label ?? '')
 
-const featuredNewOption = computed(() =>
-  props.options.find((item) => item.isNew && item.id !== model.value),
-)
+// const featuredNewOption = computed(() =>
+//   props.options.find((item) => item.isNew && item.id !== model.value),
+// )
+
+function capabilityLabel(capability?: string): string {
+  if (!capability) return ''
+  const key = `pages.models.capabilityBadge.${capability}`
+  const translated = t(key)
+  return translated === key ? capability : translated
+}
+
+function optionFullLabel(opt: ModelSelectorOption): string {
+  const cap = capabilityLabel(opt.capability)
+  return cap ? `${opt.label} · ${cap}` : opt.label
+}
+
+const selectedCapabilityLabel = computed(() => capabilityLabel(selectedOption.value?.capability))
+
+// const featuredNewOptionLabel = computed(() =>
+//   featuredNewOption.value ? optionFullLabel(featuredNewOption.value) : '',
+// )
 
 function updatePanelPosition() {
   const el = triggerRef.value
@@ -98,6 +119,9 @@ onBeforeUnmount(() => {
       >
         <span class="model-selector__value">
           <span class="model-selector__name">{{ selectedLabel }}</span>
+          <span v-if="selectedCapabilityLabel" class="model-selector__capability">
+            {{ selectedCapabilityLabel }}
+          </span>
           <span v-if="selectedOption?.isHot" class="model-selector__hot">
             {{ t('pages.aiGenerator.hot') }}
           </span>
@@ -121,43 +145,57 @@ onBeforeUnmount(() => {
           :style="panelStyle"
           role="listbox"
         >
-          <button
+          <NTooltip
             v-for="opt in options"
             :key="opt.id"
-            type="button"
-            class="playground-select-panel__option"
-            :class="{ 'playground-select-panel__option--selected': opt.id === model }"
-            role="option"
-            :aria-selected="opt.id === model"
-            @click.stop="selectOption(opt.id)"
+            trigger="hover"
+            placement="right"
+            :disabled="!opt.description"
           >
-            <span class="model-selector__option-label">
-              <span class="model-selector__option-name">{{ opt.label }}</span>
-              <span v-if="opt.isHot" class="model-selector__hot">{{ t('pages.aiGenerator.hot') }}</span>
-              <span v-else-if="opt.isNew" class="model-selector__new">{{ t('pages.aiGenerator.new') }}</span>
-            </span>
-            <svg
-              v-if="opt.id === model"
-              class="playground-select-panel__check"
-              width="14"
-              height="14"
-              viewBox="0 0 14 14"
-              fill="none"
-              aria-hidden="true"
-            >
-              <path
-                d="M2.5 7l3 3 6-6"
-                stroke="currentColor"
-                stroke-width="1.5"
-                stroke-linecap="round"
-                stroke-linejoin="round"
-              />
-            </svg>
-          </button>
+            <template #trigger>
+              <button
+                type="button"
+                class="playground-select-panel__option"
+                :class="{ 'playground-select-panel__option--selected': opt.id === model }"
+                role="option"
+                :aria-selected="opt.id === model"
+                :aria-label="opt.description ? optionFullLabel(opt) : undefined"
+                @click.stop="selectOption(opt.id)"
+              >
+                <span class="model-selector__option-label">
+                  <span class="model-selector__option-name">{{ opt.label }}</span>
+                  <span v-if="capabilityLabel(opt.capability)" class="model-selector__capability">
+                    {{ capabilityLabel(opt.capability) }}
+                  </span>
+                  <span v-if="opt.isHot" class="model-selector__hot">{{ t('pages.aiGenerator.hot') }}</span>
+                  <span v-else-if="opt.isNew" class="model-selector__new">{{ t('pages.aiGenerator.new') }}</span>
+                </span>
+                <svg
+                  v-if="opt.id === model"
+                  class="playground-select-panel__check"
+                  width="14"
+                  height="14"
+                  viewBox="0 0 14 14"
+                  fill="none"
+                  aria-hidden="true"
+                >
+                  <path
+                    d="M2.5 7l3 3 6-6"
+                    stroke="currentColor"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+              </button>
+            </template>
+            <span class="model-selector__tooltip">{{ opt.description }}</span>
+          </NTooltip>
         </div>
       </Teleport>
     </div>
 
+    <!--
     <button
       v-if="featuredNewOption"
       type="button"
@@ -167,9 +205,10 @@ onBeforeUnmount(() => {
     >
       <span class="model-selector__new">{{ t('pages.aiGenerator.new') }}</span>
       <span class="model-selector__new-hint-text">
-        {{ t('pages.aiGenerator.newHint', { model: featuredNewOption.label }) }}
+        {{ t('pages.aiGenerator.newHint', { model: featuredNewOptionLabel }) }}
       </span>
     </button>
+    -->
   </div>
 </template>
 
@@ -223,6 +262,18 @@ onBeforeUnmount(() => {
   white-space: nowrap;
 }
 
+.model-selector__capability {
+  flex-shrink: 0;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.08);
+  font-size: 10px;
+  font-weight: 400;
+  line-height: 14px;
+  color: #9b9dab;
+  white-space: nowrap;
+}
+
 .model-selector__hot {
   flex-shrink: 0;
   padding: 1px 4px;
@@ -245,6 +296,7 @@ onBeforeUnmount(() => {
   color: #fff;
 }
 
+/*
 .model-selector__new-hint {
   display: flex;
   align-items: center;
@@ -277,6 +329,7 @@ onBeforeUnmount(() => {
   line-height: 16px;
   color: #9b9dab;
 }
+*/
 
 .model-selector__chevron {
   position: absolute;
@@ -302,5 +355,19 @@ onBeforeUnmount(() => {
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+}
+
+.model-selector__tooltip {
+  display: block;
+  max-width: 280px;
+  font-size: 12px;
+  line-height: 16px;
+}
+</style>
+
+<style>
+.playground-select-panel .n-tooltip {
+  display: block;
+  width: 100%;
 }
 </style>

@@ -43,6 +43,8 @@ const modelOptions = computed<ModelSelectorOption[]>(() =>
   models.value.map((item) => ({
     id: item.id,
     label: item.displayName ?? item.name,
+    capability: item.capabilities[0],
+    description: item.description,
     isHot: item.isHot,
     isNew: item.isNew,
   })),
