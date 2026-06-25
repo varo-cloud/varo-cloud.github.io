@@ -364,10 +364,3 @@ onBeforeUnmount(() => {
   line-height: 16px;
 }
 </style>
-
-<style>
-.playground-select-panel .n-tooltip {
-  display: block;
-  width: 100%;
-}
-</style>
