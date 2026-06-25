@@ -102,6 +102,8 @@ export default {
       perRun: 'per run',
       apiPlaceholder: 'API documentation and code examples will be available here.',
       apiTab: {
+        codeExample: 'Code Example',
+        submitRequest: 'Submit a request',
         quickStart: 'Quick Start',
         quickStartDesc:
           'Copy ready-to-run examples. Code reflects your current Playground inputs.',

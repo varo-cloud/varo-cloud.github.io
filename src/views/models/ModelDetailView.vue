@@ -297,6 +297,7 @@ onUnmounted(() => {
         v-else-if="inputSchema"
         :schema="inputSchema"
         :api-model-id="apiModelId"
+        :model-name="model.name"
         :form-values="formValues"
         :readme-md="model.readmeMd"
         :faq="model.faq"

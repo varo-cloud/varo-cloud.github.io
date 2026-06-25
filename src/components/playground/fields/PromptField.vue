@@ -1,18 +1,28 @@
 <script setup lang="ts">
+import { nextTick, onMounted, type ComponentPublicInstance } from 'vue'
+import { useAutoHeightTextarea } from '@/composables/useAutoHeightTextarea'
 import SchemaFieldLabel from '../SchemaFieldLabel.vue'
 import SchemaFieldError from '../SchemaFieldError.vue'
 
 const model = defineModel<string>({ required: true })
+const autoHeight = useAutoHeightTextarea(model)
+const { syncHeight, emptyRows } = autoHeight
+
+function bindTextareaRef(el: Element | ComponentPublicInstance | null) {
+  autoHeight.textareaRef.value = el instanceof HTMLTextAreaElement ? el : null
+  if (el instanceof HTMLTextAreaElement) nextTick(syncHeight)
+}
 
 defineProps<{
   label: string
   required?: boolean
   description?: string
   placeholder?: string
-  rows?: number
   invalid?: boolean
   errorMessage?: string
 }>()
+
+onMounted(() => nextTick(syncHeight))
 </script>
 
 <template>
@@ -25,11 +35,13 @@ defineProps<{
     />
     <div class="prompt-field__wrap">
       <textarea
+        :ref="bindTextareaRef"
         v-model="model"
         class="prompt-field__input"
-        :rows="rows ?? 8"
+        :rows="emptyRows"
         :placeholder="placeholder"
         :aria-invalid="invalid || undefined"
+        @input="syncHeight"
       />
     </div>
     <SchemaFieldError v-if="invalid && errorMessage" :message="errorMessage" />
@@ -51,7 +63,7 @@ defineProps<{
 
 .prompt-field__input {
   width: 100%;
-  min-height: 120px;
+  overflow: hidden;
   border: none;
   background: transparent;
   resize: vertical;

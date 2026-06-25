@@ -104,12 +104,12 @@ export function buildPlaygroundJsonSnippet(
 export function buildHttpSnippet(apiModelId: string, values: SchemaFormValues): string {
   const url = resolveCreateGenerationUrl()
   const body = JSON.stringify(buildExternalApiBody(apiModelId, values), null, 2)
+  const escapedBody = body.replace(/'/g, "'\\''")
 
-  return `POST ${url}
-Authorization: Bearer sk_live_...
-Content-Type: application/json
-
-${body}`
+  return `curl -X POST "${url}" \\
+  -H "Authorization: Bearer sk_live_..." \\
+  -H "Content-Type: application/json" \\
+  -d '${escapedBody}'`
 }
 
 function toPythonLiteral(value: unknown, indent = 0): string {

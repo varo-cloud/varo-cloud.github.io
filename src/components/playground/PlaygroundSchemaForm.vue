@@ -63,7 +63,6 @@ function lastImageHint(key: string): string | undefined {
         :label="field.key"
         :required="field.required"
         :description="field.property.description"
-        :rows="field.key === 'prompt' ? 10 : 4"
         :invalid="isFieldInvalid(field.key)"
         :error-message="fieldErrorMessage"
       />

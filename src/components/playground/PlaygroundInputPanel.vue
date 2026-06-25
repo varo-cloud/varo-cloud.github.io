@@ -3,6 +3,10 @@ import { computed, nextTick, onBeforeUnmount, ref, useId, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useLocaleRouter } from '@/composables/useLocaleRouter'
 import { NTooltip, useMessage } from 'naive-ui'
+import AppIcon from '@/components/common/AppIcon.vue'
+import HighlightedCodeBlock from '@/components/common/HighlightedCodeBlock.vue'
+import HighlightedCodeEditor from '@/components/common/HighlightedCodeEditor.vue'
+import type { CodeHighlightLanguage } from '@/utils/code-highlight'
 import type { InputSchema, SchemaFormValues } from '@/types/schema'
 import { createDefaultFormValues, validateSchemaForm } from '@/utils/schema-form'
 import {
@@ -42,6 +46,7 @@ const message = useMessage()
 
 const inputViewMode = ref<PlaygroundInputViewMode>('form')
 const jsonDraft = ref(buildPlaygroundJsonSnippet(props.modelId, formValues.value, batchSize.value))
+const jsonEditorRef = ref<InstanceType<typeof HighlightedCodeEditor> | null>(null)
 const jsonDraftDirty = ref(false)
 const validationError = ref<string | null>(null)
 const invalidFields = ref<string[]>([])
@@ -85,6 +90,12 @@ const codeSnippet = computed(() => {
     formValues.value,
     batchSize.value,
   )
+})
+
+const codeLanguage = computed<CodeHighlightLanguage>(() => {
+  const mode = inputViewMode.value
+  if (mode === 'http' || mode === 'python' || mode === 'javascript') return mode
+  return 'json'
 })
 
 function applyParsedJsonDraft() {
@@ -152,6 +163,7 @@ watch(inputViewMode, (mode, previousMode) => {
       )
       jsonDraftDirty.value = false
     }
+    nextTick(() => jsonEditorRef.value?.syncHeight())
     return
   }
 
@@ -225,11 +237,16 @@ function goTopUp() {
   push({ name: 'billing' })
 }
 
-async function copyCodeSnippet() {
-  if (!codeSnippet.value) return
+const copyableCodeContent = computed(() =>
+  inputViewMode.value === 'json' ? jsonDraft.value : codeSnippet.value,
+)
+
+async function copyCodeContent() {
+  const text = copyableCodeContent.value
+  if (!text) return
 
   try {
-    await navigator.clipboard.writeText(codeSnippet.value)
+    await navigator.clipboard.writeText(text)
     message.success(t('pages.modelDetail.codeCopied'))
   } catch {
     message.error(t('pages.modelDetail.copyFailed'))
@@ -299,14 +316,29 @@ onBeforeUnmount(() => {
         :schema="schema"
         :invalid-fields="invalidFields"
       />
-      <textarea
-        v-else-if="inputViewMode === 'json'"
-        v-model="jsonDraft"
-        class="input-panel__json-editor scrollbar-subtle"
-        spellcheck="false"
-        @input="onJsonDraftInput"
-      />
-      <pre v-else class="input-panel__code scrollbar-subtle"><code>{{ codeSnippet }}</code></pre>
+      <div v-else class="input-panel__code-wrap">
+        <HighlightedCodeEditor
+          v-if="inputViewMode === 'json'"
+          ref="jsonEditorRef"
+          v-model="jsonDraft"
+          language="json"
+          :invalid="Boolean(validationError)"
+          @input="onJsonDraftInput"
+        />
+        <HighlightedCodeBlock
+          v-else
+          :code="codeSnippet"
+          :language="codeLanguage"
+        />
+        <button
+          type="button"
+          class="input-panel__code-copy"
+          :aria-label="t('pages.modelDetail.copyCode')"
+          @click="copyCodeContent"
+        >
+          <AppIcon name="copy" :size="16" />
+        </button>
+      </div>
       <p v-if="validationError" class="input-panel__validation-error">{{ validationError }}</p>
     </div>
 
@@ -426,12 +458,6 @@ onBeforeUnmount(() => {
       </Teleport>
     </div>
 
-    <div v-else class="input-panel__actions">
-      <button type="button" class="input-panel__copy" @click="copyCodeSnippet">
-        {{ t('pages.modelDetail.copyCode') }}
-      </button>
-    </div>
-
     <div v-if="userStore.isLoggedIn && showRunActions" class="input-panel__balance">
       <span>{{ t('pages.modelDetail.balance') }}</span>
       <span class="input-panel__balance-value">${{ balanceUsd.toFixed(2) }}</span>
@@ -471,43 +497,34 @@ onBeforeUnmount(() => {
   margin-bottom: 20px;
 }
 
-.input-panel__json-editor,
-.input-panel__code {
-  width: 100%;
-  min-height: 280px;
-  max-height: 520px;
-  margin: 0;
-  padding: 16px;
-  overflow: auto;
-  border: 0.5px solid rgba(255, 255, 255, 0.08);
-  border-radius: 8px;
-  background: rgba(0, 0, 0, 0.35);
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 12px;
-  line-height: 1.6;
-  color: #c8d6e5;
-  text-align: left;
-  white-space: pre;
-  resize: vertical;
+.input-panel__code-wrap {
+  position: relative;
 }
 
-.input-panel__json-editor {
-  display: block;
-  outline: none;
+.input-panel__code-copy {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 6px;
+  background: rgba(19, 19, 28, 0.85);
+  color: #ebf4fb;
+  cursor: pointer;
+  transition: background 0.15s ease;
 }
 
-.input-panel__json-editor:focus {
-  border-color: rgba(6, 182, 212, 0.45);
+.input-panel__code-copy:hover {
+  background: rgba(19, 19, 28, 0.95);
 }
 
-.input-panel__code {
-  white-space: pre-wrap;
-  word-break: break-word;
-  resize: none;
-}
-
-.input-panel__code code {
-  font-family: inherit;
+.input-panel__code-copy:active {
+  background: rgba(45, 45, 56, 0.95);
 }
 
 .input-panel__validation-error {
@@ -661,29 +678,6 @@ onBeforeUnmount(() => {
 
 .input-panel__run-batch-chevron--open {
   transform: rotate(180deg);
-}
-
-.input-panel__copy {
-  flex: 1;
-  width: 100%;
-  height: 40px;
-  border: none;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.1);
-  font-family: inherit;
-  font-size: 16px;
-  font-weight: 500;
-  color: #ebf4fb;
-  cursor: pointer;
-  transition: background 0.15s ease;
-}
-
-.input-panel__copy:hover {
-  background: rgba(255, 255, 255, 0.16);
-}
-
-.input-panel__copy:active {
-  background: rgba(255, 255, 255, 0.22);
 }
 
 .input-panel__balance {

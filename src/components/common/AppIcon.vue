@@ -14,6 +14,7 @@ const ICONS = {
   'image-add-line': '/assets/icons/image-add-line.svg',
   delete: '/assets/icons/delete.svg',
   edit: '/assets/icons/edit.svg',
+  copy: '/assets/icons/copy.svg',
   'code-box': '/assets/icons/code-box.svg',
   'file-paper': '/assets/icons/file-paper.svg',
   logout: '/assets/icons/logout.svg',

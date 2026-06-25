@@ -102,6 +102,8 @@ export default {
       perRun: 'per run',
       apiPlaceholder: 'API 文档与代码示例将在此提供。',
       apiTab: {
+        codeExample: '代码示例',
+        submitRequest: '提交请求',
         quickStart: '快速开始',
         quickStartDesc: '复制即可运行的示例代码，内容与 Playground 当前输入保持同步。',
         submitHint: '创建任务：{url}',
