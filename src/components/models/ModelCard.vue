@@ -246,7 +246,7 @@ async function toggleFavourite(event: Event) {
   min-width: 0;
   font-size: 16px;
   font-weight: 600;
-  line-height: 16px;
+  line-height: 20px;
   color: #222;
   overflow: hidden;
   text-overflow: ellipsis;
