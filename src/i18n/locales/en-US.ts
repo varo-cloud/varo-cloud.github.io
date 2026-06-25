@@ -112,6 +112,7 @@ export default {
       apiTab: {
         codeExample: 'Code Example',
         submitRequest: 'Submit a request',
+        queryResult: 'Query result',
         quickStart: 'Quick Start',
         quickStartDesc:
           'Copy ready-to-run examples. Code reflects your current Playground inputs.',

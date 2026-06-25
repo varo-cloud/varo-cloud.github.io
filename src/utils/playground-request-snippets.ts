@@ -101,7 +101,7 @@ export function buildPlaygroundJsonSnippet(
   return JSON.stringify(buildPlaygroundRunBody(modelId, values, batchSize), null, 2)
 }
 
-export function buildHttpSnippet(apiModelId: string, values: SchemaFormValues): string {
+export function buildHttpSubmitSnippet(apiModelId: string, values: SchemaFormValues): string {
   const url = resolveCreateGenerationUrl()
   const body = JSON.stringify(buildExternalApiBody(apiModelId, values), null, 2)
   const escapedBody = body.replace(/'/g, "'\\''")
@@ -110,6 +110,35 @@ export function buildHttpSnippet(apiModelId: string, values: SchemaFormValues): 
   -H "Authorization: Bearer sk_live_..." \\
   -H "Content-Type: application/json" \\
   -d '${escapedBody}'`
+}
+
+export function buildHttpPollSnippet(taskId = '{id}'): string {
+  const url = resolveGetGenerationUrl(taskId)
+
+  return `# Poll until status is completed or succeeded
+while true; do
+  response=$(curl -s "${url}" \\
+    -H "Authorization: Bearer sk_live_...")
+  status=$(echo "$response" | jq -r '.status')
+  if [ "$status" = "completed" ] || [ "$status" = "succeeded" ]; then
+    echo "$response" | jq -r '.url // .output.url'
+    break
+  fi
+  if [ "$status" = "failed" ]; then
+    echo "$response" | jq -r '.error.message // "Generation failed"' >&2
+    exit 1
+  fi
+  sleep 5
+done`
+}
+
+export function buildHttpSnippet(apiModelId: string, values: SchemaFormValues): string {
+  return `${buildHttpSubmitSnippet(apiModelId, values)}
+
+# Replace {id} with the task id from the creation response
+TASK_ID="{id}"
+
+${buildHttpPollSnippet('$TASK_ID')}`
 }
 
 function toPythonLiteral(value: unknown, indent = 0): string {
@@ -139,7 +168,7 @@ function toPythonLiteral(value: unknown, indent = 0): string {
   return JSON.stringify(value)
 }
 
-export function buildPythonSnippet(apiModelId: string, values: SchemaFormValues): string {
+export function buildPythonSubmitSnippet(apiModelId: string, values: SchemaFormValues): string {
   const baseUrl = resolveV1BaseUrl()
   const body = toPythonLiteral(buildExternalApiBody(apiModelId, values))
 
@@ -152,8 +181,11 @@ client = OpenAI(api_key=API_KEY, base_url="${baseUrl}")
 body = ${body}
 
 generation = client.post("/generations", body=body, cast_to=dict)
-task_id = generation["id"]
+task_id = generation["id"]`
+}
 
+export function buildPythonPollSnippet(): string {
+  return `# Poll until the task completes
 while True:
     status = client.get(f"/generations/{task_id}", cast_to=dict)
     if status["status"] in ("completed", "succeeded"):
@@ -164,7 +196,13 @@ while True:
     time.sleep(5)`
 }
 
-export function buildJavaScriptSnippet(apiModelId: string, values: SchemaFormValues): string {
+export function buildPythonSnippet(apiModelId: string, values: SchemaFormValues): string {
+  return `${buildPythonSubmitSnippet(apiModelId, values)}
+
+${buildPythonPollSnippet()}`
+}
+
+export function buildJavaScriptSubmitSnippet(apiModelId: string, values: SchemaFormValues): string {
   const baseUrl = resolveV1BaseUrl()
   const body = JSON.stringify(buildExternalApiBody(apiModelId, values), null, 2)
     .split('\n')
@@ -180,8 +218,11 @@ const client = new OpenAI({
 
 const generation = await client.post("/generations", {
   body: ${body},
-});
+});`
+}
 
+export function buildJavaScriptPollSnippet(): string {
+  return `// Poll until the task completes
 let status = generation;
 while (status.status === "queued" || status.status === "processing" || status.status === "running") {
   await new Promise((resolve) => setTimeout(resolve, 5000));
@@ -191,6 +232,50 @@ while (status.status === "queued" || status.status === "processing" || status.st
 if (status.status === "completed" || status.status === "succeeded") {
   console.log(status.url ?? status.output?.url);
 }`
+}
+
+export function buildJavaScriptSnippet(apiModelId: string, values: SchemaFormValues): string {
+  return `${buildJavaScriptSubmitSnippet(apiModelId, values)}
+
+${buildJavaScriptPollSnippet()}`
+}
+
+function buildApiSubmitSnippetForMode(
+  mode: ApiCodeViewMode,
+  apiModelId: string,
+  values: SchemaFormValues,
+): string {
+  switch (mode) {
+    case 'http':
+      return buildHttpSubmitSnippet(apiModelId, values)
+    case 'python':
+      return buildPythonSubmitSnippet(apiModelId, values)
+    case 'javascript':
+      return buildJavaScriptSubmitSnippet(apiModelId, values)
+  }
+}
+
+function buildApiPollSnippetForMode(mode: ApiCodeViewMode): string {
+  switch (mode) {
+    case 'http':
+      return buildHttpPollSnippet()
+    case 'python':
+      return buildPythonPollSnippet()
+    case 'javascript':
+      return buildJavaScriptPollSnippet()
+  }
+}
+
+export function buildApiSubmitSnippet(
+  mode: ApiCodeViewMode,
+  apiModelId: string,
+  values: SchemaFormValues,
+): string {
+  return buildApiSubmitSnippetForMode(mode, apiModelId, values)
+}
+
+export function buildApiPollSnippet(mode: ApiCodeViewMode): string {
+  return buildApiPollSnippetForMode(mode)
 }
 
 export function buildInputViewSnippet(
@@ -212,6 +297,7 @@ export function buildInputViewSnippet(
   }
 }
 
+/** @deprecated Use buildApiSubmitSnippet + buildApiPollSnippet */
 export function buildApiCodeSnippet(
   mode: ApiCodeViewMode,
   apiModelId: string,

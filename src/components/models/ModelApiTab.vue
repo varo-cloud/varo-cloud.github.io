@@ -9,7 +9,8 @@ import type { InputSchema, SchemaFormValues } from '@/types/schema'
 import type { CodeHighlightLanguage } from '@/utils/code-highlight'
 import {
   API_CODE_VIEW_MODES,
-  buildApiCodeSnippet,
+  buildApiPollSnippet,
+  buildApiSubmitSnippet,
   resolveCreateGenerationUrl,
   resolveGetGenerationUrl,
   type ApiCodeViewMode,
@@ -17,7 +18,7 @@ import {
 import { buildSchemaParameterRows } from '@/utils/schema-api-docs'
 import ModelMarkdown from './ModelMarkdown.vue'
 
-type ApiSectionId = 'quick-start' | 'parameters' | 'readme' | 'faq'
+type ApiSectionId = 'quick-start' | 'query-result' | 'parameters' | 'readme' | 'faq'
 
 const props = defineProps<{
   schema?: InputSchema
@@ -37,9 +38,11 @@ const activeSection = ref<ApiSectionId>('quick-start')
 
 const parameterRows = computed(() => buildSchemaParameterRows(props.schema))
 
-const codeSnippet = computed(() =>
-  buildApiCodeSnippet(codeViewMode.value, props.apiModelId, props.formValues),
+const submitCodeSnippet = computed(() =>
+  buildApiSubmitSnippet(codeViewMode.value, props.apiModelId, props.formValues),
 )
+
+const pollCodeSnippet = computed(() => buildApiPollSnippet(codeViewMode.value))
 
 const codeLanguage = computed<CodeHighlightLanguage>(() => {
   if (codeViewMode.value === 'http') return 'http'
@@ -67,7 +70,10 @@ const navSections = computed(() => {
     {
       id: 'quick-start',
       label: t('pages.modelDetail.apiTab.quickStart'),
-      children: [{ id: 'quick-start', label: t('pages.modelDetail.apiTab.submitRequest') }],
+      children: [
+        { id: 'quick-start', label: t('pages.modelDetail.apiTab.submitRequest') },
+        { id: 'query-result', label: t('pages.modelDetail.apiTab.queryResult') },
+      ],
     },
   ]
 
@@ -124,8 +130,11 @@ onMounted(() => {
     )
 
     for (const section of navSections.value) {
-      const el = document.getElementById(`api-section-${section.id}`)
-      if (el) sectionObserver.observe(el)
+      const targets = [section, ...(section.children ?? [])]
+      for (const target of targets) {
+        const el = document.getElementById(`api-section-${target.id}`)
+        if (el) sectionObserver.observe(el)
+      }
     }
   })
 })
@@ -146,21 +155,27 @@ onBeforeUnmount(() => {
           <button
             type="button"
             class="model-api-tab__nav-item"
-            :class="{ 'model-api-tab__nav-item--active': activeSection === section.id }"
+            :class="{
+              'model-api-tab__nav-item--active':
+                activeSection === section.id ||
+                section.children?.some((child) => child.id === activeSection),
+            }"
             @click="scrollToSection(section.id)"
           >
             {{ index + 1 }}. {{ section.label }}
           </button>
-          <button
-            v-for="child in section.children"
-            :key="`${section.id}-${child.id}`"
-            type="button"
-            class="model-api-tab__nav-subitem"
-            :class="{ 'model-api-tab__nav-subitem--active': activeSection === child.id }"
-            @click="scrollToSection(child.id)"
-          >
-            {{ child.label }}
-          </button>
+          <div v-if="section.children?.length" class="model-api-tab__nav-subitems">
+            <button
+              v-for="child in section.children"
+              :key="`${section.id}-${child.id}`"
+              type="button"
+              class="model-api-tab__nav-subitem"
+              :class="{ 'model-api-tab__nav-subitem--active': activeSection === child.id }"
+              @click="scrollToSection(child.id)"
+            >
+              {{ child.label }}
+            </button>
+          </div>
         </div>
       </nav>
     </aside>
@@ -189,30 +204,48 @@ onBeforeUnmount(() => {
 
       <div class="model-api-tab__divider" aria-hidden="true" />
 
-      <section :id="`api-section-quick-start`" class="model-api-tab__section">
+      <section class="model-api-tab__section">
         <h2 class="model-api-tab__section-title">
           1. {{ t('pages.modelDetail.apiTab.quickStart') }}
         </h2>
-        <h3 class="model-api-tab__subsection-title">{{ t('pages.modelDetail.apiTab.submitRequest') }}</h3>
-        <p class="model-api-tab__text">
-          {{ t('pages.modelDetail.apiTab.submitHint', { url: resolveCreateGenerationUrl() }) }}
-        </p>
+        <div :id="`api-section-quick-start`" class="model-api-tab__subsection">
+          <h3 class="model-api-tab__subsection-title">{{ t('pages.modelDetail.apiTab.submitRequest') }}</h3>
+          <p class="model-api-tab__text">
+            {{ t('pages.modelDetail.apiTab.submitHint', { url: resolveCreateGenerationUrl() }) }}
+          </p>
 
-        <div class="model-api-tab__code-wrap">
-          <HighlightedCodeBlock :code="codeSnippet" :language="codeLanguage" />
-          <button
-            type="button"
-            class="model-api-tab__code-copy"
-            :aria-label="t('pages.modelDetail.copyCode')"
-            @click="copyText(codeSnippet)"
-          >
-            <AppIcon name="copy" :size="16" />
-          </button>
+          <div class="model-api-tab__code-wrap">
+            <HighlightedCodeBlock :code="submitCodeSnippet" :language="codeLanguage" />
+            <button
+              type="button"
+              class="model-api-tab__code-copy"
+              :aria-label="t('pages.modelDetail.copyCode')"
+              @click="copyText(submitCodeSnippet)"
+            >
+              <AppIcon name="copy" :size="16" />
+            </button>
+          </div>
         </div>
 
-        <p class="model-api-tab__text">
-          {{ t('pages.modelDetail.apiTab.pollHint', { url: pollUrl }) }}
-        </p>
+        <div :id="`api-section-query-result`" class="model-api-tab__subsection">
+          <h3 class="model-api-tab__subsection-title">{{ t('pages.modelDetail.apiTab.queryResult') }}</h3>
+          <p class="model-api-tab__text">
+            {{ t('pages.modelDetail.apiTab.pollHint', { url: pollUrl }) }}
+          </p>
+
+          <div class="model-api-tab__code-wrap">
+            <HighlightedCodeBlock :code="pollCodeSnippet" :language="codeLanguage" />
+            <button
+              type="button"
+              class="model-api-tab__code-copy"
+              :aria-label="t('pages.modelDetail.copyCode')"
+              @click="copyText(pollCodeSnippet)"
+            >
+              <AppIcon name="copy" :size="16" />
+            </button>
+          </div>
+        </div>
+
         <p class="model-api-tab__text model-api-tab__text--accent">
           {{ t('pages.modelDetail.apiTab.syncHint') }}
         </p>
@@ -345,7 +378,14 @@ onBeforeUnmount(() => {
 .model-api-tab__nav-group {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 8px;
+}
+
+.model-api-tab__nav-subitems {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-left: 16px;
 }
 
 .model-api-tab__nav-item,
@@ -364,27 +404,42 @@ onBeforeUnmount(() => {
   font-size: 14px;
   font-weight: 500;
   line-height: 20px;
-  color: #ebf4fb;
+  color: #9b9dab;
 }
 
 .model-api-tab__nav-item--active {
   color: #06b6d4;
 }
 
+.model-api-tab__nav-item:hover:not(.model-api-tab__nav-item--active) {
+  color: #ebf4fb;
+}
+
+.model-api-tab__nav-item--active:hover {
+  color: #22d3ee;
+}
+
 .model-api-tab__nav-subitem {
-  padding-left: 12px;
+  padding: 2px 0;
   font-size: 12px;
   font-weight: 500;
-  line-height: 12px;
+  line-height: 16px;
   color: #9b9dab;
+}
+
+.model-api-tab__nav-group:has(.model-api-tab__nav-item--active) .model-api-tab__nav-subitem:not(.model-api-tab__nav-subitem--active) {
+  color: #c4c8d4;
 }
 
 .model-api-tab__nav-subitem--active {
   color: #ebf4fb;
 }
 
-.model-api-tab__nav-item:hover,
-.model-api-tab__nav-subitem:hover {
+.model-api-tab__nav-subitem:hover:not(.model-api-tab__nav-subitem--active) {
+  color: #d8dce6;
+}
+
+.model-api-tab__nav-subitem--active:hover {
   color: #ebf4fb;
 }
 
@@ -474,6 +529,14 @@ onBeforeUnmount(() => {
   font-weight: 500;
   line-height: 18px;
   color: #ebf4fb;
+}
+
+.model-api-tab__subsection {
+  margin-bottom: 24px;
+}
+
+.model-api-tab__subsection:last-of-type {
+  margin-bottom: 16px;
 }
 
 .model-api-tab__text {

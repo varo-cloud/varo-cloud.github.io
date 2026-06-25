@@ -112,6 +112,7 @@ export default {
       apiTab: {
         codeExample: '代码示例',
         submitRequest: '提交请求',
+        queryResult: '查询结果',
         quickStart: '快速开始',
         quickStartDesc: '复制即可运行的示例代码，内容与 Playground 当前输入保持同步。',
         submitHint: '创建任务：{url}',
