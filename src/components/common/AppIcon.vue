@@ -11,6 +11,7 @@ const ICONS = {
   close: '/assets/icons/close.svg',
   key: '/assets/icons/key.svg',
   add: '/assets/icons/add.svg',
+  'image-add-line': '/assets/icons/image-add-line.svg',
   delete: '/assets/icons/delete.svg',
   edit: '/assets/icons/edit.svg',
   'code-box': '/assets/icons/code-box.svg',
