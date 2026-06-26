@@ -26,7 +26,7 @@ const iconByType: Record<Exclude<AppMessageType, 'loading'>, AppIconName> = {
 <template>
   <div class="app-toast" :class="variantClass" role="alert">
     <span class="app-toast__icon" aria-hidden="true">
-      <AppIcon v-if="type !== 'loading'" :name="iconByType[type]" :size="16" />
+      <AppIcon v-if="type !== 'loading'" colored :name="iconByType[type]" :size="16" />
       <span v-else class="app-toast__spinner" />
     </span>
 
@@ -81,7 +81,7 @@ const iconByType: Record<Exclude<AppMessageType, 'loading'>, AppIconName> = {
   padding: 0;
   border: 0;
   background: transparent;
-  color: inherit;
+  color: var(--text-secondary);
   opacity: 0.72;
   cursor: pointer;
 }
@@ -101,22 +101,22 @@ const iconByType: Record<Exclude<AppMessageType, 'loading'>, AppIconName> = {
 
 .app-toast--success {
   background: rgba(0, 187, 131, 0.1);
-  color: #00bb83;
+  color: var(--text-primary);
 }
 
 .app-toast--error {
-  background: rgba(242, 72, 75, 0.1);
-  color: #f2484b;
+  background: rgba(223, 28, 65, 0.1);
+  color: var(--text-primary);
 }
 
 .app-toast--warning {
-  background: rgba(255, 152, 0, 0.1);
-  color: #ff9800;
+  background: rgba(242, 123, 44, 0.1);
+  color: var(--text-primary);
 }
 
 .app-toast--info {
-  background: rgba(6, 182, 212, 0.1);
-  color: #06b6d4;
+  background: rgba(55, 93, 251, 0.1);
+  color: var(--text-primary);
 }
 
 .app-toast--loading {

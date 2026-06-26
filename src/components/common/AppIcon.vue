@@ -38,9 +38,12 @@ const props = withDefaults(
   defineProps<{
     name: AppIconName
     size?: number
+    /** 保留 SVG 原始配色（用于 Toast 等多色图标） */
+    colored?: boolean
   }>(),
   {
     size: 16,
+    colored: false,
   },
 )
 
@@ -48,7 +51,17 @@ const iconUrl = computed(() => assetUrl(ICONS[props.name]))
 </script>
 
 <template>
+  <img
+    v-if="colored"
+    class="app-icon app-icon--colored"
+    :src="iconUrl"
+    :width="size"
+    :height="size"
+    alt=""
+    aria-hidden="true"
+  />
   <span
+    v-else
     class="app-icon"
     :style="{
       width: `${props.size}px`,
@@ -71,5 +84,10 @@ const iconUrl = computed(() => assetUrl(ICONS[props.name]))
   mask-size: contain;
   mask-repeat: no-repeat;
   mask-position: center;
+}
+
+.app-icon--colored {
+  display: block;
+  background-color: transparent;
 }
 </style>
