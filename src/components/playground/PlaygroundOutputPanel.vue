@@ -14,8 +14,6 @@ const props = defineProps<{
   status?: GenerationStatus
   progress?: number
   estimatedSeconds?: number
-  perRunPriceUsd?: number
-  runsPerTenUsd?: number
   exampleUrl?: string
 }>()
 
@@ -248,15 +246,6 @@ watch(
       </div>
     </div>
 
-    <p v-if="perRunPriceUsd != null" class="output-panel__meta">
-      <span>${{ perRunPriceUsd.toFixed(2) }}</span>
-      <span class="output-panel__meta-muted">{{ t('pages.modelDetail.perRun') }}</span>
-      <template v-if="runsPerTenUsd != null">
-        <span class="output-panel__meta-muted">·</span>
-        <span class="output-panel__meta-muted">~{{ runsPerTenUsd }} / $10</span>
-      </template>
-    </p>
-
     <GenerationPreviewLightbox
       v-if="lightboxIndex != null"
       :urls="previewUrls"
@@ -483,13 +472,4 @@ watch(
   text-align: center;
 }
 
-.output-panel__meta {
-  margin: 16px 0 0;
-  font-size: 14px;
-  color: #ebf4fb;
-}
-
-.output-panel__meta-muted {
-  color: #9b9dab;
-}
 </style>

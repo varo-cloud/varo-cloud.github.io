@@ -2,6 +2,7 @@
 import { ref } from 'vue'
 import SchemaFieldLabel from '../SchemaFieldLabel.vue'
 import SchemaFieldError from '../SchemaFieldError.vue'
+import AppIcon from '@/components/common/AppIcon.vue'
 import { useMediaUpload } from '@/composables/useMediaUpload'
 
 const model = defineModel<string>({ required: true })
@@ -73,12 +74,7 @@ function onFileChange(event: Event) {
           :disabled="uploading"
           @click="openPicker"
         >
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-            <path
-              d="M4 14l3.5-3.5 2.5 2.5L14 9l2 2v3H4v-1.5zM14 6a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"
-              fill="currentColor"
-            />
-          </svg>
+          <AppIcon name="image-add-line" :size="20" />
         </button>
         <input ref="fileInput" type="file" accept="image/*" hidden @change="onFileChange" />
       </div>
@@ -89,13 +85,15 @@ function onFileChange(event: Event) {
 
       <p v-if="uploadError" class="image-field__error">{{ uploadError }}</p>
 
-      <div v-if="previewUrl || model" class="image-field__preview-wrap">
-        <img
-          v-if="previewUrl || model.startsWith('http') || model.startsWith('/')"
-          :src="previewUrl || model"
-          alt=""
-          class="image-field__preview"
-        />
+      <div v-if="previewUrl || model" class="image-field__preview-row">
+        <div class="image-field__preview-wrap">
+          <img
+            v-if="previewUrl || model.startsWith('http') || model.startsWith('/')"
+            :src="previewUrl || model"
+            alt=""
+            class="image-field__preview"
+          />
+        </div>
         <button
           type="button"
           class="image-field__clear"
@@ -103,9 +101,7 @@ function onFileChange(event: Event) {
           :disabled="uploading"
           @click="clearMedia"
         >
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-            <path d="M5 5l10 10M15 5L5 15" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
-          </svg>
+          <AppIcon name="close" :size="20" />
         </button>
       </div>
     </div>
@@ -199,31 +195,40 @@ function onFileChange(event: Event) {
   line-height: 14px;
 }
 
-.image-field__preview-wrap {
-  position: relative;
+.image-field__preview-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
   margin-top: 8px;
+}
+
+.image-field__preview-wrap {
   width: 100px;
   height: 65px;
+  flex-shrink: 0;
+  border-radius: 8px;
+  overflow: hidden;
+  background: #21212a;
 }
 
 .image-field__preview {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  border-radius: 4px;
+  display: block;
 }
 
 .image-field__clear {
-  position: absolute;
-  top: 50%;
-  right: -28px;
-  transform: translateY(-50%);
   display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  margin-left: auto;
   padding: 0;
   border: none;
   background: none;
-  color: #9b9dab;
+  color: #ebf4fb;
   cursor: pointer;
+  flex-shrink: 0;
 }
 
 .image-field__clear:disabled {

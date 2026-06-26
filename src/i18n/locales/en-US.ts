@@ -18,6 +18,7 @@ export default {
   },
   nav: {
     models: 'Models',
+    aiGenerator: 'AI Generator',
     pricing: 'Pricing',
     apiKeys: 'API Keys',
     billing: 'Billing',
@@ -27,6 +28,7 @@ export default {
     navLabel: 'Footer',
     terms: 'Terms of Service',
     privacy: 'Privacy Policy',
+    supportEmail: 'Contact support',
     twitter: 'X (Twitter)',
     telegram: 'Telegram',
   },
@@ -63,6 +65,15 @@ export default {
         'text-to-video': 'Text to Video',
         'image-to-video': 'Image to Video',
       },
+    },
+    aiGenerator: {
+      model: 'Model',
+      hot: 'HOT',
+      new: 'NEW',
+      newHint: '{model} is now available',
+      loadError: 'Failed to load models. Please try again.',
+      modelLoadError: 'Failed to load model. Please try again.',
+      emptyModels: 'No models available.',
     },
     modelDetail: {
       title: 'Model Detail',
@@ -102,6 +113,9 @@ export default {
       perRun: 'per run',
       apiPlaceholder: 'API documentation and code examples will be available here.',
       apiTab: {
+        codeExample: 'Code Example',
+        submitRequest: 'Submit a request',
+        queryResult: 'Query result',
         quickStart: 'Quick Start',
         quickStartDesc:
           'Copy ready-to-run examples. Code reflects your current Playground inputs.',
@@ -140,6 +154,11 @@ export default {
         uploading: 'Uploading…',
         failed: 'Upload failed. Please try again.',
         invalidType: 'Unsupported file type.',
+        recordAudio: 'Record audio',
+        stopRecording: 'Stop recording',
+        recording: 'Recording…',
+        recordFailed: 'Could not access microphone. Please check permissions.',
+        recordUnsupported: 'Audio recording is not supported in this browser.',
       },
     },
     apiKeys: {

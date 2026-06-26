@@ -77,7 +77,9 @@
         "price_detail": "720p",
         "discount_percent": 16,
         "description": "Hollywood-grade cinematic image-to-video...",
-        "thumbnail_url": "https://cdn.example.com/thumbs/seedance-i2v.jpg"
+        "thumbnail_url": "https://cdn.example.com/thumbs/seedance-i2v.jpg",
+        "icon_url": "https://cdn.example.com/icons/seedance.svg",
+        "is_hot": true
       }
     ],
     "total": 48,
@@ -102,7 +104,12 @@
 | `price_detail` | string | 可选 | 运行配置说明；`per_second` 时仅填分辨率，如 `720p`（非计费单位，不含时长） |
 | `discount_percent` | number | 可选 | 折扣整数，如 `16` → `-16%` |
 | `description` | string | ✅ | 卡片描述 |
-| `thumbnail_url` | string | 可选 | 缩略图 URL |
+| `thumbnail_url` | string | 可选 | 卡片顶部预览图 URL |
+| `icon_url` | string | 可选 | 模型品牌图标 URL，显示在卡片标题旁（16×16）；缺省时前端使用默认占位 |
+| `is_hot` | boolean | 可选 | 热门标记；`true` 时在 AI Generator 模型选择器等场景展示 HOT 标签；默认 `false` |
+| `is_new` | boolean | 可选 | 新品标记；`true` 时在 AI Generator 模型选择器展示 NEW 标签，并在选择器下方展示「现已上线」提示条（当前未选中该模型时）；默认 `false` |
+
+> **`is_hot` / `is_new` 配置来源：** 由 Admin 在模型编辑页维护（Switch），存于 `models.is_hot` / `models.is_new`；公开 `GET /api/models`、`GET /api/models/batch`、`GET /api/models/{id}` 均返回该字段。详见 [admin-backend-api.md §5.3](../admin/admin-backend-api.md#53-模型管理)。
 
 #### `price_unit` 枚举
 
@@ -434,6 +441,7 @@ CREATE INDEX idx_recent_user_visited ON user_model_recent (user_id, visited_at D
 - [ ] `GET /api/models` 支持 `offset` / `limit` / `q`
 - [ ] 响应分页包装 `{ items, total, offset, limit }`
 - [ ] 列表项含 `starting_price_usd`、`price_unit`（必填枚举）
+- [ ] 列表项含 `is_hot`（boolean，缺省视为 `false`）
 - [ ] `standard_price_usd` 可选，用于划线价
 - [ ] `price_detail` 为运行配置说明；`per_second` 仅分辨率，非自由文本单位
 - [ ] 实现 `GET /api/models/batch?ids=`

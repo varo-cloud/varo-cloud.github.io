@@ -18,6 +18,7 @@ export default {
   },
   nav: {
     models: '模型',
+    aiGenerator: 'AI Generator',
     pricing: '价格',
     apiKeys: 'API 密钥',
     billing: '账单',
@@ -27,6 +28,7 @@ export default {
     navLabel: '页脚',
     terms: '服务条款',
     privacy: '隐私政策',
+    supportEmail: '联系客服',
     twitter: 'X (Twitter)',
     telegram: 'Telegram',
   },
@@ -63,6 +65,15 @@ export default {
         'text-to-video': '文生视频',
         'image-to-video': '图生视频',
       },
+    },
+    aiGenerator: {
+      model: '模型',
+      hot: 'HOT',
+      new: 'NEW',
+      newHint: '{model} 现已上线',
+      loadError: '加载模型列表失败，请重试。',
+      modelLoadError: '加载模型失败，请重试。',
+      emptyModels: '暂无可用模型。',
     },
     modelDetail: {
       title: '模型详情',
@@ -102,6 +113,9 @@ export default {
       perRun: 'per run',
       apiPlaceholder: 'API 文档与代码示例将在此提供。',
       apiTab: {
+        codeExample: '代码示例',
+        submitRequest: '提交请求',
+        queryResult: '查询结果',
         quickStart: '快速开始',
         quickStartDesc: '复制即可运行的示例代码，内容与 Playground 当前输入保持同步。',
         submitHint: '创建任务：{url}',
@@ -139,6 +153,11 @@ export default {
         uploading: '上传中…',
         failed: '上传失败，请重试。',
         invalidType: '不支持的文件类型。',
+        recordAudio: '录音',
+        stopRecording: '停止录音',
+        recording: '录音中…',
+        recordFailed: '无法访问麦克风，请检查权限。',
+        recordUnsupported: '当前浏览器不支持录音。',
       },
     },
     apiKeys: {

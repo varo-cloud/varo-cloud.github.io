@@ -1,8 +1,12 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onBeforeUnmount, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import SchemaFieldLabel from '../SchemaFieldLabel.vue'
 import SchemaFieldError from '../SchemaFieldError.vue'
+import AppIcon from '@/components/common/AppIcon.vue'
+import { useLocaleRouter } from '@/composables/useLocaleRouter'
 import { useMediaUpload } from '@/composables/useMediaUpload'
+import { useUserStore } from '@/stores/user'
 
 const model = defineModel<string>({ required: true })
 
@@ -15,13 +19,22 @@ defineProps<{
   errorMessage?: string
 }>()
 
+const { t } = useI18n()
+const { push } = useLocaleRouter()
+const userStore = useUserStore()
+
 const fileInput = ref<HTMLInputElement | null>(null)
 const audioEl = ref<HTMLAudioElement | null>(null)
 const isDragging = ref(false)
 const isPlaying = ref(false)
 const isMuted = ref(false)
+const isRecording = ref(false)
 const currentTime = ref(0)
 const duration = ref(0)
+
+let mediaStream: MediaStream | null = null
+let mediaRecorder: MediaRecorder | null = null
+let recordedChunks: Blob[] = []
 
 const { previewUrl, uploading, uploadError, applyFile, clearMedia, onUrlInput } = useMediaUpload({
   model,
@@ -30,6 +43,12 @@ const { previewUrl, uploading, uploadError, applyFile, clearMedia, onUrlInput } 
 })
 
 const hasAudio = computed(() => Boolean(previewUrl.value || model.value))
+
+const dropHint = computed(() => {
+  if (uploading.value) return t('pages.modelDetail.upload.uploading')
+  if (isRecording.value) return t('pages.modelDetail.upload.recording')
+  return 'Drag & drop or click to upload'
+})
 
 const progressPercent = computed(() => {
   if (!duration.value) return 0
@@ -43,8 +62,108 @@ function formatTime(seconds: number): string {
   return `${mins}:${secs.toString().padStart(2, '0')}`
 }
 
-function openPicker() {
+function resolveAudioMimeType(): string {
+  const types = ['audio/webm;codecs=opus', 'audio/webm', 'audio/mp4', 'audio/ogg;codecs=opus']
+  return types.find((type) => MediaRecorder.isTypeSupported(type)) ?? ''
+}
+
+function resolveFileExtension(mimeType: string): string {
+  if (mimeType.includes('webm')) return 'webm'
+  if (mimeType.includes('mp4')) return 'm4a'
+  if (mimeType.includes('ogg')) return 'ogg'
+  return 'webm'
+}
+
+function cleanupStream() {
+  mediaStream?.getTracks().forEach((track) => track.stop())
+  mediaStream = null
+}
+
+function cleanupRecordingResources() {
+  if (mediaRecorder) {
+    mediaRecorder.onstop = null
+    if (mediaRecorder.state === 'recording') {
+      mediaRecorder.stop()
+    }
+  }
+  mediaRecorder = null
+  recordedChunks = []
+  isRecording.value = false
+  cleanupStream()
+}
+
+async function finalizeRecording() {
+  const mimeType = mediaRecorder?.mimeType || 'audio/webm'
+  const blob = new Blob(recordedChunks, { type: mimeType })
+  recordedChunks = []
+  mediaRecorder = null
+  cleanupStream()
+
+  if (!blob.size) return
+
+  const file = new File([blob], `recording-${Date.now()}.${resolveFileExtension(mimeType)}`, {
+    type: mimeType,
+  })
+  resetPlayback()
+  await applyFile(file)
+}
+
+function stopRecording() {
+  if (mediaRecorder?.state === 'recording') {
+    mediaRecorder.stop()
+  } else {
+    cleanupRecordingResources()
+    return
+  }
+  isRecording.value = false
+}
+
+async function toggleRecording() {
   if (uploading.value) return
+
+  if (isRecording.value) {
+    stopRecording()
+    return
+  }
+
+  if (!userStore.isLoggedIn) {
+    push({ name: 'auth' })
+    return
+  }
+
+  if (!navigator.mediaDevices?.getUserMedia || typeof MediaRecorder === 'undefined') {
+    uploadError.value = t('pages.modelDetail.upload.recordUnsupported')
+    return
+  }
+
+  try {
+    uploadError.value = null
+    mediaStream = await navigator.mediaDevices.getUserMedia({ audio: true })
+    const mimeType = resolveAudioMimeType()
+    recordedChunks = []
+
+    mediaRecorder = mimeType
+      ? new MediaRecorder(mediaStream, { mimeType })
+      : new MediaRecorder(mediaStream)
+
+    mediaRecorder.ondataavailable = (event) => {
+      if (event.data.size > 0) recordedChunks.push(event.data)
+    }
+
+    mediaRecorder.onstop = () => {
+      void finalizeRecording()
+    }
+
+    mediaRecorder.start()
+    isRecording.value = true
+  } catch {
+    cleanupRecordingResources()
+    uploadError.value = t('pages.modelDetail.upload.recordFailed')
+  }
+}
+
+function openPicker() {
+  if (uploading.value || isRecording.value) return
   fileInput.value?.click()
 }
 
@@ -78,6 +197,7 @@ function clearAudio() {
   if (audioEl.value) {
     audioEl.value.pause()
   }
+  cleanupRecordingResources()
   clearMedia()
   resetPlayback()
   if (fileInput.value) fileInput.value.value = ''
@@ -125,6 +245,10 @@ function onProgressClick(event: MouseEvent) {
   audioEl.value.currentTime = ratio * duration.value
   currentTime.value = audioEl.value.currentTime
 }
+
+onBeforeUnmount(() => {
+  cleanupRecordingResources()
+})
 </script>
 
 <template>
@@ -143,6 +267,7 @@ function onProgressClick(event: MouseEvent) {
       :class="{
         'audio-field__box--dragging': isDragging,
         'audio-field__box--uploading': uploading,
+        'audio-field__box--recording': isRecording,
         'audio-field__box--invalid': invalid,
       }"
       @dragenter.prevent="isDragging = true"
@@ -157,7 +282,7 @@ function onProgressClick(event: MouseEvent) {
           type="text"
           class="audio-field__url"
           placeholder="https://static.wavespeed.ai/examples/5679"
-          :disabled="uploading"
+          :disabled="uploading || isRecording"
           @input="onUrlInputWithReset"
           @click.stop
         />
@@ -165,35 +290,26 @@ function onProgressClick(event: MouseEvent) {
           type="button"
           class="audio-field__icon-btn"
           aria-label="Upload audio"
-          :disabled="uploading"
+          :disabled="uploading || isRecording"
           @click.stop="openPicker"
         >
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-            <path
-              d="M4 14l3.5-3.5 2.5 2.5L14 9l2 2v3H4v-1.5zM14 6a1.5 1.5 0 1 0 0-3 1.5 1.5 0 0 0 0 3z"
-              fill="currentColor"
-            />
-          </svg>
+          <AppIcon name="image-add-line" :size="20" />
         </button>
-        <button type="button" class="audio-field__icon-btn" aria-label="Record audio" @click.stop>
-          <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
-            <path
-              d="M10 12.5a2.5 2.5 0 0 0 2.5-2.5V6a2.5 2.5 0 1 0-5 0v4a2.5 2.5 0 0 0 2.5 2.5z"
-              fill="currentColor"
-            />
-            <path
-              d="M6.5 10.5a3.5 3.5 0 0 0 7 0M10 14v2.5M7.5 16.5h5"
-              stroke="currentColor"
-              stroke-width="1.2"
-              stroke-linecap="round"
-            />
-          </svg>
+        <button
+          type="button"
+          class="audio-field__icon-btn"
+          :class="{ 'audio-field__icon-btn--recording': isRecording }"
+          :aria-label="isRecording ? t('pages.modelDetail.upload.stopRecording') : t('pages.modelDetail.upload.recordAudio')"
+          :disabled="uploading"
+          @click.stop="toggleRecording"
+        >
+          <AppIcon name="microphone" :size="20" />
         </button>
         <input ref="fileInput" type="file" accept="audio/*" hidden @change="onFileChange" />
       </div>
 
       <p class="audio-field__drop-hint">
-        {{ uploading ? $t('pages.modelDetail.upload.uploading') : 'Drag & drop or click to upload' }}
+        {{ dropHint }}
       </p>
 
       <p v-if="uploadError" class="audio-field__error">{{ uploadError }}</p>
@@ -255,7 +371,7 @@ function onProgressClick(event: MouseEvent) {
           type="button"
           class="audio-field__clear"
           aria-label="Remove audio"
-          :disabled="uploading"
+          :disabled="uploading || isRecording"
           @click.stop="clearAudio"
         >
           <svg width="20" height="20" viewBox="0 0 20 20" fill="none" aria-hidden="true">
@@ -290,6 +406,10 @@ function onProgressClick(event: MouseEvent) {
 .audio-field__box--uploading {
   opacity: 0.75;
   cursor: wait;
+}
+
+.audio-field__box--recording {
+  border-color: #f87171;
 }
 
 .audio-field__url-row {
@@ -337,6 +457,10 @@ function onProgressClick(event: MouseEvent) {
 .audio-field__icon-btn:disabled {
   cursor: not-allowed;
   opacity: 0.5;
+}
+
+.audio-field__icon-btn--recording {
+  color: #f87171;
 }
 
 .audio-field__drop-hint {

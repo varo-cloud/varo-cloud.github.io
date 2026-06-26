@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useLocaleRouter } from '@/composables/useLocaleRouter'
+import { AnalyticsEvents, trackEvent } from '@/analytics'
 import { useModelPreferencesStore } from '@/stores/modelPreferences'
 import { useUserStore } from '@/stores/user'
 import { assetUrl } from '@/utils/assetUrl'
@@ -23,6 +24,10 @@ const displayName = computed(() => props.model.displayName ?? props.model.name)
 
 const thumbnailSrc = computed(() =>
   assetUrl(props.model.thumbnailUrl ?? '/assets/models/card-thumb.jpg'),
+)
+
+const iconSrc = computed(() =>
+  assetUrl(props.model.iconUrl ?? '/assets/models/seedance.svg'),
 )
 
 const capabilityBadge = computed(() => {
@@ -58,7 +63,12 @@ async function toggleFavourite(event: Event) {
     return
   }
   try {
+    const wasFavourite = isFavourite.value
     await modelPrefs.toggleFavourite(props.model.id)
+    trackEvent(AnalyticsEvents.MODEL_FAVOURITE_TOGGLE, {
+      model_id: props.model.id,
+      action: wasFavourite ? 'remove' : 'add',
+    })
   } catch {
     // keep optimistic UI rolled back in store
   }
@@ -114,8 +124,8 @@ async function toggleFavourite(event: Event) {
       <div class="model-card__title-row">
         <h3 class="model-card__title">{{ displayName }}</h3>
         <img
-          class="model-card__chart"
-          :src="assetUrl('/assets/models/chart-dot.svg')"
+          class="model-card__icon"
+          :src="iconSrc"
           alt=""
           aria-hidden="true"
         />
@@ -227,24 +237,29 @@ async function toggleFavourite(event: Event) {
 
 .model-card__body {
   flex: 1;
-  padding: 12px 16px 0;
+  padding: 12px 16px 16px;
 }
 
 .model-card__title-row {
   display: flex;
   align-items: center;
-  gap: 6px;
+  justify-content: space-between;
+  width: 100%;
 }
 
 .model-card__title {
   margin: 0;
+  min-width: 0;
   font-size: 16px;
   font-weight: 600;
-  line-height: 16px;
+  line-height: 20px;
   color: #222;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
-.model-card__chart {
+.model-card__icon {
   width: 16px;
   height: 16px;
   flex-shrink: 0;

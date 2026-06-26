@@ -71,7 +71,8 @@
         "price_detail": "720p",
         "discount_percent": 16,
         "description": "...",
-        "thumbnail_url": "/..."
+        "thumbnail_url": "/...",
+        "icon_url": "/assets/models/seedance.svg"
       }
     ],
     "total": 48,
@@ -97,6 +98,7 @@
 | `discountPercent` | `discount_percent` | — | ❌ 缺失 |
 | `description` | `description` | — | ❌ 缺失 |
 | `thumbnailUrl` | `thumbnail_url` | — | ❌ 缺失 |
+| `iconUrl` | `icon_url` | — | ❌ 缺失 |
 | — | `credits_per_second` | ✅ | 前端不使用，后端应换算为 USD |
 | — | `active` | ✅ | 前端列表不展示，后端可过滤 `active=false` |
 
@@ -130,6 +132,7 @@
 | `modelPath` | `model_path` | 模型路径，用于 API 文档展示 |
 | `inputSchema` | `input_schema` | JSON Schema，驱动 Playground 表单 |
 | `isHot` | `is_hot` | 可选，热门标记 |
+| `isNew` | `is_new` | 可选，新品标记 |
 | `perRunPriceUsd` | `per_run_price_usd` | 默认配置下单次运行总价（USD） |
 | `runsPerTenUsd` | `runs_per_ten_usd` | 可选，`$10` 可运行次数 |
 

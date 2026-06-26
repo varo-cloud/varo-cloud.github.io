@@ -1,0 +1,67 @@
+.playground-select-panel {
+  position: fixed;
+  z-index: 9999;
+  padding: 8px;
+  border: 0.5px solid #2d2d38;
+  border-radius: 8px;
+  background: #13131c;
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-family:
+    Inter,
+    -apple-system,
+    BlinkMacSystemFont,
+    'Segoe UI',
+    Roboto,
+    'Helvetica Neue',
+    Arial,
+    sans-serif;
+}
+
+.playground-select-panel__option {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+  padding: 8px 10px;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  font-family: inherit;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 14px;
+  color: #ebf4fb;
+  cursor: pointer;
+  text-align: left;
+  transition: background 0.15s ease;
+}
+
+.playground-select-panel__option:hover {
+  background: rgba(255, 255, 255, 0.08);
+}
+
+.playground-select-panel__option--selected {
+  background: rgba(255, 255, 255, 0.06);
+}
+
+.playground-select-panel__option--selected:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.playground-select-panel__option-label {
+  min-width: 0;
+}
+
+.playground-select-panel__check {
+  flex-shrink: 0;
+  color: #ebf4fb;
+}
+
+.playground-select-panel .n-tooltip {
+  display: block;
+  width: 100%;
+}

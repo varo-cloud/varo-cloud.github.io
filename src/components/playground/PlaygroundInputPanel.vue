@@ -3,6 +3,10 @@ import { computed, nextTick, onBeforeUnmount, ref, useId, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useLocaleRouter } from '@/composables/useLocaleRouter'
 import { NTooltip, useMessage } from 'naive-ui'
+import AppIcon from '@/components/common/AppIcon.vue'
+import HighlightedCodeBlock from '@/components/common/HighlightedCodeBlock.vue'
+import HighlightedCodeEditor from '@/components/common/HighlightedCodeEditor.vue'
+import type { CodeHighlightLanguage } from '@/utils/code-highlight'
 import type { InputSchema, SchemaFormValues } from '@/types/schema'
 import { createDefaultFormValues, validateSchemaForm } from '@/utils/schema-form'
 import {
@@ -12,8 +16,12 @@ import {
   type PlaygroundInputViewMode,
 } from '@/utils/playground-request-snippets'
 import { useUserStore } from '@/stores/user'
+import { AnalyticsEvents, trackEvent } from '@/analytics'
 import PlaygroundInputViewSelect from './PlaygroundInputViewSelect.vue'
 import PlaygroundSchemaForm from './PlaygroundSchemaForm.vue'
+import ModelSelectorField, {
+  type ModelSelectorOption,
+} from './fields/ModelSelectorField.vue'
 
 const BATCH_SIZE_OPTIONS = [1, 2, 3, 4] as const
 
@@ -26,10 +34,14 @@ const props = defineProps<{
   quoteLoading?: boolean
   balanceUsd: number
   generating?: boolean
+  modelOptions?: ModelSelectorOption[]
+  analyticsSource?: 'model_detail' | 'ai_generator'
+  analyticsCapability?: string
 }>()
 
 const batchSize = defineModel<number>('batchSize', { default: 1 })
 const formValues = defineModel<SchemaFormValues>('formValues', { required: true })
+const selectedModelId = defineModel<string>('selectedModelId')
 
 const emit = defineEmits<{
   run: [values: SchemaFormValues, batchSize: number]
@@ -42,6 +54,7 @@ const message = useMessage()
 
 const inputViewMode = ref<PlaygroundInputViewMode>('form')
 const jsonDraft = ref(buildPlaygroundJsonSnippet(props.modelId, formValues.value, batchSize.value))
+const jsonEditorRef = ref<InstanceType<typeof HighlightedCodeEditor> | null>(null)
 const jsonDraftDirty = ref(false)
 const validationError = ref<string | null>(null)
 const invalidFields = ref<string[]>([])
@@ -85,6 +98,12 @@ const codeSnippet = computed(() => {
     formValues.value,
     batchSize.value,
   )
+})
+
+const codeLanguage = computed<CodeHighlightLanguage>(() => {
+  const mode = inputViewMode.value
+  if (mode === 'http' || mode === 'python' || mode === 'javascript') return mode
+  return 'json'
 })
 
 function applyParsedJsonDraft() {
@@ -152,6 +171,7 @@ watch(inputViewMode, (mode, previousMode) => {
       )
       jsonDraftDirty.value = false
     }
+    nextTick(() => jsonEditorRef.value?.syncHeight())
     return
   }
 
@@ -218,6 +238,17 @@ function handleRun() {
     push({ name: 'auth' })
     return
   }
+
+  if (props.analyticsSource) {
+    trackEvent(AnalyticsEvents.PLAYGROUND_RUN, {
+      source: props.analyticsSource,
+      model_id: props.modelId,
+      capability: props.analyticsCapability,
+      input_mode: inputViewMode.value,
+      batch_size: batchSize.value,
+    })
+  }
+
   emit('run', { ...formValues.value }, batchSize.value)
 }
 
@@ -225,12 +256,22 @@ function goTopUp() {
   push({ name: 'billing' })
 }
 
-async function copyCodeSnippet() {
-  if (!codeSnippet.value) return
+const copyableCodeContent = computed(() =>
+  inputViewMode.value === 'json' ? jsonDraft.value : codeSnippet.value,
+)
+
+async function copyCodeContent() {
+  const text = copyableCodeContent.value
+  if (!text) return
 
   try {
-    await navigator.clipboard.writeText(codeSnippet.value)
+    await navigator.clipboard.writeText(text)
     message.success(t('pages.modelDetail.codeCopied'))
+    trackEvent(AnalyticsEvents.API_CODE_COPY, {
+      source: 'playground',
+      code_type: inputViewMode.value,
+      model_id: props.modelId,
+    })
   } catch {
     message.error(t('pages.modelDetail.copyFailed'))
   }
@@ -293,20 +334,41 @@ onBeforeUnmount(() => {
     </div>
 
     <div ref="formPanelRef" class="input-panel__form">
+      <ModelSelectorField
+        v-if="modelOptions?.length && selectedModelId != null"
+        v-model="selectedModelId"
+        :options="modelOptions"
+        :disabled="generating"
+      />
       <PlaygroundSchemaForm
         v-if="inputViewMode === 'form'"
         v-model="formValues"
         :schema="schema"
         :invalid-fields="invalidFields"
       />
-      <textarea
-        v-else-if="inputViewMode === 'json'"
-        v-model="jsonDraft"
-        class="input-panel__json-editor scrollbar-subtle"
-        spellcheck="false"
-        @input="onJsonDraftInput"
-      />
-      <pre v-else class="input-panel__code scrollbar-subtle"><code>{{ codeSnippet }}</code></pre>
+      <div v-else class="input-panel__code-wrap">
+        <HighlightedCodeEditor
+          v-if="inputViewMode === 'json'"
+          ref="jsonEditorRef"
+          v-model="jsonDraft"
+          language="json"
+          :invalid="Boolean(validationError)"
+          @input="onJsonDraftInput"
+        />
+        <HighlightedCodeBlock
+          v-else
+          :code="codeSnippet"
+          :language="codeLanguage"
+        />
+        <button
+          type="button"
+          class="input-panel__code-copy"
+          :aria-label="t('pages.modelDetail.copyCode')"
+          @click="copyCodeContent"
+        >
+          <AppIcon name="copy" :size="16" />
+        </button>
+      </div>
       <p v-if="validationError" class="input-panel__validation-error">{{ validationError }}</p>
     </div>
 
@@ -426,12 +488,6 @@ onBeforeUnmount(() => {
       </Teleport>
     </div>
 
-    <div v-else class="input-panel__actions">
-      <button type="button" class="input-panel__copy" @click="copyCodeSnippet">
-        {{ t('pages.modelDetail.copyCode') }}
-      </button>
-    </div>
-
     <div v-if="userStore.isLoggedIn && showRunActions" class="input-panel__balance">
       <span>{{ t('pages.modelDetail.balance') }}</span>
       <span class="input-panel__balance-value">${{ balanceUsd.toFixed(2) }}</span>
@@ -471,43 +527,34 @@ onBeforeUnmount(() => {
   margin-bottom: 20px;
 }
 
-.input-panel__json-editor,
-.input-panel__code {
-  width: 100%;
-  min-height: 280px;
-  max-height: 520px;
-  margin: 0;
-  padding: 16px;
-  overflow: auto;
-  border: 0.5px solid rgba(255, 255, 255, 0.08);
-  border-radius: 8px;
-  background: rgba(0, 0, 0, 0.35);
-  font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
-  font-size: 12px;
-  line-height: 1.6;
-  color: #c8d6e5;
-  text-align: left;
-  white-space: pre;
-  resize: vertical;
+.input-panel__code-wrap {
+  position: relative;
 }
 
-.input-panel__json-editor {
-  display: block;
-  outline: none;
+.input-panel__code-copy {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  z-index: 2;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border: none;
+  border-radius: 6px;
+  background: rgba(19, 19, 28, 0.85);
+  color: #ebf4fb;
+  cursor: pointer;
+  transition: background 0.15s ease;
 }
 
-.input-panel__json-editor:focus {
-  border-color: rgba(6, 182, 212, 0.45);
+.input-panel__code-copy:hover {
+  background: rgba(19, 19, 28, 0.95);
 }
 
-.input-panel__code {
-  white-space: pre-wrap;
-  word-break: break-word;
-  resize: none;
-}
-
-.input-panel__code code {
-  font-family: inherit;
+.input-panel__code-copy:active {
+  background: rgba(45, 45, 56, 0.95);
 }
 
 .input-panel__validation-error {
@@ -663,29 +710,6 @@ onBeforeUnmount(() => {
   transform: rotate(180deg);
 }
 
-.input-panel__copy {
-  flex: 1;
-  width: 100%;
-  height: 40px;
-  border: none;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.1);
-  font-family: inherit;
-  font-size: 16px;
-  font-weight: 500;
-  color: #ebf4fb;
-  cursor: pointer;
-  transition: background 0.15s ease;
-}
-
-.input-panel__copy:hover {
-  background: rgba(255, 255, 255, 0.16);
-}
-
-.input-panel__copy:active {
-  background: rgba(255, 255, 255, 0.22);
-}
-
 .input-panel__balance {
   display: flex;
   align-items: center;
@@ -715,14 +739,14 @@ onBeforeUnmount(() => {
 .input-panel__batch-panel {
   position: fixed;
   z-index: 9999;
-  padding: 12px;
+  padding: 8px;
   border: 0.5px solid #2d2d38;
   border-radius: 8px;
   background: #13131c;
   box-shadow: 0 8px 24px rgba(0, 0, 0, 0.45);
   display: flex;
   flex-direction: column;
-  gap: 12px;
+  gap: 4px;
   font-family:
     Inter,
     -apple-system,
@@ -740,8 +764,9 @@ onBeforeUnmount(() => {
   justify-content: space-between;
   gap: 12px;
   width: 100%;
-  padding: 0;
+  padding: 8px 10px;
   border: none;
+  border-radius: 6px;
   background: transparent;
   font-family: inherit;
   font-size: 14px;
@@ -750,13 +775,19 @@ onBeforeUnmount(() => {
   color: #ebf4fb;
   cursor: pointer;
   text-align: left;
+  transition: background 0.15s ease;
 }
 
 .input-panel__batch-option:hover {
-  opacity: 0.85;
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .input-panel__batch-option--selected {
+  background: rgba(255, 255, 255, 0.06);
   color: #06b6d4;
+}
+
+.input-panel__batch-option--selected:hover {
+  background: rgba(255, 255, 255, 0.12);
 }
 </style>

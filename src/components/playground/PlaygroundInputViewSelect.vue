@@ -5,6 +5,7 @@ import {
   PLAYGROUND_INPUT_VIEW_MODES,
   type PlaygroundInputViewMode,
 } from '@/utils/playground-request-snippets'
+import AppIcon from '@/components/common/AppIcon.vue'
 
 const model = defineModel<PlaygroundInputViewMode>({ required: true })
 
@@ -87,17 +88,11 @@ onBeforeUnmount(() => {
       @click.stop="toggleOpen"
     >
       <span class="input-view-select__value">{{ selectedLabel }}</span>
-      <svg
-        class="input-view-select__chevron"
-        :class="{ 'input-view-select__chevron--open': open }"
-        width="16"
-        height="16"
-        viewBox="0 0 16 16"
-        fill="none"
-        aria-hidden="true"
-      >
-        <path d="M4 6l4 4 4-4" stroke="currentColor" stroke-width="1.2" stroke-linecap="round" />
-      </svg>
+      <AppIcon
+        name="chevron-down"
+        :size="16"
+        :class="['input-view-select__chevron', { 'input-view-select__chevron--open': open }]"
+      />
     </button>
 
     <Teleport to="body">
@@ -155,14 +150,17 @@ onBeforeUnmount(() => {
 .input-view-select__trigger {
   display: inline-flex;
   align-items: center;
+  justify-content: space-between;
   gap: 4px;
-  padding: 6px 10px;
-  border: 0.5px solid #2d2d38;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.06);
+  /* min-width: 68px; */
+  padding: 0;
+  border: none;
+  border-radius: 0;
+  background: transparent;
   font-family: inherit;
   font-size: 12px;
   font-weight: 500;
+  line-height: 14px;
   color: #ebf4fb;
   cursor: pointer;
 }
@@ -173,7 +171,7 @@ onBeforeUnmount(() => {
 
 .input-view-select__chevron {
   flex-shrink: 0;
-  color: #9b9dab;
+  color: #ebf4fb;
   transition: transform 0.15s ease;
 }
 

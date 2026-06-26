@@ -63,12 +63,6 @@ authHttp.interceptors.response.use(
     return response
   },
   (error) => {
-    if (import.meta.env.DEV && error.response?.status === 502) {
-      return Promise.reject(
-        new Error('无法连接 staging 认证服务，请重启 npm run dev 后重试'),
-      )
-    }
-
     const payload = error.response?.data
     if (isWrappedApiResponse(payload) && payload.code !== 0) {
       return Promise.reject(new Error(payload.message || 'Request failed'))

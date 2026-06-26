@@ -2,34 +2,34 @@
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { useLocaleRouter } from '@/composables/useLocaleRouter'
 import { NSpin } from 'naive-ui'
-import { fetchModelDetail } from '@/api/models'
+import { fetchModelDetail, fetchModels } from '@/api/models'
 import { fetchModelInputSchema } from '@/api/modelSchema'
-import ModelDetailHeader from '@/components/models/ModelDetailHeader.vue'
-import ModelApiTab from '@/components/models/ModelApiTab.vue'
 import PlaygroundInputPanel from '@/components/playground/PlaygroundInputPanel.vue'
 import PlaygroundOutputPanel from '@/components/playground/PlaygroundOutputPanel.vue'
+import type { ModelSelectorOption } from '@/components/playground/fields/ModelSelectorField.vue'
+import { useLocaleRouter } from '@/composables/useLocaleRouter'
+import { usePlaygroundQuote } from '@/composables/usePlaygroundQuote'
 import { useUserStore } from '@/stores/user'
-import { useModelPreferencesStore } from '@/stores/modelPreferences'
+import { AnalyticsEvents, trackEvent } from '@/analytics'
 import { assetUrl } from '@/utils/assetUrl'
 import { createDefaultFormValues } from '@/utils/schema-form'
-import { usePlaygroundQuote } from '@/composables/usePlaygroundQuote'
-import { AnalyticsEvents, trackEvent } from '@/analytics'
-import type { GenerationStatus, ModelDetail, PlaygroundGenerationResult } from '@/types'
+import type { GenerationStatus, Model, ModelDetail, PlaygroundGenerationResult } from '@/types'
 import type { InputSchema, SchemaFormValues } from '@/types/schema'
 
 const route = useRoute()
-const { localePath } = useLocaleRouter()
+const { replace } = useLocaleRouter()
 const { t } = useI18n()
 const userStore = useUserStore()
-const modelPrefs = useModelPreferencesStore()
 
+const models = ref<Model[]>([])
+const selectedModelId = ref('')
 const model = ref<ModelDetail | null>(null)
 const inputSchema = ref<InputSchema | null>(null)
-const loading = ref(true)
-const error = ref<string | null>(null)
-const activeTab = ref<'playground' | 'api'>('playground')
+const listLoading = ref(true)
+const modelLoading = ref(false)
+const listError = ref<string | null>(null)
+const modelError = ref<string | null>(null)
 const outputUrls = ref<string[]>([])
 const generationResults = ref<PlaygroundGenerationResult[]>([])
 const batchSize = ref(1)
@@ -39,6 +39,17 @@ const generationProgress = ref(0)
 const estimatedSeconds = 40
 
 const balanceUsd = computed(() => userStore.balanceUsd ?? 0)
+
+const modelOptions = computed<ModelSelectorOption[]>(() =>
+  models.value.map((item) => ({
+    id: item.id,
+    label: item.displayName ?? item.name,
+    capability: item.capabilities[0],
+    description: item.description,
+    isHot: item.isHot,
+    isNew: item.isNew,
+  })),
+)
 
 const apiModelId = computed(() => {
   if (!model.value) return ''
@@ -83,11 +94,6 @@ const quoteUnitCostUsd = playgroundQuote.unitCostUsd
 const isGenerating = computed(
   () => generationStatus.value === 'queued' || generationStatus.value === 'processing',
 )
-
-const displayTitle = computed(() => {
-  if (!model.value) return ''
-  return `${model.value.name} by ${model.value.provider}`
-})
 
 let generationTimers: ReturnType<typeof setTimeout>[] = []
 let progressInterval: ReturnType<typeof setInterval> | null = null
@@ -164,7 +170,7 @@ function simulateGeneration(count: number) {
 
           if (model.value) {
             trackEvent(AnalyticsEvents.PLAYGROUND_RUN_SUCCESS, {
-              source: 'model_detail',
+              source: 'ai_generator',
               model_id: model.value.id,
               capability: model.value.capabilities[0],
               batch_size: count,
@@ -176,13 +182,47 @@ function simulateGeneration(count: number) {
   )
 }
 
-watch(inputSchema, (schema) => {
-  formValues.value = createDefaultFormValues(schema ?? undefined)
-})
+function resolveInitialModelId(items: Model[]): string {
+  const queryModel = route.query.model
+  if (typeof queryModel === 'string' && items.some((item) => item.id === queryModel)) {
+    return queryModel
+  }
+  return items.find((item) => item.isHot)?.id ?? items[0]?.id ?? ''
+}
 
-async function loadModel(id: string) {
-  loading.value = true
-  error.value = null
+async function loadModels() {
+  listLoading.value = true
+  listError.value = null
+
+  try {
+    const page = await fetchModels({ limit: 100 })
+    models.value = page.items
+    if (page.items.length === 0) {
+      selectedModelId.value = ''
+      return
+    }
+    selectedModelId.value = resolveInitialModelId(page.items)
+    if (selectedModelId.value) {
+      replace({ name: 'ai-generator', query: { model: selectedModelId.value } })
+    }
+  } catch {
+    listError.value = t('pages.aiGenerator.loadError')
+    models.value = []
+    selectedModelId.value = ''
+  } finally {
+    listLoading.value = false
+  }
+}
+
+async function loadSelectedModel(id: string) {
+  if (!id) {
+    model.value = null
+    inputSchema.value = null
+    return
+  }
+
+  modelLoading.value = true
+  modelError.value = null
   resetGeneration()
   inputSchema.value = null
 
@@ -193,15 +233,13 @@ async function loadModel(id: string) {
     ])
     model.value = detail
     inputSchema.value = schema
-    if (userStore.isLoggedIn) {
-      modelPrefs.recordVisit(detail.id)
-    }
+    formValues.value = createDefaultFormValues(schema ?? undefined)
   } catch {
-    error.value = t('pages.modelDetail.loadError')
+    modelError.value = t('pages.aiGenerator.modelLoadError')
     model.value = null
     inputSchema.value = null
   } finally {
-    loading.value = false
+    modelLoading.value = false
   }
 }
 
@@ -209,16 +247,32 @@ function handleRun(_values: SchemaFormValues, count: number) {
   simulateGeneration(count)
 }
 
+watch(selectedModelId, (id, previousId) => {
+  if (!id) return
+  if (previousId && id !== previousId) {
+    trackEvent(AnalyticsEvents.MODEL_SELECTOR_CHANGE, {
+      model_id: id,
+      previous_model_id: previousId,
+    })
+    replace({ name: 'ai-generator', query: { model: id } })
+  }
+  void loadSelectedModel(id)
+})
+
 watch(
-  () => route.params.id,
-  (id) => {
-    if (typeof id === 'string') loadModel(id)
+  () => route.query.model,
+  (queryModel) => {
+    if (typeof queryModel !== 'string' || !models.value.length) return
+    if (queryModel === selectedModelId.value) return
+    if (models.value.some((item) => item.id === queryModel)) {
+      selectedModelId.value = queryModel
+    }
   },
-  { immediate: true },
 )
 
 onMounted(() => {
   userStore.loadProfile()
+  void loadModels()
 })
 
 onUnmounted(() => {
@@ -227,114 +281,66 @@ onUnmounted(() => {
 </script>
 
 <template>
-  <div class="model-detail-page">
-    <div v-if="loading" class="model-detail-page__state">
+  <div class="ai-generator-page">
+    <div v-if="listLoading" class="ai-generator-page__state">
       <NSpin size="large" />
     </div>
 
-    <div v-else-if="error || !model" class="model-detail-page__state">
-      <p>{{ error || t('pages.modelDetail.notFound') }}</p>
-      <RouterLink :to="localePath('/')" class="model-detail-page__back">
-        {{ t('pages.modelDetail.backToModels') }}
-      </RouterLink>
+    <div v-else-if="listError" class="ai-generator-page__state">
+      <p>{{ listError }}</p>
     </div>
 
-    <template v-else>
-      <div class="model-detail-page__inner">
-        <ModelDetailHeader
-          :title="displayTitle"
-          :model-path="model.modelPath"
-          :description="model.description"
-          :thumbnail-url="model.thumbnailUrl"
-        />
-      </div>
+    <div v-else-if="models.length === 0" class="ai-generator-page__state">
+      <p>{{ t('pages.aiGenerator.emptyModels') }}</p>
+    </div>
 
-      <div class="model-detail-page__tabs" role="tablist">
-        <button
-          type="button"
-          role="tab"
-          class="model-detail-page__tab"
-          :class="{ 'model-detail-page__tab--active': activeTab === 'playground' }"
-          :aria-selected="activeTab === 'playground'"
-          @click="activeTab = 'playground'"
-        >
-          {{ t('pages.modelDetail.tabs.playground') }}
-        </button>
-        <button
-          type="button"
-          role="tab"
-          class="model-detail-page__tab"
-          :class="{ 'model-detail-page__tab--active': activeTab === 'api' }"
-          :aria-selected="activeTab === 'api'"
-          @click="activeTab = 'api'"
-        >
-          {{ t('pages.modelDetail.tabs.api') }}
-        </button>
+    <div v-else class="ai-generator-page__playground">
+      <div v-if="modelLoading && !model" class="ai-generator-page__panel-placeholder">
+        <NSpin size="medium" />
       </div>
-
-      <div v-if="activeTab === 'playground'" class="model-detail-page__playground">
-        <PlaygroundInputPanel
-          v-if="inputSchema"
-          v-model:batch-size="batchSize"
-          v-model:form-values="formValues"
-          :schema="inputSchema"
-          :model-id="model.id"
-          :api-model-id="apiModelId"
-          :cost-usd="quoteCostUsd"
-          :standard-cost-usd="quoteStandardCostUsd"
-          :quote-loading="quoteLoading"
-          :balance-usd="balanceUsd"
-          :generating="isGenerating"
-          analytics-source="model_detail"
-          :analytics-capability="model.capabilities[0]"
-          @run="handleRun"
-        />
-        <div v-else class="model-detail-page__schema-empty">
-          {{ t('pages.modelDetail.schemaUnavailable') }}
-        </div>
-        <PlaygroundOutputPanel
-          :output-urls="outputUrls"
-          :results="generationResults"
-          :status="generationStatus"
-          :progress="generationProgress"
-          :estimated-seconds="estimatedSeconds"
-          :example-url="inputSchema?.example_url"
-        />
-      </div>
-
-      <ModelApiTab
-        v-else-if="inputSchema"
+      <PlaygroundInputPanel
+        v-else-if="inputSchema && model"
+        v-model:batch-size="batchSize"
+        v-model:form-values="formValues"
+        v-model:selected-model-id="selectedModelId"
         :schema="inputSchema"
+        :model-id="model.id"
+        :model-options="modelOptions"
         :api-model-id="apiModelId"
-        :model-name="model.name"
-        :form-values="formValues"
-        :readme-md="model.readmeMd"
-        :faq="model.faq"
+        :cost-usd="quoteCostUsd"
+        :standard-cost-usd="quoteStandardCostUsd"
+        :quote-loading="quoteLoading"
+        :balance-usd="balanceUsd"
+        :generating="isGenerating || modelLoading"
+        analytics-source="ai_generator"
+        :analytics-capability="model.capabilities[0]"
+        @run="handleRun"
       />
-
-      <div v-else class="model-detail-page__api">
-        <p class="model-detail-page__api-placeholder">
-          {{ t('pages.modelDetail.schemaUnavailable') }}
-        </p>
+      <div v-else class="ai-generator-page__panel-placeholder">
+        <p>{{ modelError || t('pages.modelDetail.schemaUnavailable') }}</p>
       </div>
-    </template>
+
+      <PlaygroundOutputPanel
+        :output-urls="outputUrls"
+        :results="generationResults"
+        :status="generationStatus"
+        :progress="generationProgress"
+        :estimated-seconds="estimatedSeconds"
+        :example-url="inputSchema?.example_url"
+      />
+    </div>
   </div>
 </template>
 
 <style scoped>
-.model-detail-page {
+.ai-generator-page {
   background: #0a0a0e;
   color: #ebf4fb;
   min-height: calc(100vh - 60px);
   padding: 101px 24px 48px;
 }
 
-.model-detail-page__inner {
-  max-width: 1360px;
-  margin: 0 auto 0;
-}
-
-.model-detail-page__state {
+.ai-generator-page__state {
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -344,37 +350,7 @@ onUnmounted(() => {
   color: #9b9dab;
 }
 
-.model-detail-page__back {
-  color: #06b6d4;
-  text-decoration: none;
-}
-
-.model-detail-page__tabs {
-  display: flex;
-  gap: 24px;
-  margin: 24px auto 16px;
-  max-width: 1360px;
-}
-
-.model-detail-page__tab {
-  padding: 8px 12px;
-  border: none;
-  border-radius: 8px;
-  background: transparent;
-  font-family: inherit;
-  font-size: 14px;
-  font-weight: 600;
-  color: #9b9dab;
-  cursor: pointer;
-}
-
-.model-detail-page__tab--active {
-  background: rgba(255, 255, 255, 0.06);
-  color: #ebf4fb;
-  font-weight: 500;
-}
-
-.model-detail-page__playground {
+.ai-generator-page__playground {
   display: grid;
   grid-template-columns: 400px 1fr;
   gap: 16px;
@@ -383,7 +359,7 @@ onUnmounted(() => {
   align-items: start;
 }
 
-.model-detail-page__schema-empty {
+.ai-generator-page__panel-placeholder {
   display: flex;
   align-items: center;
   justify-content: center;
@@ -396,27 +372,12 @@ onUnmounted(() => {
   font-size: 14px;
 }
 
-.model-detail-page__api {
-  max-width: 1360px;
-  margin: 0 auto;
-}
-
-.model-detail-page__api-placeholder {
-  margin: 0;
-  padding: 48px 24px;
-  text-align: center;
-  color: #9b9dab;
-  background: #13131c;
-  border: 0.5px solid rgba(255, 255, 255, 0.1);
-  border-radius: 16px;
-}
-
 @media (max-width: 1023px) {
-  .model-detail-page {
+  .ai-generator-page {
     padding: 88px 16px 32px;
   }
 
-  .model-detail-page__playground {
+  .ai-generator-page__playground {
     grid-template-columns: 1fr;
   }
 }
