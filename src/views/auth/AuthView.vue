@@ -10,7 +10,7 @@ import { useUserStore } from '@/stores/user'
 import AppHeader from '@/components/layout/AppHeader.vue'
 import AppFooter from '@/components/layout/AppFooter.vue'
 import TurnstileWidget from '@/components/auth/TurnstileWidget.vue'
-import { assetUrl } from '@/utils/assetUrl'
+// import { assetUrl } from '@/utils/assetUrl'
 import {
   getLastAuthMethod,
   setLastAuthMethod,
@@ -186,6 +186,7 @@ async function handleLogin() {
   }
 }
 
+/*
 function handleGoogleLogin() {
   if (!ensureHumanVerified()) return
   // rememberAuthMethod('google') — call after OAuth succeeds
@@ -197,6 +198,7 @@ function handleGithubLogin() {
   // rememberAuthMethod('github') — call after OAuth succeeds
   message.info(t('pages.auth.githubComingSoon'))
 }
+*/
 
 onMounted(() => {
   lastAuthMethod.value = getLastAuthMethod()
@@ -285,6 +287,7 @@ onUnmounted(() => {
             {{ t('pages.auth.loginButton') }}
           </button>
 
+          <!-- OAuth login hidden for this release
           <div class="auth-card__divider" aria-hidden="true">
             <span class="auth-card__divider-line" />
             <span class="auth-card__divider-text">{{ t('pages.auth.or') }}</span>
@@ -330,6 +333,7 @@ onUnmounted(() => {
               <span>{{ t('pages.auth.githubLogin') }}</span>
             </button>
           </div>
+          -->
 
           <p class="auth-card__terms">
             {{ t('pages.auth.termsPrefix') }}
