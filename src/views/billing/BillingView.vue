@@ -2,7 +2,8 @@
 import { computed, onMounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { NSpin, useMessage } from 'naive-ui'
+import { NSpin } from 'naive-ui'
+import { useAppMessage } from '@/composables/useAppMessage'
 import AppIcon from '@/components/common/AppIcon.vue'
 import NumberStepperInput from '@/components/common/NumberStepperInput.vue'
 import BillingTransactionRow from '@/components/billing/BillingTransactionRow.vue'
@@ -48,7 +49,7 @@ const STRIPE_LOGO = assetUrl('/assets/billing/stripe.svg')
 const route = useRoute()
 const { localePath, replace } = useLocaleRouter()
 const { t, locale } = useI18n()
-const message = useMessage()
+const message = useAppMessage()
 const userStore = useUserStore()
 
 const loading = ref(true)

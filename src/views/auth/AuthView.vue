@@ -3,7 +3,7 @@ import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useLocaleRouter } from '@/composables/useLocaleRouter'
-import { useMessage } from 'naive-ui'
+import { useAppMessage } from '@/composables/useAppMessage'
 import { requestOtp, verifyOtp } from '@/api/auth'
 import { AnalyticsEvents, setAnalyticsUserId, trackEvent } from '@/analytics'
 import { useUserStore } from '@/stores/user'
@@ -20,7 +20,7 @@ import {
 const route = useRoute()
 const { push, replace, localePath } = useLocaleRouter()
 const { t, locale } = useI18n()
-const message = useMessage()
+const message = useAppMessage()
 const userStore = useUserStore()
 
 const email = ref('')

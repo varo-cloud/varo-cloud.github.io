@@ -23,6 +23,11 @@ const ICONS = {
   email: '/assets/icons/email.svg',
   x: '/assets/icons/x.svg',
   youtube: '/assets/icons/youtube.svg',
+  'check-circle': '/assets/icons/check-circle.svg',
+  'toast-success': '/assets/icons/toast-success.svg',
+  'toast-error': '/assets/icons/toast-error.svg',
+  'toast-warning': '/assets/icons/toast-warning.svg',
+  'toast-info': '/assets/icons/toast-info.svg',
   twitter: '/assets/footer/twitter.svg',
   telegram: '/assets/footer/telegram.svg',
 } as const
