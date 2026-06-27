@@ -3,6 +3,7 @@ import type { ApiResponse, TokenPair } from '@/types'
 import { getCurrentLocale } from '@/i18n'
 import { authHttp } from '@/api/authHttp'
 import { apiBaseUrl } from '@/utils/apiBaseUrl'
+import { handleUnauthorizedSession } from '@/utils/authRedirect'
 import { resolveRequestBearerToken } from '@/utils/devAuthToken'
 
 const TOKEN_KEY = 'auth_token'
@@ -15,6 +16,29 @@ export const http = axios.create({
 
 interface RetryableRequestConfig extends InternalAxiosRequestConfig {
   _retry?: boolean
+}
+
+function isAuthExemptUrl(url?: string): boolean {
+  if (!url) return false
+  return (
+    url.includes('/auth/refresh') ||
+    url.includes('/auth/verify-otp') ||
+    url.includes('/auth/request-otp') ||
+    url.includes('/auth/logout')
+  )
+}
+
+async function tryRecoverFromUnauthorized(
+  config: RetryableRequestConfig | undefined,
+): Promise<boolean> {
+  if (!config || config._retry || isAuthExemptUrl(config.url)) return false
+
+  config._retry = true
+  const newToken = await tryRefreshAccessToken()
+  if (!newToken) return false
+
+  config.headers.Authorization = `Bearer ${newToken}`
+  return true
 }
 
 let refreshPromise: Promise<string | null> | null = null
@@ -62,8 +86,20 @@ http.interceptors.request.use((config) => {
 })
 
 http.interceptors.response.use(
-  (response) => {
+  async (response) => {
     const payload = response.data as ApiResponse<unknown>
+    const config = response.config as RetryableRequestConfig
+
+    if (payload.code === 401) {
+      if (await tryRecoverFromUnauthorized(config)) {
+        return http(config)
+      }
+      if (!isAuthExemptUrl(config.url)) {
+        await handleUnauthorizedSession()
+      }
+      return Promise.reject(new Error(payload.message || 'Unauthorized'))
+    }
+
     if (payload.code !== 0) {
       return Promise.reject(new Error(payload.message || 'Request failed'))
     }
@@ -75,19 +111,12 @@ http.interceptors.response.use(
     const isUnauthorized =
       error.response?.status === 401 || payload?.code === 401
 
-    if (
-      config &&
-      !config._retry &&
-      isUnauthorized &&
-      !config.url?.includes('/auth/refresh') &&
-      !config.url?.includes('/auth/verify-otp') &&
-      !config.url?.includes('/auth/request-otp')
-    ) {
-      config._retry = true
-      const newToken = await tryRefreshAccessToken()
-      if (newToken) {
-        config.headers.Authorization = `Bearer ${newToken}`
-        return http(config)
+    if (isUnauthorized) {
+      if (await tryRecoverFromUnauthorized(config)) {
+        return http(config!)
+      }
+      if (!isAuthExemptUrl(config?.url)) {
+        await handleUnauthorizedSession()
       }
     }
 

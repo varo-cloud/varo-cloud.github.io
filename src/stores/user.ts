@@ -45,6 +45,10 @@ export const useUserStore = defineStore('user', () => {
 
   async function logout() {
     await logoutApi()
+    clearSession()
+  }
+
+  function clearSession() {
     token.value = null
     profile.value = null
   }
@@ -59,5 +63,6 @@ export const useUserStore = defineStore('user', () => {
     loadProfile,
     setProfile,
     logout,
+    clearSession,
   }
 })
