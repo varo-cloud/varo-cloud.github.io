@@ -3,6 +3,7 @@ import type { ApiResponse, TokenPair } from '@/types'
 import { getCurrentLocale } from '@/i18n'
 import { authHttp } from '@/api/authHttp'
 import { apiBaseUrl } from '@/utils/apiBaseUrl'
+import { resolveRequestBearerToken } from '@/utils/devAuthToken'
 
 const TOKEN_KEY = 'auth_token'
 const REFRESH_TOKEN_KEY = 'refresh_token'
@@ -53,7 +54,7 @@ http.interceptors.request.use((config) => {
   config.headers.set('Accept-Language', locale)
   config.headers.set('X-Locale', locale)
 
-  const token = localStorage.getItem(TOKEN_KEY)
+  const token = resolveRequestBearerToken()
   if (token) {
     config.headers.Authorization = `Bearer ${token}`
   }

@@ -1,9 +1,8 @@
 import { defineStore } from 'pinia'
 import { computed, ref } from 'vue'
-import { clearAuthTokens, getToken } from '@/api/http'
+import { getToken } from '@/api/http'
 import { fetchUserProfile, logout as logoutApi, persistTokenPair } from '@/api/auth'
 import { setAnalyticsUserId } from '@/analytics'
-import { useRealAuthApi } from '@/utils/authApiBaseUrl'
 import type { TokenPair, UserProfile } from '@/types'
 
 export const useUserStore = defineStore('user', () => {
@@ -32,10 +31,6 @@ export const useUserStore = defineStore('user', () => {
       }
     } catch {
       profile.value = null
-      if (!useRealAuthApi()) {
-        token.value = null
-        clearAuthTokens()
-      }
     } finally {
       loading.value = false
     }

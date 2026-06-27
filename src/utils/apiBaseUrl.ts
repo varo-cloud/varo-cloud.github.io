@@ -5,8 +5,14 @@
  * Local / GitHub Pages root site: /api
  */
 export function apiBaseUrl(): string {
-  const apiPath = (import.meta.env.VITE_API_BASE_URL || 'api').replace(/^\//, '')
-  return `${import.meta.env.BASE_URL}${apiPath}`
+  const configured = (import.meta.env.VITE_API_BASE_URL || 'api').trim()
+
+  if (/^https?:\/\//i.test(configured)) {
+    return configured.replace(/\/$/, '')
+  }
+
+  const apiPath = configured.replace(/^\//, '')
+  return `${import.meta.env.BASE_URL}${apiPath}`.replace(/\/$/, '')
 }
 
 /** Map mock route like `/api/models/:id` to the deployed API prefix. */

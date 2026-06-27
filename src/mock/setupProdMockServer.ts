@@ -2,8 +2,8 @@ import axios, { getAdapter, type AxiosResponse, type InternalAxiosRequestConfig 
 import type { MockMethod } from 'vite-plugin-mock'
 import { match as matchPath } from 'path-to-regexp'
 import { http } from '@/api/http'
+import { authHttp } from '@/api/authHttp'
 import { toProdMockUrl } from '@/utils/apiBaseUrl'
-import { useRealAuthApi } from '@/utils/authApiBaseUrl'
 import apiKeysMock from '../../mock/api-keys'
 import authMock from '../../mock/auth'
 import billingMock from '../../mock/billing'
@@ -15,7 +15,7 @@ import pricingMock from '../../mock/pricing'
 import uploadMock from '../../mock/upload'
 
 const mockModules: MockMethod[] = [
-  ...(useRealAuthApi() ? [] : authMock),
+  ...authMock,
   ...apiKeysMock,
   ...modelsMock,
   ...modelSchemaMock,
@@ -126,7 +126,7 @@ function resolveMockResponse(config: InternalAxiosRequestConfig): unknown | null
 export async function setupProdMockServer(): Promise<void> {
   const realAdapter = getAdapter(http.defaults.adapter ?? axios.defaults.adapter)
 
-  http.defaults.adapter = async (config): Promise<AxiosResponse> => {
+  const mockAdapter = async (config: InternalAxiosRequestConfig): Promise<AxiosResponse> => {
     const mockData = resolveMockResponse(config)
 
     if (mockData !== null) {
@@ -142,4 +142,7 @@ export async function setupProdMockServer(): Promise<void> {
 
     return realAdapter(config)
   }
+
+  http.defaults.adapter = mockAdapter
+  authHttp.defaults.adapter = mockAdapter
 }

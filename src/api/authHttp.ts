@@ -1,7 +1,7 @@
 import axios from 'axios'
 import type { ApiResponse } from '@/types'
 import { getCurrentLocale } from '@/i18n'
-import { authApiBaseUrl } from '@/utils/authApiBaseUrl'
+import { apiBaseUrl } from '@/utils/apiBaseUrl'
 
 function parseApiErrorMessage(data: unknown): string {
   if (!data || typeof data !== 'object') return 'Request failed'
@@ -31,7 +31,7 @@ function isWrappedApiResponse(payload: unknown): payload is ApiResponse<unknown>
 }
 
 export const authHttp = axios.create({
-  baseURL: authApiBaseUrl(),
+  baseURL: apiBaseUrl().replace(/\/$/, ''),
   timeout: 15000,
 })
 
