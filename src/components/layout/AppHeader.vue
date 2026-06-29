@@ -181,7 +181,6 @@ onUnmounted(() => {
             class="app-header__nav-item"
             :class="{
               'is-active': isActive(item.name),
-              'is-docs': item.name === 'docs',
             }"
             @click="goTo(item.name)"
           >
@@ -372,16 +371,6 @@ onUnmounted(() => {
 }
 
 .app-header__nav-item.is-active {
-  color: #ebf4fb;
-}
-
-.app-header__nav-item.is-docs {
-  font-weight: 500;
-  opacity: 0.5;
-}
-
-.app-header__nav-item.is-docs:hover {
-  opacity: 0.7;
   color: #ebf4fb;
 }
 
