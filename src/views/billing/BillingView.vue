@@ -711,16 +711,21 @@ onMounted(async () => {
 
           <div
             class="billing-table"
-            :class="{ 'billing-table--records': activeTab === 'billing' }"
+            :class="{
+              'billing-table--records': activeTab === 'billing',
+              'billing-table--topup': activeTab === 'topup',
+            }"
             role="table"
           >
             <div
               v-if="activeTab === 'topup'"
-              class="billing-table__header"
+              class="billing-table__header billing-table__header--topup"
               role="row"
             >
               <span role="columnheader">{{ t('pages.billing.columns.description') }}</span>
-              <span role="columnheader">{{ t('pages.billing.columns.date') }}</span>
+              <span role="columnheader">{{ t('pages.billing.columns.status') }}</span>
+              <span role="columnheader">{{ t('pages.billing.columns.initiatedAt') }}</span>
+              <span role="columnheader">{{ t('pages.billing.columns.completedAt') }}</span>
               <span role="columnheader">{{ t('pages.billing.columns.amount') }}</span>
               <span role="columnheader">{{ t('pages.billing.columns.action') }}</span>
             </div>
@@ -1267,7 +1272,6 @@ onMounted(async () => {
 
 .billing-table__header {
   display: grid;
-  grid-template-columns: minmax(100px, 1.4fr) minmax(100px, 1fr) minmax(80px, 0.8fr) 72px;
   gap: 12px;
   align-items: center;
   min-height: 50px;
@@ -1279,6 +1283,25 @@ onMounted(async () => {
   font-weight: 500;
   line-height: 14px;
   color: var(--text-secondary);
+}
+
+.billing-table__header--topup {
+  grid-template-columns:
+    minmax(90px, 1fr)
+    minmax(88px, 0.75fr)
+    minmax(110px, 0.95fr)
+    minmax(110px, 0.95fr)
+    minmax(72px, 0.6fr)
+    72px;
+}
+
+.billing-table--topup {
+  overflow-x: auto;
+}
+
+.billing-table--topup .billing-table__header--topup,
+.billing-table--topup :deep(.billing-tx-row) {
+  min-width: 760px;
 }
 
 .billing-table__empty {
@@ -1325,7 +1348,7 @@ onMounted(async () => {
     text-align: left;
   }
 
-  .billing-table__header {
+  .billing-table__header--records {
     display: none;
   }
 }

@@ -304,6 +304,9 @@ export default {
       columns: {
         description: 'Description',
         date: 'Date',
+        status: 'Status',
+        initiatedAt: 'Initiated',
+        completedAt: 'Completed',
         amount: 'Amount',
         action: 'Action',
       },
