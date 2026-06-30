@@ -1,7 +1,7 @@
 # 管理后台功能需求 — 总览索引
 
-> **版本：** v1.3  
-> **日期：** 2026-06-29  
+> **版本：** v1.4  
+> **日期：** 2026-06-26  
 > **受众：** 管理后台前端团队、后端团队
 
 ---
@@ -69,8 +69,9 @@
 ├── P0 模型管理        — CRUD、上下架、定价、Schema
 ├── P0 生成任务        — 全站任务列表、失败排查、手动退款
 ├── P0 充值订单        — Stripe 交易、pending 监控
+├── P1 充值预设档位    — Billing 页快捷金额，驱动 GET /api/billing/packages
 ├── P1 定价目录        — 定价页条目（可与模型管理合并）
-├── P1 系统配置        — 套餐、体验金、限流
+├── P1 系统配置        — credits 换算、体验金、限流
 ├── P1 API Key 管理    — 跨用户查询与撤销
 ├── P1 首页 Hero 轮播   — 视频、缩略图、slogan、副标题
 ├── P2 内容管理        — README / FAQ 可视化编辑
@@ -84,6 +85,7 @@
 | 模型管理 | [API §5.3](./admin-backend-api.md#53-模型管理) | [页面 §5.5–5.6](./admin-frontend-pages.md#55-模型列表-models) |
 | 生成任务 | [API §5.5](./admin-backend-api.md#55-生成任务) | [页面 §5.7–5.8](./admin-frontend-pages.md#57-任务列表-generations) |
 | 充值订单 | [API §5.6](./admin-backend-api.md#56-充值订单) | [页面 §5.9](./admin-frontend-pages.md#59-充值订单-billingtransactions) |
+| 充值预设档位 | [API §5.6.1](./admin-backend-api.md#561-充值预设档位p1) | [页面 §5.9.1](./admin-frontend-pages.md#591-充值预设档位-billingpackagesp1) |
 | 系统配置 | [API §5.7](./admin-backend-api.md#57-系统配置p1) | [页面 §5.12](./admin-frontend-pages.md#512-系统配置-settingsp1) |
 | API Keys | [API §5.8](./admin-backend-api.md#58-api-key-管理p1) | [页面 §5.10](./admin-frontend-pages.md#510-api-key-管理-api-keysp1) |
 | 定价目录 | [API §5.4](./admin-backend-api.md#54-定价目录p1) | [页面 §5.11](./admin-frontend-pages.md#511-定价目录-pricingp1) |
@@ -101,7 +103,7 @@
 | 模型 API Tab | `api_model_id`、多语言 `readme_md` / `faq` |
 | 定价页 | 多语言 `name` + 定价字段或定价目录 |
 | API Keys | 用户详情 Tab + 全站 Key 管理 |
-| Billing / Stripe | 充值订单；套餐配置 |
+| Billing / Stripe | 充值订单；**充值预设档位**（`GET /api/billing/packages`） |
 | 注册体验金 | `signup_bonus_usd` + bonus 调账 |
 | 生成失败退款 | 自动退款 + 手动退款 |
 
@@ -136,9 +138,9 @@
 
 ### Phase 2 — 效率提升（P1，约 1 周）
 
-**后端：** config · pricing · api-keys · user suspend · audit logs · billing 异常处理 · readme/faq/定价名称多语言 · Hero 轮播
+**后端：** config · pricing · api-keys · user suspend · audit logs · billing 异常处理 · **billing 预设档位** · readme/faq/定价名称多语言 · Hero 轮播
 
-**前端：** Settings · API Keys · Pricing（或合并模型页）· 审计日志 · 文档 FAQ 多语言编辑 · Hero 轮播（Admin Console，用户端 frontend-web 对接可后置）
+**前端：** Settings · **充值档位** `/billing/packages` · API Keys · Pricing（或合并模型页）· 审计日志 · 文档 FAQ 多语言编辑 · Hero 轮播（Admin Console，用户端 frontend-web 对接可后置）
 
 ### Phase 3 — 运营增强（P2）
 
@@ -152,7 +154,7 @@ Promo Code · 批量赠送 · FAQ 富文本 · 公告等多语言运营内容
 |---|---|
 | 产品 V1 范围 | [Wavespeed & Atlascloud 功能调研.md](../Wavespeed%20&%20Atlascloud%20功能调研.md) |
 | REST API | [rest-api-zh.md](../api-doc/rest-api-zh.md) |
-| 认证 / Stripe | [auth-zh.md](../api-doc/auth-zh.md) · [stripe-zh.md](../api-doc/stripe-zh.md) |
+| Stripe 充值 / 计费 | [stripe-zh.md](../api-doc/stripe-zh.md) · [billing-checkout-amount-and-transactions.md](../doc-diff/billing-checkout-amount-and-transactions.md) |
 | 用户端缺口 doc-diff | [models-backend-gaps.md](../doc-diff/models-backend-gaps.md) 等 |
 | 用户端类型 | [src/types/index.ts](../../src/types/index.ts) |
 

@@ -1,7 +1,7 @@
 # 管理后台 — 前端页面专章
 
-> **版本：** v1.2  
-> **日期：** 2026-06-29  
+> **版本：** v1.3  
+> **日期：** 2026-06-26  
 > **受众：** 管理后台前端团队  
 > **姊妹文档：** [后端 API 专章](./admin-backend-api.md) · [总览索引](./admin-platform-requirements.md)
 
@@ -113,6 +113,7 @@ router.beforeEach(async (to) => {
 │ 模型     │                                      │
 │ 任务     │                                      │
 │ 充值订单  │                                      │
+│ 充值档位  │  (P1)                                │
 │ API Keys │  (P1)                                │
 │ 定价     │  (P1)                                │
 │ Hero轮播  │  (P1)                                │
@@ -139,6 +140,7 @@ router.beforeEach(async (to) => {
 | `/generations` | 任务列表 | P0 | `GET /api/admin/generations` |
 | `/generations/:id` | 任务详情 | P0 | `GET /api/admin/generations/{id}` |
 | `/billing/transactions` | 充值订单 | P0 | `GET /api/admin/billing/transactions` |
+| `/billing/packages` | 充值预设档位 | P1 | `GET/POST/PUT /api/admin/billing/packages` + reorder |
 | `/api-keys` | API Key 管理 | P1 | `GET/DELETE /api/admin/api-keys` |
 | `/pricing` | 定价目录 | P1 | pricing CRUD |
 | `/settings` | 系统配置 | P1 | `GET/PUT /api/admin/config` |
@@ -463,7 +465,7 @@ Task: cgt-20260611195952-9l74f          [退还费用]
 | 交易 ID | `id` |
 | 用户 | `user_email` |
 | 金额 | `amount_usd` |
-| 套餐 | `package_id` |
+| 套餐 | `preset_id`（空为「自定义」） |
 | 状态 | pending 黄 / completed 绿 / failed 红 / expired 灰 |
 | 支付方式 | `payment_detail` |
 | 创建时间 | `created_at` |
@@ -475,6 +477,63 @@ Task: cgt-20260611195952-9l74f          [退还费用]
 - 完整字段 + `receipt_url` 外链
 - `stripe_session_id` 可复制
 - P1：pending 超过 24h 显示「手动标记完成/失败」
+
+---
+
+### 5.9.1 充值预设档位 `/billing/packages`（P1）
+
+管理用户端 Billing 页快捷充值金额，数据下发至公开 `GET /api/billing/packages`。
+
+> 用户端选中某档位后，checkout 仍传 `{ "amount_usd": <该档位 price_usd> }`，不传 `package`。详见 [billing-checkout-amount-and-transactions.md](../doc-diff/billing-checkout-amount-and-transactions.md)。
+
+#### 布局
+
+```
+┌─────────────────────────────────────────────────────────┐
+│  充值预设档位                              [+ 新增档位]  │
+├────┬──────────┬──────────┬──────────┬────────┬────────┤
+│ ≡  │ ID       │ 金额 USD │ 展示名称  │ 状态   │ 操作   │
+├────┼──────────┼──────────┼──────────┼────────┼────────┤
+│ ≡  │ starter  │ $10.00   │ Starter  │ 启用   │ 编辑 删│
+│ ≡  │ pro      │ $25.00   │ Pro      │ 启用   │ 编辑 删│
+│ ≡  │ business │ $50.00   │ Business │ 启用   │ 编辑 删│
+└────┴──────────┴──────────┴──────────┴────────┴────────┘
+```
+
+#### 表格列
+
+| 列 | 字段 | 说明 |
+|---|---|---|
+| 排序 | `sort_order` | 拖拽 `≡` 调整，保存调用 `PUT .../reorder` |
+| ID | `id` | slug，创建后只读 |
+| 金额 | `price_usd` | 用户端该档位展示的美元金额 |
+| 展示名称 | `label["en-US"]` | 列表默认显示英文；无则显示 `id` |
+| 状态 | `active` | 启用 / 停用 Switch |
+| 操作 | — | 编辑 · 删除（有 pending 订单引用时禁用删除） |
+
+#### 新增 / 编辑抽屉
+
+| 字段 | 控件 | 校验 |
+|---|---|---|
+| ID | Input | 新建必填；`^[a-z][a-z0-9_-]{0,31}$`；编辑只读 |
+| 金额 USD | InputNumber | 必填；`0.01` ~ `10000`；最多 2 位小数 |
+| 展示名称 | 语言子 Tab `LocalizedString` | `en-US` 建议必填；供未来公开 API 或运营识别 |
+| 启用 | Switch | 默认开启 |
+
+- 保存：`POST`（新建）或 `PUT /api/admin/billing/packages/{id}`
+- 停用：Switch 或 `PATCH .../status`
+- 删除：二次确认；409 时提示「存在关联充值订单」
+
+#### 与用户端联动
+
+| Admin 操作 | 用户端效果 |
+|---|---|
+| 新增档位并启用 | Billing 页充值区多一个单选项 |
+| 修改 `price_usd` | 用户端展示金额与 checkout `amount_usd` 同步变更 |
+| 停用档位 | `GET /api/billing/packages` 不再返回该项 |
+| 调整排序 | 用户端单选项顺序同步 |
+
+**说明：** 用户端另有「自定义金额」输入框（$1 ~ $10,000），不依赖本配置。
 
 ---
 
@@ -515,9 +574,8 @@ Task: cgt-20260611195952-9l74f          [退还费用]
 
 | 分区 | 字段 | 控件 |
 |---|---|---|
-| 计费 | credits_per_usd | InputNumber |
+| 计费 | credits_per_usd | InputNumber（$1 兑换 credits 数，Webhook 入账用） |
 | 计费 | 注册体验金 USD | InputNumber |
-| 套餐 | credit_packages 表格 | 行内编辑 price_usd / credits / stripe_price_id |
 | 限流 | default_rate_limit_rpm | InputNumber |
 | 上传 | upload_max_size_mb | InputNumber |
 | 密钥 | ark_api_key 等 | 「已配置/未配置」+ 新值输入（不回显） |
