@@ -50,9 +50,11 @@ a {
   --app-header-height: 80px;
 }
 
-/* Naive UI Spin defaults to green; align with app accent. */
-.n-spin-body {
-  --n-color: var(--text-accent);
+/* Naive UI Spin inlines --n-color (primary green); override on the element that receives it. */
+.n-spin,
+.n-spin-container {
+  --n-color: var(--text-accent) !important;
+  --n-text-color: var(--text-accent) !important;
 }
 
 .scrollbar-subtle {
