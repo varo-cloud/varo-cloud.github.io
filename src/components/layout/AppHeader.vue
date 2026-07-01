@@ -427,7 +427,7 @@ onUnmounted(() => {
   top: 0;
   z-index: 100;
   width: 100%;
-  height: 54px;
+  height: var(--app-header-height);
   color: #ebf4fb;
   transition:
     background-color 0.2s ease,
@@ -452,7 +452,7 @@ onUnmounted(() => {
   height: 100%;
   max-width: 1360px;
   margin: 0 auto;
-  padding: 0 16px;
+  padding: 8px 16px;
 }
 
 .app-header__left {
@@ -725,7 +725,7 @@ onUnmounted(() => {
 
 .app-header__mobile-backdrop {
   position: fixed;
-  inset: 54px 0 0;
+  inset: var(--app-header-height) 0 0;
   z-index: 99;
   background: rgba(0, 0, 0, 0.45);
 }

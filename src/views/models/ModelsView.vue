@@ -551,7 +551,7 @@ onMounted(() => {
 @media (max-width: 767px) {
   .models-hero {
     align-items: flex-end;
-    min-height: min(100svh - 54px, 640px);
+    min-height: min(calc(100svh - var(--app-header-height)), 640px);
     padding: 72px 16px 16px;
   }
 
