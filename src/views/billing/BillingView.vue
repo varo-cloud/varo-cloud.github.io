@@ -46,17 +46,26 @@ const CUSTOM_AMOUNT_MAX_USD = 10_000
 const DEFAULT_CUSTOM_AMOUNT_USD = 20
 
 const STRIPE_LOGO = assetUrl('/assets/billing/stripe.svg')
+// const ALIPAY_LOGO = assetUrl('/assets/billing/alipay.svg')
+
+/** Re-enable when WeChat Pay ships. */
+const SHOW_WECHAT_PAY = false
 
 const PAYMENT_METHODS: Array<{
   id: PaymentMethodId
   logo?: string
   alt: string
   textClass?: string
+  hidden?: boolean
 }> = [
   { id: 'card', logo: STRIPE_LOGO, alt: 'Stripe' },
   { id: 'alipay', alt: 'Alipay', textClass: 'billing-payment-method__text--alipay' },
-  { id: 'wechat_pay', alt: 'WeChat Pay', textClass: 'billing-payment-method__text--wechat' },
+  { id: 'wechat_pay', alt: 'WeChat Pay', textClass: 'billing-payment-method__text--wechat', hidden: !SHOW_WECHAT_PAY },
 ]
+
+const visiblePaymentMethods = computed(() =>
+  PAYMENT_METHODS.filter((method) => !method.hidden),
+)
 
 const route = useRoute()
 const { localePath, replace } = useLocaleRouter()
@@ -628,7 +637,7 @@ onMounted(async () => {
                   :aria-label="t('pages.billing.paymentMethod')"
                 >
                   <label
-                    v-for="method in PAYMENT_METHODS"
+                    v-for="method in visiblePaymentMethods"
                     :key="method.id"
                     class="billing-payment-method"
                     :class="{
@@ -645,7 +654,6 @@ onMounted(async () => {
                     <img
                       v-if="method.logo"
                       :src="method.logo"
-                      :alt="method.alt"
                     />
                     <span
                       v-else
@@ -1175,15 +1183,18 @@ onMounted(async () => {
   width: 150px;
   height: 44px;
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.5);
+  background: rgba(255, 255, 255, 1);
   opacity: 0.5;
   cursor: pointer;
   transition: opacity 0.15s ease;
 }
 
 .billing-payment-method img {
-  max-width: 84px;
-  max-height: 24px;
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: inherit;
+  object-fit: cover;
 }
 
 .billing-payment-method__text {
