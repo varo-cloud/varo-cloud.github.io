@@ -25,14 +25,6 @@ const paymentDetail = computed(() => {
   return '—'
 })
 
-const packageLabel = computed(() => {
-  const id = props.transaction?.packageId
-  if (!id) return '—'
-  const key = `pages.billing.topUpDetail.packages.${id}` as const
-  const translated = t(key)
-  return translated === key ? id : translated
-})
-
 const createdLabel = computed(() => {
   if (!props.transaction) return '—'
   return formatTimestamp(props.transaction.createdAt, locale.value, 'compactDatetime')
@@ -57,7 +49,6 @@ const detailRows = computed(() => {
     { label: t('pages.billing.topUpDetail.transactionId'), value: props.transaction.id },
     { label: t('pages.billing.topUpDetail.status'), value: statusLabel.value, isStatus: true },
     { label: t('pages.billing.topUpDetail.amount'), value: amountLabel.value },
-    { label: t('pages.billing.topUpDetail.package'), value: packageLabel.value },
     { label: t('pages.billing.topUpDetail.paymentMethod'), value: 'Stripe' },
     { label: t('pages.billing.topUpDetail.paymentDetail'), value: paymentDetail.value },
     { label: t('pages.billing.topUpDetail.createdAt'), value: createdLabel.value },

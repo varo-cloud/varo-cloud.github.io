@@ -179,7 +179,6 @@ export interface Transaction {
   status?: TopUpTransactionStatus
   paymentMethod?: PaymentMethodId
   paymentDetail?: string | null
-  packageId?: string | null
   completedAt?: number | null
   receiptUrl?: string | null
 }
@@ -217,8 +216,7 @@ export interface CreditPackage {
 }
 
 export interface CreateCheckoutPayload {
-  package?: CreditPackageId
-  amountUsd?: number
+  amountUsd: number
 }
 
 export interface CheckoutSessionResult {

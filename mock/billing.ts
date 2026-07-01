@@ -1,5 +1,5 @@
 import type { MockMethod } from 'vite-plugin-mock'
-import type { CreditPackageId, Transaction } from '../src/types'
+import type { Transaction } from '../src/types'
 import { addAccountBalanceUsd, getAccountBalanceUsd } from './account-balance'
 import { fail, success } from './_util'
 
@@ -11,7 +11,6 @@ const creditPackages = [
 
 interface PendingCheckout {
   sessionId: string
-  packageId: CreditPackageId | 'custom' | null
   transactionId: string
   amountUsd: number
 }
@@ -39,7 +38,6 @@ const transactions: Transaction[] = [
     status: 'completed',
     paymentMethod: 'stripe',
     paymentDetail: 'Visa ••4242',
-    packageId: 'starter',
     completedAt: Date.parse('2026-05-12T10:01:00Z'),
     receiptUrl: 'https://pay.stripe.com/receipts/example',
   },
@@ -51,7 +49,6 @@ const transactions: Transaction[] = [
     createdAt: Date.parse('2026-05-12T09:30:00Z'),
     status: 'pending',
     paymentMethod: 'stripe',
-    packageId: 'pro',
   },
   {
     id: 'tx-topup-3',
@@ -62,7 +59,6 @@ const transactions: Transaction[] = [
     status: 'completed',
     paymentMethod: 'stripe',
     paymentDetail: 'Mastercard ••5555',
-    packageId: 'starter',
     completedAt: Date.parse('2026-05-12T09:00:30Z'),
   },
 ]
@@ -92,10 +88,6 @@ const billingRecords = [
   },
 ]
 
-function getPackage(packageId: string) {
-  return creditPackages.find((item) => item.id === packageId)
-}
-
 function toApiTransaction(tx: Transaction) {
   return {
     id: tx.id,
@@ -104,7 +96,6 @@ function toApiTransaction(tx: Transaction) {
     created_at: tx.createdAt,
     payment_method: tx.paymentMethod ?? 'stripe',
     payment_detail: tx.paymentDetail ?? null,
-    package_id: tx.packageId ?? null,
     completed_at: tx.completedAt ?? null,
     receipt_url: tx.receiptUrl ?? null,
   }
@@ -190,28 +181,15 @@ export default [
       body,
     }: {
       body: {
-        package?: string
         amount_usd?: number
       }
     }) => {
-      const customAmountUsd = Number(body.amount_usd)
-      const hasCustomAmount =
-        Number.isFinite(customAmountUsd) && customAmountUsd > 0 && !body.package
-
-      let amountUsd: number
-      let packageId: CreditPackageId | 'custom' | null
-
-      if (hasCustomAmount) {
-        amountUsd = Math.round(customAmountUsd * 100) / 100
-        packageId = 'custom'
-      } else {
-        const pkg = getPackage(body.package ?? '')
-        if (!pkg) {
-          return fail('Invalid package or amount', 400)
-        }
-        amountUsd = pkg.price_usd
-        packageId = pkg.id
+      const amountUsd = Number(body.amount_usd)
+      if (!Number.isFinite(amountUsd) || amountUsd < 1 || amountUsd > 10_000) {
+        return fail('amount_usd must be between 1 and 10000', 400)
       }
+
+      const roundedAmountUsd = Math.round(amountUsd * 100) / 100
 
       const sessionId = `cs_mock_${Date.now()}`
       const transactionId = `tx-topup-${Date.now()}`
@@ -220,32 +198,25 @@ export default [
       transactions.unshift({
         id: transactionId,
         type: 'topup',
-        amountUsd,
+        amountUsd: roundedAmountUsd,
         description: 'Top Up',
         createdAt,
         status: 'pending',
         paymentMethod: 'stripe',
-        packageId,
       })
 
       pendingCheckouts.set(sessionId, {
         sessionId,
-        packageId,
         transactionId,
-        amountUsd,
+        amountUsd: roundedAmountUsd,
       })
 
       const successBase = 'http://localhost:5173/en/billing'
       const checkoutParams = new URLSearchParams({
         stripe_checkout: '1',
         session_id: sessionId,
+        amount: String(roundedAmountUsd),
       })
-
-      if (packageId === 'custom') {
-        checkoutParams.set('amount', String(amountUsd))
-      } else if (packageId) {
-        checkoutParams.set('package', packageId)
-      }
 
       const checkoutUrl = `${successBase}?${checkoutParams.toString()}`
 
