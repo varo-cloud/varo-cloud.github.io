@@ -36,7 +36,7 @@ const transactions: Transaction[] = [
     description: 'Top Up',
     createdAt: Date.parse('2026-05-12T10:00:00Z'),
     status: 'completed',
-    paymentMethod: 'stripe',
+    paymentMethod: 'card',
     paymentDetail: 'Visa ••4242',
     completedAt: Date.parse('2026-05-12T10:01:00Z'),
     receiptUrl: 'https://pay.stripe.com/receipts/example',
@@ -48,7 +48,7 @@ const transactions: Transaction[] = [
     description: 'Top Up',
     createdAt: Date.parse('2026-05-12T09:30:00Z'),
     status: 'pending',
-    paymentMethod: 'stripe',
+    paymentMethod: 'card',
   },
   {
     id: 'tx-topup-3',
@@ -57,7 +57,7 @@ const transactions: Transaction[] = [
     description: 'Top Up',
     createdAt: Date.parse('2026-05-12T09:00:00Z'),
     status: 'completed',
-    paymentMethod: 'stripe',
+    paymentMethod: 'card',
     paymentDetail: 'Mastercard ••5555',
     completedAt: Date.parse('2026-05-12T09:00:30Z'),
   },
@@ -94,7 +94,7 @@ function toApiTransaction(tx: Transaction) {
     amount_usd: tx.amountUsd,
     status: tx.status ?? 'completed',
     created_at: tx.createdAt,
-    payment_method: tx.paymentMethod ?? 'stripe',
+    payment_method: tx.paymentMethod ?? 'card',
     payment_detail: tx.paymentDetail ?? null,
     completed_at: tx.completedAt ?? null,
     receipt_url: tx.receiptUrl ?? null,
@@ -182,11 +182,18 @@ export default [
     }: {
       body: {
         amount_usd?: number
+        payment_method?: string
       }
     }) => {
       const amountUsd = Number(body.amount_usd)
       if (!Number.isFinite(amountUsd) || amountUsd < 1 || amountUsd > 10_000) {
         return fail('amount_usd must be between 1 and 10000', 400)
+      }
+
+      const paymentMethod = (body.payment_method ?? 'card') as Transaction['paymentMethod']
+      const allowedMethods = new Set(['card', 'alipay', 'wechat_pay'])
+      if (!allowedMethods.has(paymentMethod ?? 'card')) {
+        return fail('payment_method is invalid', 400)
       }
 
       const roundedAmountUsd = Math.round(amountUsd * 100) / 100
@@ -202,7 +209,7 @@ export default [
         description: 'Top Up',
         createdAt,
         status: 'pending',
-        paymentMethod: 'stripe',
+        paymentMethod,
       })
 
       pendingCheckouts.set(sessionId, {

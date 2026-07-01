@@ -217,13 +217,14 @@ export interface CreditPackage {
 
 export interface CreateCheckoutPayload {
   amountUsd: number
+  paymentMethod: PaymentMethodId
 }
 
 export interface CheckoutSessionResult {
   checkoutUrl: string
 }
 
-export type PaymentMethodId = 'stripe' | 'paypal' | 'npay' | 'alipay'
+export type PaymentMethodId = 'card' | 'alipay' | 'wechat_pay'
 
 export interface CreateTopUpPayload {
   amountUsd: number
