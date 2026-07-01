@@ -1,7 +1,7 @@
 # 管理后台 — 前端页面专章
 
-> **版本：** v1.1  
-> **日期：** 2026-06-25  
+> **版本：** v1.3  
+> **日期：** 2026-06-26  
 > **受众：** 管理后台前端团队  
 > **姊妹文档：** [后端 API 专章](./admin-backend-api.md) · [总览索引](./admin-platform-requirements.md)
 
@@ -113,8 +113,10 @@ router.beforeEach(async (to) => {
 │ 模型     │                                      │
 │ 任务     │                                      │
 │ 充值订单  │                                      │
+│ 充值档位  │  (P1)                                │
 │ API Keys │  (P1)                                │
 │ 定价     │  (P1)                                │
+│ Hero轮播  │  (P1)                                │
 │ 系统配置  │  (P1)                                │
 └──────────┴──────────────────────────────────────┘
 ```
@@ -138,9 +140,11 @@ router.beforeEach(async (to) => {
 | `/generations` | 任务列表 | P0 | `GET /api/admin/generations` |
 | `/generations/:id` | 任务详情 | P0 | `GET /api/admin/generations/{id}` |
 | `/billing/transactions` | 充值订单 | P0 | `GET /api/admin/billing/transactions` |
+| `/billing/packages` | 充值预设档位 | P1 | `GET/POST/PUT /api/admin/billing/packages` + reorder |
 | `/api-keys` | API Key 管理 | P1 | `GET/DELETE /api/admin/api-keys` |
 | `/pricing` | 定价目录 | P1 | pricing CRUD |
 | `/settings` | 系统配置 | P1 | `GET/PUT /api/admin/config` |
+| `/content/hero-carousel` | 首页 Hero 轮播 | P1 | `GET/PUT /api/admin/hero-carousel` + slides CRUD |
 | `/audit-logs` | 审计日志 | P1 | `GET /api/admin/audit-logs` |
 
 ---
@@ -461,7 +465,7 @@ Task: cgt-20260611195952-9l74f          [退还费用]
 | 交易 ID | `id` |
 | 用户 | `user_email` |
 | 金额 | `amount_usd` |
-| 套餐 | `package_id` |
+| 套餐 | `preset_id`（空为「自定义」） |
 | 状态 | pending 黄 / completed 绿 / failed 红 / expired 灰 |
 | 支付方式 | `payment_detail` |
 | 创建时间 | `created_at` |
@@ -473,6 +477,63 @@ Task: cgt-20260611195952-9l74f          [退还费用]
 - 完整字段 + `receipt_url` 外链
 - `stripe_session_id` 可复制
 - P1：pending 超过 24h 显示「手动标记完成/失败」
+
+---
+
+### 5.9.1 充值预设档位 `/billing/packages`（P1）
+
+管理用户端 Billing 页快捷充值金额，数据下发至公开 `GET /api/billing/packages`。
+
+> 用户端选中某档位后，checkout 仍传 `{ "amount_usd": <该档位 price_usd> }`，不传 `package`。详见 [billing-checkout-amount-and-transactions.md](../doc-diff/billing-checkout-amount-and-transactions.md)。
+
+#### 布局
+
+```
+┌─────────────────────────────────────────────────────────┐
+│  充值预设档位                              [+ 新增档位]  │
+├────┬──────────┬──────────┬──────────┬────────┬────────┤
+│ ≡  │ ID       │ 金额 USD │ 展示名称  │ 状态   │ 操作   │
+├────┼──────────┼──────────┼──────────┼────────┼────────┤
+│ ≡  │ starter  │ $10.00   │ Starter  │ 启用   │ 编辑 删│
+│ ≡  │ pro      │ $25.00   │ Pro      │ 启用   │ 编辑 删│
+│ ≡  │ business │ $50.00   │ Business │ 启用   │ 编辑 删│
+└────┴──────────┴──────────┴──────────┴────────┴────────┘
+```
+
+#### 表格列
+
+| 列 | 字段 | 说明 |
+|---|---|---|
+| 排序 | `sort_order` | 拖拽 `≡` 调整，保存调用 `PUT .../reorder` |
+| ID | `id` | slug，创建后只读 |
+| 金额 | `price_usd` | 用户端该档位展示的美元金额 |
+| 展示名称 | `label["en-US"]` | 列表默认显示英文；无则显示 `id` |
+| 状态 | `active` | 启用 / 停用 Switch |
+| 操作 | — | 编辑 · 删除（有 pending 订单引用时禁用删除） |
+
+#### 新增 / 编辑抽屉
+
+| 字段 | 控件 | 校验 |
+|---|---|---|
+| ID | Input | 新建必填；`^[a-z][a-z0-9_-]{0,31}$`；编辑只读 |
+| 金额 USD | InputNumber | 必填；`0.01` ~ `10000`；最多 2 位小数 |
+| 展示名称 | 语言子 Tab `LocalizedString` | `en-US` 建议必填；供未来公开 API 或运营识别 |
+| 启用 | Switch | 默认开启 |
+
+- 保存：`POST`（新建）或 `PUT /api/admin/billing/packages/{id}`
+- 停用：Switch 或 `PATCH .../status`
+- 删除：二次确认；409 时提示「存在关联充值订单」
+
+#### 与用户端联动
+
+| Admin 操作 | 用户端效果 |
+|---|---|
+| 新增档位并启用 | Billing 页充值区多一个单选项 |
+| 修改 `price_usd` | 用户端展示金额与 checkout `amount_usd` 同步变更 |
+| 停用档位 | `GET /api/billing/packages` 不再返回该项 |
+| 调整排序 | 用户端单选项顺序同步 |
+
+**说明：** 用户端另有「自定义金额」输入框（$1 ~ $10,000），不依赖本配置。
 
 ---
 
@@ -513,9 +574,8 @@ Task: cgt-20260611195952-9l74f          [退还费用]
 
 | 分区 | 字段 | 控件 |
 |---|---|---|
-| 计费 | credits_per_usd | InputNumber |
+| 计费 | credits_per_usd | InputNumber（$1 兑换 credits 数，Webhook 入账用） |
 | 计费 | 注册体验金 USD | InputNumber |
-| 套餐 | credit_packages 表格 | 行内编辑 price_usd / credits / stripe_price_id |
 | 限流 | default_rate_limit_rpm | InputNumber |
 | 上传 | upload_max_size_mb | InputNumber |
 | 密钥 | ark_api_key 等 | 「已配置/未配置」+ 新值输入（不回显） |
@@ -535,6 +595,53 @@ Task: cgt-20260611195952-9l74f          [退还费用]
 | 目标 | `target_type` + `target_id` |
 | 原因 | `reason` |
 | 详情 | 展开 JSON diff |
+
+---
+
+### 5.14 首页 Hero 轮播 `/content/hero-carousel`（P1）
+
+管理 Models 首页顶部视频轮播：背景视频、底部缩略图、随 slide 切换的 slogan / 副标题。
+
+> **用户端 frontend-web 对接可后置**；本页仅 Admin Console 配置能力。详见 [后端 API §5.11](./admin-backend-api.md#511-hero-轮播配置p1)。
+
+#### 布局
+
+```
+┌─────────────────────────────────────────────────────────┐
+│  全局设置                                                │
+│  轮播间隔(ms) [5000]  自动轮播 [✓]  静音 [✓]              │
+│  默认 Slogan / 副标题 — 语言子 Tab (en-US · zh-CN)        │
+└─────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────┐
+│  [+ 新增 Slide]                              [保存排序]  │
+├────┬──────────┬──────────┬────────────┬────────┬────────┤
+│ ≡  │ 缩略图    │ 视频      │ Slogan      │ 状态   │ 操作   │
+├────┼──────────┼──────────┼────────────┼────────┼────────┤
+│ ≡  │ [preview]│ 已上传    │ Seedance…  │ 启用   │ 编辑 删│
+└────┴──────────┴──────────┴────────────┴────────┴────────┘
+```
+
+#### 编辑 Slide 抽屉 / 弹窗
+
+| 字段 | 控件 | 说明 |
+|---|---|---|
+| 视频 | Upload + URL 预览 | `POST .../assets` `kind=video`；建议 ≥ 1920×1080 |
+| 缩略图 | Upload + URL 预览 | `kind=poster`；底部导航 + 视频 poster |
+| Slogan | 语言子 Tab `LocalizedString` | 留空则使用全局默认 |
+| 副标题 | 语言子 Tab `LocalizedString` | 留空则使用全局默认 |
+| 启用 | Switch | 对应 `active` |
+
+#### 交互
+
+- 拖拽 `≡` 调整顺序 → `PUT .../slides/reorder`
+- 停用 slide 需二次确认
+- 删除 slide 不删 CDN 文件（提示运营自行清理）
+- 保存后公开 `GET /api/site/hero-carousel` 缓存失效
+
+#### API 模块
+
+`src/api/hero-carousel.ts` — 映射见 [后端 §5.11](./admin-backend-api.md#511-hero-轮播配置p1)
 
 ---
 
@@ -597,6 +704,7 @@ admin-web/src/
 │   ├── billing.ts
 │   ├── api-keys.ts       # P1
 │   ├── pricing.ts        # P1
+│   ├── hero-carousel.ts  # P1
 │   └── config.ts         # P1
 ├── types/
 │   └── admin.ts          # Admin 专用类型
@@ -633,6 +741,7 @@ admin-web/src/
 | 用户端页面 | Admin 对应能力 |
 |---|---|
 | Models 首页 | 模型列表 + 编辑：展示字段、上下架、排序 |
+| Models 首页 Hero | Hero 轮播页：视频、缩略图、slogan、副标题 |
 | Model Detail / Playground | 模型编辑：Schema、定价 |
 | Model API Tab | 模型编辑：api_model_id、readme、faq |
 | Pricing | 定价目录 或 模型定价 Tab |
@@ -655,6 +764,7 @@ admin-web/src/
 ### Phase 2 — P1（约 1 周）
 
 - [ ] Settings / API Keys / Pricing（或合并到模型页，含定价名称多语言）
+- [ ] Hero 轮播配置页 `/content/hero-carousel`
 - [ ] 用户禁用、充值异常处理、审计日志页
 - [ ] 模型文档 FAQ 多语言编辑（readme + FAQ 语言子 Tab）
 

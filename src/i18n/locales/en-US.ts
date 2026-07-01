@@ -16,6 +16,9 @@ export default {
     signOut: 'Sign Out',
     userId: 'ID:{id}',
     defaultUserName: 'User',
+    openMenu: 'Open menu',
+    closeMenu: 'Close menu',
+    menu: 'Menu',
   },
   nav: {
     models: 'Models',
@@ -301,6 +304,9 @@ export default {
       columns: {
         description: 'Description',
         date: 'Date',
+        status: 'Status',
+        initiatedAt: 'Initiated',
+        completedAt: 'Completed',
         amount: 'Amount',
         action: 'Action',
       },

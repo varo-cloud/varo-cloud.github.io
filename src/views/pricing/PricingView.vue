@@ -172,7 +172,7 @@ onMounted(() => {
 
 .pricing-table {
   border: 1px solid #d7d7d7;
-  border-radius: 8px 8px 0 0;
+  border-radius: 8px;
   overflow: hidden;
   background: #fff;
 }

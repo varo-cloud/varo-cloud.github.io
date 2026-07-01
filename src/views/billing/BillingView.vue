@@ -4,8 +4,8 @@ import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { NSpin } from 'naive-ui'
 import { useAppMessage } from '@/composables/useAppMessage'
-import AppIcon from '@/components/common/AppIcon.vue'
-import NumberStepperInput from '@/components/common/NumberStepperInput.vue'
+// import AppIcon from '@/components/common/AppIcon.vue'
+// import NumberStepperInput from '@/components/common/NumberStepperInput.vue'
 import BillingTransactionRow from '@/components/billing/BillingTransactionRow.vue'
 import BillingRecordRow from '@/components/billing/BillingRecordRow.vue'
 import BillingTopUpDetailDialog from '@/components/billing/BillingTopUpDetailDialog.vue'
@@ -17,7 +17,7 @@ import {
   fetchBillingSummary,
   fetchCreditPackages,
   fetchTransactions,
-  updateAutoTopUp,
+  // updateAutoTopUp,
 } from '@/api/billing'
 import { useLocaleRouter } from '@/composables/useLocaleRouter'
 import { AnalyticsEvents, trackEvent } from '@/analytics'
@@ -37,8 +37,8 @@ import type {
 
 type HistoryTab = 'topup' | 'billing'
 
-/** Re-enable when auto top-up ships. */
-const SHOW_AUTO_TOP_UP = false
+// /** Re-enable when auto top-up ships. */
+// const SHOW_AUTO_TOP_UP = false
 
 const CUSTOM_AMOUNT_MIN_USD = 1
 const CUSTOM_AMOUNT_MAX_USD = 10_000
@@ -66,10 +66,10 @@ const checkoutProcessing = ref(false)
 const mockPaying = ref(false)
 const viewingTransaction = ref<Transaction | null>(null)
 
-const autoTopUpEnabled = ref(false)
-const autoTopUpThresholdNumber = ref(5)
-const autoTopUpAmountNumber = ref(20)
-const savingAutoTopUp = ref(false)
+// const autoTopUpEnabled = ref(false)
+// const autoTopUpThresholdNumber = ref(5)
+// const autoTopUpAmountNumber = ref(20)
+// const savingAutoTopUp = ref(false)
 
 const activeTab = ref<HistoryTab>('topup')
 const rechargeSectionRef = ref<HTMLElement | null>(null)
@@ -144,12 +144,12 @@ const spentTrendLabel = computed(() => {
   })
 })
 
-const autoTopUpSummaryLabel = computed(() =>
-  t('pages.billing.autoTopUpSummary', {
-    amount: formatUsd(autoTopUpAmountNumber.value),
-    threshold: formatUsd(autoTopUpThresholdNumber.value),
-  }),
-)
+// const autoTopUpSummaryLabel = computed(() =>
+//   t('pages.billing.autoTopUpSummary', {
+//     amount: formatUsd(autoTopUpAmountNumber.value),
+//     threshold: formatUsd(autoTopUpThresholdNumber.value),
+//   }),
+// )
 
 const topUpTransactions = computed(() =>
   transactions.value.filter((item) => item.type === 'topup'),
@@ -227,9 +227,9 @@ async function loadBilling(options: { silent?: boolean } = {}) {
       selectedPackageId.value = packageData[0].id
     }
 
-    autoTopUpEnabled.value = summaryData.autoTopUp.enabled
-    autoTopUpThresholdNumber.value = summaryData.autoTopUp.thresholdUsd
-    autoTopUpAmountNumber.value = summaryData.autoTopUp.topUpAmountUsd
+    // autoTopUpEnabled.value = summaryData.autoTopUp.enabled
+    // autoTopUpThresholdNumber.value = summaryData.autoTopUp.thresholdUsd
+    // autoTopUpAmountNumber.value = summaryData.autoTopUp.topUpAmountUsd
   } catch {
     if (!options.silent) {
       error.value = t('pages.billing.loadError')
@@ -273,19 +273,10 @@ async function handleBuy() {
   purchasing.value = true
 
   try {
-    const urls = buildCheckoutUrls()
     const checkoutPayload =
       selectedPackageId.value === 'custom'
-        ? {
-            amountUsd: parsedCustomAmountUsd.value!,
-            successUrl: urls.successUrl,
-            cancelUrl: urls.cancelUrl,
-          }
-        : {
-            package: selectedPackageId.value as CreditPackageId,
-            successUrl: urls.successUrl,
-            cancelUrl: urls.cancelUrl,
-          }
+        ? { amountUsd: parsedCustomAmountUsd.value! }
+        : { package: selectedPackageId.value as CreditPackageId }
 
     trackEvent(AnalyticsEvents.CHECKOUT_START, {
       package_id: selectedPackageId.value === 'custom' ? 'custom' : selectedPackageId.value ?? undefined,
@@ -370,38 +361,38 @@ async function handleCheckoutReturn() {
   }
 }
 
-async function handleEnableAutoTopUp() {
-  if (savingAutoTopUp.value) return
-
-  const thresholdUsd = autoTopUpThresholdNumber.value
-  const topUpAmountUsd = autoTopUpAmountNumber.value
-
-  if (!Number.isFinite(thresholdUsd) || thresholdUsd <= 0) return
-  if (!Number.isFinite(topUpAmountUsd) || topUpAmountUsd <= 0) return
-
-  savingAutoTopUp.value = true
-
-  try {
-    const result = await updateAutoTopUp({
-      enabled: autoTopUpEnabled.value,
-      thresholdUsd,
-      topUpAmountUsd,
-    })
-
-    if (summary.value) {
-      summary.value = {
-        ...summary.value,
-        autoTopUp: result,
-      }
-    }
-
-    message.success(t('pages.billing.autoTopUpSaved'))
-  } catch {
-    message.error(t('pages.billing.autoTopUpError'))
-  } finally {
-    savingAutoTopUp.value = false
-  }
-}
+// async function handleEnableAutoTopUp() {
+//   if (savingAutoTopUp.value) return
+//
+//   const thresholdUsd = autoTopUpThresholdNumber.value
+//   const topUpAmountUsd = autoTopUpAmountNumber.value
+//
+//   if (!Number.isFinite(thresholdUsd) || thresholdUsd <= 0) return
+//   if (!Number.isFinite(topUpAmountUsd) || topUpAmountUsd <= 0) return
+//
+//   savingAutoTopUp.value = true
+//
+//   try {
+//     const result = await updateAutoTopUp({
+//       enabled: autoTopUpEnabled.value,
+//       thresholdUsd,
+//       topUpAmountUsd,
+//     })
+//
+//     if (summary.value) {
+//       summary.value = {
+//         ...summary.value,
+//         autoTopUp: result,
+//       }
+//     }
+//
+//     message.success(t('pages.billing.autoTopUpSaved'))
+//   } catch {
+//     message.error(t('pages.billing.autoTopUpError'))
+//   } finally {
+//     savingAutoTopUp.value = false
+//   }
+// }
 
 function handleAddBillingAddress() {
   message.info(t('pages.billing.addBillingAddressSoon'))
@@ -437,9 +428,9 @@ function handleExportCsv() {
   message.success(t('pages.billing.exportCsvSuccess'))
 }
 
-function handleAddCard() {
-  message.info(t('pages.billing.addCardSoon'))
-}
+// function handleAddCard() {
+//   message.info(t('pages.billing.addCardSoon'))
+// }
 
 function handleViewTransaction(item: Transaction) {
   viewingTransaction.value = item
@@ -481,8 +472,7 @@ onMounted(async () => {
         </div>
 
         <section
-          class="billing-summary"
-          :class="{ 'billing-summary--two-cols': !SHOW_AUTO_TOP_UP }"
+          class="billing-summary billing-summary--two-cols"
           aria-label="Billing summary"
         >
           <article class="billing-summary__card billing-summary__card--balance">
@@ -511,6 +501,7 @@ onMounted(async () => {
             </div>
           </article>
 
+          <!-- Auto top-up summary card — re-enable when feature ships
           <article v-if="SHOW_AUTO_TOP_UP" class="billing-summary__card">
             <div class="billing-summary__auto-header">
               <p class="billing-summary__label">{{ t('pages.billing.autoTopUp') }}</p>
@@ -526,15 +517,13 @@ onMounted(async () => {
               {{ summary.autoTopUp.enabled ? t('pages.billing.on') : t('pages.billing.off') }}
             </p>
           </article>
+          -->
         </section>
 
         <section ref="rechargeSectionRef" class="billing-recharge" aria-label="Account recharge">
           <h2 class="billing-section-title">{{ t('pages.billing.accountRecharge') }}</h2>
 
-          <div
-            class="billing-recharge__grid"
-            :class="{ 'billing-recharge__grid--single': !SHOW_AUTO_TOP_UP }"
-          >
+          <div class="billing-recharge__grid billing-recharge__grid--single">
             <div class="billing-panel">
               <p class="billing-panel__subtitle">{{ t('pages.billing.choosePackage') }}</p>
 
@@ -628,6 +617,7 @@ onMounted(async () => {
               </button>
             </div>
 
+            <!-- Auto top-up panel — re-enable when feature ships
             <div v-if="SHOW_AUTO_TOP_UP" class="billing-panel billing-panel--auto">
               <div class="billing-panel__auto-header">
                 <p class="billing-panel__subtitle billing-panel__subtitle--inline">
@@ -677,6 +667,7 @@ onMounted(async () => {
                 {{ t('pages.billing.enableAutoTopUp') }}
               </button>
             </div>
+            -->
           </div>
         </section>
 
@@ -720,16 +711,21 @@ onMounted(async () => {
 
           <div
             class="billing-table"
-            :class="{ 'billing-table--records': activeTab === 'billing' }"
+            :class="{
+              'billing-table--records': activeTab === 'billing',
+              'billing-table--topup': activeTab === 'topup',
+            }"
             role="table"
           >
             <div
               v-if="activeTab === 'topup'"
-              class="billing-table__header"
+              class="billing-table__header billing-table__header--topup"
               role="row"
             >
               <span role="columnheader">{{ t('pages.billing.columns.description') }}</span>
-              <span role="columnheader">{{ t('pages.billing.columns.date') }}</span>
+              <span role="columnheader">{{ t('pages.billing.columns.status') }}</span>
+              <span role="columnheader">{{ t('pages.billing.columns.initiatedAt') }}</span>
+              <span role="columnheader">{{ t('pages.billing.columns.completedAt') }}</span>
               <span role="columnheader">{{ t('pages.billing.columns.amount') }}</span>
               <span role="columnheader">{{ t('pages.billing.columns.action') }}</span>
             </div>
@@ -1103,8 +1099,7 @@ onMounted(async () => {
   max-height: 24px;
 }
 
-.billing-buy-btn,
-.billing-enable-btn {
+.billing-buy-btn {
   width: 100%;
   height: 48px;
   border: 0;
@@ -1125,6 +1120,7 @@ onMounted(async () => {
   cursor: not-allowed;
 }
 
+/* Auto top-up styles — re-enable when feature ships
 .billing-enable-btn {
   height: 40px;
   background: rgba(255, 255, 255, 0.2);
@@ -1224,6 +1220,7 @@ onMounted(async () => {
 .billing-toggle--on .billing-toggle__thumb {
   transform: translateX(16px);
 }
+*/
 
 .billing-history__toolbar {
   display: flex;
@@ -1275,7 +1272,6 @@ onMounted(async () => {
 
 .billing-table__header {
   display: grid;
-  grid-template-columns: minmax(100px, 1.4fr) minmax(100px, 1fr) minmax(80px, 0.8fr) 72px;
   gap: 12px;
   align-items: center;
   min-height: 50px;
@@ -1287,6 +1283,25 @@ onMounted(async () => {
   font-weight: 500;
   line-height: 14px;
   color: var(--text-secondary);
+}
+
+.billing-table__header--topup {
+  grid-template-columns:
+    minmax(90px, 1fr)
+    minmax(88px, 0.75fr)
+    minmax(110px, 0.95fr)
+    minmax(110px, 0.95fr)
+    minmax(72px, 0.6fr)
+    72px;
+}
+
+.billing-table--topup {
+  overflow-x: auto;
+}
+
+.billing-table--topup .billing-table__header--topup,
+.billing-table--topup :deep(.billing-tx-row) {
+  min-width: 760px;
 }
 
 .billing-table__empty {
@@ -1333,7 +1348,7 @@ onMounted(async () => {
     text-align: left;
   }
 
-  .billing-table__header {
+  .billing-table__header--records {
     display: none;
   }
 }

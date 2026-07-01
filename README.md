@@ -19,21 +19,70 @@ Vue 3 + TypeScript + Vite 前端工程骨架，对齐 V1 产品信息架构（Mo
 # 安装依赖
 npm install
 
-# 启动开发服务器（默认开启 Mock）
+# 复制环境变量模板并按需修改
+cp .env.example .env.development
+
+# 启动开发服务器
 npm run dev
 
 # 构建
 npm run build
+
+# 测试环境构建（使用 .env.staging）
+npm run build:staging
 ```
 
 ## 环境变量
 
-`.env.development`:
+`.env.development`、`.env.staging`、`.env.production` 等真实配置文件**不会**提交到 Git（见 `.gitignore`）。请从模板创建：
 
-| 变量 | 说明 |
-|---|---|
-| `VITE_USE_MOCK=true` | 开发环境启用本地 Mock |
-| `VITE_API_BASE_URL=/api` | API 基础路径 |
+```bash
+cp .env.example .env.development   # 本地开发：npm run dev
+cp .env.example .env.staging       # 测试构建：npm run build:staging
+cp .env.example .env.production    # 生产构建：npm run build
+```
+
+各变量说明见 [`.env.example`](./.env.example)。常用配置摘要：
+
+| 变量 | 说明 | 典型值 |
+|---|---|---|
+| `VITE_USE_MOCK` | 开发时是否启用 `mock/` 本地 Mock | `true` / `false` |
+| `VITE_API_BASE_URL` | API 基础路径（可与 `VITE_BASE` 组合） | `/api` 或完整 URL |
+| `VITE_BASE` | 部署子路径（Vite `base`） | `/` 或 `/staging.github.io/` |
+| `VITE_DEV_API_PROXY_TARGET` | **仅 dev**：将 `/api` 代理到真实后端 | `https://staging.api.varo.cloud` |
+| `VITE_DEV_AUTH_TOKEN` | **仅 dev**：本地免登录 access token | 留空或 staging 登录后填入 |
+| `VITE_DEV_REFRESH_TOKEN` | **仅 dev**：配合 access token 自动续期 | 留空或 staging 登录后填入 |
+| `VITE_TURNSTILE_SITE_KEY` | Cloudflare Turnstile 人机验证 | 测试 key 见 `.env.example` |
+| `VITE_GA_MEASUREMENT_ID` | Google Analytics 4 ID，留空则关闭 | `G-XXXXXXXXXX` |
+
+**本地对接 staging 后端示例**（`.env.development`）：
+
+```env
+VITE_USE_MOCK=false
+VITE_API_BASE_URL=/api
+VITE_DEV_API_PROXY_TARGET=https://staging.api.varo.cloud
+VITE_DEV_AUTH_TOKEN=<staging 登录后的 access_token>
+VITE_DEV_REFRESH_TOKEN=<staging 登录后的 refresh_token>
+```
+
+修改 `.env.*` 后需**重启** dev server 才会生效。
+
+### GitHub Actions 部署
+
+`.env.staging` / `.env.production` 不会进入 Git 仓库，CI 构建时在 workflow 中注入环境变量（见 [`.github/workflows/`](./.github/workflows/)）。
+
+请在 GitHub 仓库中配置：
+
+| 名称 | 类型 | 用途 |
+|---|---|---|
+| `VITE_TURNSTILE_SITE_KEY` | Secret | Turnstile site key（staging / production 共用，或按环境拆分） |
+| `VITE_GA_MEASUREMENT_ID` | Variable | GA4 测量 ID，留空则关闭统计 |
+
+**Staging / Production 固定值**（已写在 `deploy-staging.yml`、`deploy-production.yml`）：
+
+- `VITE_USE_MOCK=false`
+- `VITE_API_BASE_URL=https://staging.api.varo.cloud/api`
+- `VITE_BASE=/staging.github.io/`
 
 ## 路由清单
 

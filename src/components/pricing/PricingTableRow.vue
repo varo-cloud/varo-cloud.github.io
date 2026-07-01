@@ -69,6 +69,14 @@ function handleView() {
   border-bottom: 1px solid #eee;
 }
 
+.pricing-row:last-child {
+  border-bottom: none;
+}
+
+.pricing-row:hover {
+  background: rgba(236, 236, 236, 0.2);
+}
+
 .pricing-row__cell {
   font-size: 14px;
   font-weight: 500;
