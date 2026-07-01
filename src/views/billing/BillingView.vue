@@ -273,16 +273,13 @@ async function handleBuy() {
   purchasing.value = true
 
   try {
-    const checkoutPayload =
-      selectedPackageId.value === 'custom'
-        ? { amountUsd: parsedCustomAmountUsd.value! }
-        : { package: selectedPackageId.value as CreditPackageId }
-
+    const amountUsd = selectedCheckoutAmountUsd.value!
     trackEvent(AnalyticsEvents.CHECKOUT_START, {
-      package_id: selectedPackageId.value === 'custom' ? 'custom' : selectedPackageId.value ?? undefined,
-      amount_usd: selectedCheckoutAmountUsd.value ?? undefined,
+      amount_usd: amountUsd,
+      preset_id:
+        selectedPackageId.value !== 'custom' ? selectedPackageId.value ?? undefined : undefined,
     })
-    const { checkoutUrl } = await createCheckoutSession(checkoutPayload)
+    const { checkoutUrl } = await createCheckoutSession({ amountUsd })
     window.location.assign(checkoutUrl)
   } catch {
     message.error(t('pages.billing.topUpError'))

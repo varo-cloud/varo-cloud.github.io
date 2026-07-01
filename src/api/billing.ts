@@ -61,7 +61,6 @@ interface ApiTransaction {
   created_at?: string | number
   payment_method?: string
   payment_detail?: string | null
-  package_id?: string | null
   completed_at?: string | number | null
   receipt_url?: string | null
   type?: string
@@ -70,7 +69,6 @@ interface ApiTransaction {
   createdAt?: number
   paymentMethod?: string
   paymentDetail?: string | null
-  packageId?: string | null
   completedAt?: number | null
   receiptUrl?: string | null
 }
@@ -151,7 +149,6 @@ function mapTransaction(raw: ApiTransaction): Transaction {
       status: raw.status as Transaction['status'],
       paymentMethod: raw.paymentMethod as Transaction['paymentMethod'],
       paymentDetail: raw.paymentDetail ?? null,
-      packageId: raw.packageId ?? null,
       completedAt: raw.completedAt ?? null,
       receiptUrl: raw.receiptUrl ?? null,
     }
@@ -166,7 +163,6 @@ function mapTransaction(raw: ApiTransaction): Transaction {
     status: raw.status as Transaction['status'],
     paymentMethod: (raw.payment_method as Transaction['paymentMethod']) ?? 'stripe',
     paymentDetail: raw.payment_detail ?? null,
-    packageId: raw.package_id ?? null,
     completedAt: raw.completed_at != null ? parseTimestamp(raw.completed_at) : null,
     receiptUrl: raw.receipt_url ?? null,
   }
@@ -221,17 +217,9 @@ export async function fetchBillingRecords(): Promise<BillingRecord[]> {
 }
 
 export function createCheckoutSession(payload: CreateCheckoutPayload) {
-  const body: Record<string, string | number> = {}
-
-  if (payload.package) {
-    body.package = payload.package
-  }
-
-  if (payload.amountUsd != null) {
-    body.amount_usd = payload.amountUsd
-  }
-
-  return unwrap<ApiCheckoutResponse>(http.post('/billing/checkout', body)).then(
+  return unwrap<ApiCheckoutResponse>(
+    http.post('/billing/checkout', { amount_usd: payload.amountUsd }),
+  ).then(
     (data): CheckoutSessionResult => ({
       checkoutUrl: data.checkout_url,
     }),
