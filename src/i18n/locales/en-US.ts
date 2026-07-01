@@ -262,6 +262,12 @@ export default {
       customAmountInput: 'Custom top-up amount (USD)',
       customAmountInvalid: 'Enter an amount between {min} and {max}.',
       paymentMethod: 'Payment Method',
+      paymentMethods: {
+        card: 'Card',
+        alipay: 'Alipay',
+        wechat_pay: 'WeChat Pay',
+      },
+      continueToCheckout: 'Continue to {method} — {amount}',
       continueToStripe: 'Continue to Stripe — {amount}',
       checkoutProcessing: 'Confirming your payment…',
       checkoutSuccess: 'Top-up successful. Your balance has been updated.',

@@ -161,7 +161,7 @@ function mapTransaction(raw: ApiTransaction): Transaction {
     description: 'Top Up',
     createdAt: parseTimestamp(raw.created_at),
     status: raw.status as Transaction['status'],
-    paymentMethod: (raw.payment_method as Transaction['paymentMethod']) ?? 'stripe',
+    paymentMethod: (raw.payment_method as Transaction['paymentMethod']) ?? 'card',
     paymentDetail: raw.payment_detail ?? null,
     completedAt: raw.completed_at != null ? parseTimestamp(raw.completed_at) : null,
     receiptUrl: raw.receipt_url ?? null,
@@ -218,7 +218,10 @@ export async function fetchBillingRecords(): Promise<BillingRecord[]> {
 
 export function createCheckoutSession(payload: CreateCheckoutPayload) {
   return unwrap<ApiCheckoutResponse>(
-    http.post('/billing/checkout', { amount_usd: payload.amountUsd }),
+    http.post('/billing/checkout', {
+      amount_usd: payload.amountUsd,
+      payment_method: payload.paymentMethod,
+    }),
   ).then(
     (data): CheckoutSessionResult => ({
       checkoutUrl: data.checkout_url,

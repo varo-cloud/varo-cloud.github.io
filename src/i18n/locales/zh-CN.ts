@@ -260,6 +260,12 @@ export default {
       customAmountInput: '自定义充值金额（USD）',
       customAmountInvalid: '请输入 {min} 至 {max} 之间的金额。',
       paymentMethod: '支付方式',
+      paymentMethods: {
+        card: '银行卡',
+        alipay: '支付宝',
+        wechat_pay: '微信支付',
+      },
+      continueToCheckout: '前往 {method} 支付 — {amount}',
       continueToStripe: '前往 Stripe 支付 — {amount}',
       checkoutProcessing: '正在确认支付结果…',
       checkoutSuccess: '充值成功，余额已更新。',

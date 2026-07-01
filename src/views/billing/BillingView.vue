@@ -31,6 +31,7 @@ import type {
   BillingSummary,
   CreditPackage,
   CreditPackageId,
+  PaymentMethodId,
   TopUpSelectionId,
   Transaction,
 } from '@/types'
@@ -46,6 +47,17 @@ const DEFAULT_CUSTOM_AMOUNT_USD = 20
 
 const STRIPE_LOGO = assetUrl('/assets/billing/stripe.svg')
 
+const PAYMENT_METHODS: Array<{
+  id: PaymentMethodId
+  logo?: string
+  alt: string
+  textClass?: string
+}> = [
+  { id: 'card', logo: STRIPE_LOGO, alt: 'Stripe' },
+  { id: 'alipay', alt: 'Alipay', textClass: 'billing-payment-method__text--alipay' },
+  { id: 'wechat_pay', alt: 'WeChat Pay', textClass: 'billing-payment-method__text--wechat' },
+]
+
 const route = useRoute()
 const { localePath, replace } = useLocaleRouter()
 const { t, locale } = useI18n()
@@ -60,6 +72,7 @@ const transactions = ref<Transaction[]>([])
 const billingRecords = ref<BillingRecord[]>([])
 
 const selectedPackageId = ref<TopUpSelectionId | null>(null)
+const selectedPaymentMethod = ref<PaymentMethodId>('card')
 const customAmountInput = ref(String(DEFAULT_CUSTOM_AMOUNT_USD))
 const purchasing = ref(false)
 const checkoutProcessing = ref(false)
@@ -95,12 +108,14 @@ const isCheckoutReady = computed(() => {
 })
 
 const buyButtonLabel = computed(() => {
-  if (!isCheckoutReady.value) {
-    return t('pages.billing.continueToStripe', { amount: '—' })
-  }
+  const amountLabel = isCheckoutReady.value
+    ? formatUsd(selectedCheckoutAmountUsd.value ?? 0)
+    : '—'
+  const methodLabel = t(`pages.billing.paymentMethods.${selectedPaymentMethod.value}`)
 
-  return t('pages.billing.continueToStripe', {
-    amount: formatUsd(selectedCheckoutAmountUsd.value ?? 0),
+  return t('pages.billing.continueToCheckout', {
+    amount: amountLabel,
+    method: methodLabel,
   })
 })
 
@@ -276,10 +291,14 @@ async function handleBuy() {
     const amountUsd = selectedCheckoutAmountUsd.value!
     trackEvent(AnalyticsEvents.CHECKOUT_START, {
       amount_usd: amountUsd,
+      payment_method: selectedPaymentMethod.value,
       preset_id:
         selectedPackageId.value !== 'custom' ? selectedPackageId.value ?? undefined : undefined,
     })
-    const { checkoutUrl } = await createCheckoutSession({ amountUsd })
+    const { checkoutUrl } = await createCheckoutSession({
+      amountUsd,
+      paymentMethod: selectedPaymentMethod.value,
+    })
     window.location.assign(checkoutUrl)
   } catch {
     message.error(t('pages.billing.topUpError'))
@@ -603,8 +622,39 @@ onMounted(async () => {
                   {{ t('pages.billing.paymentMethod') }}
                 </p>
 
-                <div class="billing-payment-stripe" aria-label="Stripe">
-                  <img :src="STRIPE_LOGO" alt="Stripe" />
+                <div
+                  class="billing-payment-methods"
+                  role="radiogroup"
+                  :aria-label="t('pages.billing.paymentMethod')"
+                >
+                  <label
+                    v-for="method in PAYMENT_METHODS"
+                    :key="method.id"
+                    class="billing-payment-method"
+                    :class="{
+                      'billing-payment-method--selected': selectedPaymentMethod === method.id,
+                    }"
+                  >
+                    <input
+                      v-model="selectedPaymentMethod"
+                      class="billing-amount-option__input"
+                      type="radio"
+                      name="payment-method"
+                      :value="method.id"
+                    />
+                    <img
+                      v-if="method.logo"
+                      :src="method.logo"
+                      :alt="method.alt"
+                    />
+                    <span
+                      v-else
+                      class="billing-payment-method__text"
+                      :class="method.textClass"
+                    >
+                      {{ t(`pages.billing.paymentMethods.${method.id}`) }}
+                    </span>
+                  </label>
                 </div>
 
                 <button
@@ -978,7 +1028,7 @@ onMounted(async () => {
   margin-top: 0;
 }
 
-.billing-panel__checkout .billing-payment-stripe {
+.billing-panel__checkout .billing-payment-methods {
   margin-bottom: 8px;
 }
 
@@ -1112,20 +1162,46 @@ onMounted(async () => {
   border-color: var(--text-accent);
 }
 
-.billing-payment-stripe {
-  display: inline-flex;
+.billing-payment-methods {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.billing-payment-method {
+  display: flex;
   align-items: center;
   justify-content: center;
   width: 150px;
   height: 44px;
-  margin-bottom: 24px;
   border-radius: 8px;
   background: rgba(255, 255, 255, 0.5);
+  opacity: 0.5;
+  cursor: pointer;
+  transition: opacity 0.15s ease;
 }
 
-.billing-payment-stripe img {
+.billing-payment-method img {
   max-width: 84px;
   max-height: 24px;
+}
+
+.billing-payment-method__text {
+  font-size: 14px;
+  font-weight: 600;
+  line-height: 1;
+}
+
+.billing-payment-method__text--alipay {
+  color: #1677ff;
+}
+
+.billing-payment-method__text--wechat {
+  color: #07c160;
+}
+
+.billing-payment-method--selected {
+  opacity: 1;
 }
 
 .billing-buy-btn {
