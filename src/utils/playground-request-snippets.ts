@@ -49,17 +49,35 @@ export function buildExternalApiBody(apiModelId: string, values: SchemaFormValue
   }
 }
 
-/** Playground JWT run — wrapped body with `model_id` + `input`. */
+/** Playground JWT run — flat body with `model`, `batch_size`, and input fields. */
 export function buildPlaygroundRunBody(
   modelId: string,
   values: SchemaFormValues,
   batchSize = 1,
 ) {
   return {
-    model_id: modelId,
-    input: { ...values },
+    model: modelId,
     batch_size: batchSize,
+    ...values,
   }
+}
+
+const PLAYGROUND_RUN_META_KEYS = new Set(['model_id', 'model', 'batch_size', 'batchSize', 'input'])
+
+function extractPlaygroundInputValues(
+  parsed: Record<string, unknown> & { input?: SchemaFormValues },
+): SchemaFormValues | null {
+  if (parsed.input && typeof parsed.input === 'object' && !Array.isArray(parsed.input)) {
+    return { ...parsed.input }
+  }
+
+  const values: SchemaFormValues = {}
+  for (const [key, value] of Object.entries(parsed)) {
+    if (PLAYGROUND_RUN_META_KEYS.has(key)) continue
+    values[key] = value
+  }
+
+  return values
 }
 
 export function parseJsonInputDraft(
@@ -70,16 +88,14 @@ export function parseJsonInputDraft(
       input?: SchemaFormValues
       batch_size?: number
       batchSize?: number
+      model_id?: string
+      model?: string
     } & SchemaFormValues
 
-    if (!parsed || typeof parsed !== 'object') return null
+    if (!parsed || typeof parsed !== 'object' || Array.isArray(parsed)) return null
 
-    const values =
-      'input' in parsed && parsed.input && typeof parsed.input === 'object'
-        ? parsed.input
-        : (parsed as SchemaFormValues)
-
-    if (!values || typeof values !== 'object' || Array.isArray(values)) return null
+    const values = extractPlaygroundInputValues(parsed)
+    if (!values) return null
 
     const rawBatch = parsed.batch_size ?? parsed.batchSize
     const batchSize =

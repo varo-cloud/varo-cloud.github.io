@@ -109,6 +109,7 @@ export default {
       balance: 'Balance',
       topUp: 'Top Up',
       insufficientBalance: 'Insufficient balance to run. Please top up your account.',
+      generationFailed: 'Generation failed. Please try again.',
       schemaUnavailable: 'Input schema is unavailable for this model.',
       requiredFieldsMissing: 'Please fill in all required fields.',
       fieldRequired: 'This field is required',

@@ -3,22 +3,20 @@ import type { InputSchema } from '../src/types/schema'
 /** Source: wavespeed.ai model_schema/bytedance/seedance-2.0/text-to-video */
 export const seedance20T2vSchema: InputSchema = {
   type: 'object',
-  example_url:
-    'https://static.wavespeed.ai/examples/dfdcb9026c2f476ca9bf742f80e19fb0/d40dccd0-a2c9-4d00-ac2b-a43712128da8.mp4#t=0.001',
-  required: ['prompt'],
+  example_url:'',
+  required: ['text'],
   'x-order-properties': [
-    'prompt',
+    'text',
     'reference_images',
     'reference_videos',
     'reference_audios',
     'aspect_ratio',
     'resolution',
     'duration',
-    'enable_web_search',
     'generate_audio',
   ],
   properties: {
-    prompt: {
+    text: {
       type: 'string',
       description: 'Describe the scene, action, camera movement, and mood for the video.',
     },
@@ -57,7 +55,7 @@ export const seedance20T2vSchema: InputSchema = {
       type: 'string',
       description: 'The output video resolution.',
       enum: ['480p', '720p', '1080p', '4k'],
-      default: '720p',
+      default: '480p',
       'x-ui-component': 'select',
     },
     duration: {
@@ -67,11 +65,6 @@ export const seedance20T2vSchema: InputSchema = {
       maximum: 15,
       default: 5,
       'x-ui-component': 'slider',
-    },
-    enable_web_search: {
-      type: 'boolean',
-      description: 'Enable web search for real-time information.',
-      default: false,
     },
     generate_audio: {
       type: 'boolean',

@@ -109,6 +109,7 @@ export default {
       balance: '余额',
       topUp: 'Top Up',
       insufficientBalance: '余额不足，无法生成。请充值后再试。',
+      generationFailed: '生成失败，请重试。',
       schemaUnavailable: '该模型暂无输入 Schema，无法使用 Playground。',
       requiredFieldsMissing: '请填写所有必填字段。',
       fieldRequired: '请填写此字段',

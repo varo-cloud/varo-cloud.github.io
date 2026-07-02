@@ -1,0 +1,256 @@
+import { computed, onBeforeUnmount, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
+import axios from 'axios'
+import {
+  createPlaygroundGeneration,
+  fetchPlaygroundGeneration,
+  mapPlaygroundGenerationResult,
+  type PlaygroundGenerationSnapshot,
+} from '@/api/playground'
+import { useAppMessage } from '@/composables/useAppMessage'
+import { AnalyticsEvents, trackEvent } from '@/analytics'
+import type { GenerationStatus, PlaygroundGenerationResult } from '@/types'
+import type { SchemaFormValues } from '@/types/schema'
+
+const POLL_INTERVAL_MS = 3000
+
+export interface RunPlaygroundGenerationOptions {
+  modelId: string
+  values: SchemaFormValues
+  batchSize: number
+  unitCostUsd: number
+  analyticsSource?: 'model_detail' | 'ai_generator'
+  analyticsCapability?: string
+  onSuccess?: () => void
+}
+
+function sleep(ms: number, signal: { aborted: boolean }) {
+  return new Promise<void>((resolve) => {
+    if (signal.aborted) {
+      resolve()
+      return
+    }
+
+    const timer = setTimeout(() => {
+      clearTimeout(timer)
+      resolve()
+    }, ms)
+  })
+}
+
+function isInsufficientBalanceError(error: unknown): boolean {
+  if (!axios.isAxiosError(error)) return false
+  return error.response?.status === 402 || error.response?.data?.code === 402
+}
+
+function averageProgress(snapshots: PlaygroundGenerationSnapshot[]): number {
+  const values = snapshots
+    .map((item) => item.progress)
+    .filter((value): value is number => typeof value === 'number' && Number.isFinite(value))
+
+  if (values.length === 0) return 0
+  return Math.round(values.reduce((sum, value) => sum + value, 0) / values.length)
+}
+
+function resolveRunErrorMessage(
+  error: unknown,
+  insufficientBalanceMessage: string,
+  fallbackMessage: string,
+): string {
+  if (isInsufficientBalanceError(error)) return insufficientBalanceMessage
+  if (error instanceof Error && error.message) return error.message
+  return fallbackMessage
+}
+
+export function usePlaygroundGeneration() {
+  const { t } = useI18n()
+  const message = useAppMessage()
+
+  const generationStatus = ref<GenerationStatus>('idle')
+  const generationProgress = ref(0)
+  const outputUrls = ref<string[]>([])
+  const generationResults = ref<PlaygroundGenerationResult[]>([])
+
+  let pollAbort = { aborted: false }
+  let progressInterval: ReturnType<typeof setInterval> | null = null
+
+  const isGenerating = computed(
+    () => generationStatus.value === 'queued' || generationStatus.value === 'processing',
+  )
+
+  function clearProgressInterval() {
+    if (progressInterval) {
+      clearInterval(progressInterval)
+      progressInterval = null
+    }
+  }
+
+  function resetGeneration() {
+    pollAbort.aborted = true
+    clearProgressInterval()
+    generationStatus.value = 'idle'
+    generationProgress.value = 0
+    outputUrls.value = []
+    generationResults.value = []
+  }
+
+  function startIndeterminateProgress() {
+    clearProgressInterval()
+    generationProgress.value = 0
+
+    progressInterval = setInterval(() => {
+      if (generationStatus.value !== 'processing') return
+      if (generationProgress.value >= 90) return
+      generationProgress.value = Math.min(90, generationProgress.value + 1)
+    }, 400)
+  }
+
+  function applySnapshots(snapshots: PlaygroundGenerationSnapshot[]) {
+    const hasProcessing = snapshots.some((item) => item.status === 'processing')
+    generationStatus.value = hasProcessing ? 'processing' : 'queued'
+
+    const progress = averageProgress(snapshots)
+    if (progress > 0) {
+      generationProgress.value = progress
+    } else if (generationStatus.value === 'processing' && !progressInterval) {
+      startIndeterminateProgress()
+    }
+  }
+
+  function applyCompletedSnapshots(
+    snapshots: PlaygroundGenerationSnapshot[],
+    unitCostUsd: number,
+    options: RunPlaygroundGenerationOptions,
+  ) {
+    clearProgressInterval()
+    generationStatus.value = 'completed'
+    generationProgress.value = 100
+    generationResults.value = snapshots.map((snapshot) =>
+      mapPlaygroundGenerationResult(snapshot, unitCostUsd),
+    )
+    outputUrls.value = generationResults.value
+      .map((item) => item.output.url)
+      .filter((url) => Boolean(url))
+
+    if (options.analyticsSource) {
+      trackEvent(AnalyticsEvents.PLAYGROUND_RUN_SUCCESS, {
+        source: options.analyticsSource,
+        model_id: options.modelId,
+        capability: options.analyticsCapability,
+        batch_size: options.batchSize,
+      })
+    }
+
+    options.onSuccess?.()
+  }
+
+  async function pollGenerations(taskIds: string[], options: RunPlaygroundGenerationOptions) {
+    const signal = pollAbort
+
+    while (!signal.aborted) {
+      const snapshots = await Promise.all(taskIds.map((id) => fetchPlaygroundGeneration(id)))
+
+      if (signal.aborted) return
+
+      const hasFailed = snapshots.some((item) => item.status === 'failed')
+      const allTerminal = snapshots.every(
+        (item) => item.status === 'completed' || item.status === 'failed',
+      )
+
+      if (allTerminal) {
+        if (hasFailed) {
+          clearProgressInterval()
+          generationStatus.value = 'failed'
+          generationProgress.value = 0
+          const failedMessage =
+            snapshots.find((item) => item.errorMessage)?.errorMessage
+            ?? t('pages.modelDetail.generationFailed')
+          message.error(failedMessage)
+          return
+        }
+
+        applyCompletedSnapshots(snapshots, options.unitCostUsd, options)
+        return
+      }
+
+      applySnapshots(snapshots)
+      await sleep(POLL_INTERVAL_MS, signal)
+    }
+  }
+
+  async function runGeneration(options: RunPlaygroundGenerationOptions) {
+    pollAbort.aborted = true
+    clearProgressInterval()
+    pollAbort = { aborted: false }
+
+    generationStatus.value = 'queued'
+    generationProgress.value = 0
+    outputUrls.value = []
+    generationResults.value = []
+
+    try {
+      const created = await createPlaygroundGeneration(
+        options.modelId,
+        options.values,
+        options.batchSize,
+      )
+
+      if (pollAbort.aborted) return
+
+      const hasProcessing = created.some((item) => item.status === 'processing')
+      generationStatus.value = hasProcessing ? 'processing' : 'queued'
+
+      const allTerminal = created.every(
+        (item) => item.status === 'completed' || item.status === 'failed',
+      )
+
+      if (allTerminal) {
+        const hasFailed = created.some((item) => item.status === 'failed')
+        if (hasFailed) {
+          generationStatus.value = 'failed'
+          message.error(t('pages.modelDetail.generationFailed'))
+          return
+        }
+
+        applyCompletedSnapshots(created, options.unitCostUsd, options)
+        return
+      }
+
+      if (generationStatus.value === 'processing') {
+        startIndeterminateProgress()
+      }
+
+      await pollGenerations(
+        created.map((item) => item.id),
+        options,
+      )
+    } catch (error) {
+      if (pollAbort.aborted) return
+
+      generationStatus.value = 'failed'
+      generationProgress.value = 0
+      message.error(
+        resolveRunErrorMessage(
+          error,
+          t('pages.modelDetail.insufficientBalance'),
+          t('pages.modelDetail.generationFailed'),
+        ),
+      )
+    }
+  }
+
+  onBeforeUnmount(() => {
+    pollAbort.aborted = true
+    clearProgressInterval()
+  })
+
+  return {
+    generationStatus,
+    generationProgress,
+    outputUrls,
+    generationResults,
+    isGenerating,
+    runGeneration,
+    resetGeneration,
+  }
+}
