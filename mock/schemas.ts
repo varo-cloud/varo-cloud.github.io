@@ -4,9 +4,9 @@ import type { InputSchema } from '../src/types/schema'
 export const seedance20T2vSchema: InputSchema = {
   type: 'object',
   example_url:'',
-  required: ['text'],
+  required: ['prompt'],
   'x-order-properties': [
-    'text',
+    'prompt',
     'reference_images',
     'reference_videos',
     'reference_audios',
@@ -16,7 +16,7 @@ export const seedance20T2vSchema: InputSchema = {
     'generate_audio',
   ],
   properties: {
-    text: {
+    prompt: {
       type: 'string',
       description: 'Describe the scene, action, camera movement, and mood for the video.',
     },

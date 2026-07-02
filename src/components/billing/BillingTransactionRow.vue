@@ -32,6 +32,14 @@ const amountLabel = computed(() => {
   return `${prefix}$${Math.abs(props.item.amountUsd).toFixed(2)}`
 })
 
+const providerLabel = computed(() => {
+  const provider = props.item.provider
+  if (!provider) return '—'
+  const key = `pages.billing.providers.${provider}`
+  const translated = t(key)
+  return translated === key ? provider : translated
+})
+
 const paymentMethodLabel = computed(() => {
   if (!props.item.paymentMethod) return '—'
   const key = `pages.billing.paymentMethods.${props.item.paymentMethod}`
@@ -51,6 +59,7 @@ const paymentMethodLabel = computed(() => {
         {{ statusLabel }}
       </span>
     </span>
+    <span class="billing-tx-row__provider" role="cell">{{ providerLabel }}</span>
     <span class="billing-tx-row__payment" role="cell">{{ paymentMethodLabel }}</span>
     <span class="billing-tx-row__time" role="cell">{{ initiatedLabel }}</span>
     <span class="billing-tx-row__time" role="cell">{{ completedLabel }}</span>
@@ -69,6 +78,7 @@ const paymentMethodLabel = computed(() => {
   grid-template-columns:
     minmax(90px, 1fr)
     minmax(88px, 0.75fr)
+    minmax(80px, 0.7fr)
     minmax(88px, 0.75fr)
     minmax(110px, 0.95fr)
     minmax(110px, 0.95fr)
@@ -86,7 +96,8 @@ const paymentMethodLabel = computed(() => {
 }
 
 .billing-tx-row__time,
-.billing-tx-row__payment {
+.billing-tx-row__payment,
+.billing-tx-row__provider {
   color: var(--text-secondary);
   font-weight: 400;
 }
@@ -109,6 +120,11 @@ const paymentMethodLabel = computed(() => {
 }
 
 .billing-tx-row__status-badge--pending {
+  background: rgba(255, 152, 0, 0.12);
+  color: #ff9800;
+}
+
+.billing-tx-row__status-badge--partial {
   background: rgba(255, 152, 0, 0.12);
   color: #ff9800;
 }

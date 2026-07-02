@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { formatUsd } from '@/utils/currency'
 import { formatTimestamp } from '@/utils/time'
 import type { TopUpTransactionStatus, Transaction } from '@/types'
 
@@ -38,7 +39,35 @@ const amountLabel = computed(() => {
   return `$${props.transaction.amountUsd.toFixed(2)}`
 })
 
+const feeLabel = computed(() => {
+  if (!props.transaction || props.transaction.feeUsd == null) return '—'
+  return formatUsd(props.transaction.feeUsd)
+})
+
+const providerLabel = computed(() => {
+  const provider = props.transaction?.provider
+  if (!provider) return '—'
+  const key = `pages.billing.providers.${provider}`
+  const translated = t(key)
+  return translated === key ? provider : translated
+})
+
+const paymentMethodLabel = computed(() => {
+  const method = props.transaction?.paymentMethod
+  if (!method) return '—'
+  const key = `pages.billing.paymentMethods.${method}`
+  const translated = t(key)
+  return translated === key ? method : translated
+})
+
 const statusLabel = computed(() => t(`pages.billing.topUpDetail.statuses.${status.value}`))
+
+const receiptLabel = computed(() => {
+  if (props.transaction?.provider === 'nowpayments') {
+    return t('pages.billing.topUpDetail.viewInvoice')
+  }
+  return t('pages.billing.topUpDetail.viewReceipt')
+})
 
 const detailRows = computed(() => {
   if (!props.transaction) return []
@@ -46,7 +75,10 @@ const detailRows = computed(() => {
   return [
     { label: t('pages.billing.topUpDetail.transactionId'), value: props.transaction.id },
     { label: t('pages.billing.topUpDetail.status'), value: statusLabel.value, isStatus: true },
+    { label: t('pages.billing.topUpDetail.provider'), value: providerLabel.value },
     { label: t('pages.billing.topUpDetail.amount'), value: amountLabel.value },
+    { label: t('pages.billing.topUpDetail.fee'), value: feeLabel.value },
+    { label: t('pages.billing.topUpDetail.paymentMethod'), value: paymentMethodLabel.value },
     { label: t('pages.billing.topUpDetail.paymentDetail'), value: paymentDetail.value },
     { label: t('pages.billing.topUpDetail.createdAt'), value: createdLabel.value },
     { label: t('pages.billing.topUpDetail.completedAt'), value: completedLabel.value },
@@ -82,6 +114,9 @@ const detailRows = computed(() => {
         <p v-if="status === 'pending'" class="billing-topup-detail__hint">
           {{ t('pages.billing.topUpDetail.pendingHint') }}
         </p>
+        <p v-else-if="status === 'partial'" class="billing-topup-detail__hint">
+          {{ t('pages.billing.topUpDetail.partialHint') }}
+        </p>
 
         <dl class="billing-topup-detail__rows">
           <div
@@ -105,13 +140,13 @@ const detailRows = computed(() => {
 
         <div class="billing-topup-detail__actions">
           <a
-            v-if="transaction.receiptUrl && status === 'completed'"
+            v-if="transaction.receiptUrl && (status === 'completed' || status === 'partial')"
             class="billing-topup-detail__receipt"
             :href="transaction.receiptUrl"
             target="_blank"
             rel="noopener noreferrer"
           >
-            {{ t('pages.billing.topUpDetail.viewReceipt') }}
+            {{ receiptLabel }}
           </a>
           <button type="button" class="billing-topup-detail__done" @click="emit('close')">
             {{ t('pages.billing.topUpDetail.close') }}
@@ -239,7 +274,8 @@ const detailRows = computed(() => {
   color: #00bb83;
 }
 
-.billing-topup-detail__status--pending {
+.billing-topup-detail__status--pending,
+.billing-topup-detail__status--partial {
   background: rgba(255, 152, 0, 0.12);
   color: #ff9800;
 }

@@ -13,6 +13,7 @@ interface PendingCheckout {
   sessionId: string
   transactionId: string
   amountUsd: number
+  provider: 'stripe' | 'nowpayments'
 }
 
 const pendingCheckouts = new Map<string, PendingCheckout>()
@@ -32,14 +33,16 @@ const transactions: Transaction[] = [
   {
     id: 'tx-topup-1',
     type: 'topup',
-    amountUsd: 10,
+    amountUsd: 20.91,
     description: 'Top Up',
     createdAt: Date.parse('2026-05-12T10:00:00Z'),
     status: 'completed',
+    provider: 'stripe',
     paymentMethod: 'card',
     paymentDetail: 'Visa ••4242',
     completedAt: Date.parse('2026-05-12T10:01:00Z'),
     receiptUrl: 'https://pay.stripe.com/receipts/example',
+    feeUsd: 0.88,
   },
   {
     id: 'tx-topup-2',
@@ -48,7 +51,8 @@ const transactions: Transaction[] = [
     description: 'Top Up',
     createdAt: Date.parse('2026-05-12T09:30:00Z'),
     status: 'pending',
-    paymentMethod: 'card',
+    provider: 'stripe',
+    paymentMethod: null,
   },
   {
     id: 'tx-topup-3',
@@ -57,9 +61,23 @@ const transactions: Transaction[] = [
     description: 'Top Up',
     createdAt: Date.parse('2026-05-12T09:00:00Z'),
     status: 'completed',
+    provider: 'stripe',
     paymentMethod: 'card',
     paymentDetail: 'Mastercard ••5555',
     completedAt: Date.parse('2026-05-12T09:00:30Z'),
+    feeUsd: 0.59,
+  },
+  {
+    id: 'tx-topup-4',
+    type: 'topup',
+    amountUsd: 5,
+    description: 'Top Up',
+    createdAt: Date.parse('2026-05-11T18:00:00Z'),
+    status: 'partial',
+    provider: 'nowpayments',
+    paymentMethod: 'usdttrc20',
+    paymentDetail: 'TXyz1234567890abcdef',
+    receiptUrl: 'https://nowpayments.io/payment/?iid=example',
   },
 ]
 
@@ -91,13 +109,15 @@ const billingRecords = [
 function toApiTransaction(tx: Transaction) {
   return {
     id: tx.id,
+    provider: tx.provider ?? 'stripe',
     amount_usd: tx.amountUsd,
     status: tx.status ?? 'completed',
     created_at: tx.createdAt,
-    payment_method: tx.paymentMethod ?? 'card',
+    payment_method: tx.paymentMethod ?? null,
     payment_detail: tx.paymentDetail ?? null,
     completed_at: tx.completedAt ?? null,
     receipt_url: tx.receiptUrl ?? null,
+    fee_usd: tx.feeUsd ?? null,
   }
 }
 
@@ -116,12 +136,17 @@ function completeCheckout(sessionId: string) {
   if (index === -1) return false
 
   const now = Date.now()
+  const isCrypto = pending.provider === 'nowpayments'
   const completed: Transaction = {
     ...transactions[index],
     status: 'completed',
-    paymentDetail: 'Visa ••4242',
+    paymentMethod: isCrypto ? 'usdttrc20' : 'card',
+    paymentDetail: isCrypto ? 'TXyz1234567890abcdef' : 'Visa ••4242',
     completedAt: now,
-    receiptUrl: 'https://pay.stripe.com/receipts/example',
+    receiptUrl: isCrypto
+      ? 'https://nowpayments.io/payment/?iid=example'
+      : 'https://pay.stripe.com/receipts/example',
+    feeUsd: isCrypto ? 0 : 0.88,
   }
   transactions[index] = completed
 
@@ -131,7 +156,7 @@ function completeCheckout(sessionId: string) {
   billingRecords.unshift({
     id: `br-topup-${now}`,
     style: 'topup',
-    key: 'Stripe · Visa ••4242',
+    key: isCrypto ? 'Crypto · USDT-TRC20' : 'Stripe · Visa ••4242',
     amountUsd: pending.amountUsd,
     createdAt: now,
   })
@@ -140,7 +165,60 @@ function completeCheckout(sessionId: string) {
   return true
 }
 
+function createCheckoutResponse(
+  body: { amount_usd?: number; preset_id?: string | null },
+  provider: 'stripe' | 'nowpayments',
+) {
+  const amountUsd = Number(body.amount_usd)
+  if (!Number.isFinite(amountUsd) || amountUsd < 1 || amountUsd > 10_000) {
+    return fail('amount_usd must be between 1 and 10000', 400)
+  }
+
+  const roundedAmountUsd = Math.round(amountUsd * 100) / 100
+  const sessionId = `cs_mock_${Date.now()}`
+  const transactionId = `tx-topup-${Date.now()}`
+  const createdAt = Date.now()
+
+  transactions.unshift({
+    id: transactionId,
+    type: 'topup',
+    amountUsd: roundedAmountUsd,
+    description: 'Top Up',
+    createdAt,
+    status: 'pending',
+    provider,
+    paymentMethod: null,
+  })
+
+  pendingCheckouts.set(sessionId, {
+    sessionId,
+    transactionId,
+    amountUsd: roundedAmountUsd,
+    provider,
+  })
+
+  const successBase = 'http://localhost:5173/en/billing'
+  const checkoutParams = new URLSearchParams({
+    stripe_checkout: provider === 'stripe' ? '1' : '0',
+    session_id: sessionId,
+    amount: String(roundedAmountUsd),
+    ...(body.preset_id ? { package: body.preset_id } : {}),
+  })
+
+  const checkoutUrl = `${successBase}?${checkoutParams.toString()}`
+  return success({ checkout_url: checkoutUrl })
+}
+
 export default [
+  {
+    url: '/api/billing/config',
+    method: 'get',
+    response: () =>
+      success({
+        publishable_key: 'pk_test_mock',
+        crypto_enabled: true,
+      }),
+  },
   {
     url: '/api/billing/packages',
     method: 'get',
@@ -175,60 +253,16 @@ export default [
     response: () => success(billingRecords),
   },
   {
-    url: '/api/billing/checkout',
+    url: '/api/billing/stripe/checkout',
     method: 'post',
-    response: ({
-      body,
-    }: {
-      body: {
-        amount_usd?: number
-        payment_method?: string
-      }
-    }) => {
-      const amountUsd = Number(body.amount_usd)
-      if (!Number.isFinite(amountUsd) || amountUsd < 1 || amountUsd > 10_000) {
-        return fail('amount_usd must be between 1 and 10000', 400)
-      }
-
-      const paymentMethod = (body.payment_method ?? 'card') as Transaction['paymentMethod']
-      const allowedMethods = new Set(['card', 'alipay', 'wechat_pay'])
-      if (!allowedMethods.has(paymentMethod ?? 'card')) {
-        return fail('payment_method is invalid', 400)
-      }
-
-      const roundedAmountUsd = Math.round(amountUsd * 100) / 100
-
-      const sessionId = `cs_mock_${Date.now()}`
-      const transactionId = `tx-topup-${Date.now()}`
-      const createdAt = Date.now()
-
-      transactions.unshift({
-        id: transactionId,
-        type: 'topup',
-        amountUsd: roundedAmountUsd,
-        description: 'Top Up',
-        createdAt,
-        status: 'pending',
-        paymentMethod,
-      })
-
-      pendingCheckouts.set(sessionId, {
-        sessionId,
-        transactionId,
-        amountUsd: roundedAmountUsd,
-      })
-
-      const successBase = 'http://localhost:5173/en/billing'
-      const checkoutParams = new URLSearchParams({
-        stripe_checkout: '1',
-        session_id: sessionId,
-        amount: String(roundedAmountUsd),
-      })
-
-      const checkoutUrl = `${successBase}?${checkoutParams.toString()}`
-
-      return success({ checkout_url: checkoutUrl })
-    },
+    response: ({ body }: { body: { amount_usd?: number; preset_id?: string | null } }) =>
+      createCheckoutResponse(body, 'stripe'),
+  },
+  {
+    url: '/api/billing/nowpayments/checkout',
+    method: 'post',
+    response: ({ body }: { body: { amount_usd?: number; preset_id?: string | null } }) =>
+      createCheckoutResponse(body, 'nowpayments'),
   },
   {
     url: '/api/billing/checkout/mock-complete',
