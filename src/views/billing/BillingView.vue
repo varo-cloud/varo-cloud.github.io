@@ -12,7 +12,9 @@ import BillingTopUpDetailDialog from '@/components/billing/BillingTopUpDetailDia
 import StripeCheckoutMockPanel from '@/components/billing/StripeCheckoutMockPanel.vue'
 import {
   completeMockCheckout,
-  createCheckoutSession,
+  createCryptoCheckoutSession,
+  createStripeCheckoutSession,
+  fetchBillingConfig,
   fetchBillingRecords,
   fetchBillingSummary,
   fetchCreditPackages,
@@ -47,6 +49,7 @@ const DEFAULT_CUSTOM_AMOUNT_USD = 20
 
 const STRIPE_LOGO = assetUrl('/assets/billing/stripe.svg')
 const ALIPAY_LOGO = assetUrl('/assets/billing/alipay.svg')
+const CRYPTO_LOGO = assetUrl('/assets/billing/npay.svg')
 
 /** Re-enable when WeChat Pay ships. */
 const SHOW_WECHAT_PAY = false
@@ -57,14 +60,22 @@ const PAYMENT_METHODS: Array<{
   alt: string
   textClass?: string
   hidden?: boolean
+  requiresCrypto?: boolean
 }> = [
   { id: 'card', logo: STRIPE_LOGO, alt: 'Stripe' },
   { id: 'alipay', logo: ALIPAY_LOGO, alt: 'Alipay', textClass: 'billing-payment-method__text--alipay' },
   { id: 'wechat_pay', alt: 'WeChat Pay', textClass: 'billing-payment-method__text--wechat', hidden: !SHOW_WECHAT_PAY },
+  { id: 'crypto', logo: CRYPTO_LOGO, alt: 'Crypto', requiresCrypto: true },
 ]
 
+const cryptoEnabled = ref(false)
+
 const visiblePaymentMethods = computed(() =>
-  PAYMENT_METHODS.filter((method) => !method.hidden),
+  PAYMENT_METHODS.filter((method) => {
+    if (method.hidden) return false
+    if (method.requiresCrypto) return cryptoEnabled.value
+    return true
+  }),
 )
 
 const route = useRoute()
@@ -235,17 +246,19 @@ async function loadBilling(options: { silent?: boolean } = {}) {
   }
 
   try {
-    const [summaryData, packageData, transactionData, recordData] = await Promise.all([
+    const [summaryData, packageData, transactionData, recordData, configData] = await Promise.all([
       fetchBillingSummary(),
       fetchCreditPackages(),
       fetchTransactions(),
       fetchBillingRecords(),
+      fetchBillingConfig().catch(() => ({ publishableKey: '', cryptoEnabled: false })),
     ])
 
     summary.value = summaryData
     packages.value = packageData
     transactions.value = transactionData
     billingRecords.value = recordData
+    cryptoEnabled.value = configData.cryptoEnabled
 
     if (packageData.length > 0 && !selectedPackageId.value) {
       selectedPackageId.value = packageData[0].id
@@ -298,15 +311,21 @@ async function handleBuy() {
 
   try {
     const amountUsd = selectedCheckoutAmountUsd.value!
+    const presetId = selectedPackageId.value !== 'custom' ? selectedPackageId.value : null
+    const checkoutProvider = selectedPaymentMethod.value === 'crypto' ? 'nowpayments' : 'stripe'
     trackEvent(AnalyticsEvents.CHECKOUT_START, {
       amount_usd: amountUsd,
       payment_method: selectedPaymentMethod.value,
-      preset_id:
-        selectedPackageId.value !== 'custom' ? selectedPackageId.value ?? undefined : undefined,
+      provider: checkoutProvider,
+      preset_id: presetId ?? undefined,
     })
-    const { checkoutUrl } = await createCheckoutSession({
+    const createCheckout =
+      selectedPaymentMethod.value === 'crypto'
+        ? createCryptoCheckoutSession
+        : createStripeCheckoutSession
+    const { checkoutUrl } = await createCheckout({
       amountUsd,
-      paymentMethod: selectedPaymentMethod.value,
+      presetId,
     })
     window.location.assign(checkoutUrl)
   } catch {
@@ -347,6 +366,9 @@ async function pollCheckoutResult(sessionId: string | null) {
         )
 
     if (target?.status === 'completed') return
+    if (target?.status === 'partial') {
+      throw new Error('checkout-partial')
+    }
     if (target?.status === 'failed' || target?.status === 'expired') {
       throw new Error('checkout-failed')
     }
@@ -378,8 +400,12 @@ async function handleCheckoutReturn() {
     })
     message.success(t('pages.billing.checkoutSuccess'))
     activeTab.value = 'topup'
-  } catch {
-    message.warning(t('pages.billing.checkoutPending'))
+  } catch (error) {
+    if (error instanceof Error && error.message === 'checkout-partial') {
+      message.warning(t('pages.billing.checkoutPartial'))
+    } else {
+      message.warning(t('pages.billing.checkoutPending'))
+    }
   } finally {
     checkoutProcessing.value = false
     await replace({ name: 'billing' })
@@ -582,6 +608,7 @@ onMounted(async () => {
                   />
                   <span class="billing-amount-option__amount">{{ packageLabel(pkg.id) }}</span>
                   <span class="billing-amount-option__price">{{ formatUsd(pkg.priceUsd) }}</span>
+                  <span v-if="pkg.label" class="billing-amount-option__hint">{{ pkg.label }}</span>
                 </label>
 
                 <label
@@ -789,6 +816,8 @@ onMounted(async () => {
             >
               <span role="columnheader">{{ t('pages.billing.columns.description') }}</span>
               <span role="columnheader">{{ t('pages.billing.columns.status') }}</span>
+              <span role="columnheader">{{ t('pages.billing.columns.provider') }}</span>
+              <span role="columnheader">{{ t('pages.billing.columns.paymentMethod') }}</span>
               <span role="columnheader">{{ t('pages.billing.columns.initiatedAt') }}</span>
               <span role="columnheader">{{ t('pages.billing.columns.completedAt') }}</span>
               <span role="columnheader">{{ t('pages.billing.columns.amount') }}</span>
@@ -1423,6 +1452,8 @@ onMounted(async () => {
   grid-template-columns:
     minmax(90px, 1fr)
     minmax(88px, 0.75fr)
+    minmax(80px, 0.7fr)
+    minmax(88px, 0.75fr)
     minmax(110px, 0.95fr)
     minmax(110px, 0.95fr)
     minmax(72px, 0.6fr)
@@ -1435,7 +1466,7 @@ onMounted(async () => {
 
 .billing-table--topup .billing-table__header--topup,
 .billing-table--topup :deep(.billing-tx-row) {
-  min-width: 760px;
+  min-width: 940px;
 }
 
 .billing-table__empty {

@@ -168,7 +168,9 @@ export interface CreateApiKeyResult {
 
 export type TransactionType = 'topup' | 'usage'
 
-export type TopUpTransactionStatus = 'pending' | 'completed' | 'failed' | 'expired'
+export type TopUpTransactionStatus = 'pending' | 'completed' | 'failed' | 'expired' | 'partial'
+
+export type TransactionProvider = 'stripe' | 'nowpayments'
 
 export interface Transaction {
   id: string
@@ -177,10 +179,12 @@ export interface Transaction {
   description: string
   createdAt: number
   status?: TopUpTransactionStatus
-  paymentMethod?: PaymentMethodId
+  provider?: TransactionProvider
+  paymentMethod?: string | null
   paymentDetail?: string | null
   completedAt?: number | null
   receiptUrl?: string | null
+  feeUsd?: number | null
 }
 
 export interface BalanceInfo {
@@ -212,19 +216,25 @@ export type TopUpSelectionId = CreditPackageId | 'custom'
 
 export interface CreditPackage {
   id: CreditPackageId
+  label: string
   priceUsd: number
+}
+
+export interface BillingConfig {
+  publishableKey: string
+  cryptoEnabled: boolean
 }
 
 export interface CreateCheckoutPayload {
   amountUsd: number
-  paymentMethod: PaymentMethodId
+  presetId?: string | null
 }
 
 export interface CheckoutSessionResult {
   checkoutUrl: string
 }
 
-export type PaymentMethodId = 'card' | 'alipay' | 'wechat_pay'
+export type PaymentMethodId = 'card' | 'alipay' | 'wechat_pay' | 'crypto'
 
 export interface CreateTopUpPayload {
   amountUsd: number

@@ -58,35 +58,58 @@
 
 ### POST /api/api-keys
 
-生成一个新的 `sk_live_` API Key。完整 key 仅在本次响应中返回一次，请立即保存。
+创建一把 API Key。**完整密钥仅在此处返回一次**，请立刻保存。
+
+**认证：** JWT
+
+**请求体（可选）**
+```json
+{ "name": "production" }
+```
+
+| 字段 | 类型 | 说明 |
+|---|---|---|
+| `name` | string | 可选；省略、空串或纯空白时回退为 `"Untitled"` |
 
 **响应 200（`data`）**
 ```json
-{
-  "id": "uuid",
-  "key": "sk_live_abc123...",
-  "prefix": "sk_live_1f78",
-  "created_at": 1781179001000
-}
+{ "id": "…", "key": "sk_live_…", "prefix": "sk_live_xxxx", "name": "production", "created_at": 1781179001000 }
 ```
-
----
 
 ### GET /api/api-keys
 
-查询当前用户所有有效的 API Key。只返回前缀，不返回完整 key。
+列出当前用户的全部 Key（含已吊销），用于控制台表格展示与吊销态徽标。**不返回完整密钥。**
+
+**认证：** JWT
 
 **响应 200（`data`）**
 ```json
 [
   {
-    "id": "uuid",
-    "prefix": "sk_live_1f78",
+    "id": "…",
+    "prefix": "sk_live_xxxx",
+    "name": "production",
+    "is_active": true,
     "created_at": 1781179001000,
-    "is_active": true
+    "total_calls": 42,
+    "total_spend_usd": 3.51,
+    "last_used_at": 1781179001000
   }
 ]
 ```
+
+| 字段 | 类型 | 说明 |
+|---|---|---|
+| `prefix` | string | 密钥前缀（脱敏展示用） |
+| `name` | string | 用户自定义名称 |
+| `is_active` | boolean | `false` 表示已吊销 |
+| `created_at` | number | 创建时间（13 位毫秒） |
+| `total_calls` | integer | 该 Key 的累计调用次数 |
+| `total_spend_usd` | number | 该 Key 的累计消费（USD） |
+| `last_used_at` | number \| null | 最近一次使用时间（13 位毫秒）；从未使用为 `null` |
+
+> 统计自该 Key 被记账后开始累计：调用须由 `/v2/generate` 或 `/v1/videos/generations` 经该 Key 发起，
+> 历史记录（无 `api_key_id`）不计入。
 
 ---
 
@@ -106,6 +129,23 @@
 
 ---
 
+## 充值套餐接口
+
+### GET /api/billing/packages
+
+返回当前有效的充值套餐列表（`active = true`），供充值页展示预设金额选项。**公开接口，无需认证**。若无有效套餐，返回内置兜底列表（至少 1 条）。详见 [计费 / Stripe API · GET /api/billing/packages](./stripe-zh.md#get-apibillingpackages)。
+
+**响应 200（`data`）**
+```json
+[
+  { "id": "starter",  "price_usd": 10.0 },
+  { "id": "pro",      "price_usd": 25.0 },
+  { "id": "business", "price_usd": 50.0 }
+]
+```
+
+---
+
 ## 账户余额接口
 
 ### GET /api/billing/balance
@@ -119,42 +159,113 @@
 { "balance_usd": 17.50 }
 ```
 
-**错误码**
-| 状态码 | 原因 |
-|---|---|
-| 404 | 用户不存在 |
+无 credits 记录（从未充值）时返回 `{ "balance_usd": 0.0 }`，不再返回 404。
+
+---
+
+### GET /api/billing/summary
+
+当前用户的账户概览：余额、本月消费、累计充值与累计消费。
+
+**认证方式：** JWT
+
+**响应 200（`data`）**
+```json
+{
+  "balance_usd": 17.50,
+  "month_spend_usd": 96.28,
+  "total_topup_usd": 120.00,
+  "total_charged_usd": 125.00,
+  "total_spent_usd": 102.50
+}
+```
+
+| 字段 | 类型 | 说明 |
+|---|---|---|
+| `balance_usd` | number | 当前余额（USD） |
+| `month_spend_usd` | number | 本自然月消费（USD，不含已退款） |
+| `total_topup_usd` | number | 累计充值入账（`transactions.credits_granted` 求和 ÷ 100，与余额口径一致，**不含手续费**） |
+| `total_charged_usd` | number | 累计实际扣款（`transactions.amount_usd` 求和，**含支付手续费**，通常略高于 `total_topup_usd`） |
+| `total_spent_usd` | number | 累计消费（USD，不含已退款） |
+
+> `total_topup_usd`（入账）与 `total_charged_usd`（扣款）的差额为支付手续费。余额对账用前者：`balance ≈ total_topup − total_spent`（另含管理员调账）。
+
+新用户或无数据时各字段为 `0`，不返回 404。
+
+---
+
+### GET /api/billing/records
+
+当前用户的账单流水（`billing_records`）：管理员手动调账、赠送、退款等记录，按时间倒序。与充值订单（`transactions`）分开。
+
+**认证方式：** JWT
+
+**查询参数**
+| 参数 | 类型 | 默认 | 说明 |
+|---|---|---|---|
+| `offset` | int | `0` | 偏移量（≥ 0） |
+| `limit` | int | `20` | 每页条数（1–100） |
+
+**响应 200（`data`）**
+```json
+{
+  "items": [
+    { "id": "uuid", "style": "bonus", "amount_usd": 5.00, "reason": "promo", "created_at": 1781179001000 }
+  ],
+  "total": 42,
+  "offset": 0,
+  "limit": 20
+}
+```
+
+| 字段 | 类型 | 说明 |
+|---|---|---|
+| `id` | string | 流水 ID |
+| `style` | string | 类型，如 `bonus`、`manual_topup`、`refund` |
+| `amount_usd` | number | 金额（USD，浮点数；正数为入账） |
+| `reason` | string \| null | 备注 |
+| `created_at` | number | 创建时间（13 位毫秒整数，UTC） |
+
+---
+
+### GET /api/billing/transactions
+
+查询当前用户的充值历史，按时间倒序排列。详细字段说明见 [计费 / Stripe API · GET /api/billing/transactions](./stripe-zh.md#get-apibillingtransactions)。
+
+**认证方式：** JWT
+
+**响应 200（`data`）**
+```json
+[
+  {
+    "id": "uuid",
+    "amount_usd": 20.00,
+    "status": "completed",
+    "created_at": 1781179001000,
+    "completed_at": 1781179060000,
+    "payment_method": "stripe",
+    "payment_detail": "Visa ••4242",
+    "receipt_url": "https://pay.stripe.com/receipts/..."
+  }
+]
+```
+
+| 字段 | 类型 | 说明 |
+|---|---|---|
+| `id` | string | 交易 ID |
+| `amount_usd` | number | 充值金额（USD，浮点数） |
+| `status` | string | `pending` \| `completed` \| `failed` \| `expired` |
+| `created_at` | number | 创建时间（13 位毫秒整数，UTC） |
+| `completed_at` | number \| null | 完成时间（13 位毫秒整数）；仅 `completed` 时非 null |
+| `payment_method` | string \| null | 支付方式（如 `"stripe"`）；仅完成后填充 |
+| `payment_detail` | string \| null | 卡信息摘要（如 `"Visa ••4242"`）；最佳努力，可能为 null |
+| `receipt_url` | string \| null | Stripe 收据链接；最佳努力，可能为 null |
 
 ---
 
 ### POST /api/admin/credits/topup
 
-为指定用户充值 credits（原子增加）。调用方需具有 `admin` 角色。`amount` 与 `new_balance` 为内部 credits 单位（1 美元 = 100 credits）。
-
-**认证方式：** JWT（仅管理员）
-
-**请求体**
-```json
-{
-  "user_id": "uuid",
-  "amount": 1000
-}
-```
-
-**响应 200（`data`）**
-```json
-{
-  "user_id": "uuid",
-  "new_balance": 2750
-}
-```
-
-**错误码**
-| 状态码 | 原因 |
-|---|---|
-| 403 | 非管理员账号 |
-| 404 | 目标用户不存在 |
-
----
+管理员为用户充值 credits 的接口已移至管理后台文档，见 [admin-api-zh.md — 充值 credits](./admin-api-zh.md#充值-credits内部单位)。
 
 ## 用量接口
 
@@ -188,64 +299,205 @@
 
 ---
 
+## 上传接口
+
+### POST /api/upload
+
+上传图片/视频/音频，返回一个可被生成接口引用的 URL（如图生视频的输入图）。
+
+**认证：** JWT
+
+**请求：** `multipart/form-data`，字段名 `file`。仅接受 `image/*`、`video/*`、`audio/*`。
+
+**响应 200（`data`）**
+```json
+{ "url": "https://…/uploads/<user_id>/<uuid>.png" }
+```
+
+返回的 URL 可被上游直接拉取：默认是有效期内的 S3 预签名 GET URL；配置了 `S3_PUBLIC_BASE_URL` 时返回
+公开/CDN URL。
+
+| 状态码 | 含义 |
+|---|---|
+| 413 | 文件超过 `UPLOAD_MAX_BYTES`（默认 50MB） |
+| 415 | 文件类型不支持 |
+| 503 | 未配置 `S3_BUCKET` |
+
 ## 模型接口
 
-模型列表与计费配置来自数据库 `config` 表（`model_rates`），可通过 SQL 调整。
+模型目录存于 `models` 表，是单一数据源：既含展示字段，也含生成配置（上游 `base_url`、`secret_env`、
+`resolutions`、`mode`、`rate`）。生成配置仅服务端使用，**绝不**出现在任何 `GET /api/models*` 响应中。
+`config` 表不再存 `model_rates`，仅保留 `credit_packages`。
+
+`GET /api/models` 系列**对访客公开**（无需 JWT）；仅 `/api/admin/models/*` 需要管理员 JWT。所有金额字段
+为 `_usd`（USD），**不返回** credits。
+
+> `GET /v1/models` 是另一套接口（供 API Key 调用方列举可生成模型），不受本节影响。
 
 ### GET /api/models
 
-查询所有可用模型及其支持的分辨率与计费模式。
+模型目录分页列表，供首页卡片展示。
 
-**认证方式：** JWT
+**认证：** 无（公开）
+
+**多语言解析：** `name`、`display_name`、`description` 字段会根据请求头自动本地化。优先读取 `X-Locale` 头（如 `zh-CN`），其次取 `Accept-Language` 首项，默认回退到 `en-US`。找不到目标语言时自动降级到 `en-US`。
+
+**查询参数**
+| 参数 | 默认 | 说明 |
+|---|---|---|
+| `offset` | 0 | 分页偏移 |
+| `limit` | 20 | 每页条数（1–100） |
+| `q` | — | 可选，按 `name` / `display_name` / `provider` / `description` 模糊搜索 |
+
+**响应 200（`data`）**
+```json
+{
+  "items": [
+    {
+      "id": "dreamina-seedance-2-0-260128",
+      "name": "Seedance 2.0",
+      "display_name": "Seedance 2.0",
+      "provider": "ByteDance",
+      "capabilities": ["text-to-video", "image-to-video"],
+      "starting_price_usd": 0.068,
+      "standard_price_usd": null,
+      "price_unit": "per_second",
+      "price_detail": "480p",
+      "discount_percent": null,
+      "description": "...",
+      "thumbnail_url": null,
+      "icon_url": null,
+      "is_hot": false,
+      "is_new": true
+    }
+  ],
+  "total": 48,
+  "offset": 0,
+  "limit": 20
+}
+```
+
+`price_unit` 枚举：`per_second` | `per_image` | `per_million_tokens` | `per_hour`。
+
+### GET /api/models/batch
+
+按 ID 批量取卡片（收藏 / 最近 Tab 用）。
+
+**认证：** 无（公开）
+
+**查询参数：** `ids` — 逗号分隔的模型 ID
+
+**响应 200（`data`）：** 卡片对象数组，**按请求 ID 顺序**返回，缺失/下架的 ID 自动跳过。
+
+### GET /api/models/{model_id}
+
+模型详情。
+
+**认证：** 无（公开）
+
+**多语言解析：** 同 `GET /api/models`，`name`、`display_name`、`description` 按 `X-Locale` / `Accept-Language` / `en-US` 优先级解析。
+
+**响应 200（`data`）：** 卡片字段 **加** `model_path`、`api_model_id`、`per_run_price_usd`、
+`runs_per_ten_usd`、`readme_md`、`faq`（`{ question, answer }[]`）。生成配置与 `input_schema` 不返回。
+
+```json
+{
+  "id": "dreamina-seedance-2-0-260128",
+  "name": "Seedance 2.0",
+  "provider": "ByteDance",
+  "capabilities": ["text-to-video", "image-to-video"],
+  "starting_price_usd": 0.068,
+  "price_unit": "per_second",
+  "model_path": "bytedance/seedance-2.0/text-to-video",
+  "api_model_id": "dreamina-seedance-2-0-260128",
+  "per_run_price_usd": 0.72,
+  "runs_per_ten_usd": 13,
+  "readme_md": "## Seedance 2.0 ...",
+  "faq": [{ "question": "...", "answer": "..." }]
+}
+```
+
+> `api_model_id` 是外部 `POST /v1/generations` 请求体中的 `model` 值。`input_schema` 由
+> `GET /api/models/{id}/input-schema` 单独提供。
+
+**错误码**
+| 状态码 | 原因 |
+|---|---|
+| 404 | 模型不存在或已下架 |
+
+### GET /api/models/{model_id}/input-schema
+
+返回该模型的参数表单定义（JSON Schema），供 Playground 动态渲染表单。
+
+**认证：** 无（公开）
+
+**响应 200（`data`）** 该模型的 `input_schema` 对象；管理员尚未配置时为 `null`。
+
+模型不存在或未上架返回 `404`。表单定义由 Admin 通过 `PUT /api/admin/models/{model_id}` 维护。
+
+### POST /api/models/{model_id}/quote
+
+在发起生成前预估费用。与实际扣费走**同一套计价逻辑**，预估值即最终扣费。
+
+**认证：** JWT
+
+**请求体**
+```json
+{ "input": { "resolution": "720p", "ratio": "16:9", "fps": 24, "duration": 5 } }
+```
+
+`input` 内为生成参数（`resolution` / `ratio` / `fps` / `duration` / `input_video_seconds` / `audio` /
+`content`），字段与运行接口一致。
+
+**响应 200（`data`）**
+```json
+{ "cost_usd": 0.84 }
+```
+
+仅返回 USD。模型不在上架目录返回 `404`；参数非法（分辨率不支持、fps 非法等）返回 `400`。
+
+### Admin：模型管理
+
+模型管理接口（创建 / 更新 / 上下架 / 删除）已移至管理后台文档，见 [admin-api-zh.md — 模型管理](./admin-api-zh.md#模型管理)。
+
+## 定价接口
+
+### GET /api/pricing
+
+面向访客的价目表，供定价页全量展示。数据由模型目录（`models` 表）派生，**不**单独维护一张定价表：
+每个有定价的上架模型对应一条记录，金额取该模型行上的 `*_usd` 字段。
+
+**认证：** 无（公开）
+
+**请求参数：** 无（前端全量展示，不做筛选）
 
 **响应 200（`data`）**
 ```json
 [
   {
-    "id": "seedance-1-5-pro-251215",
-    "resolutions": ["480p", "720p", "1080p"],
-    "mode": "audio",
-    "active": true
-  },
-  {
     "id": "dreamina-seedance-2-0-260128",
-    "resolutions": ["480p", "720p", "1080p", "4k"],
-    "mode": "video",
-    "active": true
-  },
-  {
-    "id": "dreamina-seedance-2-0-fast-260128",
-    "resolutions": ["480p", "720p"],
-    "mode": "video",
-    "active": true
+    "model_id": "dreamina-seedance-2-0-260128",
+    "name": "Seedance 2.0",
+    "standard_price_usd": 0.068,
+    "starting_price_usd": 0.068,
+    "price_unit": "per_second",
+    "discount_percent": null
   }
 ]
 ```
 
-`mode` 决定费率结构：`audio` 模型按「有/无音频」计费，`video` 模型按「分辨率 + 有/无参考视频」计费。具体见「计费与定价」。
+| 字段 | 类型 | 说明 |
+|---|---|---|
+| `id` | string | 定价条目 ID（此实现等于 `model_id`） |
+| `model_id` | string | 关联控制台模型；前端「View」跳转 `/models/{model_id}` |
+| `name` | string | 展示名称 |
+| `standard_price_usd` | number | 标准单价（划线价）；模型未单独设标准价时**回退为 `starting_price_usd`**（无折扣时两者相等） |
+| `starting_price_usd` | number | 起价（USD），表格加粗展示 |
+| `price_unit` | string | 枚举：`per_second` \| `per_image` \| `per_million_tokens` \| `per_hour` |
+| `discount_percent` | number \| null | 折扣整数（如 `15` → `-15%`）；无折扣为 `null`，前端显示 `--` |
 
----
-
-### GET /api/models/{model_id}
-
-查询单个模型详情。
-
-**认证方式：** JWT
-
-**响应 200（`data`）**
-```json
-{
-  "id": "seedance-1-5-pro-251215",
-  "resolutions": ["480p", "720p", "1080p"],
-  "mode": "audio",
-  "active": true
-}
-```
-
-**错误码**
-| 状态码 | 原因 |
-|---|---|
-| 404 | 模型不存在 |
+仅返回 `active = true` 且已设置 `starting_price_usd` 的模型。定价由 Admin 通过
+`PUT /api/admin/models/{model_id}` 维护（与模型目录同源）。
 
 ---
 
@@ -272,6 +524,56 @@
 | 状态码 | 原因 |
 |---|---|
 | 404 | 用户不存在 |
+
+---
+
+## 用户模型偏好
+
+登录用户的收藏与最近访问，支撑 Models 首页的「收藏 / 最近」Tab。仅存模型 ID，卡片详情由
+`GET /api/models/batch` 批量获取。所有接口需 **JWT**；每个写操作返回完整 `ModelPreferences`。
+
+**`ModelPreferences`（各接口的 `data`）**
+```json
+{
+  "favourites": ["seedance-1-5-pro-251215", "dreamina-seedance-2-0-260128"],
+  "recent": [
+    { "id": "seedance-1-5-pro-251215", "visited_at": 1781179001000 }
+  ]
+}
+```
+
+- `favourites`：模型 ID 数组，按收藏时间**倒序**。
+- `recent`：`{ id, visited_at }` 数组，按 `visited_at`（13 位毫秒）**倒序**，最多 50 条。
+- 空状态返回 `[]`，不返回 `null`。
+
+### GET /api/user/model-preferences
+
+读取当前用户的收藏与最近访问。**认证：** JWT。**响应 200（`data`）：** `ModelPreferences`。
+
+### POST /api/models/{model_id}/favourite
+
+添加收藏（幂等：重复添加不报错）。允许收藏已下架模型。**认证：** JWT。
+**响应 200（`data`）：** 更新后的 `ModelPreferences`。
+
+| 状态码 | 原因 |
+|---|---|
+| 401 | 未登录 |
+| 404 | `model_id` 不在模型目录 |
+
+### DELETE /api/models/{model_id}/favourite
+
+取消收藏（幂等：取消不存在的收藏仍返回 200，**不** 404）。**认证：** JWT。
+**响应 200（`data`）：** 更新后的 `ModelPreferences`。
+
+### POST /api/models/{model_id}/visit
+
+记录一次访问：按 `model_id` 去重后写入，`visited_at` 取服务端当前时间（毫秒），仅保留最新 50 条。
+**认证：** JWT。**响应 200（`data`）：** 更新后的 `ModelPreferences`。
+
+| 状态码 | 原因 |
+|---|---|
+| 401 | 未登录 |
+| 404 | `model_id` 不在模型目录 |
 
 ---
 
@@ -519,6 +821,11 @@ cost_usd = credits ÷ 100
 
 ---
 
+> 别名：`POST /v1/generations`、`GET /v1/generations/{id}` 等价于
+> `/v1/videos/generations`（前端使用前者，旧路径保留）。
+
+---
+
 ### Python 调用示例（OpenAI SDK）
 
 先安装依赖：`pip install openai httpx`
@@ -565,6 +872,59 @@ with httpx.Client(timeout=30) as http:
 ```
 
 ---
+
+## Playground 接口
+
+供网页控制台直接生成（JWT 鉴权，扣用户自身 credit，计费渠道标记为 `playground`）。
+
+### POST /api/playground/generations
+
+**认证：** JWT
+
+**请求体**
+```json
+{ "model": "…", "prompt": "…", "resolution": "720p", "ratio": "16:9", "fps": 24, "duration": 5, "image_url": null }
+```
+
+**响应 200（`data`）**
+```json
+{ "id": "task-1", "status": "queued", "model": "…", "created_at": 1781179001000 }
+```
+
+余额不足返回 `402`（上游未启动时已扣 credit 会退回）；模型/参数非法返回 `400`。
+
+### GET /api/playground/generations/{id}
+
+**认证：** JWT（仅本人任务可见，否则 `404`）
+
+**响应 200（`data`）**
+```json
+{ "id": "task-1", "status": "succeeded", "output_url": "https://…/video.mp4" }
+```
+
+`status` ∈ `queued` | `running` | `succeeded` | `failed`。完成后结果 URL 写入记录，后续轮询直接返回。
+
+---
+
+## 管理员接口
+
+全部 `/api/admin/*` 接口（仪表盘、用户、生成记录、充值交易、退款、模型、系统配置、充值套餐）见独立文档 [admin-api-zh.md](./admin-api-zh.md)。
+
+---
+
+## 部署：三实例拆分
+
+服务按路由职责拆分为三个可独立部署的实例，各自使用不同的 FastAPI 入口与 Dockerfile：
+
+| 实例 | 入口 | Dockerfile | 鉴权 | 路由 |
+|---|---|---|---|---|
+| **Inference**（推理） | `app.main_inference:app` | `Dockerfile.inference` | API Key | `/v1`、`/v2` |
+| **Public**（公开控制台） | `app.main:app` | `Dockerfile` | JWT（用户） | 认证、API Key、余额、用量、计费、模型、资料、定价、偏好、上传、Playground |
+| **Admin**（管理后台） | `app.main_admin:app` | `Dockerfile.admin` | JWT（管理员角色） | `/api/admin/*`（仪表盘、用户、生成记录、系统配置、充值套餐等） |
+
+三者共享同一套代码与数据库，仅通过入口文件加载的路由不同，互相之间的接口在各自实例上均返回 404。
+
+**部署建议**：Admin 实例应部署在私有 / 内网环境，不对公网开放，避免管理接口暴露在公共访问面上；Public 与 Inference 实例可正常对外提供服务。
 
 ## 健康检查
 

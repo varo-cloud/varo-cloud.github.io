@@ -1,12 +1,14 @@
 import { http, unwrap } from './http'
 import type {
   BillingAutoTopUp,
+  BillingConfig,
   BillingRecord,
   BillingSummary,
   CheckoutSessionResult,
   CreateCheckoutPayload,
   CreditPackage,
   Transaction,
+  TransactionProvider,
   // UpdateAutoTopUpPayload,
 } from '@/types'
 
@@ -54,23 +56,32 @@ interface ApiBillingRecord {
   amountUsd?: number
 }
 
+interface ApiBillingConfig {
+  publishable_key?: string
+  crypto_enabled?: boolean
+}
+
 interface ApiTransaction {
   id: string
+  provider?: string
   amount_usd?: number
   status?: string
   created_at?: string | number
-  payment_method?: string
+  payment_method?: string | null
   payment_detail?: string | null
   completed_at?: string | number | null
   receipt_url?: string | null
+  fee_usd?: number | null
   type?: string
   amountUsd?: number
   description?: string
   createdAt?: number
-  paymentMethod?: string
+  paymentMethod?: string | null
   paymentDetail?: string | null
   completedAt?: number | null
   receiptUrl?: string | null
+  feeUsd?: number | null
+  providerCamel?: TransactionProvider
 }
 
 function parseTimestamp(value: string | number | undefined): number {
@@ -113,6 +124,7 @@ function mapUsageToBillingRecord(raw: ApiUsageRecord): BillingRecord {
 
 interface ApiCreditPackage {
   id: string
+  label: string
   price_usd: number
 }
 
@@ -138,6 +150,11 @@ function mapBillingRecord(raw: ApiBillingRecord): BillingRecord {
   }
 }
 
+function mapTransactionProvider(value: string | undefined): TransactionProvider | undefined {
+  if (value === 'stripe' || value === 'nowpayments') return value
+  return undefined
+}
+
 function mapTransaction(raw: ApiTransaction): Transaction {
   if (raw.amountUsd != null) {
     return {
@@ -147,10 +164,12 @@ function mapTransaction(raw: ApiTransaction): Transaction {
       description: raw.description ?? 'Top Up',
       createdAt: raw.createdAt ?? Date.now(),
       status: raw.status as Transaction['status'],
-      paymentMethod: raw.paymentMethod as Transaction['paymentMethod'],
+      provider: raw.providerCamel ?? mapTransactionProvider(raw.provider),
+      paymentMethod: raw.paymentMethod ?? null,
       paymentDetail: raw.paymentDetail ?? null,
       completedAt: raw.completedAt ?? null,
       receiptUrl: raw.receiptUrl ?? null,
+      feeUsd: raw.feeUsd ?? null,
     }
   }
 
@@ -161,18 +180,30 @@ function mapTransaction(raw: ApiTransaction): Transaction {
     description: 'Top Up',
     createdAt: parseTimestamp(raw.created_at),
     status: raw.status as Transaction['status'],
-    paymentMethod: (raw.payment_method as Transaction['paymentMethod']) ?? 'card',
+    provider: mapTransactionProvider(raw.provider),
+    paymentMethod: raw.payment_method ?? null,
     paymentDetail: raw.payment_detail ?? null,
     completedAt: raw.completed_at != null ? parseTimestamp(raw.completed_at) : null,
     receiptUrl: raw.receipt_url ?? null,
+    feeUsd: raw.fee_usd ?? null,
   }
 }
 
 function mapCreditPackage(raw: ApiCreditPackage): CreditPackage {
   return {
     id: raw.id as CreditPackage['id'],
+    label: raw.label,
     priceUsd: raw.price_usd,
   }
+}
+
+export function fetchBillingConfig() {
+  return unwrap<ApiBillingConfig>(http.get('/billing/config')).then(
+    (raw): BillingConfig => ({
+      publishableKey: raw.publishable_key ?? '',
+      cryptoEnabled: raw.crypto_enabled ?? false,
+    }),
+  )
 }
 
 export async function fetchBillingSummary(): Promise<BillingSummary> {
@@ -216,17 +247,36 @@ export async function fetchBillingRecords(): Promise<BillingRecord[]> {
   }
 }
 
-export function createCheckoutSession(payload: CreateCheckoutPayload) {
+function buildCheckoutBody(payload: CreateCheckoutPayload) {
+  return {
+    amount_usd: payload.amountUsd,
+    ...(payload.presetId ? { preset_id: payload.presetId } : {}),
+  }
+}
+
+export function createStripeCheckoutSession(payload: CreateCheckoutPayload) {
   return unwrap<ApiCheckoutResponse>(
-    http.post('/billing/checkout', {
-      amount_usd: payload.amountUsd,
-      payment_method: payload.paymentMethod,
-    }),
+    http.post('/billing/stripe/checkout', buildCheckoutBody(payload)),
   ).then(
     (data): CheckoutSessionResult => ({
       checkoutUrl: data.checkout_url,
     }),
   )
+}
+
+export function createCryptoCheckoutSession(payload: CreateCheckoutPayload) {
+  return unwrap<ApiCheckoutResponse>(
+    http.post('/billing/nowpayments/checkout', buildCheckoutBody(payload)),
+  ).then(
+    (data): CheckoutSessionResult => ({
+      checkoutUrl: data.checkout_url,
+    }),
+  )
+}
+
+/** @deprecated Use createStripeCheckoutSession or createCryptoCheckoutSession */
+export function createCheckoutSession(payload: CreateCheckoutPayload) {
+  return createStripeCheckoutSession(payload)
 }
 
 export function completeMockCheckout(sessionId: string) {

@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { NSpin } from 'naive-ui'
@@ -9,12 +9,12 @@ import PlaygroundInputPanel from '@/components/playground/PlaygroundInputPanel.v
 import PlaygroundOutputPanel from '@/components/playground/PlaygroundOutputPanel.vue'
 import type { ModelSelectorOption } from '@/components/playground/fields/ModelSelectorField.vue'
 import { useLocaleRouter } from '@/composables/useLocaleRouter'
+import { usePlaygroundGeneration } from '@/composables/usePlaygroundGeneration'
 import { usePlaygroundQuote } from '@/composables/usePlaygroundQuote'
 import { useUserStore } from '@/stores/user'
 import { AnalyticsEvents, trackEvent } from '@/analytics'
-import { assetUrl } from '@/utils/assetUrl'
 import { createDefaultFormValues } from '@/utils/schema-form'
-import type { GenerationStatus, Model, ModelDetail, PlaygroundGenerationResult } from '@/types'
+import type { Model, ModelDetail } from '@/types'
 import type { InputSchema, SchemaFormValues } from '@/types/schema'
 
 const route = useRoute()
@@ -30,13 +30,19 @@ const listLoading = ref(true)
 const modelLoading = ref(false)
 const listError = ref<string | null>(null)
 const modelError = ref<string | null>(null)
-const outputUrls = ref<string[]>([])
-const generationResults = ref<PlaygroundGenerationResult[]>([])
 const batchSize = ref(1)
 const formValues = ref<SchemaFormValues>({})
-const generationStatus = ref<GenerationStatus>('idle')
-const generationProgress = ref(0)
 const estimatedSeconds = 40
+
+const {
+  generationStatus,
+  generationProgress,
+  outputUrls,
+  generationResults,
+  isGenerating,
+  runGeneration,
+  resetGeneration,
+} = usePlaygroundGeneration()
 
 const balanceUsd = computed(() => userStore.balanceUsd ?? 0)
 
@@ -90,97 +96,6 @@ const quoteCostUsd = playgroundQuote.costUsd
 const quoteStandardCostUsd = playgroundQuote.standardCostUsd
 const quoteLoading = playgroundQuote.loading
 const quoteUnitCostUsd = playgroundQuote.unitCostUsd
-
-const isGenerating = computed(
-  () => generationStatus.value === 'queued' || generationStatus.value === 'processing',
-)
-
-let generationTimers: ReturnType<typeof setTimeout>[] = []
-let progressInterval: ReturnType<typeof setInterval> | null = null
-
-function clearGenerationTimers() {
-  generationTimers.forEach(clearTimeout)
-  generationTimers = []
-  if (progressInterval) {
-    clearInterval(progressInterval)
-    progressInterval = null
-  }
-}
-
-function resetGeneration() {
-  clearGenerationTimers()
-  generationStatus.value = 'idle'
-  generationProgress.value = 0
-  outputUrls.value = []
-  generationResults.value = []
-}
-
-function buildGenerationResult(url: string, index: number, unitCostUsd: number): PlaygroundGenerationResult {
-  const currentModel = model.value
-  return {
-    id: `gen_${Date.now()}_${index}`,
-    object: 'generation',
-    status: 'completed',
-    model: currentModel?.modelPath ?? '',
-    created_at: Math.floor(Date.now() / 1000),
-    output: {
-      type: 'image',
-      url,
-    },
-    usage: {
-      cost_usd: unitCostUsd,
-    },
-  }
-}
-
-function simulateGeneration(count: number) {
-  clearGenerationTimers()
-  generationStatus.value = 'queued'
-  generationProgress.value = 0
-  outputUrls.value = []
-  generationResults.value = []
-
-  generationTimers.push(
-    setTimeout(() => {
-      generationStatus.value = 'processing'
-      const durationMs = 3500
-      const tickMs = 50
-      const steps = durationMs / tickMs
-      let step = 0
-
-      progressInterval = setInterval(() => {
-        step += 1
-        generationProgress.value = Math.min(100, Math.round((step / steps) * 100))
-        if (step >= steps && progressInterval) {
-          clearInterval(progressInterval)
-          progressInterval = null
-        }
-      }, tickMs)
-
-      generationTimers.push(
-        setTimeout(() => {
-          const url = assetUrl('/assets/model-detail/sample-output.jpg')
-          const urls = Array.from({ length: count }, () => url)
-          generationStatus.value = 'completed'
-          generationProgress.value = 100
-          outputUrls.value = urls
-          generationResults.value = urls.map((item, index) =>
-            buildGenerationResult(item, index, quoteUnitCostUsd.value),
-          )
-
-          if (model.value) {
-            trackEvent(AnalyticsEvents.PLAYGROUND_RUN_SUCCESS, {
-              source: 'ai_generator',
-              model_id: model.value.id,
-              capability: model.value.capabilities[0],
-              batch_size: count,
-            })
-          }
-        }, durationMs),
-      )
-    }, 800),
-  )
-}
 
 function resolveInitialModelId(items: Model[]): string {
   const queryModel = route.query.model
@@ -243,8 +158,20 @@ async function loadSelectedModel(id: string) {
   }
 }
 
-function handleRun(_values: SchemaFormValues, count: number) {
-  simulateGeneration(count)
+function handleRun(values: SchemaFormValues, count: number) {
+  if (!model.value) return
+
+  void runGeneration({
+    modelId: model.value.id,
+    values,
+    batchSize: count,
+    unitCostUsd: quoteUnitCostUsd.value,
+    analyticsSource: 'ai_generator',
+    analyticsCapability: model.value.capabilities[0],
+    onSuccess: () => {
+      void userStore.loadProfile()
+    },
+  })
 }
 
 watch(selectedModelId, (id, previousId) => {
@@ -273,10 +200,6 @@ watch(
 onMounted(() => {
   userStore.loadProfile()
   void loadModels()
-})
-
-onUnmounted(() => {
-  clearGenerationTimers()
 })
 </script>
 
