@@ -49,6 +49,7 @@ const DEFAULT_CUSTOM_AMOUNT_USD = 20
 
 const STRIPE_LOGO = assetUrl('/assets/billing/stripe.svg')
 const ALIPAY_WECHAT_LOGO = assetUrl('/assets/billing/alipay-wechat.svg')
+const CRYPTO_LOGO = assetUrl('/assets/billing/crypto.svg')
 
 const PAYMENT_METHODS: Array<{
   id: PaymentMethodId
@@ -60,7 +61,7 @@ const PAYMENT_METHODS: Array<{
 }> = [
   { id: 'card', logo: STRIPE_LOGO, alt: 'Stripe' },
   { id: '', logo: ALIPAY_WECHAT_LOGO, alt: 'AliWechatPay', textClass: 'billing-payment-method__text--alipay' },
-  { id: 'crypto', alt: 'Crypto', requiresCrypto: true },
+  { id: 'crypto', logo: CRYPTO_LOGO, alt: 'Crypto', requiresCrypto: true },
 ]
 
 const cryptoEnabled = ref(false)
