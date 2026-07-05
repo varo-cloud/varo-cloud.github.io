@@ -13,6 +13,7 @@ import PlaygroundOutputPanel from '@/components/playground/PlaygroundOutputPanel
 import { useUserStore } from '@/stores/user'
 import { useModelPreferencesStore } from '@/stores/modelPreferences'
 import { createDefaultFormValues } from '@/utils/schema-form'
+import { extractInputSchema } from '@/utils/model-schema'
 import { usePlaygroundQuote } from '@/composables/usePlaygroundQuote'
 import { usePlaygroundGeneration } from '@/composables/usePlaygroundGeneration'
 import type { Model, ModelDetail } from '@/types'
@@ -46,28 +47,16 @@ const {
 
 const balanceUsd = computed(() => userStore.balanceUsd ?? 0)
 
-const apiModelId = computed(() => {
-  if (!model.value) return ''
-  return model.value.apiModelId ?? model.value.modelPath.replace(/\//g, '-')
-})
-
-const fallbackUnitCostUsd = computed(() => {
-  if (!model.value) return 0
-  return model.value.perRunPriceUsd ?? model.value.startingPriceUsd ?? 0
-})
+const fallbackUnitCostUsd = computed(() => model.value?.startingPriceUsd ?? 0)
 
 const fallbackStandardUnitCostUsd = computed(() => {
   const current = model.value
-  if (
-    !current ||
-    current.originalPriceUsd == null ||
-    current.perRunPriceUsd == null ||
-    !current.startingPriceUsd
-  ) {
+  if (!current || current.originalPriceUsd == null || !current.startingPriceUsd) {
     return undefined
   }
 
-  return (current.originalPriceUsd / current.startingPriceUsd) * current.perRunPriceUsd
+  if (current.originalPriceUsd <= current.startingPriceUsd) return undefined
+  return current.originalPriceUsd
 })
 
 const playgroundQuote = usePlaygroundQuote({
@@ -86,15 +75,12 @@ const quoteStandardCostUsd = playgroundQuote.standardCostUsd
 const quoteLoading = playgroundQuote.loading
 const quoteUnitCostUsd = playgroundQuote.unitCostUsd
 
-const displayTitle = computed(() => {
-  if (!model.value) return ''
-  return `${model.value.name} by ${model.value.provider}`
-})
+const displayTitle = computed(() => model.value?.displayName ?? '')
 
 const modelSwitcherOptions = computed(() =>
   modelOptions.value.map((item) => ({
     id: item.id,
-    label: item.displayName || item.name,
+    label: item.displayName,
   })),
 )
 
@@ -107,26 +93,37 @@ async function loadModelOptions() {
   }
 }
 
-function handleModelSelect(id: string) {
-  if (id === model.value?.id) return
-  void push({ name: 'model-detail', params: { id } })
+function handleModelSelect(slug: string) {
+  if (slug === model.value?.id) return
+  void push({ name: 'model-detail', params: { slug } })
 }
 
 watch(inputSchema, (schema) => {
   formValues.value = createDefaultFormValues(schema ?? undefined)
 })
 
-async function loadModel(id: string) {
+async function loadModel(slug: string) {
   loading.value = true
   error.value = null
   resetGeneration()
   inputSchema.value = null
 
   try {
-    const [detail, schema] = await Promise.all([
-      fetchModelDetail(id),
-      fetchModelInputSchema(id).catch(() => null),
-    ])
+    const detail = await fetchModelDetail(slug)
+    let schema: InputSchema | null = null
+
+    try {
+      schema = await fetchModelInputSchema(slug)
+    } catch {
+      if (detail.inputSchema) {
+        try {
+          schema = extractInputSchema(detail.inputSchema)
+        } catch {
+          schema = null
+        }
+      }
+    }
+
     model.value = detail
     inputSchema.value = schema
     if (userStore.isLoggedIn) {
@@ -150,7 +147,7 @@ function handleRun(values: SchemaFormValues, count: number) {
     batchSize: count,
     unitCostUsd: quoteUnitCostUsd.value,
     analyticsSource: 'model_detail',
-    analyticsCapability: model.value.capabilities[0],
+    analyticsCapability: model.value.capability,
     onSuccess: () => {
       void userStore.loadProfile()
     },
@@ -158,9 +155,9 @@ function handleRun(values: SchemaFormValues, count: number) {
 }
 
 watch(
-  () => route.params.id,
-  (id) => {
-    if (typeof id === 'string') loadModel(id)
+  () => route.params.slug,
+  (slug) => {
+    if (typeof slug === 'string') loadModel(slug)
   },
   { immediate: true },
 )
@@ -189,7 +186,7 @@ onMounted(() => {
         <ModelDetailHeader
           :title="displayTitle"
           :model-id="model.id"
-          :model-path="model.modelPath"
+          :slug="model.id"
           :description="model.description"
           :thumbnail-url="model.thumbnailUrl"
           :model-options="modelSwitcherOptions"
@@ -227,14 +224,14 @@ onMounted(() => {
           v-model:form-values="formValues"
           :schema="inputSchema"
           :model-id="model.id"
-          :api-model-id="apiModelId"
+          :api-model-id="model.id"
           :cost-usd="quoteCostUsd"
           :standard-cost-usd="quoteStandardCostUsd"
           :quote-loading="quoteLoading"
           :balance-usd="balanceUsd"
           :generating="isGenerating"
           analytics-source="model_detail"
-          :analytics-capability="model.capabilities[0]"
+          :analytics-capability="model.capability"
           @run="handleRun"
         />
         <div v-else class="model-detail-page__schema-empty">
@@ -253,8 +250,8 @@ onMounted(() => {
       <ModelApiTab
         v-else-if="inputSchema"
         :schema="inputSchema"
-        :api-model-id="apiModelId"
-        :model-name="model.name"
+        :api-model-id="model.id"
+        :model-name="model.displayName"
         :form-values="formValues"
         :readme-md="model.readmeMd"
         :faq="model.faq"

@@ -24,9 +24,9 @@ interface ApiPlaygroundGeneration {
   }
 }
 
-interface ApiPlaygroundGenerationList {
-  object: 'list'
-  data: ApiPlaygroundGeneration[]
+interface ApiPlaygroundBatchCreateResponse {
+  ids: string[]
+  batch_size: number
 }
 
 export interface PlaygroundGenerationSnapshot {
@@ -96,10 +96,15 @@ export function mapPlaygroundGenerationResult(
 }
 
 function mapCreateResponse(
-  raw: ApiPlaygroundGeneration | ApiPlaygroundGenerationList,
+  raw: ApiPlaygroundGeneration | ApiPlaygroundBatchCreateResponse,
 ): PlaygroundGenerationSnapshot[] {
-  if ('object' in raw && raw.object === 'list' && Array.isArray(raw.data)) {
-    return raw.data.map(mapPlaygroundGenerationSnapshot)
+  if ('ids' in raw && Array.isArray(raw.ids)) {
+    return raw.ids.map((id) => ({
+      id,
+      status: 'queued' as const,
+      model: '',
+      createdAt: Date.now(),
+    }))
   }
 
   return [mapPlaygroundGenerationSnapshot(raw as ApiPlaygroundGeneration)]
@@ -107,42 +112,29 @@ function mapCreateResponse(
 
 interface ApiPlaygroundQuote {
   cost_usd: number
-  standard_cost_usd?: number | null
-  discount_percent?: number | null
-  unit_cost_usd?: number | null
-  batch_size: number
-  runs_per_ten_usd?: number | null
-  breakdown?: PlaygroundQuote['breakdown']
 }
 
 function mapPlaygroundQuote(raw: ApiPlaygroundQuote): PlaygroundQuote {
   return {
     cost_usd: raw.cost_usd,
-    standard_cost_usd: raw.standard_cost_usd ?? undefined,
-    discount_percent: raw.discount_percent ?? undefined,
-    unit_cost_usd: raw.unit_cost_usd ?? undefined,
-    batch_size: raw.batch_size,
-    runs_per_ten_usd: raw.runs_per_ten_usd ?? undefined,
-    breakdown: raw.breakdown,
   }
 }
 
-export function fetchPlaygroundQuote(modelId: string, payload: PlaygroundQuotePayload) {
+export function fetchPlaygroundQuote(slug: string, payload: PlaygroundQuotePayload) {
   return unwrap<ApiPlaygroundQuote>(
-    http.post(`/models/${modelId}/quote`, {
+    http.post(`/models/${slug}/quote`, {
       input: payload.input,
-      batch_size: payload.batch_size ?? 1,
     }),
   ).then(mapPlaygroundQuote)
 }
 
 export function createPlaygroundGeneration(
-  modelId: string,
+  slug: string,
   input: SchemaFormValues,
   batchSize = 1,
 ) {
-  return unwrap<ApiPlaygroundGeneration | ApiPlaygroundGenerationList>(
-    http.post('/playground/generations', buildPlaygroundRunBody(modelId, input, batchSize)),
+  return unwrap<ApiPlaygroundGeneration | ApiPlaygroundBatchCreateResponse>(
+    http.post('/playground/generations', buildPlaygroundRunBody(slug, input, batchSize)),
   ).then(mapCreateResponse)
 }
 
@@ -151,4 +143,3 @@ export function fetchPlaygroundGeneration(id: string) {
     mapPlaygroundGenerationSnapshot,
   )
 }
-

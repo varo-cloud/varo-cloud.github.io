@@ -49,36 +49,24 @@ const balanceUsd = computed(() => userStore.balanceUsd ?? 0)
 const modelOptions = computed<ModelSelectorOption[]>(() =>
   models.value.map((item) => ({
     id: item.id,
-    label: item.displayName ?? item.name,
-    capability: item.capabilities[0],
+    label: item.displayName,
+    capability: item.capability,
     description: item.description,
     isHot: item.isHot,
     isNew: item.isNew,
   })),
 )
 
-const apiModelId = computed(() => {
-  if (!model.value) return ''
-  return model.value.apiModelId ?? model.value.modelPath.replace(/\//g, '-')
-})
-
-const fallbackUnitCostUsd = computed(() => {
-  if (!model.value) return 0
-  return model.value.perRunPriceUsd ?? model.value.startingPriceUsd ?? 0
-})
+const fallbackUnitCostUsd = computed(() => model.value?.startingPriceUsd ?? 0)
 
 const fallbackStandardUnitCostUsd = computed(() => {
   const current = model.value
-  if (
-    !current ||
-    current.originalPriceUsd == null ||
-    current.perRunPriceUsd == null ||
-    !current.startingPriceUsd
-  ) {
+  if (!current || current.originalPriceUsd == null || !current.startingPriceUsd) {
     return undefined
   }
 
-  return (current.originalPriceUsd / current.startingPriceUsd) * current.perRunPriceUsd
+  if (current.originalPriceUsd <= current.startingPriceUsd) return undefined
+  return current.originalPriceUsd
 })
 
 const playgroundQuote = usePlaygroundQuote({
@@ -167,7 +155,7 @@ function handleRun(values: SchemaFormValues, count: number) {
     batchSize: count,
     unitCostUsd: quoteUnitCostUsd.value,
     analyticsSource: 'ai_generator',
-    analyticsCapability: model.value.capabilities[0],
+    analyticsCapability: model.value.capability,
     onSuccess: () => {
       void userStore.loadProfile()
     },
@@ -229,14 +217,14 @@ onMounted(() => {
         :schema="inputSchema"
         :model-id="model.id"
         :model-options="modelOptions"
-        :api-model-id="apiModelId"
+        :api-model-id="model.id"
         :cost-usd="quoteCostUsd"
         :standard-cost-usd="quoteStandardCostUsd"
         :quote-loading="quoteLoading"
         :balance-usd="balanceUsd"
         :generating="isGenerating || modelLoading"
         analytics-source="ai_generator"
-        :analytics-capability="model.capabilities[0]"
+        :analytics-capability="model.capability"
         @run="handleRun"
       />
       <div v-else class="ai-generator-page__panel-placeholder">

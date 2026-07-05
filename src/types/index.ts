@@ -12,13 +12,18 @@ export interface ApiResponse<T> {
   data: T
 }
 
+export type ModelCategory = 'video' | 'image' | 'llm'
+
 export interface Model {
+  /** Catalog slug, e.g. `seedance-2.0/text-to-video` — maps from API `slug` */
   id: string
-  name: string
+  /** Base model seq_id — maps from API `model_id` (int) */
+  baseModelId: number
+  /** Single capability label, e.g. `text-to-video` — maps from API `capability` */
+  capability: string
+  category: ModelCategory
   /** Maps from API field `display_name` */
-  displayName?: string
-  provider: string
-  capabilities: string[]
+  displayName: string
   /** Maps from API field `starting_price_usd` — unit rate in USD */
   startingPriceUsd: number
   /** Maps from API field `standard_price_usd` — strikethrough reference price */
@@ -27,8 +32,6 @@ export interface Model {
   priceUnit: PricingPriceUnit
   /** Maps from API field `price_detail` — optional run context; for per_second, resolution only e.g. "720p" */
   priceDetail?: string
-  /** Maps from API field `discount_percent` */
-  discountPercent?: number
   description: string
   /** Maps from API field `thumbnail_url` */
   thumbnailUrl?: string
@@ -38,25 +41,17 @@ export interface Model {
   isHot?: boolean
   /** Maps from API field `is_new` */
   isNew?: boolean
+  /** Maps from API field `sort_order` */
+  sortOrder?: number
 }
 
 export interface ModelDetail extends Model {
-  /** Maps from API field `model_path` */
-  modelPath: string
-  /** Maps from API field `api_model_id` — used in external /v1/generations examples */
-  apiModelId?: string
-  /** Maps from API field `is_hot` */
-  isHot?: boolean
-  /** Maps from API field `is_new` */
-  isNew?: boolean
-  /** Maps from API field `per_run_price_usd` — total USD for default run config */
-  perRunPriceUsd?: number
-  /** Maps from API field `runs_per_ten_usd` */
-  runsPerTenUsd?: number
   /** Maps from API field `readme_md` — model README rendered in API tab */
   readmeMd?: string
   /** Maps from API field `faq` */
   faq?: ModelFaqItem[]
+  /** Maps from API field `input_schema` */
+  inputSchema?: Record<string, unknown> | null
 }
 
 export interface ModelFaqItem {
@@ -257,7 +252,7 @@ export interface BillingRecord {
   style: BillingRecordStyle
   /** Usage or payment detail, e.g. model · resolution · duration */
   key: string
-  /** Masked API key when style is `api`; empty for web and other types */
+  /** Masked API Key when style is `api`; empty for web and other types */
   apiKey?: string | null
   amountUsd: number
   createdAt: number
@@ -271,21 +266,17 @@ export type PricingMediaType = 'video' | 'image' | 'llm'
 export type PricingPriceUnit = 'per_second' | 'per_image' | 'per_million_tokens' | 'per_hour'
 
 export interface PricingItem {
+  /** Slug — maps from API `id` */
   id: string
-  /** Maps from API field `model_id` */
-  modelId?: string
+  /** Slug — maps from API `model_id` (same as `id`) */
+  modelId: string
+  /** Maps from API `name` (`display_name`) */
   name: string
   /** Maps from API field `standard_price_usd` */
   standardPriceUsd: number
   /** Maps from API field `starting_price_usd` */
   startingPriceUsd: number
   priceUnit: PricingPriceUnit
-  /** Maps from API field `discount_percent` */
-  discountPercent?: number
-  /** Maps from API field `category` — optional, not used for UI filtering */
-  category?: PricingCategory
-  /** Maps from API field `media_type` — optional, not used for UI filtering */
-  mediaType?: PricingMediaType
 }
 
 export type UploadKind = 'image' | 'video' | 'audio'
@@ -314,31 +305,10 @@ export interface PlaygroundGenerationResult {
   }
 }
 
-export type PlaygroundBillingMode =
-  | 'output_duration'
-  | 'input_plus_output_duration'
-  | 'per_image'
-  | 'per_request'
-
-export interface PlaygroundQuoteBreakdown {
-  billing_mode: PlaygroundBillingMode
-  billed_seconds?: number
-  resolution?: string
-  rate_per_second_usd?: number
-  has_reference_videos?: boolean
-}
-
 export interface PlaygroundQuote {
   cost_usd: number
-  standard_cost_usd?: number
-  discount_percent?: number
-  unit_cost_usd?: number
-  batch_size: number
-  runs_per_ten_usd?: number
-  breakdown?: PlaygroundQuoteBreakdown
 }
 
 export interface PlaygroundQuotePayload {
   input: Record<string, unknown>
-  batch_size?: number
 }

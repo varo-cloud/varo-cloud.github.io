@@ -1,16 +1,13 @@
 import { http, unwrap } from './http'
-import type { PricingCategory, PricingItem, PricingMediaType, PricingPriceUnit } from '@/types'
+import type { PricingItem, PricingPriceUnit } from '@/types'
 
 interface ApiPricingItem {
   id: string
-  model_id?: string
+  model_id: string
   name: string
   standard_price_usd: number
   starting_price_usd: number
   price_unit: PricingPriceUnit
-  discount_percent?: number | null
-  category?: PricingCategory
-  media_type?: PricingMediaType
 }
 
 function mapPricingItem(raw: ApiPricingItem): PricingItem {
@@ -21,9 +18,6 @@ function mapPricingItem(raw: ApiPricingItem): PricingItem {
     standardPriceUsd: raw.standard_price_usd,
     startingPriceUsd: raw.starting_price_usd,
     priceUnit: raw.price_unit,
-    discountPercent: raw.discount_percent ?? undefined,
-    category: raw.category,
-    mediaType: raw.media_type,
   }
 }
 

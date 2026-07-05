@@ -2,79 +2,70 @@ import { http, unwrap } from './http'
 import type {
   FetchModelsParams,
   Model,
+  ModelCategory,
   ModelDetail,
   ModelFaqItem,
   ModelsPage,
   PricingPriceUnit,
 } from '@/types'
 
-interface ApiModel {
-  id: string
-  name: string
-  display_name?: string
-  provider: string
-  capabilities: string[]
-  starting_price_usd: number
-  standard_price_usd?: number | null
-  price_unit: PricingPriceUnit
-  price_detail?: string | null
-  discount_percent?: number | null
+interface ApiModelCard {
+  slug: string
+  model_id: number
+  capability: string
+  category: ModelCategory
+  display_name: string
   description: string
   thumbnail_url?: string | null
   icon_url?: string | null
+  starting_price_usd?: number | null
+  standard_price_usd?: number | null
+  price_unit?: PricingPriceUnit | null
+  price_detail?: string | null
   is_hot?: boolean | null
   is_new?: boolean | null
+  sort_order?: number | null
 }
 
-interface ApiModelDetail extends ApiModel {
-  model_path: string
-  api_model_id?: string | null
-  is_hot?: boolean
-  is_new?: boolean
-  per_run_price_usd?: number | null
-  runs_per_ten_usd?: number | null
+interface ApiModelDetail extends ApiModelCard {
   readme_md?: string | null
   faq?: ModelFaqItem[] | null
+  input_schema?: Record<string, unknown> | null
 }
 
 interface ApiModelsPage {
-  items: ApiModel[]
+  items: ApiModelCard[]
   total: number
   offset: number
   limit: number
 }
 
-function mapModel(raw: Partial<ApiModel> & Pick<ApiModel, 'id'>): Model {
+function mapModel(raw: ApiModelCard): Model {
   return {
-    id: raw.id,
-    name: raw.name ?? raw.id,
-    displayName: raw.display_name ?? undefined,
-    provider: raw.provider ?? '',
-    capabilities: raw.capabilities ?? [],
+    id: raw.slug,
+    baseModelId: raw.model_id,
+    capability: raw.capability,
+    category: raw.category,
+    displayName: raw.display_name,
     startingPriceUsd: raw.starting_price_usd ?? 0,
     originalPriceUsd: raw.standard_price_usd ?? undefined,
     priceUnit: raw.price_unit ?? 'per_second',
     priceDetail: raw.price_detail ?? undefined,
-    discountPercent: raw.discount_percent ?? undefined,
     description: raw.description ?? '',
     thumbnailUrl: raw.thumbnail_url ?? undefined,
     iconUrl: raw.icon_url ?? undefined,
     isHot: raw.is_hot ?? undefined,
     isNew: raw.is_new ?? undefined,
+    sortOrder: raw.sort_order ?? undefined,
   }
 }
 
 function mapModelDetail(raw: ApiModelDetail): ModelDetail {
   return {
     ...mapModel(raw),
-    modelPath: raw.model_path,
-    apiModelId: raw.api_model_id ?? undefined,
-    isHot: raw.is_hot,
-    isNew: raw.is_new,
-    perRunPriceUsd: raw.per_run_price_usd ?? undefined,
-    runsPerTenUsd: raw.runs_per_ten_usd ?? undefined,
     readmeMd: raw.readme_md ?? undefined,
     faq: raw.faq ?? undefined,
+    inputSchema: raw.input_schema ?? undefined,
   }
 }
 
@@ -87,15 +78,15 @@ function mapModelsPage(raw: ApiModelsPage): ModelsPage {
   }
 }
 
-function filterModelsByQuery(items: ApiModel[], query?: string): ApiModel[] {
+function filterModelsByQuery(items: ApiModelCard[], query?: string): ApiModelCard[] {
   const q = query?.trim().toLowerCase()
   if (!q) return items
 
   return items.filter((model) => {
-    const name = (model.display_name ?? model.name ?? model.id).toLowerCase()
+    const baseSlug = model.slug.split('/')[0]?.toLowerCase() ?? ''
     return (
-      name.includes(q) ||
-      (model.provider ?? '').toLowerCase().includes(q) ||
+      model.display_name.toLowerCase().includes(q) ||
+      baseSlug.includes(q) ||
       (model.description ?? '').toLowerCase().includes(q)
     )
   })
@@ -103,7 +94,7 @@ function filterModelsByQuery(items: ApiModel[], query?: string): ApiModel[] {
 
 /** 兼容后端返回 data 为数组，或 data 为 { items, total, ... } 两种形态 */
 function normalizeModelsPage(
-  raw: ApiModelsPage | ApiModel[],
+  raw: ApiModelsPage | ApiModelCard[],
   params?: FetchModelsParams,
 ): ModelsPage {
   if (Array.isArray(raw)) {
@@ -123,18 +114,19 @@ function normalizeModelsPage(
 }
 
 export function fetchModels(params?: FetchModelsParams) {
-  return unwrap<ApiModelsPage | ApiModel[]>(http.get('/models', { params })).then((raw) =>
+  return unwrap<ApiModelsPage | ApiModelCard[]>(http.get('/models', { params })).then((raw) =>
     normalizeModelsPage(raw, params),
   )
 }
 
-export function fetchModelDetail(id: string) {
-  return unwrap<ApiModelDetail>(http.get(`/models/${id}`)).then(mapModelDetail)
+export function fetchModelDetail(slug: string) {
+  return unwrap<ApiModelDetail>(http.get(`/models/${slug}`)).then(mapModelDetail)
 }
 
-export function fetchModelsByIds(ids: string[]) {
-  if (ids.length === 0) return Promise.resolve([] as Model[])
-  return unwrap<ApiModel[]>(http.get('/models/batch', { params: { ids: ids.join(',') } })).then(
-    (items) => items.map(mapModel),
+export function fetchModelsByIds(slugs: string[]) {
+  if (slugs.length === 0) return Promise.resolve([] as Model[])
+  const ids = slugs.map(encodeURIComponent).join(',')
+  return unwrap<ApiModelCard[]>(http.get('/models/batch', { params: { ids } })).then((items) =>
+    items.map(mapModel),
   )
 }
