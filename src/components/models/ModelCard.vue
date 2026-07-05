@@ -20,7 +20,7 @@ const modelPrefs = useModelPreferencesStore()
 
 const isFavourite = computed(() => modelPrefs.isFavourite(props.model.id))
 
-const displayName = computed(() => props.model.displayName ?? props.model.name)
+const displayName = computed(() => props.model.displayName)
 
 const thumbnailSrc = computed(() =>
   assetUrl(props.model.thumbnailUrl ?? '/assets/models/card-thumb.jpg'),
@@ -31,7 +31,7 @@ const iconSrc = computed(() =>
 )
 
 const capabilityBadge = computed(() => {
-  const cap = props.model.capabilities[0]
+  const cap = props.model.capability
   if (!cap) return ''
   const key = `pages.models.capabilityBadge.${cap}`
   const translated = t(key)
@@ -53,7 +53,7 @@ function goToDetail() {
   if (userStore.isLoggedIn) {
     modelPrefs.recordVisit(props.model.id)
   }
-  push({ name: 'model-detail', params: { id: props.model.id } })
+  push({ name: 'model-detail', params: { slug: props.model.id } })
 }
 
 async function toggleFavourite(event: Event) {
@@ -147,12 +147,6 @@ async function toggleFavourite(event: Event) {
           <template v-if="model.priceDetail">
             <span class="model-card__detail"> · {{ model.priceDetail }}</span>
           </template>
-          <span
-            v-if="model.discountPercent"
-            class="model-card__discount"
-          >
-            -{{ model.discountPercent }}%
-          </span>
         </p>
       </div>
 

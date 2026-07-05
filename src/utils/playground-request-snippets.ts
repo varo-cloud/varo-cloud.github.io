@@ -41,10 +41,10 @@ export function resolveGetGenerationUrl(taskId: string): string {
   return `${resolveV1BaseUrl()}/generations/${taskId}`
 }
 
-/** External API Key calls — flat body with `model` (api_model_id). */
-export function buildExternalApiBody(apiModelId: string, values: SchemaFormValues) {
+/** External API Key calls — flat body with `model` (catalog slug). */
+export function buildExternalApiBody(modelSlug: string, values: SchemaFormValues) {
   return {
-    model: apiModelId,
+    model: modelSlug,
     ...pruneApiValues(values),
   }
 }

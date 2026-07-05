@@ -13,7 +13,7 @@ const props = defineProps<{
 }>()
 
 const emit = defineEmits<{
-  view: [id: string]
+  view: [slug: string]
 }>()
 
 const { t } = useI18n()
@@ -24,7 +24,7 @@ const standardPrice = computed(() => formatPricingUsd(props.item.standardPriceUs
 const startingPrice = computed(() => formatPricingUsd(props.item.startingPriceUsd, props.item.priceUnit))
 
 function handleView() {
-  emit('view', props.item.modelId ?? props.item.id)
+  emit('view', props.item.modelId)
 }
 </script>
 
@@ -42,15 +42,6 @@ function handleView() {
         <strong>{{ startingPrice }}</strong><span class="pricing-row__unit">{{ unitLabel }}</span>
       </span>
     </div>
-    <div class="pricing-row__cell pricing-row__cell--discount">
-      <span
-        v-if="item.discountPercent"
-        class="pricing-row__badge"
-      >
-        -{{ item.discountPercent }}%
-      </span>
-      <span v-else class="pricing-row__no-discount">--</span>
-    </div>
     <div class="pricing-row__cell pricing-row__cell--action">
       <button type="button" class="pricing-row__view-btn" @click="handleView">
         {{ t('pages.pricing.view') }}
@@ -62,7 +53,7 @@ function handleView() {
 <style scoped>
 .pricing-row {
   display: grid;
-  grid-template-columns: minmax(0, 1.6fr) minmax(0, 0.9fr) minmax(0, 1.1fr) minmax(0, 0.7fr) 71px;
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 0.9fr) minmax(0, 1.1fr) 71px;
   align-items: center;
   min-height: 80px;
   padding: 0 24px;
@@ -120,31 +111,6 @@ function handleView() {
 .pricing-row__price-value :deep(strong) {
   font-weight: 500;
   color: #06b6d4;
-}
-
-.pricing-row__cell--discount {
-  display: flex;
-  align-items: center;
-}
-
-.pricing-row__badge {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  padding: 4px 8px;
-  border-radius: 30px;
-  background: #ff9800;
-  color: #fff;
-  font-size: 16px;
-  font-weight: 500;
-  line-height: 14px;
-  white-space: nowrap;
-}
-
-.pricing-row__no-discount {
-  font-size: 16px;
-  font-weight: 500;
-  color: #222;
 }
 
 .pricing-row__cell--action {

@@ -27,6 +27,11 @@ function unauthorized() {
   return { code: 401, message: 'Unauthorized', data: null }
 }
 
+function extractSlugFromPath(url: string, action: string): string | null {
+  const match = url.match(new RegExp(`^/api/models/([^/]+/[^/?]+)/${action}`))
+  return match ? decodeURIComponent(match[1]!) : null
+}
+
 export default [
   {
     url: '/api/user/model-preferences',
@@ -38,60 +43,69 @@ export default [
     },
   },
   {
-    url: '/api/models/:id/favourite',
+    url: /^\/api\/models\/[^/]+\/[^/?]+\/favourite$/,
     method: 'post',
     response: ({
       headers,
-      query,
+      url,
     }: {
       headers: Record<string, string>
-      query: Record<string, string>
+      url: string
     }) => {
       const token = getToken(headers)
       if (!token) return unauthorized()
 
+      const slug = extractSlugFromPath(url, 'favourite')
+      if (!slug) return { code: 404, message: 'Model not found', data: null }
+
       const prefs = getPreferences(token)
-      if (!prefs.favourites.includes(query.id)) {
-        prefs.favourites = [...prefs.favourites, query.id]
+      if (!prefs.favourites.includes(slug)) {
+        prefs.favourites = [...prefs.favourites, slug]
       }
       return success(prefs)
     },
   },
   {
-    url: '/api/models/:id/favourite',
+    url: /^\/api\/models\/[^/]+\/[^/?]+\/favourite$/,
     method: 'delete',
     response: ({
       headers,
-      query,
+      url,
     }: {
       headers: Record<string, string>
-      query: Record<string, string>
+      url: string
     }) => {
       const token = getToken(headers)
       if (!token) return unauthorized()
 
+      const slug = extractSlugFromPath(url, 'favourite')
+      if (!slug) return success(getPreferences(token))
+
       const prefs = getPreferences(token)
-      prefs.favourites = prefs.favourites.filter((id) => id !== query.id)
+      prefs.favourites = prefs.favourites.filter((id) => id !== slug)
       return success(prefs)
     },
   },
   {
-    url: '/api/models/:id/visit',
+    url: /^\/api\/models\/[^/]+\/[^/?]+\/visit$/,
     method: 'post',
     response: ({
       headers,
-      query,
+      url,
     }: {
       headers: Record<string, string>
-      query: Record<string, string>
+      url: string
     }) => {
       const token = getToken(headers)
       if (!token) return unauthorized()
 
+      const slug = extractSlugFromPath(url, 'visit')
+      if (!slug) return { code: 404, message: 'Model not found', data: null }
+
       const prefs = getPreferences(token)
-      const filtered = prefs.recent.filter((entry) => entry.id !== query.id)
-      prefs.recent = [{ id: query.id, visitedAt: Date.now() }, ...filtered].slice(0, MAX_RECENT)
+      const filtered = prefs.recent.filter((entry) => entry.id !== slug)
+      prefs.recent = [{ id: slug, visitedAt: Date.now() }, ...filtered].slice(0, MAX_RECENT)
       return success(prefs)
     },
   },
-] as MockMethod[]
+] as unknown as MockMethod[]

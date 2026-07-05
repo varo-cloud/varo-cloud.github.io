@@ -236,19 +236,24 @@ export const klingI2vSchema: InputSchema = {
 }
 
 export const modelInputSchemas: Record<string, InputSchema> = {
-  'seedance-i2v': seedanceI2vSchema,
-  'seedance-t2v': seedance20T2vSchema,
-  'kling-t2v': seedanceT2vSchema,
-  'kling-i2v': klingI2vSchema,
+  'seedance-2.0/image-to-video': seedanceI2vSchema,
+  'seedance-2.0/text-to-video': seedance20T2vSchema,
+  'kling-2.6/text-to-video': seedanceT2vSchema,
+  'kling-2.6/image-to-video': klingI2vSchema,
 }
 
-export function resolveInputSchema(modelId: string): InputSchema | undefined {
-  if (modelInputSchemas[modelId]) {
-    return modelInputSchemas[modelId]
+export function resolveInputSchema(slug: string): InputSchema | undefined {
+  if (modelInputSchemas[slug]) {
+    return modelInputSchemas[slug]
   }
 
-  const index = Number(modelId.replace('model-', ''))
-  if (!Number.isFinite(index) || index <= 0) return undefined
+  const variantMatch = slug.match(/-v(\d+)\//)
+  if (variantMatch) {
+    const baseSlug = slug.replace(/-v\d+\//, '/')
+    if (modelInputSchemas[baseSlug]) {
+      return modelInputSchemas[baseSlug]
+    }
+  }
 
-  return index % 2 === 0 ? seedanceI2vSchema : seedance20T2vSchema
+  return slug.includes('image-to-video') ? seedanceI2vSchema : seedance20T2vSchema
 }

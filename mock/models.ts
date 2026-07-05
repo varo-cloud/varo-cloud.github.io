@@ -1,103 +1,88 @@
 import type { MockMethod } from 'vite-plugin-mock'
-import type { PricingPriceUnit } from '../src/types'
-import { resolveApiModelId, resolveModelDoc } from './model-docs'
+import type { ModelCategory, PricingPriceUnit } from '../src/types'
+import { resolveModelDoc } from './model-docs'
 import { success } from './_util'
 
 interface ModelCatalogEntry {
-  id: string
-  name: string
-  display_name?: string
-  provider: string
-  model_path: string
-  capabilities: string[]
-  starting_price_usd: number
-  standard_price_usd?: number
-  price_unit: PricingPriceUnit
-  per_run_price_usd?: number
-  runs_per_ten_usd?: number
-  price_detail?: string
-  discount_percent?: number
-  is_hot?: boolean
-  is_new?: boolean
+  slug: string
+  model_id: number
+  capability: string
+  category: ModelCategory
+  display_name: string
   description: string
   thumbnail_url?: string
   icon_url?: string
+  starting_price_usd: number
+  standard_price_usd?: number
+  price_unit: PricingPriceUnit
+  price_detail?: string
+  is_hot?: boolean
+  is_new?: boolean
+  sort_order?: number
 }
 
 const baseModels: ModelCatalogEntry[] = [
   {
-    id: 'seedance-i2v',
-    name: 'Seedance 2.0 Image-to-Video',
-    display_name: 'Seedance 2.0',
-    provider: 'ByteDance',
-    model_path: 'bytedance/seedance-v1.5-pro/image-to-video',
-    capabilities: ['image-to-video'],
+    slug: 'seedance-2.0/image-to-video',
+    model_id: 1,
+    capability: 'image-to-video',
+    category: 'video',
+    display_name: 'Seedance 2.0 Image-to-Video',
     starting_price_usd: 0.084,
     standard_price_usd: 0.1,
     price_unit: 'per_second',
-    per_run_price_usd: 0.42,
-    runs_per_ten_usd: 23,
     price_detail: '720p',
-    discount_percent: 16,
     is_hot: true,
+    sort_order: 10,
     description:
       'Hollywood-grade cinematic image-to-video generation with native audio sync at 480p or 720p. Animates a starting frame with natural-language motion prompts.',
     thumbnail_url: '/assets/model-detail/model-thumb.jpg',
     icon_url: '/assets/models/seedance.svg',
   },
   {
-    id: 'seedance-t2v',
-    name: 'Seedance 2.0 Text-to-Video',
-    display_name: 'Seedance 2.0',
-    provider: 'ByteDance',
-    model_path: 'bytedance/seedance-2.0/text-to-video',
-    capabilities: ['text-to-video'],
+    slug: 'seedance-2.0/text-to-video',
+    model_id: 1,
+    capability: 'text-to-video',
+    category: 'video',
+    display_name: 'Seedance 2.0 Text-to-Video',
     starting_price_usd: 0.072,
     standard_price_usd: 0.09,
     price_unit: 'per_second',
-    per_run_price_usd: 0.36,
-    runs_per_ten_usd: 27,
     price_detail: '480p',
-    discount_percent: 20,
     is_new: true,
+    sort_order: 11,
     description:
       'Hollywood-grade cinematic text-to-video generation with native audio sync. Supports reference images, videos, and audios for style and motion guidance.',
     thumbnail_url: '/assets/models/card-thumb.jpg',
     icon_url: '/assets/models/seedance.svg',
   },
   {
-    id: 'kling-t2v',
-    name: 'Kling Text-to-Video',
-    display_name: 'Kling 2.6',
-    provider: 'Kuaishou',
-    model_path: 'kwaivgi/kling-v2.6-pro/text-to-video',
-    capabilities: ['text-to-video'],
+    slug: 'kling-2.6/text-to-video',
+    model_id: 2,
+    capability: 'text-to-video',
+    category: 'video',
+    display_name: 'Kling 2.6 Text-to-Video',
     starting_price_usd: 0.066,
     standard_price_usd: 0.08,
     price_unit: 'per_second',
-    per_run_price_usd: 0.33,
-    runs_per_ten_usd: 30,
     price_detail: '720p',
-    discount_percent: 18,
+    sort_order: 20,
     description:
       'High-quality text-to-video generation powered by Kling with cinematic motion control.',
     thumbnail_url: '/assets/models/card-thumb.jpg',
     icon_url: '/assets/models/seedance.svg',
   },
   {
-    id: 'kling-i2v',
-    name: 'Kling Image-to-Video',
-    display_name: 'Kling 2.6',
-    provider: 'Kuaishou',
-    model_path: 'kwaivgi/kling-v2.6-pro/image-to-video',
-    capabilities: ['image-to-video'],
+    slug: 'kling-2.6/image-to-video',
+    model_id: 2,
+    capability: 'image-to-video',
+    category: 'video',
+    display_name: 'Kling 2.6 Image-to-Video',
     starting_price_usd: 0.066,
     standard_price_usd: 0.08,
     price_unit: 'per_second',
-    per_run_price_usd: 0.33,
-    runs_per_ten_usd: 30,
     price_detail: '720p',
-    discount_percent: 18,
+    sort_order: 21,
     description:
       'Transform reference images into smooth video clips with Kling image-to-video.',
     thumbnail_url: '/assets/models/card-thumb.jpg',
@@ -105,39 +90,22 @@ const baseModels: ModelCatalogEntry[] = [
   },
 ]
 
-const VARIANT_PROVIDERS = [
-  'ByteDance',
-  'Kuaishou',
-  'OpenAI',
-  'Google',
-  'Luma',
-  'Runway',
-  'Minimax',
-  'Hunyuan',
-]
-
 const VARIANT_FAMILIES = [
-  'Seedance 2.0',
-  'Kling 2.6',
-  'Veo 2',
-  'Sora',
-  'Gen-3',
-  'Dream Machine',
-  'Hailuo',
-  'Wan 2.1',
-  'Pika 2.0',
-  'Stable Video',
+  'seedance-2.0',
+  'kling-2.6',
+  'veo-2',
+  'sora',
+  'gen-3',
+  'dream-machine',
+  'hailuo',
+  'wan-2.1',
+  'pika-2.0',
+  'stable-video',
 ]
 
 const VARIANT_TEMPLATES = [
-  {
-    capability: 'text-to-video' as const,
-    suffix: 'Text-to-Video',
-  },
-  {
-    capability: 'image-to-video' as const,
-    suffix: 'Image-to-Video',
-  },
+  { capability: 'text-to-video' as const },
+  { capability: 'image-to-video' as const },
 ]
 
 function buildModelCatalog(): ModelCatalogEntry[] {
@@ -145,33 +113,27 @@ function buildModelCatalog(): ModelCatalogEntry[] {
   let index = 0
 
   while (catalog.length < 48) {
-    const provider = VARIANT_PROVIDERS[index % VARIANT_PROVIDERS.length]
     const family = VARIANT_FAMILIES[index % VARIANT_FAMILIES.length]
     const template = VARIANT_TEMPLATES[index % VARIANT_TEMPLATES.length]
     const variant = Math.floor(index / VARIANT_TEMPLATES.length) % 3
     const pricePerSecond = Number((0.04 + (index % 12) * 0.004).toFixed(3))
     const standardPerSecond = Number((pricePerSecond * 1.2).toFixed(3))
-    const duration = 4 + (index % 8)
-    const perRun = Number((pricePerSecond * duration).toFixed(2))
-    const slug = family.toLowerCase().replace(/\s+/g, '-').replace(/\./g, '')
+    const slugSuffix = variant > 0 ? `-v${variant + 1}` : ''
 
     catalog.push({
-      id: `model-${index + 1}`,
-      name: `${family} ${template.suffix}${variant > 0 ? ` v${variant + 1}` : ''}`,
-      display_name: family,
-      provider,
-      model_path: `${provider.toLowerCase()}/${slug}/${template.capability}`,
-      capabilities: [template.capability],
+      slug: `${family}${slugSuffix}/${template.capability}`,
+      model_id: 100 + index,
+      capability: template.capability,
+      category: 'video',
+      display_name: `${family.replace(/-/g, ' ')} ${template.capability.replace(/-/g, ' ')}${variant > 0 ? ` v${variant + 1}` : ''}`,
       starting_price_usd: pricePerSecond,
       standard_price_usd: standardPerSecond,
       price_unit: 'per_second',
-      per_run_price_usd: perRun,
-      runs_per_ten_usd: Math.max(1, Math.floor(10 / perRun)),
       price_detail: ['480p', '720p', '1080p'][index % 3],
-      ...(index % 4 !== 0 ? { discount_percent: [20, 25, 30][index % 3] } : {}),
       is_hot: index % 7 === 0,
       is_new: index % 11 === 3,
-      description: `${family} ${template.capability.replace(/-/g, ' ')} generation powered by ${provider}.`,
+      sort_order: 100 + index,
+      description: `${family} ${template.capability.replace(/-/g, ' ')} generation.`,
       thumbnail_url:
         index % 3 === 0 ? '/assets/model-detail/model-thumb.jpg' : '/assets/models/card-thumb.jpg',
       icon_url: '/assets/models/seedance.svg',
@@ -182,20 +144,15 @@ function buildModelCatalog(): ModelCatalogEntry[] {
   return catalog
 }
 
-function toListItem(model: ModelCatalogEntry) {
-  const {
-    model_path: _modelPath,
-    per_run_price_usd: _perRun,
-    runs_per_ten_usd: _runs,
-    ...item
-  } = model
-  return item
-}
-
 const models = buildModelCatalog()
 
-export function findCatalogModelById(id: string): ModelCatalogEntry | undefined {
-  return models.find((item) => item.id === id)
+export function findCatalogModelBySlug(slug: string): ModelCatalogEntry | undefined {
+  return models.find((item) => item.slug === slug)
+}
+
+/** @deprecated use findCatalogModelBySlug */
+export function findCatalogModelById(slug: string): ModelCatalogEntry | undefined {
+  return findCatalogModelBySlug(slug)
 }
 
 function filterModels(query: string) {
@@ -203,13 +160,32 @@ function filterModels(query: string) {
   if (!q) return models
 
   return models.filter((model) => {
-    const name = (model.display_name ?? model.name).toLowerCase()
+    const baseSlug = model.slug.split('/')[0]?.toLowerCase() ?? ''
     return (
-      name.includes(q) ||
-      model.provider.toLowerCase().includes(q) ||
+      model.display_name.toLowerCase().includes(q) ||
+      baseSlug.includes(q) ||
       model.description.toLowerCase().includes(q)
     )
   })
+}
+
+function decodeBatchIds(raw: string): string[] {
+  return raw
+    .split(',')
+    .filter(Boolean)
+    .map((id) => {
+      try {
+        return decodeURIComponent(id)
+      } catch {
+        return id
+      }
+    })
+}
+
+function extractSlugFromPath(url: string): string | null {
+  const match = url.match(/^\/api\/models\/([^?]+?)(?:\/(?:input-schema|quote|favourite|visit))?\/?(?:\?.*)?$/)
+  if (!match) return null
+  return decodeURIComponent(match[1]!)
 }
 
 export default [
@@ -222,7 +198,7 @@ export default [
       const filtered = filterModels(query.q ?? '')
 
       return success({
-        items: filtered.slice(offset, offset + limit).map(toListItem),
+        items: filtered.slice(offset, offset + limit),
         total: filtered.length,
         offset,
         limit,
@@ -233,31 +209,31 @@ export default [
     url: '/api/models/batch',
     method: 'get',
     response: ({ query }: { query: Record<string, string> }) => {
-      const ids = (query.ids ?? '').split(',').filter(Boolean)
-      const items = ids
-        .map((id) => models.find((item) => item.id === id))
+      const slugs = decodeBatchIds(query.ids ?? '')
+      const items = slugs
+        .map((slug) => models.find((item) => item.slug === slug))
         .filter((item): item is ModelCatalogEntry => Boolean(item))
-        .map(toListItem)
 
       return success(items)
     },
   },
   {
-    url: '/api/models/:id',
+    url: /^\/api\/models\/[^/]+\/[^/?]+$/,
     method: 'get',
-    response: ({ query }: { query: Record<string, string> }) => {
-      const model = models.find((item) => item.id === query.id)
+    response: ({ url }: { url: string }) => {
+      const slug = extractSlugFromPath(url)
+      const model = slug ? findCatalogModelBySlug(slug) : undefined
       if (!model) {
         return { code: 404, message: 'Model not found', data: null }
       }
 
-      const doc = resolveModelDoc(model.id)
+      const doc = resolveModelDoc(model.slug)
       return success({
         ...model,
-        api_model_id: resolveApiModelId(model.id, model.model_path),
         readme_md: doc.readme_md || null,
         faq: doc.faq.length > 0 ? doc.faq : null,
+        input_schema: null,
       })
     },
   },
-] as MockMethod[]
+] as unknown as MockMethod[]

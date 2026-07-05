@@ -28,8 +28,8 @@ async function loadPricing() {
   }
 }
 
-function goToModel(id: string) {
-  push({ name: 'model-detail', params: { id } })
+function goToModel(slug: string) {
+  push({ name: 'model-detail', params: { slug } })
 }
 
 onMounted(() => {
@@ -65,7 +65,6 @@ onMounted(() => {
             <span>{{ t('pages.pricing.columns.model') }}</span>
             <span>{{ t('pages.pricing.columns.standardPrice') }}</span>
             <span>{{ t('pages.pricing.columns.price') }}</span>
-            <span>{{ t('pages.pricing.columns.discount') }}</span>
             <span class="pricing-table__header-action" aria-hidden="true" />
           </div>
 
@@ -179,7 +178,7 @@ onMounted(() => {
 
 .pricing-table__header {
   display: grid;
-  grid-template-columns: minmax(0, 1.6fr) minmax(0, 0.9fr) minmax(0, 1.1fr) minmax(0, 0.7fr) 71px;
+  grid-template-columns: minmax(0, 1.6fr) minmax(0, 0.9fr) minmax(0, 1.1fr) 71px;
   align-items: center;
   min-height: 50px;
   padding: 0 24px;

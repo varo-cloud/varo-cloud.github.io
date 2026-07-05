@@ -11,7 +11,7 @@ export type ModelSwitcherOption = {
 const props = defineProps<{
   title: string
   modelId: string
-  modelPath: string
+  slug: string
   description: string
   thumbnailUrl?: string
   modelOptions?: ModelSwitcherOption[]
@@ -125,7 +125,7 @@ onBeforeUnmount(() => {
         @mouseenter="openDropdown"
         @mouseleave="scheduleClose"
       >
-        <code class="model-header__path-text">{{ modelPath }}</code>
+        <code class="model-header__path-text">{{ slug }}</code>
         <AppIcon
           v-if="hasSwitcher"
           name="chevron-down"

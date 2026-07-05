@@ -10,7 +10,7 @@ const appLayoutChildren: RouteRecordRaw[] = [
     component: () => import('@/views/models/ModelsView.vue'),
   },
   {
-    path: 'models/:id',
+    path: 'models/:slug(.+)',
     name: 'model-detail',
     meta: { fullBleed: true, transparentHeader: true },
     component: () => import('@/views/models/ModelDetailView.vue'),

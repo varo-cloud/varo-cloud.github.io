@@ -30,26 +30,16 @@ export function usePlaygroundQuote(options: UsePlaygroundQuoteOptions) {
   const fallbackUnitCostUsd = computed(() => toValue(options.fallbackUnitCostUsd))
   const fallbackStandardUnitCostUsd = computed(() => toValue(options.fallbackStandardUnitCostUsd))
 
-  const unitCostUsd = computed(
-    () => quote.value?.unit_cost_usd ?? fallbackUnitCostUsd.value,
+  const unitCostUsd = computed(() => quote.value?.cost_usd ?? fallbackUnitCostUsd.value)
+
+  const costUsd = computed(() =>
+    roundUsd(unitCostUsd.value * options.batchSize.value),
   )
 
-  const costUsd = computed(() => {
-    if (quote.value) return quote.value.cost_usd
-    return roundUsd(fallbackUnitCostUsd.value * options.batchSize.value)
-  })
-
   const standardCostUsd = computed(() => {
-    if (quote.value?.standard_cost_usd != null) return quote.value.standard_cost_usd
     const fallbackUnit = fallbackStandardUnitCostUsd.value
     if (fallbackUnit == null) return undefined
     return roundUsd(fallbackUnit * options.batchSize.value)
-  })
-
-  const runsPerTenUsd = computed(() => {
-    if (quote.value?.runs_per_ten_usd != null) return quote.value.runs_per_ten_usd
-    const unit = unitCostUsd.value
-    return unit > 0 ? Math.max(1, Math.floor(10 / unit)) : undefined
   })
 
   async function runQuoteRequest() {
@@ -69,7 +59,6 @@ export function usePlaygroundQuote(options: UsePlaygroundQuoteOptions) {
     try {
       const result = await fetchPlaygroundQuote(modelId, {
         input: { ...options.formValues.value },
-        batch_size: options.batchSize.value,
       })
 
       if (serial === requestSerial) {
@@ -143,7 +132,6 @@ export function usePlaygroundQuote(options: UsePlaygroundQuoteOptions) {
     costUsd,
     standardCostUsd,
     unitCostUsd,
-    runsPerTenUsd,
     refresh: () => scheduleQuote(true),
   }
 }
