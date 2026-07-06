@@ -63,21 +63,27 @@ function prunePlaygroundInputValues(values: SchemaFormValues): SchemaFormValues 
   return result
 }
 
+function stripPlaygroundRunMetaKeys(values: SchemaFormValues): SchemaFormValues {
+  const result: SchemaFormValues = {}
+
+  for (const [key, value] of Object.entries(values)) {
+    if (PLAYGROUND_RUN_META_KEYS.has(key)) continue
+    result[key] = value
+  }
+
+  return result
+}
+
 /** Playground JWT run — flat body with catalog `model` slug and input fields. */
 export function buildPlaygroundRunBody(
   modelSlug: string,
   values: SchemaFormValues,
   batchSize = 1,
 ) {
-  const input = prunePlaygroundInputValues(values)
-
   return {
-    ...input,
-    reference_images: Array.isArray(input.reference_images) ? input.reference_images : [],
-    reference_videos: Array.isArray(input.reference_videos) ? input.reference_videos : [],
-    reference_audios: Array.isArray(input.reference_audios) ? input.reference_audios : [],
-    batch_size: batchSize,
     model: modelSlug,
+    batch_size: batchSize,
+    ...prunePlaygroundInputValues(values),
   }
 }
 
@@ -125,7 +131,15 @@ export function buildPlaygroundJsonSnippet(
   values: SchemaFormValues,
   batchSize = 1,
 ): string {
-  return JSON.stringify(buildPlaygroundRunBody(modelId, values, batchSize), null, 2)
+  return JSON.stringify(
+    {
+      model: modelId,
+      batch_size: batchSize,
+      ...stripPlaygroundRunMetaKeys(values),
+    },
+    null,
+    2,
+  )
 }
 
 export function buildHttpSubmitSnippet(apiModelId: string, values: SchemaFormValues): string {
