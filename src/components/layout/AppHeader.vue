@@ -36,12 +36,31 @@ const navItems = computed(() => [
   { label: t('nav.docs'), name: 'docs' },
 ])
 
-const userMenuOptions = computed(() => [
-  { label: t('common.deposit'), key: 'deposit', icon: 'deposit' as const },
-  { label: t('nav.apiKeys'), key: 'api-keys', icon: 'code-box' as const },
-  { label: t('header.myBilling'), key: 'billing', icon: 'file-paper' as const },
-  { label: t('header.signOut'), key: 'logout', icon: 'logout' as const },
-])
+import type { AppIconName } from '@/components/common/AppIcon.vue'
+
+type UserMenuOption = {
+  label: string
+  key: string
+  icon: AppIconName
+}
+
+const isAdmin = computed(() => userStore.profile?.role === 'admin')
+
+const userMenuOptions = computed((): UserMenuOption[] => {
+  const options: UserMenuOption[] = [
+    { label: t('common.deposit'), key: 'deposit', icon: 'deposit' },
+    { label: t('nav.apiKeys'), key: 'api-keys', icon: 'code-box' },
+    { label: t('header.myBilling'), key: 'billing', icon: 'file-paper' },
+  ]
+
+  if (isAdmin.value) {
+    options.push({ label: t('header.adminConsole'), key: 'admin', icon: 'key' })
+  }
+
+  options.push({ label: t('header.signOut'), key: 'logout', icon: 'logout' })
+
+  return options
+})
 
 const languageMenuOptions = computed(() => [
   { label: 'English', key: 'en-US' },
@@ -150,6 +169,11 @@ function handleUserMenuSelect(key: string) {
     void userStore.logout().then(() => {
       push({ name: 'models' })
     })
+    return
+  }
+
+  if (key === 'admin') {
+    window.open('/admin-web', '_blank', 'noopener,noreferrer')
     return
   }
 

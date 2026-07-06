@@ -13,6 +13,7 @@ export default {
   header: {
     searchModels: 'Search Models',
     myBilling: 'My Billing',
+    adminConsole: 'Admin Console',
     signOut: 'Sign Out',
     userId: 'ID:{id}',
     defaultUserName: 'User',
