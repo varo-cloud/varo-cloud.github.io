@@ -5,7 +5,7 @@ import { useI18n } from 'vue-i18n'
 import { NSpin } from 'naive-ui'
 import { useAppMessage } from '@/composables/useAppMessage'
 // import AppIcon from '@/components/common/AppIcon.vue'
-// import NumberStepperInput from '@/components/common/NumberStepperInput.vue'
+import NumberStepperInput from '@/components/common/NumberStepperInput.vue'
 import BillingTransactionRow from '@/components/billing/BillingTransactionRow.vue'
 import BillingRecordRow from '@/components/billing/BillingRecordRow.vue'
 import BillingTopUpDetailDialog from '@/components/billing/BillingTopUpDetailDialog.vue'
@@ -117,6 +117,15 @@ const selectedPackage = computed(() => {
 
 const parsedCustomAmountUsd = computed(() => parseCustomAmount(customAmountInput.value))
 
+const customAmountNumber = computed({
+  get: () => parsedCustomAmountUsd.value ?? DEFAULT_CUSTOM_AMOUNT_USD,
+  set: (value: number) => {
+    const rounded = Math.round(value * 100) / 100
+    customAmountInput.value = Number.isFinite(rounded) ? String(rounded) : ''
+    selectedPackageId.value = 'custom'
+  },
+})
+
 const selectedCheckoutAmountUsd = computed(() => {
   if (selectedPackageId.value === 'custom') return parsedCustomAmountUsd.value
   return selectedPackage.value?.priceUsd ?? null
@@ -211,14 +220,6 @@ function isValidCustomAmount(amount: number | null): amount is number {
 }
 
 function selectCustomAmount() {
-  selectedPackageId.value = 'custom'
-}
-
-function handleCustomAmountInput(event: Event) {
-  const target = event.target
-  if (!(target instanceof HTMLInputElement)) return
-
-  customAmountInput.value = target.value
   selectedPackageId.value = 'custom'
 }
 
@@ -651,20 +652,22 @@ onMounted(async () => {
                     height="16"
                   />
                   <span class="billing-amount-option__amount">{{ t('pages.billing.customAmount') }}</span>
-                  <input
-                    class="billing-amount-option__custom-input"
-                    type="number"
-                    inputmode="decimal"
-                    :min="CUSTOM_AMOUNT_MIN_USD"
-                    :max="CUSTOM_AMOUNT_MAX_USD"
-                    step="0.01"
-                    :value="customAmountInput"
-                    :aria-label="t('pages.billing.customAmountInput')"
-                    @input="handleCustomAmountInput"
-                    @focus="selectCustomAmount"
+                  <div
+                    v-if="selectedPackageId === 'custom'"
+                    class="billing-amount-option__custom-field"
                     @click.stop="selectCustomAmount"
-                  />
-                  <span class="billing-amount-option__custom-hint">
+                    @focusin="selectCustomAmount"
+                  >
+                    <NumberStepperInput
+                      v-model="customAmountNumber"
+                      :min="CUSTOM_AMOUNT_MIN_USD"
+                      :max="CUSTOM_AMOUNT_MAX_USD"
+                      :step="1"
+                      size="md"
+                      :invalid="!isValidCustomAmount(parsedCustomAmountUsd)"
+                    />
+                  </div>
+                  <span v-else class="billing-amount-option__custom-hint">
                     {{
                       t('pages.billing.customAmountMinHint', {
                         min: formatUsd(CUSTOM_AMOUNT_MIN_USD),
@@ -1165,12 +1168,32 @@ onMounted(async () => {
 }
 
 .billing-amount-option--custom {
-  grid-template-columns: 16px minmax(72px, auto) 1fr;
+  grid-template-columns: 16px minmax(72px, auto) minmax(72px, auto) 1fr;
 }
 
 .billing-amount-option--custom .billing-amount-option__amount {
   font-size: 14px;
   font-weight: 500;
+}
+
+.billing-amount-option__custom-field {
+  grid-column: 4;
+  justify-self: end;
+  width: 210px;
+}
+
+.billing-amount-option__custom-field :deep(.number-stepper) {
+  width: 100%;
+}
+
+.billing-amount-option__custom-hint {
+  grid-column: 4;
+  justify-self: end;
+  max-width: 336px;
+  font-size: 12px;
+  line-height: 14px;
+  color: var(--text-secondary);
+  text-align: right;
 }
 
 .billing-amount-option__price {
@@ -1201,32 +1224,6 @@ onMounted(async () => {
   line-height: 14px;
   color: var(--text-secondary);
   text-align: right;
-}
-
-.billing-amount-option__custom-input {
-  grid-column: 3 / -1;
-  justify-self: end;
-  width: 120px;
-  height: 32px;
-  padding: 0 12px;
-  border: 1px solid rgba(255, 255, 255, 0.2);
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.06);
-  color: var(--text-primary);
-  font-size: 14px;
-}
-
-.billing-amount-option__custom-hint {
-  grid-column: 2 / -1;
-  justify-self: end;
-  font-size: 12px;
-  line-height: 14px;
-  color: var(--text-secondary);
-}
-
-.billing-amount-option__custom-input:focus {
-  outline: none;
-  border-color: var(--text-accent);
 }
 
 .billing-payment-methods {
@@ -1548,11 +1545,20 @@ onMounted(async () => {
 
   .billing-amount-option__bonus,
   .billing-amount-option__hint,
-  .billing-amount-option__custom-input,
+  .billing-amount-option__custom-field,
   .billing-amount-option__custom-hint {
     grid-column: 2;
     justify-self: start;
     max-width: none;
+    text-align: left;
+  }
+
+  .billing-amount-option__custom-field {
+    width: 100%;
+    max-width: 210px;
+  }
+
+  .billing-amount-option__custom-hint {
     text-align: left;
   }
 
