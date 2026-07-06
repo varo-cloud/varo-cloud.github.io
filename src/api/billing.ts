@@ -1,6 +1,5 @@
 import { http, unwrap } from './http'
 import type {
-  BillingAutoTopUp,
   BillingConfig,
   BillingRecord,
   BillingSummary,
@@ -22,6 +21,8 @@ interface ApiUsageRecord {
   duration?: number
   cost_usd: number
   status: string
+  invocation_channel?: string
+  api_key_prefix?: string | null
   created_at?: string | number
 }
 
@@ -29,19 +30,13 @@ interface ApiCheckoutResponse {
   checkout_url: string
 }
 
-interface ApiAutoTopUp {
-  enabled: boolean
-  threshold_usd?: number
-  top_up_amount_usd?: number
-  package_id?: string
-}
-
 interface ApiBillingSummary {
   balance_usd?: number
+  month_spend_usd?: number
+  total_topup_usd?: number
+  total_spent_usd?: number
+  /** @deprecated legacy field */
   spent_this_month_usd?: number
-  spent_change_percent?: number
-  auto_top_up?: ApiAutoTopUp
-  autoTopUp?: BillingAutoTopUp
 }
 
 interface ApiBillingRecord {
@@ -91,32 +86,21 @@ function parseTimestamp(value: string | number | undefined): number {
   return Number.isFinite(parsed) ? parsed : Date.now()
 }
 
-function mapAutoTopUp(raw: ApiAutoTopUp | BillingAutoTopUp): BillingAutoTopUp {
-  if ('thresholdUsd' in raw) return raw
-
-  return {
-    enabled: raw.enabled,
-    thresholdUsd: raw.threshold_usd ?? 5,
-    topUpAmountUsd: raw.top_up_amount_usd ?? 20,
-  }
-}
-
 function mapBillingSummary(raw: ApiBillingSummary): BillingSummary {
   return {
     balanceUsd: raw.balance_usd ?? 0,
-    spentThisMonthUsd: raw.spent_this_month_usd ?? 0,
-    spentChangePercent: raw.spent_change_percent ?? 0,
-    autoTopUp: mapAutoTopUp(raw.auto_top_up ?? raw.autoTopUp ?? { enabled: false }),
+    monthSpendUsd: raw.month_spend_usd ?? raw.spent_this_month_usd ?? 0,
+    totalTopupUsd: raw.total_topup_usd ?? 0,
+    totalSpentUsd: raw.total_spent_usd ?? 0,
   }
 }
 
 function mapUsageToBillingRecord(raw: ApiUsageRecord): BillingRecord {
-  const durationPart = raw.duration != null ? ` · ${raw.duration}s` : ''
   return {
     id: raw.task_id,
-    style: 'api',
-    key: `${raw.model}${durationPart}`,
-    apiKey: null,
+    style: raw.invocation_channel ?? 'api',
+    key: raw.task_id,
+    apiKey: raw.api_key_prefix ? `${raw.api_key_prefix}******` : null,
     amountUsd: -Math.abs(raw.cost_usd),
     createdAt: parseTimestamp(raw.created_at),
   }
@@ -214,9 +198,9 @@ export async function fetchBillingSummary(): Promise<BillingSummary> {
     const balance = await unwrap<ApiBillingBalance>(http.get('/billing/balance'))
     return {
       balanceUsd: balance.balance_usd ?? 0,
-      spentThisMonthUsd: 0,
-      spentChangePercent: 0,
-      autoTopUp: { enabled: false, thresholdUsd: 5, topUpAmountUsd: 20 },
+      monthSpendUsd: 0,
+      totalTopupUsd: 0,
+      totalSpentUsd: 0,
     }
   }
 }
@@ -238,13 +222,14 @@ export async function fetchBillingRecords(): Promise<BillingRecord[]> {
     const items = await unwrap<ApiBillingRecord[]>(http.get('/billing/records'))
     return items.map(mapBillingRecord)
   } catch {
-    try {
-      const usage = await unwrap<ApiUsageRecord[]>(http.get('/usage'))
-      return usage.map(mapUsageToBillingRecord)
-    } catch {
-      return []
-    }
+    return []
   }
+}
+
+export function fetchUsageRecords() {
+  return unwrap<ApiUsageRecord[]>(http.get('/usage')).then((items) =>
+    items.map(mapUsageToBillingRecord),
+  )
 }
 
 function buildStripeCheckoutBody(payload: CreateCheckoutPayload) {

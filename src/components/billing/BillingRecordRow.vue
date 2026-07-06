@@ -14,7 +14,11 @@ const timeLabel = computed(() =>
   formatTimestamp(props.item.createdAt, locale.value, 'compactDatetime'),
 )
 
-const styleLabel = computed(() => t(`pages.billing.styles.${props.item.style}`))
+const styleLabel = computed(() => {
+  const key = `pages.billing.styles.${props.item.style}`
+  const translated = t(key)
+  return translated === key ? props.item.style : translated
+})
 
 const isPositive = computed(() => props.item.amountUsd > 0)
 
@@ -95,7 +99,8 @@ const apiKeyLabel = computed(() => props.item.apiKey || '—')
   color: var(--text-secondary);
 }
 
-.billing-record-row__badge--web {
+.billing-record-row__badge--web,
+.billing-record-row__badge--playground {
   background: rgba(6, 182, 212, 0.08);
   color: #06b6d4;
 }

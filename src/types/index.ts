@@ -194,9 +194,9 @@ export interface BillingAutoTopUp {
 
 export interface BillingSummary {
   balanceUsd: number
-  spentThisMonthUsd: number
-  spentChangePercent: number
-  autoTopUp: BillingAutoTopUp
+  monthSpendUsd: number
+  totalTopupUsd: number
+  totalSpentUsd: number
 }
 
 export interface TopUpPreset {
@@ -245,7 +245,7 @@ export interface UpdateAutoTopUpPayload {
   topUpAmountUsd: number
 }
 
-export type BillingRecordStyle = 'api' | 'web' | 'topup' | 'bonus'
+export type BillingRecordStyle = 'api' | 'web' | 'playground' | 'topup' | 'bonus' | (string & {})
 
 export interface BillingRecord {
   id: string

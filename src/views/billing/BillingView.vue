@@ -15,10 +15,10 @@ import {
   createCryptoCheckoutSession,
   createStripeCheckoutSession,
   fetchBillingConfig,
-  fetchBillingRecords,
   fetchBillingSummary,
   fetchCreditPackages,
   fetchTransactions,
+  fetchUsageRecords,
   // updateAutoTopUp,
 } from '@/api/billing'
 import { useLocaleRouter } from '@/composables/useLocaleRouter'
@@ -43,7 +43,7 @@ type HistoryTab = 'topup' | 'billing'
 // /** Re-enable when auto top-up ships. */
 // const SHOW_AUTO_TOP_UP = false
 
-const CUSTOM_AMOUNT_MIN_USD = 1
+const CUSTOM_AMOUNT_MIN_USD = 2
 const CUSTOM_AMOUNT_MAX_USD = 10_000
 const DEFAULT_CUSTOM_AMOUNT_USD = 20
 
@@ -91,6 +91,8 @@ const summary = ref<BillingSummary | null>(null)
 const packages = ref<CreditPackage[]>([])
 const transactions = ref<Transaction[]>([])
 const billingRecords = ref<BillingRecord[]>([])
+const billingRecordsLoading = ref(false)
+const billingRecordsLoaded = ref(false)
 
 const selectedPackageId = ref<TopUpSelectionId | null>(null)
 const selectedPaymentMethod = ref<PaymentMethodId>('card')
@@ -171,15 +173,6 @@ const mockCheckoutDisplayAmountUsd = computed(() => {
   return mockCheckoutPackage.value?.priceUsd ?? selectedCheckoutAmountUsd.value
 })
 
-const spentTrendLabel = computed(() => {
-  const percent = summary.value?.spentChangePercent ?? 0
-  const arrow = percent <= 0 ? '↓' : '↑'
-  return t('pages.billing.spentTrend', {
-    arrow,
-    percent: Math.abs(percent),
-  })
-})
-
 // const autoTopUpSummaryLabel = computed(() =>
 //   t('pages.billing.autoTopUpSummary', {
 //     amount: formatUsd(autoTopUpAmountNumber.value),
@@ -194,7 +187,7 @@ const topUpTransactions = computed(() =>
 const historyEmpty = computed(() =>
   activeTab.value === 'topup'
     ? topUpTransactions.value.length === 0
-    : billingRecords.value.length === 0,
+    : !billingRecordsLoading.value && billingRecords.value.length === 0,
 )
 
 function packageLabel(id: CreditPackageId) {
@@ -240,6 +233,12 @@ function resolveTransactionIdFromSession(sessionId: string | null) {
   return `tx-topup-${sessionId.slice('cs_mock_'.length)}`
 }
 
+function billingStyleLabel(style: string) {
+  const key = `pages.billing.styles.${style}`
+  const translated = t(key)
+  return translated === key ? style : translated
+}
+
 async function loadBilling(options: { silent?: boolean } = {}) {
   if (!options.silent) {
     loading.value = true
@@ -247,18 +246,16 @@ async function loadBilling(options: { silent?: boolean } = {}) {
   }
 
   try {
-    const [summaryData, packageData, transactionData, recordData, configData] = await Promise.all([
+    const [summaryData, packageData, transactionData, configData] = await Promise.all([
       fetchBillingSummary(),
       fetchCreditPackages(),
       fetchTransactions(),
-      fetchBillingRecords(),
       fetchBillingConfig().catch(() => ({ publishableKey: '', cryptoEnabled: false })),
     ])
 
     summary.value = summaryData
     packages.value = packageData
     transactions.value = transactionData
-    billingRecords.value = recordData
     cryptoEnabled.value = configData.cryptoEnabled
 
     if (packageData.length > 0 && !selectedPackageId.value) {
@@ -274,12 +271,32 @@ async function loadBilling(options: { silent?: boolean } = {}) {
       summary.value = null
       packages.value = []
       transactions.value = []
-      billingRecords.value = []
     }
   } finally {
     if (!options.silent) {
       loading.value = false
     }
+  }
+}
+
+async function loadUsageRecords() {
+  billingRecordsLoading.value = true
+
+  try {
+    billingRecords.value = await fetchUsageRecords()
+    billingRecordsLoaded.value = true
+  } catch {
+    billingRecords.value = []
+    message.error(t('pages.billing.loadError'))
+  } finally {
+    billingRecordsLoading.value = false
+  }
+}
+
+function switchHistoryTab(tab: HistoryTab) {
+  activeTab.value = tab
+  if (tab === 'billing' && !billingRecordsLoaded.value && !billingRecordsLoading.value) {
+    void loadUsageRecords()
   }
 }
 
@@ -469,7 +486,7 @@ function handleExportCsv() {
     const prefix = record.amountUsd > 0 ? '+' : '-'
     return [
       formatTimestamp(record.createdAt, locale.value, 'compactDatetime'),
-      t(`pages.billing.styles.${record.style}`),
+      billingStyleLabel(record.style),
       record.key,
       record.apiKey ?? '',
       `${prefix}$${Math.abs(record.amountUsd).toFixed(2)}`,
@@ -524,10 +541,7 @@ onMounted(async () => {
           <span>{{ t('pages.billing.checkoutProcessing') }}</span>
         </div>
 
-        <section
-          class="billing-summary billing-summary--two-cols"
-          aria-label="Billing summary"
-        >
+        <section class="billing-summary" aria-label="Billing summary">
           <article class="billing-summary__card billing-summary__card--balance">
             <p class="billing-summary__label">{{ t('pages.billing.cashBalance') }}</p>
             <div class="billing-summary__balance-row">
@@ -540,18 +554,17 @@ onMounted(async () => {
 
           <article class="billing-summary__card">
             <p class="billing-summary__label">{{ t('pages.billing.spentThisMonth') }}</p>
-            <div class="billing-summary__spent-row">
-              <p class="billing-summary__value">{{ formatUsd(summary.spentThisMonthUsd) }}</p>
-              <p
-                class="billing-summary__trend"
-                :class="{
-                  'billing-summary__trend--down': summary.spentChangePercent <= 0,
-                  'billing-summary__trend--up': summary.spentChangePercent > 0,
-                }"
-              >
-                {{ spentTrendLabel }}
-              </p>
-            </div>
+            <p class="billing-summary__value">{{ formatUsd(summary.monthSpendUsd) }}</p>
+          </article>
+
+          <article class="billing-summary__card">
+            <p class="billing-summary__label">{{ t('pages.billing.totalTopup') }}</p>
+            <p class="billing-summary__value">{{ formatUsd(summary.totalTopupUsd) }}</p>
+          </article>
+
+          <article class="billing-summary__card">
+            <p class="billing-summary__label">{{ t('pages.billing.totalSpent') }}</p>
+            <p class="billing-summary__value">{{ formatUsd(summary.totalSpentUsd) }}</p>
           </article>
 
           <!-- Auto top-up summary card — re-enable when feature ships
@@ -651,6 +664,13 @@ onMounted(async () => {
                     @focus="selectCustomAmount"
                     @click.stop="selectCustomAmount"
                   />
+                  <span class="billing-amount-option__custom-hint">
+                    {{
+                      t('pages.billing.customAmountMinHint', {
+                        min: formatUsd(CUSTOM_AMOUNT_MIN_USD),
+                      })
+                    }}
+                  </span>
                 </label>
               </div>
               </div>
@@ -768,7 +788,7 @@ onMounted(async () => {
                 :class="{ 'billing-history__tab--active': activeTab === 'topup' }"
                 role="tab"
                 :aria-selected="activeTab === 'topup'"
-                @click="activeTab = 'topup'"
+                @click="switchHistoryTab('topup')"
               >
                 {{ t('pages.billing.topUp') }}
               </button>
@@ -778,7 +798,7 @@ onMounted(async () => {
                 :class="{ 'billing-history__tab--active': activeTab === 'billing' }"
                 role="tab"
                 :aria-selected="activeTab === 'billing'"
-                @click="activeTab = 'billing'"
+                @click="switchHistoryTab('billing')"
               >
                 {{ t('pages.billing.billingTab') }}
               </button>
@@ -838,7 +858,11 @@ onMounted(async () => {
               <span role="columnheader">{{ t('pages.billing.billingColumns.value') }}</span>
             </div>
 
-            <div v-if="historyEmpty" class="billing-table__empty">
+            <div v-if="billingRecordsLoading" class="billing-table__empty">
+              <NSpin size="small" />
+            </div>
+
+            <div v-else-if="historyEmpty" class="billing-table__empty">
               {{ t('pages.billing.emptyHistory') }}
             </div>
 
@@ -950,13 +974,9 @@ onMounted(async () => {
 
 .billing-summary {
   display: grid;
-  grid-template-columns: repeat(3, minmax(0, 1fr));
+  grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 24px;
   margin-bottom: 40px;
-}
-
-.billing-summary--two-cols {
-  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .billing-summary__card {
@@ -1194,6 +1214,14 @@ onMounted(async () => {
   background: rgba(255, 255, 255, 0.06);
   color: var(--text-primary);
   font-size: 14px;
+}
+
+.billing-amount-option__custom-hint {
+  grid-column: 2 / -1;
+  justify-self: end;
+  font-size: 12px;
+  line-height: 14px;
+  color: var(--text-secondary);
 }
 
 .billing-amount-option__custom-input:focus {
@@ -1520,7 +1548,8 @@ onMounted(async () => {
 
   .billing-amount-option__bonus,
   .billing-amount-option__hint,
-  .billing-amount-option__custom-input {
+  .billing-amount-option__custom-input,
+  .billing-amount-option__custom-hint {
     grid-column: 2;
     justify-self: start;
     max-width: none;
