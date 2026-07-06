@@ -15,7 +15,8 @@ import type { SchemaFormValues } from '@/types/schema'
 const POLL_INTERVAL_MS = 3000
 
 export interface RunPlaygroundGenerationOptions {
-  modelId: string
+  /** Catalog slug, e.g. `seedance-2.0/text-to-video` */
+  modelSlug: string
   values: SchemaFormValues
   batchSize: number
   unitCostUsd: number
@@ -52,12 +53,27 @@ function averageProgress(snapshots: PlaygroundGenerationSnapshot[]): number {
   return Math.round(values.reduce((sum, value) => sum + value, 0) / values.length)
 }
 
+function resolveHttpStatus(error: unknown): number | undefined {
+  if (!axios.isAxiosError(error)) return undefined
+  return error.response?.status ?? (typeof error.response?.data?.code === 'number'
+    ? error.response.data.code
+    : undefined)
+}
+
 function resolveRunErrorMessage(
   error: unknown,
   insufficientBalanceMessage: string,
+  upstreamFailedMessage: string,
   fallbackMessage: string,
 ): string {
   if (isInsufficientBalanceError(error)) return insufficientBalanceMessage
+
+  const status = resolveHttpStatus(error)
+  if (status === 502 || status === 404) {
+    if (error instanceof Error && error.message) return error.message
+    return upstreamFailedMessage
+  }
+
   if (error instanceof Error && error.message) return error.message
   return fallbackMessage
 }
@@ -135,7 +151,7 @@ export function usePlaygroundGeneration() {
     if (options.analyticsSource) {
       trackEvent(AnalyticsEvents.PLAYGROUND_RUN_SUCCESS, {
         source: options.analyticsSource,
-        model_id: options.modelId,
+        model_id: options.modelSlug,
         capability: options.analyticsCapability,
         batch_size: options.batchSize,
       })
@@ -190,7 +206,7 @@ export function usePlaygroundGeneration() {
 
     try {
       const created = await createPlaygroundGeneration(
-        options.modelId,
+        options.modelSlug,
         options.values,
         options.batchSize,
       )
@@ -233,6 +249,7 @@ export function usePlaygroundGeneration() {
         resolveRunErrorMessage(
           error,
           t('pages.modelDetail.insufficientBalance'),
+          t('pages.modelDetail.upstreamFailed'),
           t('pages.modelDetail.generationFailed'),
         ),
       )

@@ -72,6 +72,11 @@ export const seedance20T2vSchema: InputSchema = {
         'Whether to generate native audio synchronized with the output video. Defaults to true.',
       default: true,
     },
+    enable_web_search: {
+      type: 'boolean',
+      description: 'Enable web search for real-time information.',
+      default: false,
+    },
   },
 }
 
@@ -154,6 +159,11 @@ export const seedanceI2vSchema: InputSchema = {
       description: 'The random seed to use for the generation. -1 means random.',
       default: -1,
     },
+    enable_web_search: {
+      type: 'boolean',
+      description: 'Enable web search for real-time information.',
+      default: false,
+    },
   },
 }
 
@@ -207,6 +217,11 @@ export const seedanceT2vSchema: InputSchema = {
     seed: {
       type: 'integer',
       default: -1,
+    },
+    enable_web_search: {
+      type: 'boolean',
+      description: 'Enable web search for real-time information.',
+      default: false,
     },
   },
 }

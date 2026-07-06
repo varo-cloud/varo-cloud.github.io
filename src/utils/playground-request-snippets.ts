@@ -49,35 +49,46 @@ export function buildExternalApiBody(modelSlug: string, values: SchemaFormValues
   }
 }
 
-/** Playground JWT run — flat body with `model`, `batch_size`, and input fields. */
+const PLAYGROUND_RUN_META_KEYS = new Set(['model_id', 'model', 'batch_size', 'batchSize', 'input'])
+
+function prunePlaygroundInputValues(values: SchemaFormValues): SchemaFormValues {
+  const result: SchemaFormValues = {}
+
+  for (const [key, value] of Object.entries(values)) {
+    if (PLAYGROUND_RUN_META_KEYS.has(key)) continue
+    if (value === '' || value === null || value === undefined) continue
+    result[key] = value
+  }
+
+  return result
+}
+
+/** Playground JWT run — flat body with catalog `model` slug and input fields. */
 export function buildPlaygroundRunBody(
-  modelId: string,
+  modelSlug: string,
   values: SchemaFormValues,
   batchSize = 1,
 ) {
+  const input = prunePlaygroundInputValues(values)
+
   return {
-    model: modelId,
+    ...input,
+    reference_images: Array.isArray(input.reference_images) ? input.reference_images : [],
+    reference_videos: Array.isArray(input.reference_videos) ? input.reference_videos : [],
+    reference_audios: Array.isArray(input.reference_audios) ? input.reference_audios : [],
     batch_size: batchSize,
-    ...values,
+    model: modelSlug,
   }
 }
-
-const PLAYGROUND_RUN_META_KEYS = new Set(['model_id', 'model', 'batch_size', 'batchSize', 'input'])
 
 function extractPlaygroundInputValues(
   parsed: Record<string, unknown> & { input?: SchemaFormValues },
 ): SchemaFormValues | null {
   if (parsed.input && typeof parsed.input === 'object' && !Array.isArray(parsed.input)) {
-    return { ...parsed.input }
+    return prunePlaygroundInputValues(parsed.input)
   }
 
-  const values: SchemaFormValues = {}
-  for (const [key, value] of Object.entries(parsed)) {
-    if (PLAYGROUND_RUN_META_KEYS.has(key)) continue
-    values[key] = value
-  }
-
-  return values
+  return prunePlaygroundInputValues(parsed as SchemaFormValues)
 }
 
 export function parseJsonInputDraft(

@@ -129,12 +129,12 @@ export function fetchPlaygroundQuote(slug: string, payload: PlaygroundQuotePaylo
 }
 
 export function createPlaygroundGeneration(
-  slug: string,
+  modelSlug: string,
   input: SchemaFormValues,
   batchSize = 1,
 ) {
   return unwrap<ApiPlaygroundGeneration | ApiPlaygroundBatchCreateResponse>(
-    http.post('/playground/generations', buildPlaygroundRunBody(slug, input, batchSize)),
+    http.post('/playground/generations', buildPlaygroundRunBody(modelSlug, input, batchSize)),
   ).then(mapCreateResponse)
 }
 

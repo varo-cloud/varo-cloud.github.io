@@ -110,6 +110,7 @@ export default {
       topUp: 'Top Up',
       insufficientBalance: 'Insufficient balance to run. Please top up your account.',
       generationFailed: 'Generation failed. Please try again.',
+      upstreamFailed: 'Upstream service is temporarily unavailable. Please try again later.',
       schemaUnavailable: 'Input schema is unavailable for this model.',
       requiredFieldsMissing: 'Please fill in all required fields.',
       fieldRequired: 'This field is required',

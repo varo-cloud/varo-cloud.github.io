@@ -150,7 +150,7 @@ function handleRun(values: SchemaFormValues, count: number) {
   if (!model.value) return
 
   void runGeneration({
-    modelId: model.value.id,
+    modelSlug: model.value.id,
     values,
     batchSize: count,
     unitCostUsd: quoteUnitCostUsd.value,
