@@ -10,6 +10,7 @@ import billingMock from '../../mock/billing'
 import modelPreferencesMock from '../../mock/model-preferences'
 import modelSchemaMock from '../../mock/model-schema'
 import modelsMock from '../../mock/models'
+import modelHistoryMock from '../../mock/model-history'
 import playgroundGenerationsMock from '../../mock/playground-generations'
 import playgroundQuoteMock from '../../mock/playground-quote'
 import pricingMock from '../../mock/pricing'
@@ -19,6 +20,7 @@ const mockModules: MockMethod[] = [
   ...authMock,
   ...apiKeysMock,
   ...modelsMock,
+  ...modelHistoryMock,
   ...modelSchemaMock,
   ...playgroundQuoteMock,
   ...playgroundGenerationsMock,

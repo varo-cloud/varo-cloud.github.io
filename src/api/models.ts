@@ -1,10 +1,13 @@
 import { http, unwrap } from './http'
 import type {
+  FetchModelHistoryParams,
   FetchModelsParams,
   Model,
   ModelCategory,
   ModelDetail,
   ModelFaqItem,
+  ModelHistoryEntry,
+  ModelHistoryPage,
   ModelsPage,
   PricingPriceUnit,
 } from '@/types'
@@ -38,6 +41,62 @@ interface ApiModelsPage {
   total: number
   offset: number
   limit: number
+}
+
+interface ApiModelHistoryEntry {
+  task_id: string
+  status: string
+  cost_usd?: number
+  invocation_channel?: string
+  created_at?: string | number
+}
+
+interface ApiModelHistoryPage {
+  items: ApiModelHistoryEntry[]
+  total: number
+  offset: number
+  limit: number
+}
+
+function parseTimestamp(value: string | number | undefined): number {
+  if (typeof value === 'number') return value
+  if (!value) return Date.now()
+  const parsed = Date.parse(value)
+  return Number.isFinite(parsed) ? parsed : Date.now()
+}
+
+function mapModelHistoryEntry(raw: ApiModelHistoryEntry): ModelHistoryEntry {
+  return {
+    taskId: raw.task_id,
+    status: raw.status,
+    costUsd: raw.cost_usd ?? 0,
+    invocationChannel: raw.invocation_channel ?? 'api',
+    createdAt: parseTimestamp(raw.created_at),
+  }
+}
+
+function normalizeModelHistoryPage(
+  raw: ApiModelHistoryPage | ApiModelHistoryEntry[],
+  params?: FetchModelHistoryParams,
+): ModelHistoryPage {
+  if (Array.isArray(raw)) {
+    const offset = Math.max(0, params?.offset ?? 0)
+    const limit = Math.min(100, Math.max(1, params?.limit ?? 20))
+
+    return {
+      items: raw.slice(offset, offset + limit).map(mapModelHistoryEntry),
+      total: raw.length,
+      offset,
+      limit,
+    }
+  }
+
+  return {
+    items: (raw.items ?? []).map(mapModelHistoryEntry),
+    total: raw.total ?? raw.items?.length ?? 0,
+    offset: raw.offset ?? params?.offset ?? 0,
+    limit: raw.limit ?? params?.limit ?? 20,
+  }
 }
 
 function mapModel(raw: ApiModelCard): Model {
@@ -136,4 +195,10 @@ export function fetchRecentModels() {
     const items = Array.isArray(raw) ? raw : (raw.items ?? [])
     return items.map(mapModel)
   })
+}
+
+export function fetchModelHistory(slug: string, params?: FetchModelHistoryParams) {
+  return unwrap<ApiModelHistoryPage | ApiModelHistoryEntry[]>(
+    http.get(`/models/${slug}/history`, { params }),
+  ).then((raw) => normalizeModelHistoryPage(raw, params))
 }

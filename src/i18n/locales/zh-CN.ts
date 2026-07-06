@@ -158,6 +158,21 @@ export default {
       tabs: {
         playground: 'Playground',
         api: 'API',
+        history: 'History',
+      },
+      history: {
+        loadError: '加载历史记录失败，请重试。',
+        retry: '重试',
+        empty: '暂无任务记录。',
+        loginRequired: '登录后可查看该模型的任务历史。',
+        loadMore: '加载更多',
+        columns: {
+          taskId: 'Task ID',
+          status: '状态',
+          channel: '类型',
+          cost: '费用',
+          time: '时间',
+        },
       },
       generation: {
         queued: 'Queued',

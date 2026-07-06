@@ -8,6 +8,7 @@ import { fetchModelDetail, fetchModels } from '@/api/models'
 import { fetchModelInputSchema } from '@/api/modelSchema'
 import ModelDetailHeader from '@/components/models/ModelDetailHeader.vue'
 import ModelApiTab from '@/components/models/ModelApiTab.vue'
+import ModelHistoryTab from '@/components/models/ModelHistoryTab.vue'
 import PlaygroundInputPanel from '@/components/playground/PlaygroundInputPanel.vue'
 import PlaygroundOutputPanel from '@/components/playground/PlaygroundOutputPanel.vue'
 import { useUserStore } from '@/stores/user'
@@ -30,7 +31,7 @@ const modelOptions = ref<Model[]>([])
 const inputSchema = ref<InputSchema | null>(null)
 const loading = ref(true)
 const error = ref<string | null>(null)
-const activeTab = ref<'playground' | 'api'>('playground')
+const activeTab = ref<'playground' | 'api' | 'history'>('playground')
 const batchSize = ref(1)
 const formValues = ref<SchemaFormValues>({})
 const estimatedSeconds = 40
@@ -215,6 +216,16 @@ onMounted(() => {
         >
           {{ t('pages.modelDetail.tabs.api') }}
         </button>
+        <button
+          type="button"
+          role="tab"
+          class="model-detail-page__tab"
+          :class="{ 'model-detail-page__tab--active': activeTab === 'history' }"
+          :aria-selected="activeTab === 'history'"
+          @click="activeTab = 'history'"
+        >
+          {{ t('pages.modelDetail.tabs.history') }}
+        </button>
       </div>
 
       <div v-if="activeTab === 'playground'" class="model-detail-page__playground">
@@ -248,7 +259,7 @@ onMounted(() => {
       </div>
 
       <ModelApiTab
-        v-else-if="inputSchema"
+        v-else-if="activeTab === 'api' && inputSchema"
         :schema="inputSchema"
         :api-model-id="model.id"
         :model-name="model.displayName"
@@ -257,11 +268,13 @@ onMounted(() => {
         :faq="model.faq"
       />
 
-      <div v-else class="model-detail-page__api">
+      <div v-else-if="activeTab === 'api'" class="model-detail-page__api">
         <p class="model-detail-page__api-placeholder">
           {{ t('pages.modelDetail.schemaUnavailable') }}
         </p>
       </div>
+
+      <ModelHistoryTab v-else-if="activeTab === 'history'" :model-slug="model.id" />
     </template>
   </div>
 </template>
