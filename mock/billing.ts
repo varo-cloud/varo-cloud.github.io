@@ -21,13 +21,10 @@ const pendingCheckouts = new Map<string, PendingCheckout>()
 
 let summary = {
   balance_usd: getAccountBalanceUsd(),
-  spent_this_month_usd: 96.28,
-  spent_change_percent: -12,
-  auto_top_up: {
-    enabled: false,
-    threshold_usd: 5,
-    top_up_amount_usd: 20,
-  },
+  month_spend_usd: 2.72,
+  total_topup_usd: 10,
+  total_charged_usd: 10,
+  total_spent_usd: 2.72,
 }
 
 const transactions: Transaction[] = [
@@ -180,8 +177,8 @@ function createCheckoutResponse(
   provider: 'stripe' | 'nowpayments',
 ) {
   const amountUsd = Number(body.amount_usd)
-  if (!Number.isFinite(amountUsd) || amountUsd < 1 || amountUsd > 10_000) {
-    return fail('amount_usd must be between 1 and 10000', 400)
+  if (!Number.isFinite(amountUsd) || amountUsd < 2 || amountUsd > 10_000) {
+    return fail('amount_usd must be between 2 and 10000', 400)
   }
 
   let paymentMethod: Transaction['paymentMethod'] | undefined
@@ -274,6 +271,33 @@ export default [
     url: '/api/billing/records',
     method: 'get',
     response: () => success(billingRecords),
+  },
+  {
+    url: '/api/usage',
+    method: 'get',
+    response: () =>
+      success([
+        {
+          task_id: 'cgt-20260706134426-t5c6j',
+          model: 'seedance-2.0-fast/text-to-video',
+          duration: 10,
+          cost_usd: 1.2,
+          status: 'succeeded',
+          invocation_channel: 'playground',
+          api_key_prefix: null,
+          created_at: 1783316667411,
+        },
+        {
+          task_id: 'cgt-20260706132039-rg5ph',
+          model: 'seedance-2.0/text-to-video',
+          duration: 10,
+          cost_usd: 1.52,
+          status: 'succeeded',
+          invocation_channel: 'api',
+          api_key_prefix: 'sk_live_1f78',
+          created_at: 1783315240019,
+        },
+      ]),
   },
   {
     url: '/api/billing/stripe/checkout',

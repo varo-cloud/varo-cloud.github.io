@@ -1,18 +1,42 @@
 import { http, unwrap } from './http'
 import type { ModelPreferences } from '@/types'
 
+interface ApiModelRecentEntry {
+  id: string
+  visited_at: number
+}
+
+interface ApiModelPreferences {
+  favourites: string[]
+  recent: ApiModelRecentEntry[]
+}
+
+function mapModelPreferences(raw: ApiModelPreferences): ModelPreferences {
+  return {
+    favourites: raw.favourites ?? [],
+    recent: (raw.recent ?? []).map((entry) => ({
+      id: entry.id,
+      visitedAt: entry.visited_at,
+    })),
+  }
+}
+
 export function fetchModelPreferences() {
-  return unwrap<ModelPreferences>(http.get('/user/model-preferences'))
+  return unwrap<ApiModelPreferences>(http.get('/user/model-preferences')).then(mapModelPreferences)
 }
 
 export function addModelFavourite(modelId: string) {
-  return unwrap<ModelPreferences>(http.post(`/models/${modelId}/favourite`))
+  return unwrap<ApiModelPreferences>(http.post(`/models/${modelId}/favourite`)).then(
+    mapModelPreferences,
+  )
 }
 
 export function removeModelFavourite(modelId: string) {
-  return unwrap<ModelPreferences>(http.delete(`/models/${modelId}/favourite`))
+  return unwrap<ApiModelPreferences>(http.delete(`/models/${modelId}/favourite`)).then(
+    mapModelPreferences,
+  )
 }
 
 export function recordModelVisit(modelId: string) {
-  return unwrap<ModelPreferences>(http.post(`/models/${modelId}/visit`))
+  return unwrap<ApiModelPreferences>(http.post(`/models/${modelId}/visit`)).then(mapModelPreferences)
 }

@@ -4,7 +4,7 @@ import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useLocaleRouter } from '@/composables/useLocaleRouter'
 import { NEmpty, NSpin } from 'naive-ui'
-import { fetchModels, fetchModelsByIds } from '@/api/models'
+import { fetchModels, fetchModelsByIds, fetchRecentModels } from '@/api/models'
 import ModelCard from '@/components/models/ModelCard.vue'
 import ModelsHeroCarousel from '@/components/models/ModelsHeroCarousel.vue'
 import { useModelPreferencesStore } from '@/stores/modelPreferences'
@@ -70,23 +70,62 @@ function sortByIdOrder(items: Model[], ids: string[]) {
   return [...items].sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0))
 }
 
-async function loadSavedModels(tab: 'favourite' | 'recent') {
+async function loadModelsByIds(ids: string[]) {
+  if (ids.length === 0) return
+
+  try {
+    const items = await fetchModelsByIds(ids)
+    models.value = sortByIdOrder(items, ids)
+    total.value = models.value.length
+  } catch {
+    error.value = t('pages.models.loadError')
+  }
+}
+
+async function loadFavouriteModels(refreshPreferences = true) {
+  if (!userStore.isLoggedIn) {
+    models.value = []
+    total.value = 0
+    loading.value = false
+    return
+  }
+
   loading.value = true
   loadingMore.value = false
   error.value = null
   models.value = []
   total.value = 0
 
-  const ids = tab === 'favourite' ? modelPrefs.favouriteIds : modelPrefs.recentIds
-  if (ids.length === 0) {
+  try {
+    if (refreshPreferences) {
+      await modelPrefs.syncFromApi()
+    }
+    await loadModelsByIds([...modelPrefs.favouriteIds])
+  } catch {
+    error.value = t('pages.models.loadError')
+  } finally {
+    loading.value = false
+  }
+}
+
+async function loadRecentModels() {
+  if (!userStore.isLoggedIn) {
+    models.value = []
+    total.value = 0
     loading.value = false
     return
   }
 
+  loading.value = true
+  loadingMore.value = false
+  error.value = null
+  models.value = []
+  total.value = 0
+
   try {
-    const items = await fetchModelsByIds(ids)
-    models.value = sortByIdOrder(items, ids)
-    total.value = models.value.length
+    const items = await fetchRecentModels()
+    models.value = items
+    total.value = items.length
   } catch {
     error.value = t('pages.models.loadError')
   } finally {
@@ -130,8 +169,13 @@ async function loadModels(append = false) {
 function switchTab(key: 'latest' | 'favourite' | 'recent') {
   activeTab.value = key
 
-  if (key === 'favourite' || key === 'recent') {
-    loadSavedModels(key)
+  if (key === 'favourite') {
+    loadFavouriteModels()
+    return
+  }
+
+  if (key === 'recent') {
+    loadRecentModels()
     return
   }
 
@@ -141,6 +185,18 @@ function switchTab(key: 'latest' | 'favourite' | 'recent') {
 function loadMore() {
   if (!hasMore.value || loadingMore.value || loading.value) return
   loadModels(true)
+}
+
+function retryLoad() {
+  if (activeTab.value === 'latest') {
+    loadModels()
+    return
+  }
+  if (activeTab.value === 'favourite') {
+    loadFavouriteModels()
+    return
+  }
+  loadRecentModels()
 }
 
 function goToAuth() {
@@ -171,12 +227,19 @@ watch(
 )
 
 watch(
-  () => [modelPrefs.favouriteIds, modelPrefs.recentIds],
+  () => modelPrefs.favouriteIds,
   () => {
     if (activeTab.value === 'favourite') {
-      loadSavedModels('favourite')
-    } else if (activeTab.value === 'recent') {
-      loadSavedModels('recent')
+      loadFavouriteModels(false)
+    }
+  },
+)
+
+watch(
+  () => modelPrefs.recentIds,
+  () => {
+    if (activeTab.value === 'recent') {
+      loadRecentModels()
     }
   },
 )
@@ -251,7 +314,7 @@ onMounted(() => {
         <div v-else-if="error" class="models-state">
           <NEmpty :description="error">
             <template #extra>
-              <button type="button" class="models-retry" @click="loadModels()">
+              <button type="button" class="models-retry" @click="retryLoad">
                 {{ t('pages.models.retry') }}
               </button>
             </template>

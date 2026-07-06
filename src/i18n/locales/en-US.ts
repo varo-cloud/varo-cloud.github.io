@@ -253,6 +253,8 @@ export default {
       placeholder: 'View balance and transaction history.',
       cashBalance: 'Cash Balance',
       spentThisMonth: 'Spent this Month',
+      totalTopup: 'Total Top-up',
+      totalSpent: 'Total Spent',
       spentTrend: '{arrow} {percent}% vs last month',
       autoTopUp: 'Auto top-up',
       on: 'On',
@@ -262,6 +264,7 @@ export default {
       choosePackage: 'Choose a package',
       customAmount: 'Custom amount',
       customAmountInput: 'Custom top-up amount (USD)',
+      customAmountMinHint: 'Minimum top-up: {min}',
       customAmountInvalid: 'Enter an amount between {min} and {max}.',
       paymentMethod: 'Payment Method',
       paymentMethods: {
@@ -330,13 +333,14 @@ export default {
       billingColumns: {
         time: 'Time',
         style: 'Style',
-        detail: 'Detail',
+        detail: 'Task ID',
         apiKey: 'API Key',
         value: 'Value',
       },
       styles: {
         api: 'API',
         web: 'Web',
+        playground: 'Playground',
         topup: 'Top Up',
         bonus: 'Bonus',
       },

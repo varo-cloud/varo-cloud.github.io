@@ -251,6 +251,8 @@ export default {
       placeholder: '查看余额与消费流水。',
       cashBalance: '现金余额',
       spentThisMonth: '本月消费',
+      totalTopup: '累计充值',
+      totalSpent: '累计消费',
       spentTrend: '{arrow} 较上月 {percent}%',
       autoTopUp: '自动充值',
       on: '开启',
@@ -260,6 +262,7 @@ export default {
       choosePackage: '选择套餐',
       customAmount: '自定义金额',
       customAmountInput: '自定义充值金额（USD）',
+      customAmountMinHint: '最低充值金额 {min}',
       customAmountInvalid: '请输入 {min} 至 {max} 之间的金额。',
       paymentMethod: '支付方式',
       paymentMethods: {
@@ -327,13 +330,14 @@ export default {
       billingColumns: {
         time: '时间',
         style: '类型',
-        detail: '详情',
+        detail: 'Task ID',
         apiKey: 'API Key',
         value: '金额',
       },
       styles: {
         api: 'API',
         web: '网页',
+        playground: 'Playground',
         topup: '充值',
         bonus: '赠送',
       },

@@ -130,3 +130,10 @@ export function fetchModelsByIds(slugs: string[]) {
     items.map(mapModel),
   )
 }
+
+export function fetchRecentModels() {
+  return unwrap<ApiModelCard[] | ApiModelsPage>(http.get('/user/recent-models')).then((raw) => {
+    const items = Array.isArray(raw) ? raw : (raw.items ?? [])
+    return items.map(mapModel)
+  })
+}
