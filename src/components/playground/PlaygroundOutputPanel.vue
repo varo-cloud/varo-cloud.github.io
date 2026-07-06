@@ -234,7 +234,7 @@ watch(
       </div>
       <pre
         v-else-if="showOutput && viewMode === 'json'"
-        class="output-panel__json"
+        class="output-panel__json scrollbar-subtle"
       ><code>{{ formattedJson }}</code></pre>
       <GenerationStatusDisplay
         v-else-if="isGenerating && activeStatus"
