@@ -1,5 +1,6 @@
 import type { MockMethod } from 'vite-plugin-mock'
 import type { ModelPreferences } from '../src/types'
+import { findCatalogModelBySlug } from './models'
 import { success } from './_util'
 
 const MAX_RECENT = 50
@@ -40,6 +41,21 @@ export default [
       const token = getToken(headers)
       if (!token) return unauthorized()
       return success(getPreferences(token))
+    },
+  },
+  {
+    url: '/api/user/recent-models',
+    method: 'get',
+    response: ({ headers }: { headers: Record<string, string> }) => {
+      const token = getToken(headers)
+      if (!token) return unauthorized()
+
+      const prefs = getPreferences(token)
+      const items = prefs.recent
+        .map((entry) => findCatalogModelBySlug(entry.id))
+        .filter((item): item is NonNullable<typeof item> => Boolean(item))
+
+      return success(items)
     },
   },
   {

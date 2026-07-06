@@ -4,7 +4,7 @@ import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useLocaleRouter } from '@/composables/useLocaleRouter'
 import { NEmpty, NSpin } from 'naive-ui'
-import { fetchModels, fetchModelsByIds } from '@/api/models'
+import { fetchModels, fetchModelsByIds, fetchRecentModels } from '@/api/models'
 import ModelCard from '@/components/models/ModelCard.vue'
 import ModelsHeroCarousel from '@/components/models/ModelsHeroCarousel.vue'
 import { useModelPreferencesStore } from '@/stores/modelPreferences'
@@ -82,7 +82,7 @@ async function loadModelsByIds(ids: string[]) {
   }
 }
 
-async function loadSavedModels(tab: 'favourite' | 'recent', refreshPreferences = true) {
+async function loadFavouriteModels(refreshPreferences = true) {
   if (!userStore.isLoggedIn) {
     models.value = []
     total.value = 0
@@ -100,10 +100,32 @@ async function loadSavedModels(tab: 'favourite' | 'recent', refreshPreferences =
     if (refreshPreferences) {
       await modelPrefs.syncFromApi()
     }
+    await loadModelsByIds([...modelPrefs.favouriteIds])
+  } catch {
+    error.value = t('pages.models.loadError')
+  } finally {
+    loading.value = false
+  }
+}
 
-    const ids =
-      tab === 'favourite' ? [...modelPrefs.favouriteIds] : [...modelPrefs.recentIds]
-    await loadModelsByIds(ids)
+async function loadRecentModels() {
+  if (!userStore.isLoggedIn) {
+    models.value = []
+    total.value = 0
+    loading.value = false
+    return
+  }
+
+  loading.value = true
+  loadingMore.value = false
+  error.value = null
+  models.value = []
+  total.value = 0
+
+  try {
+    const items = await fetchRecentModels()
+    models.value = items
+    total.value = items.length
   } catch {
     error.value = t('pages.models.loadError')
   } finally {
@@ -147,8 +169,13 @@ async function loadModels(append = false) {
 function switchTab(key: 'latest' | 'favourite' | 'recent') {
   activeTab.value = key
 
-  if (key === 'favourite' || key === 'recent') {
-    loadSavedModels(key)
+  if (key === 'favourite') {
+    loadFavouriteModels()
+    return
+  }
+
+  if (key === 'recent') {
+    loadRecentModels()
     return
   }
 
@@ -165,7 +192,11 @@ function retryLoad() {
     loadModels()
     return
   }
-  loadSavedModels(activeTab.value)
+  if (activeTab.value === 'favourite') {
+    loadFavouriteModels()
+    return
+  }
+  loadRecentModels()
 }
 
 function goToAuth() {
@@ -196,12 +227,19 @@ watch(
 )
 
 watch(
-  () => [modelPrefs.favouriteIds, modelPrefs.recentIds],
+  () => modelPrefs.favouriteIds,
   () => {
     if (activeTab.value === 'favourite') {
-      loadSavedModels('favourite', false)
-    } else if (activeTab.value === 'recent') {
-      loadSavedModels('recent', false)
+      loadFavouriteModels(false)
+    }
+  },
+)
+
+watch(
+  () => modelPrefs.recentIds,
+  () => {
+    if (activeTab.value === 'recent') {
+      loadRecentModels()
     }
   },
 )
