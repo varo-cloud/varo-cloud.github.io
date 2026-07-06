@@ -77,6 +77,7 @@ function lastImageHint(key: string): string | undefined {
         :compact="field.key === 'last_image' || field.key === 'end_image'"
         :invalid="isFieldInvalid(field.key)"
         :error-message="fieldErrorMessage"
+        :show-label="true"
       />
 
       <VideoUploaderField
