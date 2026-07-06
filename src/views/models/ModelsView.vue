@@ -70,23 +70,40 @@ function sortByIdOrder(items: Model[], ids: string[]) {
   return [...items].sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0))
 }
 
-async function loadSavedModels(tab: 'favourite' | 'recent') {
+async function loadModelsByIds(ids: string[]) {
+  if (ids.length === 0) return
+
+  try {
+    const items = await fetchModelsByIds(ids)
+    models.value = sortByIdOrder(items, ids)
+    total.value = models.value.length
+  } catch {
+    error.value = t('pages.models.loadError')
+  }
+}
+
+async function loadSavedModels(tab: 'favourite' | 'recent', refreshPreferences = true) {
+  if (!userStore.isLoggedIn) {
+    models.value = []
+    total.value = 0
+    loading.value = false
+    return
+  }
+
   loading.value = true
   loadingMore.value = false
   error.value = null
   models.value = []
   total.value = 0
 
-  const ids = tab === 'favourite' ? modelPrefs.favouriteIds : modelPrefs.recentIds
-  if (ids.length === 0) {
-    loading.value = false
-    return
-  }
-
   try {
-    const items = await fetchModelsByIds(ids)
-    models.value = sortByIdOrder(items, ids)
-    total.value = models.value.length
+    if (refreshPreferences) {
+      await modelPrefs.syncFromApi()
+    }
+
+    const ids =
+      tab === 'favourite' ? [...modelPrefs.favouriteIds] : [...modelPrefs.recentIds]
+    await loadModelsByIds(ids)
   } catch {
     error.value = t('pages.models.loadError')
   } finally {
@@ -143,6 +160,14 @@ function loadMore() {
   loadModels(true)
 }
 
+function retryLoad() {
+  if (activeTab.value === 'latest') {
+    loadModels()
+    return
+  }
+  loadSavedModels(activeTab.value)
+}
+
 function goToAuth() {
   push({ name: 'auth' })
 }
@@ -174,9 +199,9 @@ watch(
   () => [modelPrefs.favouriteIds, modelPrefs.recentIds],
   () => {
     if (activeTab.value === 'favourite') {
-      loadSavedModels('favourite')
+      loadSavedModels('favourite', false)
     } else if (activeTab.value === 'recent') {
-      loadSavedModels('recent')
+      loadSavedModels('recent', false)
     }
   },
 )
@@ -251,7 +276,7 @@ onMounted(() => {
         <div v-else-if="error" class="models-state">
           <NEmpty :description="error">
             <template #extra>
-              <button type="button" class="models-retry" @click="loadModels()">
+              <button type="button" class="models-retry" @click="retryLoad">
                 {{ t('pages.models.retry') }}
               </button>
             </template>
