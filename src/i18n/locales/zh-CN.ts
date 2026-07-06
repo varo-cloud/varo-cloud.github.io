@@ -13,6 +13,7 @@ export default {
   header: {
     searchModels: '搜索模型',
     myBilling: '我的账单',
+    adminConsole: '管理后台',
     signOut: '退出登录',
     userId: 'ID:{id}',
     defaultUserName: '用户',
