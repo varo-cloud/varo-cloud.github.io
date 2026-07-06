@@ -72,6 +72,26 @@ export interface FetchModelsParams {
   q?: string
 }
 
+export interface ModelHistoryEntry {
+  taskId: string
+  status: string
+  costUsd: number
+  invocationChannel: string
+  createdAt: number
+}
+
+export interface ModelHistoryPage {
+  items: ModelHistoryEntry[]
+  total: number
+  offset: number
+  limit: number
+}
+
+export interface FetchModelHistoryParams {
+  offset?: number
+  limit?: number
+}
+
 export interface ModelRecentEntry {
   id: string
   visitedAt: number

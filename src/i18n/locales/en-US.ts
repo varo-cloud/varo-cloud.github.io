@@ -159,6 +159,21 @@ export default {
       tabs: {
         playground: 'Playground',
         api: 'API',
+        history: 'History',
+      },
+      history: {
+        loadError: 'Failed to load history. Please try again.',
+        retry: 'Retry',
+        empty: 'No task history yet.',
+        loginRequired: 'Sign in to view task history for this model.',
+        loadMore: 'Load more',
+        columns: {
+          taskId: 'Task ID',
+          status: 'Status',
+          channel: 'Style',
+          cost: 'Cost',
+          time: 'Time',
+        },
       },
       generation: {
         queued: 'Queued',
