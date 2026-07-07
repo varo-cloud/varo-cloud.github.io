@@ -58,6 +58,16 @@ export default {
       heroCtaSecondary: '查看文档',
       heroSignup: '免费开始',
       filterLabel: '筛选模型',
+      filters: {
+        all: '全部',
+        category: '类型',
+        capability: '能力',
+      },
+      categories: {
+        video: '视频',
+        image: '图片',
+        llm: '大语言模型',
+      },
       searchPlaceholder: '搜索',
       from: '起价',
       tryModel: '立即体验',
@@ -80,6 +90,9 @@ export default {
       capabilities: {
         'text-to-video': '文生视频',
         'image-to-video': '图生视频',
+        'video-to-video': '视频编辑',
+        'text-to-image': '文生图',
+        'image-to-image': '图生图',
       },
     },
     aiGenerator: {

@@ -89,6 +89,45 @@ const baseModels: ModelCatalogEntry[] = [
     thumbnail_url: '/assets/models/card-thumb.jpg',
     icon_url: '/assets/models/seedance.svg',
   },
+  {
+    slug: 'flux-1/text-to-image',
+    model_id: 3,
+    capability: 'text-to-image',
+    category: 'image',
+    display_name: 'Flux 1 Text-to-Image',
+    starting_price_usd: 0.02,
+    price_unit: 'per_image',
+    sort_order: 30,
+    description: 'High-quality text-to-image generation with Flux.',
+    thumbnail_url: '/assets/models/card-thumb.jpg',
+    icon_url: '/assets/models/seedance.svg',
+  },
+  {
+    slug: 'flux-1/image-to-image',
+    model_id: 3,
+    capability: 'image-to-image',
+    category: 'image',
+    display_name: 'Flux 1 Image-to-Image',
+    starting_price_usd: 0.025,
+    price_unit: 'per_image',
+    sort_order: 31,
+    description: 'Image editing and transformation with Flux image-to-image.',
+    thumbnail_url: '/assets/models/card-thumb.jpg',
+    icon_url: '/assets/models/seedance.svg',
+  },
+  {
+    slug: 'gpt-4o/llm',
+    model_id: 4,
+    capability: 'llm',
+    category: 'llm',
+    display_name: 'GPT-4o',
+    starting_price_usd: 0.005,
+    price_unit: 'per_million_tokens',
+    sort_order: 40,
+    description: 'Multimodal large language model for text generation.',
+    thumbnail_url: '/assets/models/card-thumb.jpg',
+    icon_url: '/assets/models/seedance.svg',
+  },
 ]
 
 const VARIANT_FAMILIES = [
@@ -156,18 +195,54 @@ export function findCatalogModelById(slug: string): ModelCatalogEntry | undefine
   return findCatalogModelBySlug(slug)
 }
 
-function filterModels(query: string) {
-  const q = query.trim().toLowerCase()
-  if (!q) return models
+function filterModels(query: Record<string, string>) {
+  let filtered = models
 
-  return models.filter((model) => {
-    const baseSlug = model.slug.split('/')[0]?.toLowerCase() ?? ''
-    return (
-      model.display_name.toLowerCase().includes(q) ||
-      baseSlug.includes(q) ||
-      model.description.toLowerCase().includes(q)
-    )
-  })
+  const category = query.category?.trim()
+  if (category) {
+    filtered = filtered.filter((model) => model.category === category)
+  }
+
+  const capability = query.capability?.trim()
+  if (capability) {
+    filtered = filtered.filter((model) => model.capability === capability)
+  }
+
+  const q = query.q?.trim().toLowerCase()
+  if (q) {
+    filtered = filtered.filter((model) => {
+      const baseSlug = model.slug.split('/')[0]?.toLowerCase() ?? ''
+      return (
+        model.display_name.toLowerCase().includes(q) ||
+        baseSlug.includes(q) ||
+        model.description.toLowerCase().includes(q)
+      )
+    })
+  }
+
+  return filtered
+}
+
+function buildFacets(catalog: ModelCatalogEntry[]) {
+  const categoryBaseIds = new Map<string, Set<number>>()
+  const capabilityCounts = new Map<string, number>()
+
+  for (const item of catalog) {
+    if (!categoryBaseIds.has(item.category)) {
+      categoryBaseIds.set(item.category, new Set())
+    }
+    categoryBaseIds.get(item.category)!.add(item.model_id)
+    capabilityCounts.set(item.capability, (capabilityCounts.get(item.capability) ?? 0) + 1)
+  }
+
+  return {
+    categories: [...categoryBaseIds.entries()]
+      .map(([value, ids]) => ({ value, count: ids.size }))
+      .sort((a, b) => a.value.localeCompare(b.value)),
+    capabilities: [...capabilityCounts.entries()]
+      .map(([value, count]) => ({ value, count }))
+      .sort((a, b) => a.value.localeCompare(b.value)),
+  }
 }
 
 function decodeBatchIds(raw: string): string[] {
@@ -191,6 +266,11 @@ function extractSlugFromPath(url: string): string | null {
 
 export default [
   {
+    url: '/api/models/facets',
+    method: 'get',
+    response: () => success(buildFacets(models)),
+  },
+  {
     url: '/api/models',
     method: 'get',
     response: ({
@@ -202,7 +282,7 @@ export default [
     }) => {
       const offset = Math.max(0, Number(query.offset) || 0)
       const limit = Math.min(100, Math.max(1, Number(query.limit) || 20))
-      const filtered = filterModels(query.q ?? '')
+      const filtered = filterModels(query)
 
       return success({
         items: filtered.slice(offset, offset + limit).map((item) => ({

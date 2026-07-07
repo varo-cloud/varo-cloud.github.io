@@ -58,6 +58,16 @@ export default {
       heroCtaSecondary: 'View Docs',
       heroSignup: 'Star Free',
       filterLabel: 'Filter models',
+      filters: {
+        all: 'All',
+        category: 'Category',
+        capability: 'Capability',
+      },
+      categories: {
+        video: 'Video',
+        image: 'Image',
+        llm: 'LLM',
+      },
       searchPlaceholder: 'Search',
       from: 'From',
       tryModel: 'Try it',
@@ -80,6 +90,9 @@ export default {
       capabilities: {
         'text-to-video': 'Text to Video',
         'image-to-video': 'Image to Video',
+        'video-to-video': 'Video to Video',
+        'text-to-image': 'Text to Image',
+        'image-to-image': 'Image to Image',
       },
     },
     aiGenerator: {
