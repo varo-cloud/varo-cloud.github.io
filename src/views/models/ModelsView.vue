@@ -4,19 +4,19 @@ import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useLocaleRouter } from '@/composables/useLocaleRouter'
 import { NEmpty, NSpin } from 'naive-ui'
-import { fetchModels, fetchFavouriteModels, fetchRecentModels } from '@/api/models'
+import { fetchModels, fetchFavouriteModels, fetchModelFacets, fetchRecentModels } from '@/api/models'
 import ModelCard from '@/components/models/ModelCard.vue'
 import ModelsHeroCarousel from '@/components/models/ModelsHeroCarousel.vue'
 import { useModelPreferencesStore } from '@/stores/modelPreferences'
 import { useUserStore } from '@/stores/user'
 import { assetUrl } from '@/utils/assetUrl'
-import type { Model } from '@/types'
+import type { FacetItem, Model, ModelCategory } from '@/types'
 
 const PAGE_SIZE = 20
 const SEARCH_DEBOUNCE_MS = 300
 
 const route = useRoute()
-const { push } = useLocaleRouter()
+const { push, replace } = useLocaleRouter()
 const { t } = useI18n()
 const userStore = useUserStore()
 const modelPrefs = useModelPreferencesStore()
@@ -28,6 +28,12 @@ const loadingMore = ref(false)
 const error = ref<string | null>(null)
 const activeTab = ref<'latest' | 'favourite' | 'recent'>('latest')
 const searchQuery = ref('')
+const selectedCategory = ref<ModelCategory | null>(null)
+const selectedCapability = ref<string | null>(null)
+const facets = ref<{ categories: FacetItem[]; capabilities: FacetItem[] }>({
+  categories: [],
+  capabilities: [],
+})
 const heroActiveIndex = ref(0)
 
 const heroSlideContent = computed(() => {
@@ -64,6 +70,44 @@ const emptyDescription = computed(() => {
   if (activeTab.value === 'recent') return t('pages.models.emptyRecent')
   return t('pages.models.empty')
 })
+
+function categoryLabel(value: string): string {
+  const key = `pages.models.categories.${value}`
+  const translated = t(key)
+  return translated === key ? value : translated
+}
+
+function capabilityLabel(value: string): string {
+  const key = `pages.models.capabilities.${value}`
+  const translated = t(key)
+  return translated === key ? value : translated
+}
+
+function isModelCategory(value: string): value is ModelCategory {
+  return value === 'video' || value === 'image' || value === 'llm'
+}
+
+function buildListQuery() {
+  const query: Record<string, string> = {}
+  const q = searchQuery.value.trim()
+  if (q) query.q = q
+  if (selectedCategory.value) query.category = selectedCategory.value
+  if (selectedCapability.value) query.capability = selectedCapability.value
+  return query
+}
+
+function syncRouteQuery() {
+  if (activeTab.value !== 'latest') return
+  replace({ name: 'models', query: buildListQuery() })
+}
+
+async function loadFacets() {
+  try {
+    facets.value = await fetchModelFacets()
+  } catch {
+    facets.value = { categories: [], capabilities: [] }
+  }
+}
 
 async function loadFavouriteModels() {
   if (!userStore.isLoggedIn) {
@@ -132,6 +176,8 @@ async function loadModels(append = false) {
       offset: append ? models.value.length : 0,
       limit: PAGE_SIZE,
       q: searchQuery.value.trim() || undefined,
+      category: selectedCategory.value ?? undefined,
+      capability: selectedCapability.value ?? undefined,
     })
 
     models.value = append ? [...models.value, ...page.items] : page.items
@@ -161,6 +207,20 @@ function switchTab(key: 'latest' | 'favourite' | 'recent') {
     return
   }
 
+  loadModels()
+}
+
+function selectCategory(category: ModelCategory | null) {
+  if (selectedCategory.value === category) return
+  selectedCategory.value = category
+  syncRouteQuery()
+  loadModels()
+}
+
+function selectCapability(capability: string | null) {
+  if (selectedCapability.value === capability) return
+  selectedCapability.value = capability
+  syncRouteQuery()
   loadModels()
 }
 
@@ -213,6 +273,7 @@ watch(searchQuery, () => {
 
   if (searchDebounceTimer) clearTimeout(searchDebounceTimer)
   searchDebounceTimer = setTimeout(() => {
+    syncRouteQuery()
     loadModels()
   }, SEARCH_DEBOUNCE_MS)
 })
@@ -241,6 +302,18 @@ onMounted(() => {
   if (typeof q === 'string' && q) {
     searchQuery.value = q
   }
+
+  const category = route.query.category
+  if (typeof category === 'string' && isModelCategory(category)) {
+    selectedCategory.value = category
+  }
+
+  const capability = route.query.capability
+  if (typeof capability === 'string' && capability) {
+    selectedCapability.value = capability
+  }
+
+  void loadFacets()
   loadModels()
 })
 </script>
@@ -297,6 +370,62 @@ onMounted(() => {
               :placeholder="t('pages.models.searchPlaceholder')"
             />
           </label>
+        </div>
+
+        <div
+          v-if="activeTab === 'latest' && (facets.categories.length > 0 || facets.capabilities.length > 0)"
+          class="models-filters"
+          :aria-label="t('pages.models.filterLabel')"
+        >
+          <div v-if="facets.categories.length > 0" class="models-filter-group">
+            <span class="models-filter-group__label">{{ t('pages.models.filters.category') }}</span>
+            <div class="models-filter-chips">
+              <button
+                type="button"
+                class="models-filter-chip"
+                :class="{ 'is-active': !selectedCategory }"
+                @click="selectCategory(null)"
+              >
+                {{ t('pages.models.filters.all') }}
+              </button>
+              <button
+                v-for="item in facets.categories"
+                :key="item.value"
+                type="button"
+                class="models-filter-chip"
+                :class="{ 'is-active': selectedCategory === item.value }"
+                @click="selectCategory(item.value as ModelCategory)"
+              >
+                {{ categoryLabel(item.value) }}
+                <span class="models-filter-chip__count">{{ item.count }}</span>
+              </button>
+            </div>
+          </div>
+
+          <div v-if="facets.capabilities.length > 0" class="models-filter-group">
+            <span class="models-filter-group__label">{{ t('pages.models.filters.capability') }}</span>
+            <div class="models-filter-chips">
+              <button
+                type="button"
+                class="models-filter-chip"
+                :class="{ 'is-active': !selectedCapability }"
+                @click="selectCapability(null)"
+              >
+                {{ t('pages.models.filters.all') }}
+              </button>
+              <button
+                v-for="item in facets.capabilities"
+                :key="item.value"
+                type="button"
+                class="models-filter-chip"
+                :class="{ 'is-active': selectedCapability === item.value }"
+                @click="selectCapability(item.value)"
+              >
+                {{ capabilityLabel(item.value) }}
+                <span class="models-filter-chip__count">{{ item.count }}</span>
+              </button>
+            </div>
+          </div>
         </div>
 
         <div v-if="loading" class="models-state">
@@ -516,6 +645,73 @@ onMounted(() => {
   color: #9b9dab;
 }
 
+.models-filters {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.models-filter-group {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.models-filter-group__label {
+  flex-shrink: 0;
+  min-width: 48px;
+  color: #9b9dab;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+}
+
+.models-filter-chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.models-filter-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 14px;
+  border: 1px solid #e8e8e8;
+  border-radius: 20px;
+  background: #fff;
+  color: #666;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 20px;
+  cursor: pointer;
+  white-space: nowrap;
+}
+
+.models-filter-chip:hover {
+  border-color: #d4d4d8;
+  color: #222;
+}
+
+.models-filter-chip.is-active {
+  border-color: #06b6d4;
+  background: rgba(6, 182, 212, 0.08);
+  color: #0891b2;
+}
+
+.models-filter-chip__count {
+  color: #9b9dab;
+  font-size: 12px;
+  font-weight: 500;
+  line-height: 16px;
+}
+
+.models-filter-chip.is-active .models-filter-chip__count {
+  color: #06b6d4;
+}
+
 .models-grid {
   display: grid;
   grid-template-columns: repeat(1, minmax(0, 1fr));
@@ -648,6 +844,11 @@ onMounted(() => {
 
   .models-search {
     width: 100%;
+  }
+
+  .models-filter-group {
+    flex-direction: column;
+    align-items: flex-start;
   }
 }
 </style>

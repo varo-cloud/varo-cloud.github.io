@@ -5,6 +5,7 @@ import type {
   Model,
   ModelCategory,
   ModelDetail,
+  ModelFacetsResponse,
   ModelFaqItem,
   ModelHistoryEntry,
   ModelHistoryPage,
@@ -178,6 +179,10 @@ export function fetchModels(params?: FetchModelsParams) {
   return unwrap<ApiModelsPage | ApiModelCard[]>(http.get('/models', { params })).then((raw) =>
     normalizeModelsPage(raw, params),
   )
+}
+
+export function fetchModelFacets() {
+  return unwrap<ModelFacetsResponse>(http.get('/models/facets'))
 }
 
 export function fetchModelDetail(slug: string) {

@@ -72,6 +72,18 @@ export interface FetchModelsParams {
   offset?: number
   limit?: number
   q?: string
+  category?: ModelCategory
+  capability?: string
+}
+
+export interface FacetItem {
+  value: string
+  count: number
+}
+
+export interface ModelFacetsResponse {
+  categories: FacetItem[]
+  capabilities: FacetItem[]
 }
 
 export interface ModelHistoryEntry {

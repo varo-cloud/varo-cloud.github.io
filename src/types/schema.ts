@@ -13,6 +13,10 @@ export type SchemaWidget =
   | 'multi-image-uploader'
   | 'multi-audio-uploader'
   | 'multi-video-uploader'
+  | 'multi-prompt'
+  | 'element-list'
+  | 'voice-select'
+  | 'voice-list'
   | 'placeholder'
 
 export interface SchemaUiComponentProps {
@@ -29,7 +33,12 @@ export interface SchemaProperty {
   step?: number
   minItems?: number
   maxItems?: number
-  items?: SchemaProperty
+  items?: SchemaProperty & {
+    properties?: Record<string, SchemaProperty>
+    required?: string[]
+  }
+  properties?: Record<string, SchemaProperty>
+  required?: string[]
   'x-ui-component'?: string
   'x-ui-component-props'?: SchemaUiComponentProps
 }

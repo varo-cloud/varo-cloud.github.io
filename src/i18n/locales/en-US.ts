@@ -58,6 +58,16 @@ export default {
       heroCtaSecondary: 'View Docs',
       heroSignup: 'Star Free',
       filterLabel: 'Filter models',
+      filters: {
+        all: 'All',
+        category: 'Category',
+        capability: 'Capability',
+      },
+      categories: {
+        video: 'Video',
+        image: 'Image',
+        llm: 'LLM',
+      },
       searchPlaceholder: 'Search',
       from: 'From',
       tryModel: 'Try it',
@@ -80,6 +90,9 @@ export default {
       capabilities: {
         'text-to-video': 'Text to Video',
         'image-to-video': 'Image to Video',
+        'video-to-video': 'Video to Video',
+        'text-to-image': 'Text to Image',
+        'image-to-image': 'Image to Image',
       },
     },
     aiGenerator: {
@@ -156,6 +169,34 @@ export default {
         multiAudioUploader: 'Component not implemented yet — tell me how to build it.',
         multiVideoUploader: 'Component not implemented yet — tell me how to build it.',
         unknownWidget: 'Unsupported field type — implementation pending.',
+      },
+      fields: {
+        promptMode: {
+          single: 'Single prompt',
+          multi: 'Multi-shot',
+        },
+        multiPrompt: {
+          shotLabel: 'Shot {index}',
+          promptPlaceholder: 'Describe this shot…',
+          durationLabel: 'Duration',
+          addShot: 'Add shot',
+          removeShot: 'Remove shot',
+          totalDuration: 'Total duration: {current}/{max}s',
+          durationExceeded: 'Total shot duration cannot exceed {max}s.',
+        },
+        elementList: {
+          empty: 'No elements added yet.',
+          itemLabel: 'Element {index}',
+          placeholder: 'Element ID',
+          addItem: 'Add element',
+          removeItem: 'Remove element',
+        },
+        voiceList: {
+          empty: 'No reference voices added yet.',
+          itemLabel: 'Voice {index}',
+          addItem: 'Add voice',
+          removeItem: 'Remove voice',
+        },
       },
       tabs: {
         playground: 'Playground',

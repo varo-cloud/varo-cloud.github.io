@@ -1,3 +1,4 @@
+import { DEFAULT_KLING_VOICE_ID } from '@/constants/kling-voices'
 import type {
   InputSchema,
   ResolvedSchemaField,
@@ -27,6 +28,12 @@ const SWITCH_FIELD_KEYS = new Set([
   'sound',
   'keep_original_sound',
 ])
+
+const ARRAY_EDITOR_FIELD_KEYS: Record<string, SchemaWidget> = {
+  multi_prompt: 'multi-prompt',
+  element_list: 'element-list',
+  voice_list: 'voice-list',
+}
 
 function uploaderAccept(property: SchemaProperty): string {
   return property['x-ui-component-props']?.accept ?? ''
@@ -97,6 +104,11 @@ function isImageUploaderField(key: string, property: SchemaProperty): boolean {
 }
 
 export function resolveWidget(key: string, property: SchemaProperty): SchemaWidget {
+  const arrayEditor = ARRAY_EDITOR_FIELD_KEYS[key]
+  if (arrayEditor && property.type === 'array') return arrayEditor
+
+  if (key === 'voice_id' && property.type === 'string') return 'voice-select'
+
   const fromUi = resolveWidgetFromUiComponent(property['x-ui-component'], key, property)
   if (fromUi) return fromUi
 
@@ -176,6 +188,12 @@ function defaultForProperty(key: string, property: SchemaProperty, widget: Schem
     case 'multi-audio-uploader':
     case 'multi-video-uploader':
       return []
+    case 'multi-prompt':
+    case 'element-list':
+    case 'voice-list':
+      return []
+    case 'voice-select':
+      return property.default ?? property.enum?.[0] ?? DEFAULT_KLING_VOICE_ID
     case 'placeholder':
       return null
     default:
@@ -200,6 +218,15 @@ export function getSelectOptions(property: SchemaProperty): { label: string; val
     label: String(value),
     value,
   }))
+}
+
+export function getArrayItemProperty(
+  property: SchemaProperty,
+  itemKey: string,
+): SchemaProperty | undefined {
+  const items = property.items
+  if (!items || items.type !== 'object') return undefined
+  return items.properties?.[itemKey]
 }
 
 export function validateSchemaForm(
