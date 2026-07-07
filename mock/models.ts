@@ -1,6 +1,7 @@
 import type { MockMethod } from 'vite-plugin-mock'
 import type { ModelCategory, PricingPriceUnit } from '../src/types'
 import { resolveModelDoc } from './model-docs'
+import { resolveIsFavourited } from './_userPreferences'
 import { success } from './_util'
 
 interface ModelCatalogEntry {
@@ -192,13 +193,22 @@ export default [
   {
     url: '/api/models',
     method: 'get',
-    response: ({ query }: { query: Record<string, string> }) => {
+    response: ({
+      query,
+      headers,
+    }: {
+      query: Record<string, string>
+      headers: Record<string, string>
+    }) => {
       const offset = Math.max(0, Number(query.offset) || 0)
       const limit = Math.min(100, Math.max(1, Number(query.limit) || 20))
       const filtered = filterModels(query.q ?? '')
 
       return success({
-        items: filtered.slice(offset, offset + limit),
+        items: filtered.slice(offset, offset + limit).map((item) => ({
+          ...item,
+          is_favourited: resolveIsFavourited(headers, item.slug),
+        })),
         total: filtered.length,
         offset,
         limit,

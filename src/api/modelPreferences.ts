@@ -7,8 +7,8 @@ interface ApiModelRecentEntry {
 }
 
 interface ApiModelPreferences {
-  favourites: string[]
-  recent: ApiModelRecentEntry[]
+  favourites?: string[]
+  recent?: ApiModelRecentEntry[]
 }
 
 function mapModelPreferences(raw: ApiModelPreferences): ModelPreferences {
@@ -19,10 +19,6 @@ function mapModelPreferences(raw: ApiModelPreferences): ModelPreferences {
       visitedAt: entry.visited_at,
     })),
   }
-}
-
-export function fetchModelPreferences() {
-  return unwrap<ApiModelPreferences>(http.get('/user/model-preferences')).then(mapModelPreferences)
 }
 
 export function addModelFavourite(modelId: string) {

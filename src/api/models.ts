@@ -28,6 +28,7 @@ interface ApiModelCard {
   is_hot?: boolean | null
   is_new?: boolean | null
   sort_order?: number | null
+  is_favourited?: boolean | null
 }
 
 interface ApiModelDetail extends ApiModelCard {
@@ -116,6 +117,7 @@ function mapModel(raw: ApiModelCard): Model {
     isHot: raw.is_hot ?? undefined,
     isNew: raw.is_new ?? undefined,
     sortOrder: raw.sort_order ?? undefined,
+    isFavourited: raw.is_favourited ?? false,
   }
 }
 
@@ -190,11 +192,18 @@ export function fetchModelsByIds(slugs: string[]) {
   )
 }
 
-export function fetchRecentModels() {
-  return unwrap<ApiModelCard[] | ApiModelsPage>(http.get('/user/recent-models')).then((raw) => {
-    const items = Array.isArray(raw) ? raw : (raw.items ?? [])
-    return items.map(mapModel)
-  })
+function fetchUserModelsPage(path: string, params?: FetchModelsParams) {
+  return unwrap<ApiModelsPage | ApiModelCard[]>(http.get(path, { params })).then((raw) =>
+    normalizeModelsPage(raw, params),
+  )
+}
+
+export function fetchRecentModels(params?: FetchModelsParams) {
+  return fetchUserModelsPage('/user/recent-models', params)
+}
+
+export function fetchFavouriteModels(params?: FetchModelsParams) {
+  return fetchUserModelsPage('/user/model-preferences', params)
 }
 
 export function fetchModelHistory(slug: string, params?: FetchModelHistoryParams) {

@@ -1,61 +1,76 @@
 import type { MockMethod } from 'vite-plugin-mock'
 import type { ModelPreferences } from '../src/types'
 import { findCatalogModelBySlug } from './models'
+import {
+  extractSlugFromPath,
+  getPreferences,
+  getToken,
+  MAX_RECENT,
+} from './_userPreferences'
 import { success } from './_util'
-
-const MAX_RECENT = 50
-
-const preferencesByToken = new Map<string, ModelPreferences>()
-
-function getToken(headers: Record<string, string>): string | null {
-  const auth = headers.authorization || headers.Authorization
-  if (!auth) return null
-  return auth.replace(/^Bearer\s+/i, '')
-}
-
-function emptyPreferences(): ModelPreferences {
-  return { favourites: [], recent: [] }
-}
-
-function getPreferences(token: string): ModelPreferences {
-  if (!preferencesByToken.has(token)) {
-    preferencesByToken.set(token, emptyPreferences())
-  }
-  return preferencesByToken.get(token)!
-}
 
 function unauthorized() {
   return { code: 401, message: 'Unauthorized', data: null }
 }
 
-function extractSlugFromPath(url: string, action: string): string | null {
-  const match = url.match(new RegExp(`^/api/models/([^/]+/[^/?]+)/${action}`))
-  return match ? decodeURIComponent(match[1]!) : null
+function buildUserModelsPage(
+  slugs: string[],
+  prefs: ModelPreferences,
+  query: Record<string, string>,
+) {
+  const offset = Math.max(0, Number(query.offset) || 0)
+  const limit = Math.min(100, Math.max(1, Number(query.limit) || 20))
+
+  const items = slugs
+    .map((slug) => findCatalogModelBySlug(slug))
+    .filter((item): item is NonNullable<typeof item> => Boolean(item))
+    .map((item) => ({
+      ...item,
+      is_favourited: prefs.favourites.includes(item.slug),
+    }))
+
+  return {
+    items: items.slice(offset, offset + limit),
+    total: items.length,
+    offset,
+    limit,
+  }
 }
 
 export default [
   {
     url: '/api/user/model-preferences',
     method: 'get',
-    response: ({ headers }: { headers: Record<string, string> }) => {
+    response: ({
+      headers,
+      query,
+    }: {
+      headers: Record<string, string>
+      query: Record<string, string>
+    }) => {
       const token = getToken(headers)
       if (!token) return unauthorized()
-      return success(getPreferences(token))
+
+      const prefs = getPreferences(token)
+      return success(buildUserModelsPage(prefs.favourites, prefs, query))
     },
   },
   {
     url: '/api/user/recent-models',
     method: 'get',
-    response: ({ headers }: { headers: Record<string, string> }) => {
+    response: ({
+      headers,
+      query,
+    }: {
+      headers: Record<string, string>
+      query: Record<string, string>
+    }) => {
       const token = getToken(headers)
       if (!token) return unauthorized()
 
       const prefs = getPreferences(token)
-      const items = prefs.recent
-        .map((entry) => findCatalogModelBySlug(entry.id))
-        .filter((item): item is NonNullable<typeof item> => Boolean(item))
-
-      return success(items)
+      const slugs = prefs.recent.map((entry) => entry.id)
+      return success(buildUserModelsPage(slugs, prefs, query))
     },
   },
   {
