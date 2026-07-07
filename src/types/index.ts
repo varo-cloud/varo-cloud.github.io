@@ -43,6 +43,8 @@ export interface Model {
   isNew?: boolean
   /** Maps from API field `sort_order` */
   sortOrder?: number
+  /** Maps from API field `is_favourited` — returned on model list endpoints when authenticated */
+  isFavourited: boolean
 }
 
 export interface ModelDetail extends Model {

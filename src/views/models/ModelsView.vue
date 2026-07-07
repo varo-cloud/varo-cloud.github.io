@@ -4,7 +4,7 @@ import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useLocaleRouter } from '@/composables/useLocaleRouter'
 import { NEmpty, NSpin } from 'naive-ui'
-import { fetchModels, fetchModelsByIds, fetchRecentModels } from '@/api/models'
+import { fetchModels, fetchFavouriteModels, fetchRecentModels } from '@/api/models'
 import ModelCard from '@/components/models/ModelCard.vue'
 import ModelsHeroCarousel from '@/components/models/ModelsHeroCarousel.vue'
 import { useModelPreferencesStore } from '@/stores/modelPreferences'
@@ -65,24 +65,7 @@ const emptyDescription = computed(() => {
   return t('pages.models.empty')
 })
 
-function sortByIdOrder(items: Model[], ids: string[]) {
-  const order = new Map(ids.map((id, index) => [id, index]))
-  return [...items].sort((a, b) => (order.get(a.id) ?? 0) - (order.get(b.id) ?? 0))
-}
-
-async function loadModelsByIds(ids: string[]) {
-  if (ids.length === 0) return
-
-  try {
-    const items = await fetchModelsByIds(ids)
-    models.value = sortByIdOrder(items, ids)
-    total.value = models.value.length
-  } catch {
-    error.value = t('pages.models.loadError')
-  }
-}
-
-async function loadFavouriteModels(refreshPreferences = true) {
+async function loadFavouriteModels() {
   if (!userStore.isLoggedIn) {
     models.value = []
     total.value = 0
@@ -97,10 +80,9 @@ async function loadFavouriteModels(refreshPreferences = true) {
   total.value = 0
 
   try {
-    if (refreshPreferences) {
-      await modelPrefs.syncFromApi()
-    }
-    await loadModelsByIds([...modelPrefs.favouriteIds])
+    const page = await fetchFavouriteModels({ limit: PAGE_SIZE, offset: 0 })
+    models.value = page.items
+    total.value = page.total
   } catch {
     error.value = t('pages.models.loadError')
   } finally {
@@ -123,9 +105,9 @@ async function loadRecentModels() {
   total.value = 0
 
   try {
-    const items = await fetchRecentModels()
-    models.value = items
-    total.value = items.length
+    const page = await fetchRecentModels({ limit: PAGE_SIZE, offset: 0 })
+    models.value = page.items
+    total.value = page.total
   } catch {
     error.value = t('pages.models.loadError')
   } finally {
@@ -207,6 +189,25 @@ function goToDocs() {
   push({ name: 'docs' })
 }
 
+function handleFavouriteChange({
+  modelId,
+  isFavourited,
+}: {
+  modelId: string
+  isFavourited: boolean
+}) {
+  if (activeTab.value === 'favourite' && !isFavourited) {
+    models.value = models.value.filter((model) => model.id !== modelId)
+    total.value = Math.max(0, total.value - 1)
+    return
+  }
+
+  const index = models.value.findIndex((model) => model.id === modelId)
+  if (index >= 0) {
+    models.value[index] = { ...models.value[index], isFavourited }
+  }
+}
+
 watch(searchQuery, () => {
   if (activeTab.value !== 'latest') return
 
@@ -222,15 +223,6 @@ watch(
     if (!loggedIn && activeTab.value !== 'latest') {
       activeTab.value = 'latest'
       loadModels()
-    }
-  },
-)
-
-watch(
-  () => modelPrefs.favouriteIds,
-  () => {
-    if (activeTab.value === 'favourite') {
-      loadFavouriteModels(false)
     }
   },
 )
@@ -330,6 +322,7 @@ onMounted(() => {
             v-for="model in models"
             :key="model.id"
             :model="model"
+            @favourite-change="handleFavouriteChange"
           />
         </div>
 

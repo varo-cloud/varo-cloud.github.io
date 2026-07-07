@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useLocaleRouter } from '@/composables/useLocaleRouter'
 import { AnalyticsEvents, trackEvent } from '@/analytics'
@@ -13,12 +13,23 @@ const props = defineProps<{
   model: Model
 }>()
 
+const emit = defineEmits<{
+  favouriteChange: [payload: { modelId: string; isFavourited: boolean }]
+}>()
+
 const { push } = useLocaleRouter()
 const { t } = useI18n()
 const userStore = useUserStore()
 const modelPrefs = useModelPreferencesStore()
 
-const isFavourite = computed(() => modelPrefs.isFavourite(props.model.id))
+const isFavourite = ref(props.model.isFavourited)
+
+watch(
+  () => props.model.isFavourited,
+  (value) => {
+    isFavourite.value = value
+  },
+)
 
 const displayName = computed(() => props.model.displayName)
 
@@ -62,15 +73,17 @@ async function toggleFavourite(event: Event) {
     push({ name: 'auth' })
     return
   }
+  const wasFavourite = isFavourite.value
+  isFavourite.value = !wasFavourite
   try {
-    const wasFavourite = isFavourite.value
-    await modelPrefs.toggleFavourite(props.model.id)
+    await modelPrefs.toggleFavourite(props.model.id, wasFavourite)
+    emit('favouriteChange', { modelId: props.model.id, isFavourited: isFavourite.value })
     trackEvent(AnalyticsEvents.MODEL_FAVOURITE_TOGGLE, {
       model_id: props.model.id,
       action: wasFavourite ? 'remove' : 'add',
     })
   } catch {
-    // keep optimistic UI rolled back in store
+    isFavourite.value = wasFavourite
   }
 }
 </script>
