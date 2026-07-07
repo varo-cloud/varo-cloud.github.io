@@ -156,6 +156,34 @@ export default {
         multiVideoUploader: '组件尚未实现，请告诉我如何实现。',
         unknownWidget: '暂不支持的字段类型，待实现。',
       },
+      fields: {
+        promptMode: {
+          single: '单段提示词',
+          multi: '多镜头分镜',
+        },
+        multiPrompt: {
+          shotLabel: '镜头 {index}',
+          promptPlaceholder: '描述该镜头内容…',
+          durationLabel: '时长',
+          addShot: '添加镜头',
+          removeShot: '删除镜头',
+          totalDuration: '总时长：{current}/{max} 秒',
+          durationExceeded: '各镜头时长总和不能超过 {max} 秒。',
+        },
+        elementList: {
+          empty: '尚未添加元素引用。',
+          itemLabel: '元素 {index}',
+          placeholder: '元素 ID',
+          addItem: '添加元素',
+          removeItem: '删除元素',
+        },
+        voiceList: {
+          empty: '尚未添加参考音色。',
+          itemLabel: '音色 {index}',
+          addItem: '添加音色',
+          removeItem: '删除音色',
+        },
+      },
       tabs: {
         playground: 'Playground',
         api: 'API',
