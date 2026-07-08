@@ -21,6 +21,7 @@ const model = defineModel<string>({ required: true })
 
 const props = defineProps<{
   disabled?: boolean
+  selectedDisplay?: ModelSelectorOption
 }>()
 
 const { t } = useI18n()
@@ -59,9 +60,12 @@ const {
   validSlugOnly: true,
 })
 
-const selectedOption = computed(() =>
-  selectorOptions.value.find((item) => item.id === model.value),
-)
+const selectedOption = computed(() => {
+  const fromList = selectorOptions.value.find((item) => item.id === model.value)
+  if (fromList) return fromList
+  if (props.selectedDisplay?.id === model.value) return props.selectedDisplay
+  return undefined
+})
 
 const selectedLabel = computed(() => selectedOption.value?.label ?? '')
 

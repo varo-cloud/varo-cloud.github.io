@@ -20,7 +20,9 @@ import { useUserStore } from '@/stores/user'
 import { AnalyticsEvents, trackEvent } from '@/analytics'
 import PlaygroundInputViewSelect from './PlaygroundInputViewSelect.vue'
 import PlaygroundSchemaForm from './PlaygroundSchemaForm.vue'
-import ModelSelectorField from './fields/ModelSelectorField.vue'
+import ModelSelectorField, {
+  type ModelSelectorOption,
+} from './fields/ModelSelectorField.vue'
 
 const BATCH_SIZE_OPTIONS = [1, 2, 3, 4] as const
 
@@ -33,6 +35,7 @@ const props = defineProps<{
   quoteLoading?: boolean
   balanceUsd: number
   generating?: boolean
+  selectedModelDisplay?: ModelSelectorOption
   analyticsSource?: 'model_detail' | 'ai_generator'
   analyticsCapability?: string
 }>()
@@ -335,6 +338,7 @@ onBeforeUnmount(() => {
       <ModelSelectorField
         v-if="selectedModelId != null"
         v-model="selectedModelId"
+        :selected-display="selectedModelDisplay"
         :disabled="generating"
       />
       <PlaygroundSchemaForm

@@ -1,5 +1,5 @@
 import { computed, onBeforeUnmount, ref, watch, type MaybeRefOrGetter, toValue } from 'vue'
-import { fetchModels, fetchModelsByIds } from '@/api/models'
+import { fetchModelDetail, fetchModels, fetchModelsByIds } from '@/api/models'
 import { isValidModelSlug } from '@/utils/model-slug'
 import type { Model } from '@/types'
 
@@ -84,6 +84,16 @@ export function usePaginatedModelSearch(options?: {
       const model = fetched[0]
       if (model && !items.value.some((item) => item.id === model.id)) {
         items.value = [model, ...items.value]
+        return
+      }
+    } catch {
+      // fall through to detail lookup
+    }
+
+    try {
+      const detail = await fetchModelDetail(selectedId)
+      if (!items.value.some((item) => item.id === detail.id)) {
+        items.value = [detail, ...items.value]
       }
     } catch {
       // ignore

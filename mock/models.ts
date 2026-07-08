@@ -317,7 +317,10 @@ export default [
     response: ({ query }: { query: Record<string, string> }) => {
       const slugs = decodeBatchIds(query.ids ?? '')
       const items = slugs
-        .map((slug) => models.find((item) => item.slug === slug))
+        .map((slug) => {
+          const normalized = slug.trim().replace(/^\/+|\/+$/g, '')
+          return models.find((item) => item.slug === normalized || item.slug === slug)
+        })
         .filter((item): item is ModelCatalogEntry => Boolean(item))
 
       return success(items)

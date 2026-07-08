@@ -97,6 +97,19 @@ const quoteStandardCostUsd = playgroundQuote.standardCostUsd
 const quoteLoading = playgroundQuote.loading
 const quoteUnitCostUsd = playgroundQuote.unitCostUsd
 
+const selectedModelDisplay = computed(() => {
+  if (!model.value) return undefined
+
+  return {
+    id: model.value.id,
+    label: model.value.displayName,
+    capability: model.value.capability,
+    description: model.value.description,
+    isHot: model.value.isHot,
+    isNew: model.value.isNew,
+  }
+})
+
 async function initializePage() {
   listLoading.value = true
   listError.value = null
@@ -176,17 +189,21 @@ function handleRun(values: SchemaFormValues, count: number) {
   })
 }
 
-watch(selectedModelId, (id, previousId) => {
-  if (!id) return
-  if (previousId && id !== previousId) {
-    trackEvent(AnalyticsEvents.MODEL_SELECTOR_CHANGE, {
-      model_id: id,
-      previous_model_id: previousId,
-    })
-    replace({ name: 'ai-generator', query: { model: id } })
-  }
-  void loadSelectedModel(id)
-})
+watch(
+  selectedModelId,
+  (id, previousId) => {
+    if (!id) return
+    if (previousId && id !== previousId) {
+      trackEvent(AnalyticsEvents.MODEL_SELECTOR_CHANGE, {
+        model_id: id,
+        previous_model_id: previousId,
+      })
+      replace({ name: 'ai-generator', query: { model: id } })
+    }
+    void loadSelectedModel(id)
+  },
+  { immediate: true },
+)
 
 watch(
   () => route.query.model,
@@ -229,6 +246,7 @@ onMounted(() => {
         v-model:batch-size="batchSize"
         v-model:form-values="formValues"
         v-model:selected-model-id="selectedModelId"
+        :selected-model-display="selectedModelDisplay"
         :schema="inputSchema"
         :model-id="model.id"
         :api-model-id="model.id"
