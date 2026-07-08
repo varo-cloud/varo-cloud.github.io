@@ -61,7 +61,8 @@ const showMoreButton = computed(() => {
     props.series.length +
     props.categories.length +
     (props.categories.length > 0 ? 1 : 0) +
-    props.capabilities.length
+    props.capabilities.length +
+    (props.capabilities.length > 0 ? 1 : 0)
   return !expanded.value && totalItems > COLLAPSED_LIMIT * 2
 })
 
@@ -168,6 +169,29 @@ function selectCapability(value: string | null) {
       <section v-if="capabilities.length > 0" class="models-filter-section">
         <h3 class="models-filter-section__title">{{ t('pages.models.sidebar.capability') }}</h3>
         <ul class="models-filter-list">
+          <li>
+            <button
+              type="button"
+              class="models-filter-item"
+              :class="{ 'is-active': !selectedCapability }"
+              @click="selectCapability(null)"
+            >
+              <img
+                :src="
+                  assetUrl(
+                    !selectedCapability
+                      ? '/assets/models/filter-checked.svg'
+                      : '/assets/models/filter-unchecked.svg',
+                  )
+                "
+                alt=""
+                aria-hidden="true"
+                class="models-filter-item__icon"
+              />
+              <span class="models-filter-item__label">{{ t('pages.models.filters.all') }}</span>
+              <span class="models-filter-item__count">{{ totalCount }}</span>
+            </button>
+          </li>
           <li v-for="item in visibleItems(capabilities)" :key="`cap-${item.value}`">
             <button
               type="button"
