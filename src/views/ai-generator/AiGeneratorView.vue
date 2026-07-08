@@ -218,7 +218,6 @@ watch(
 )
 
 onMounted(() => {
-  userStore.loadProfile()
   void initializePage()
 })
 </script>

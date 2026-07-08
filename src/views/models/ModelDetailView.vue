@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useLocaleRouter } from '@/composables/useLocaleRouter'
@@ -168,10 +168,6 @@ watch(
   },
   { immediate: true },
 )
-
-onMounted(() => {
-  userStore.loadProfile()
-})
 </script>
 
 <template>
@@ -195,6 +191,7 @@ onMounted(() => {
           :slug="model.id"
           :description="model.description"
           :thumbnail-url="model.thumbnailUrl"
+          :prefilled-model="model"
           @select="handleModelSelect"
         />
       </div>

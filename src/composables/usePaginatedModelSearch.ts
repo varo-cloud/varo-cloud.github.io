@@ -41,6 +41,8 @@ function mergeUniqueModels(existing: Model[], incoming: Model[]): Model[] {
 
 export function usePaginatedModelSearch(options?: {
   selectedId?: MaybeRefOrGetter<string | undefined>
+  /** Already-loaded model; skips fetchModelDetail when selectedId matches */
+  prefilledModel?: MaybeRefOrGetter<Model | undefined>
   enabled?: MaybeRefOrGetter<boolean>
   validSlugOnly?: boolean
   prefetchTotal?: boolean
@@ -75,15 +77,24 @@ export function usePaginatedModelSearch(options?: {
     return pageItems.filter((item) => isValidModelSlug(item.id))
   }
 
+  function addSelectedToList(model: Model) {
+    if (items.value.some((item) => item.id === model.id)) return
+    items.value = [model, ...items.value]
+  }
+
   async function ensureSelectedInList() {
     const selectedId = toValue(options?.selectedId)
     if (!selectedId || items.value.some((item) => item.id === selectedId)) return
 
+    const prefilled = toValue(options?.prefilledModel)
+    if (prefilled?.id === selectedId) {
+      addSelectedToList(prefilled)
+      return
+    }
+
     try {
       const detail = await fetchModelDetail(selectedId)
-      if (!items.value.some((item) => item.id === detail.id)) {
-        items.value = [detail, ...items.value]
-      }
+      addSelectedToList(detail)
     } catch {
       // ignore
     }
@@ -161,7 +172,7 @@ export function usePaginatedModelSearch(options?: {
   })
 
   watch(
-    () => toValue(options?.selectedId),
+    () => [toValue(options?.selectedId), toValue(options?.prefilledModel)] as const,
     () => {
       void ensureSelectedInList()
     },

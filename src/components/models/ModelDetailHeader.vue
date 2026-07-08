@@ -6,6 +6,7 @@ import AppIcon from '@/components/common/AppIcon.vue'
 import PlaygroundSelectPanelSearch from '@/components/playground/PlaygroundSelectPanelSearch.vue'
 import { usePaginatedModelSearch } from '@/composables/usePaginatedModelSearch'
 import { assetUrl } from '@/utils/assetUrl'
+import type { Model } from '@/types'
 
 const props = defineProps<{
   title: string
@@ -13,6 +14,7 @@ const props = defineProps<{
   slug: string
   description: string
   thumbnailUrl?: string
+  prefilledModel?: Model
 }>()
 
 const emit = defineEmits<{
@@ -42,6 +44,7 @@ const {
   resetSearch,
 } = usePaginatedModelSearch({
   selectedId: () => props.modelId,
+  prefilledModel: () => props.prefilledModel,
   enabled: () => open.value,
   prefetchTotal: true,
 })
