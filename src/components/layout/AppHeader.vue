@@ -50,6 +50,7 @@ const userMenuOptions = computed((): UserMenuOption[] => {
   const options: UserMenuOption[] = [
     { label: t('common.deposit'), key: 'deposit', icon: 'deposit' },
     { label: t('nav.apiKeys'), key: 'api-keys', icon: 'code-box' },
+    { label: t('nav.generations'), key: 'generations', icon: 'image-add-line' },
     { label: t('header.myBilling'), key: 'billing', icon: 'file-paper' },
   ]
 
@@ -177,7 +178,7 @@ function handleUserMenuSelect(key: string) {
     return
   }
 
-  if (key === 'deposit' || key === 'billing' || key === 'api-keys') {
+  if (key === 'deposit' || key === 'billing' || key === 'api-keys' || key === 'generations') {
     goTo(key === 'deposit' ? 'billing' : key)
   }
 }

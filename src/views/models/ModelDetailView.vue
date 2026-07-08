@@ -23,7 +23,7 @@ import type { ModelDetail } from '@/types'
 import type { InputSchema, SchemaFormValues } from '@/types/schema'
 
 const route = useRoute()
-const { localePath, push } = useLocaleRouter()
+const { localePath, push, replace } = useLocaleRouter()
 const { t } = useI18n()
 const userStore = useUserStore()
 const modelPrefs = useModelPreferencesStore()
@@ -110,6 +110,14 @@ async function loadModel(slug: string) {
     inputSchema.value = schema
     if (userStore.isLoggedIn) {
       modelPrefs.recordVisit(detail.id)
+    }
+
+    const taskId = route.query.task_id
+    if (typeof taskId === 'string' && taskId) {
+      await handleViewHistoryDetail(taskId)
+      const nextQuery = { ...route.query }
+      delete nextQuery.task_id
+      void replace({ query: nextQuery })
     }
   } catch {
     error.value = t('pages.modelDetail.loadError')

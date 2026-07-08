@@ -12,6 +12,7 @@ import modelSchemaMock from '../../mock/model-schema'
 import modelsMock from '../../mock/models'
 import modelHistoryMock from '../../mock/model-history'
 import generationDetailMock from '../../mock/generation-detail'
+import generationsListMock from '../../mock/generations-list'
 import playgroundGenerationsMock from '../../mock/playground-generations'
 import playgroundQuoteMock from '../../mock/playground-quote'
 import pricingMock from '../../mock/pricing'
@@ -24,6 +25,7 @@ const mockModules: MockMethod[] = [
   ...modelsMock,
   ...modelHistoryMock,
   ...generationDetailMock,
+  ...generationsListMock,
   ...modelSchemaMock,
   ...playgroundQuoteMock,
   ...playgroundGenerationsMock,
