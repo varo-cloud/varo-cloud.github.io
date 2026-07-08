@@ -194,14 +194,6 @@ export function fetchModelDetail(slug: string) {
   return unwrap<ApiModelDetail>(http.get(`/models/${normalizeModelSlug(slug)}`)).then(mapModelDetail)
 }
 
-export function fetchModelsByIds(slugs: string[]) {
-  if (slugs.length === 0) return Promise.resolve([] as Model[])
-  const ids = slugs.map(encodeURIComponent).join(',')
-  return unwrap<ApiModelCard[]>(http.get('/models/batch', { params: { ids } })).then((items) =>
-    items.map(mapModel),
-  )
-}
-
 function fetchUserModelsPage(path: string, params?: FetchModelsParams) {
   return unwrap<ApiModelsPage | ApiModelCard[]>(http.get(path, { params })).then((raw) =>
     normalizeModelsPage(raw, params),

@@ -261,19 +261,6 @@ function buildFacets(catalog: ModelCatalogEntry[]) {
   }
 }
 
-function decodeBatchIds(raw: string): string[] {
-  return raw
-    .split(',')
-    .filter(Boolean)
-    .map((id) => {
-      try {
-        return decodeURIComponent(id)
-      } catch {
-        return id
-      }
-    })
-}
-
 function extractSlugFromPath(url: string): string | null {
   const match = url.match(/^\/api\/models\/([^?]+?)(?:\/(?:input-schema|quote|favourite|visit))?\/?(?:\?.*)?$/)
   if (!match) return null
@@ -309,21 +296,6 @@ export default [
         offset,
         limit,
       })
-    },
-  },
-  {
-    url: '/api/models/batch',
-    method: 'get',
-    response: ({ query }: { query: Record<string, string> }) => {
-      const slugs = decodeBatchIds(query.ids ?? '')
-      const items = slugs
-        .map((slug) => {
-          const normalized = slug.trim().replace(/^\/+|\/+$/g, '')
-          return models.find((item) => item.slug === normalized || item.slug === slug)
-        })
-        .filter((item): item is ModelCatalogEntry => Boolean(item))
-
-      return success(items)
     },
   },
   {
