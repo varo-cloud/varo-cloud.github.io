@@ -40,6 +40,12 @@ const appLayoutChildren: RouteRecordRaw[] = [
     component: () => import('@/views/billing/BillingView.vue'),
   },
   {
+    path: 'generations',
+    name: 'generations',
+    meta: { requiresAuth: true, fullBleed: true },
+    component: () => import('@/views/generations/GenerationsHistoryView.vue'),
+  },
+  {
     path: 'docs',
     name: 'docs',
     component: () => import('@/views/docs/DocsView.vue'),

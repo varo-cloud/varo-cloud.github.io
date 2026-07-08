@@ -402,3 +402,38 @@ export interface GenerationDetail {
   requestPartial?: boolean
   result: GenerationResult
 }
+
+export type GenerationTaskStatus = 'queued' | 'processing' | 'succeeded' | 'failed'
+
+export interface GenerationListItem {
+  taskId: string
+  model: string
+  category: 'video' | 'image'
+  capability: string
+  status: GenerationTaskStatus
+  duration: number | null
+  costUsd: number
+  invocationChannel: string | null
+  apiKeyPrefix: string | null
+  prompt: string | null
+  outputUrl: string | null
+  createdAt: number
+}
+
+export interface GenerationListPage {
+  items: GenerationListItem[]
+  total: number
+  offset: number
+  limit: number
+}
+
+export interface FetchGenerationsParams {
+  offset?: number
+  limit?: number
+  createdFrom?: number
+  createdTo?: number
+  status?: GenerationTaskStatus
+  model?: string
+  invocationChannel?: string
+  category?: 'video' | 'image'
+}
