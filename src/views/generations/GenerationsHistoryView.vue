@@ -91,10 +91,10 @@ function statusClass(status: string) {
   return `generations-history__status--${normalizeStatus(status)}`
 }
 
-function truncatePrompt(prompt: string | null, max = 48) {
-  if (!prompt) return '—'
-  if (prompt.length <= max) return prompt
-  return `${prompt.slice(0, max)}…`
+function truncateCell(value: string | null, max = 48) {
+  if (!value) return '—'
+  if (value.length <= max) return value
+  return `${value.slice(0, max)}…`
 }
 
 function buildFetchParams() {
@@ -246,7 +246,9 @@ onMounted(() => {
               class="generations-history__row"
               role="row"
             >
-              <span class="generations-history__task-id" role="cell">{{ item.taskId }}</span>
+              <span class="generations-history__task-id" role="cell" :title="item.taskId">
+                {{ truncateCell(item.taskId) }}
+              </span>
               <span class="generations-history__model" role="cell" :title="item.model">
                 {{ item.model }}
               </span>
@@ -260,7 +262,7 @@ onMounted(() => {
                 <span class="generations-history__channel">{{ channelLabel(item.invocationChannel) }}</span>
               </span>
               <span class="generations-history__prompt" role="cell" :title="item.prompt ?? undefined">
-                {{ truncatePrompt(item.prompt) }}
+                {{ truncateCell(item.prompt) }}
               </span>
               <span class="generations-history__cost" role="cell">{{ formatUsd(item.costUsd) }}</span>
               <span class="generations-history__time" role="cell">
@@ -449,9 +451,11 @@ onMounted(() => {
 }
 
 .generations-history__task-id {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 13px;
-  word-break: break-all;
 }
 
 .generations-history__model {
