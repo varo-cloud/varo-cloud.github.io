@@ -9,7 +9,7 @@ import {
 } from '@/api/playground'
 import { useAppMessage } from '@/composables/useAppMessage'
 import { AnalyticsEvents, trackEvent } from '@/analytics'
-import type { GenerationStatus, PlaygroundGenerationResult } from '@/types'
+import type { GenerationDetail, GenerationStatus, PlaygroundGenerationResult } from '@/types'
 import type { SchemaFormValues } from '@/types/schema'
 
 const POLL_INTERVAL_MS = 3000
@@ -23,6 +23,33 @@ export interface RunPlaygroundGenerationOptions {
   analyticsSource?: 'model_detail' | 'ai_generator'
   analyticsCapability?: string
   onSuccess?: () => void
+}
+
+function normalizeCreatedAt(value: number): number {
+  return value > 1_000_000_000_000 ? Math.floor(value / 1000) : value
+}
+
+function mapDetailToResult(detail: GenerationDetail, unitCostUsd: number): PlaygroundGenerationResult {
+  return {
+    id: detail.taskId,
+    object: 'generation',
+    status: detail.status === 'failed' ? 'failed' : 'completed',
+    model: detail.model,
+    created_at: normalizeCreatedAt(detail.createdAt),
+    output: {
+      type: detail.result.type,
+      url: detail.result.output_url ?? '',
+    },
+    usage: { cost_usd: unitCostUsd },
+  }
+}
+
+function mapDetailStatus(status: GenerationDetail['status']): GenerationStatus {
+  if (status === 'queued') return 'queued'
+  if (status === 'processing') return 'processing'
+  if (status === 'succeeded') return 'completed'
+  if (status === 'failed') return 'failed'
+  return 'idle'
 }
 
 function sleep(ms: number, signal: { aborted: boolean }) {
@@ -256,6 +283,87 @@ export function usePlaygroundGeneration() {
     }
   }
 
+  async function pollRestoredGeneration(taskId: string, unitCostUsd: number) {
+    const signal = pollAbort
+
+    while (!signal.aborted) {
+      const snapshot = await fetchPlaygroundGeneration(taskId)
+
+      if (signal.aborted) return
+
+      if (snapshot.status === 'completed') {
+        clearProgressInterval()
+        generationStatus.value = 'completed'
+        generationProgress.value = 100
+        generationResults.value = [mapPlaygroundGenerationResult(snapshot, unitCostUsd)]
+        outputUrls.value = generationResults.value
+          .map((item) => item.output.url)
+          .filter((url) => Boolean(url))
+        return
+      }
+
+      if (snapshot.status === 'failed') {
+        clearProgressInterval()
+        generationStatus.value = 'failed'
+        generationProgress.value = 0
+        outputUrls.value = []
+        generationResults.value = []
+        message.error(snapshot.errorMessage ?? t('pages.modelDetail.generationFailed'))
+        return
+      }
+
+      applySnapshots([snapshot])
+      await sleep(POLL_INTERVAL_MS, signal)
+    }
+  }
+
+  function restoreFromDetail(detail: GenerationDetail, options?: { pollInProgress?: boolean }) {
+    pollAbort.aborted = true
+    clearProgressInterval()
+    pollAbort = { aborted: false }
+
+    const unitCostUsd = detail.costUsd ?? 0
+    const status = mapDetailStatus(detail.status)
+
+    if (status === 'completed') {
+      generationStatus.value = 'completed'
+      generationProgress.value = 100
+
+      if (detail.result.output_url) {
+        generationResults.value = [mapDetailToResult(detail, unitCostUsd)]
+        outputUrls.value = [detail.result.output_url]
+      } else {
+        generationResults.value = []
+        outputUrls.value = []
+      }
+      return
+    }
+
+    if (status === 'failed') {
+      generationStatus.value = 'failed'
+      generationProgress.value = 0
+      outputUrls.value = []
+      generationResults.value = []
+      if (detail.result.error?.message) {
+        message.error(detail.result.error.message)
+      }
+      return
+    }
+
+    generationStatus.value = status
+    generationProgress.value = 0
+    outputUrls.value = []
+    generationResults.value = []
+
+    if (status === 'processing') {
+      startIndeterminateProgress()
+    }
+
+    if (options?.pollInProgress !== false) {
+      void pollRestoredGeneration(detail.taskId, unitCostUsd)
+    }
+  }
+
   onBeforeUnmount(() => {
     pollAbort.aborted = true
     clearProgressInterval()
@@ -269,5 +377,6 @@ export function usePlaygroundGeneration() {
     isGenerating,
     runGeneration,
     resetGeneration,
+    restoreFromDetail,
   }
 }

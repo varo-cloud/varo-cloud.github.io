@@ -5,6 +5,7 @@ import { useI18n } from 'vue-i18n'
 import { useLocaleRouter } from '@/composables/useLocaleRouter'
 import { NSpin } from 'naive-ui'
 import { fetchModelDetail } from '@/api/models'
+import { fetchGenerationDetail } from '@/api/generations'
 import ModelDetailHeader from '@/components/models/ModelDetailHeader.vue'
 import ModelApiTab from '@/components/models/ModelApiTab.vue'
 import ModelHistoryTab from '@/components/models/ModelHistoryTab.vue'
@@ -16,6 +17,8 @@ import { createDefaultFormValues } from '@/utils/schema-form'
 import { extractInputSchema } from '@/utils/model-schema'
 import { usePlaygroundQuote } from '@/composables/usePlaygroundQuote'
 import { usePlaygroundGeneration } from '@/composables/usePlaygroundGeneration'
+import { useAppMessage } from '@/composables/useAppMessage'
+import { requestToFormValues, resolveBatchSizeFromRequest } from '@/utils/restore-playground-form'
 import type { ModelDetail } from '@/types'
 import type { InputSchema, SchemaFormValues } from '@/types/schema'
 
@@ -24,6 +27,7 @@ const { localePath, push } = useLocaleRouter()
 const { t } = useI18n()
 const userStore = useUserStore()
 const modelPrefs = useModelPreferencesStore()
+const message = useAppMessage()
 
 const model = ref<ModelDetail | null>(null)
 const inputSchema = ref<InputSchema | null>(null)
@@ -32,6 +36,7 @@ const error = ref<string | null>(null)
 const activeTab = ref<'playground' | 'api' | 'history'>('playground')
 const batchSize = ref(1)
 const formValues = ref<SchemaFormValues>({})
+const restoringHistory = ref(false)
 const estimatedSeconds = 40
 
 const {
@@ -42,6 +47,7 @@ const {
   isGenerating,
   runGeneration,
   resetGeneration,
+  restoreFromDetail,
 } = usePlaygroundGeneration()
 
 const balanceUsd = computed(() => userStore.balanceUsd ?? 0)
@@ -128,6 +134,31 @@ function handleRun(values: SchemaFormValues, count: number) {
       void userStore.loadProfile()
     },
   })
+}
+
+async function handleViewHistoryDetail(taskId: string) {
+  if (restoringHistory.value || !model.value) return
+
+  restoringHistory.value = true
+  try {
+    const detail = await fetchGenerationDetail(taskId)
+
+    if (detail.requestPartial) {
+      message.warning(t('pages.modelDetail.history.partialParams'))
+    }
+
+    if (inputSchema.value) {
+      formValues.value = requestToFormValues(detail.request, inputSchema.value)
+    }
+
+    batchSize.value = resolveBatchSizeFromRequest(detail.request)
+    activeTab.value = 'playground'
+    restoreFromDetail(detail)
+  } catch {
+    message.error(t('pages.modelDetail.history.detailLoadError'))
+  } finally {
+    restoringHistory.value = false
+  }
 }
 
 watch(
@@ -247,7 +278,11 @@ onMounted(() => {
         </p>
       </div>
 
-      <ModelHistoryTab v-else-if="activeTab === 'history'" :model-slug="model.id" />
+      <ModelHistoryTab
+        v-else-if="activeTab === 'history'"
+        :model-slug="model.id"
+        @view-detail="handleViewHistoryDetail"
+      />
     </template>
   </div>
 </template>

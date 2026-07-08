@@ -348,3 +348,57 @@ export interface PlaygroundQuote {
 export interface PlaygroundQuotePayload {
   input: Record<string, unknown>
 }
+
+export interface VideoGenerationRequest {
+  model: string
+  prompt?: string
+  image_url?: string | null
+  first_image?: string | null
+  last_image?: string | null
+  reference_images?: string[]
+  reference_videos?: string[]
+  reference_audios?: string[]
+  duration?: number
+  resolution?: string
+  ratio?: string
+  fps?: number
+  generate_audio?: boolean
+  audio?: Record<string, unknown> | null
+  camera_fixed?: boolean
+  seed?: number
+  batch_size?: number
+  [key: string]: unknown
+}
+
+export interface ImageGenerationRequest {
+  model: string
+  prompt?: string
+  image_url?: string
+  size?: string
+  n?: number
+  seed?: number
+  [key: string]: unknown
+}
+
+export type GenerationRequest = VideoGenerationRequest | ImageGenerationRequest
+
+export interface GenerationResult {
+  type: 'video' | 'image'
+  output_url: string | null
+  error: { message: string } | null
+}
+
+export interface GenerationDetail {
+  taskId: string
+  model: string
+  category: ModelCategory
+  capability: string
+  status: 'queued' | 'processing' | 'succeeded' | 'failed'
+  invocationChannel: string | null
+  apiKeyPrefix: string | null
+  costUsd: number
+  createdAt: number
+  request: GenerationRequest
+  requestPartial?: boolean
+  result: GenerationResult
+}

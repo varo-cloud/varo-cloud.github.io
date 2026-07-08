@@ -15,6 +15,10 @@ const props = defineProps<{
   modelSlug: string
 }>()
 
+const emit = defineEmits<{
+  viewDetail: [taskId: string]
+}>()
+
 const { t, locale } = useI18n()
 const { push } = useLocaleRouter()
 const userStore = useUserStore()
@@ -105,6 +109,10 @@ function goToAuth() {
   void push({ name: 'auth' })
 }
 
+function handleViewDetail(taskId: string) {
+  emit('viewDetail', taskId)
+}
+
 watch(
   () => props.modelSlug,
   () => {
@@ -146,6 +154,7 @@ onMounted(() => {
           <span role="columnheader">{{ t('pages.modelDetail.history.columns.channel') }}</span>
           <span role="columnheader">{{ t('pages.modelDetail.history.columns.cost') }}</span>
           <span role="columnheader">{{ t('pages.modelDetail.history.columns.time') }}</span>
+          <span role="columnheader">{{ t('pages.modelDetail.history.columns.actions') }}</span>
         </div>
 
         <div v-if="items.length === 0" class="model-history__empty">
@@ -171,6 +180,15 @@ onMounted(() => {
             <span class="model-history__cost" role="cell">{{ formatUsd(item.costUsd) }}</span>
             <span class="model-history__time" role="cell">
               {{ formatTimestamp(item.createdAt, locale, 'compactDatetime') }}
+            </span>
+            <span role="cell">
+              <button
+                type="button"
+                class="model-history__view-btn"
+                @click="handleViewDetail(item.taskId)"
+              >
+                {{ t('pages.modelDetail.history.viewDetail') }}
+              </button>
             </span>
           </div>
         </div>
@@ -247,7 +265,8 @@ onMounted(() => {
     minmax(88px, 0.7fr)
     minmax(88px, 0.7fr)
     minmax(72px, 0.55fr)
-    minmax(120px, 0.9fr);
+    minmax(120px, 0.9fr)
+    minmax(72px, 0.55fr);
   gap: 12px;
   align-items: center;
   padding: 0 32px;
@@ -343,6 +362,23 @@ onMounted(() => {
   justify-content: center;
 }
 
+.model-history__view-btn {
+  min-height: 28px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 6px;
+  background: rgba(6, 182, 212, 0.12);
+  color: #06b6d4;
+  font-family: inherit;
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.model-history__view-btn:hover {
+  background: rgba(6, 182, 212, 0.2);
+}
+
 @media (max-width: 1023px) {
   .model-history__header {
     display: none;
@@ -355,6 +391,10 @@ onMounted(() => {
 
   .model-history__task-id {
     grid-column: 1 / -1;
+  }
+
+  .model-history__view-btn {
+    width: 100%;
   }
 }
 </style>

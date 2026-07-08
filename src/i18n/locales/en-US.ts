@@ -238,7 +238,11 @@ export default {
           channel: 'Style',
           cost: 'Cost',
           time: 'Time',
+          actions: 'Actions',
         },
+        viewDetail: 'View',
+        detailLoadError: 'Failed to load generation details. Please try again.',
+        partialParams: 'Some input parameters are unavailable for this older record.',
       },
       generation: {
         queued: 'Queued',
