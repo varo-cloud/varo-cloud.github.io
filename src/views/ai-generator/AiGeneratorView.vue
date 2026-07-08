@@ -4,17 +4,17 @@ import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { NSpin } from 'naive-ui'
 import { fetchModelDetail, fetchModels } from '@/api/models'
-import { fetchModelInputSchema } from '@/api/modelSchema'
 import PlaygroundInputPanel from '@/components/playground/PlaygroundInputPanel.vue'
 import PlaygroundOutputPanel from '@/components/playground/PlaygroundOutputPanel.vue'
-import type { ModelSelectorOption } from '@/components/playground/fields/ModelSelectorField.vue'
 import { useLocaleRouter } from '@/composables/useLocaleRouter'
 import { usePlaygroundGeneration } from '@/composables/usePlaygroundGeneration'
 import { usePlaygroundQuote } from '@/composables/usePlaygroundQuote'
 import { useUserStore } from '@/stores/user'
 import { AnalyticsEvents, trackEvent } from '@/analytics'
 import { createDefaultFormValues } from '@/utils/schema-form'
-import type { Model, ModelDetail } from '@/types'
+import { extractInputSchema } from '@/utils/model-schema'
+import { isValidModelSlug, normalizeModelSlug } from '@/utils/model-slug'
+import type { ModelDetail } from '@/types'
 import type { InputSchema, SchemaFormValues } from '@/types/schema'
 
 const route = useRoute()
@@ -22,7 +22,7 @@ const { replace } = useLocaleRouter()
 const { t } = useI18n()
 const userStore = useUserStore()
 
-const models = ref<Model[]>([])
+const hasModels = ref(true)
 const selectedModelId = ref('')
 const model = ref<ModelDetail | null>(null)
 const inputSchema = ref<InputSchema | null>(null)
@@ -46,16 +46,28 @@ const {
 
 const balanceUsd = computed(() => userStore.balanceUsd ?? 0)
 
-const modelOptions = computed<ModelSelectorOption[]>(() =>
-  models.value.map((item) => ({
-    id: item.id,
-    label: item.displayName,
-    capability: item.capability,
-    description: item.description,
-    isHot: item.isHot,
-    isNew: item.isNew,
-  })),
-)
+function selectableModels<T extends { id: string }>(items: T[]): T[] {
+  return items.filter((item) => isValidModelSlug(item.id))
+}
+
+async function resolveInitialModelId(): Promise<string> {
+  const queryModel = route.query.model
+  if (typeof queryModel === 'string') {
+    const normalizedQuery = normalizeModelSlug(queryModel)
+    if (isValidModelSlug(normalizedQuery)) {
+      try {
+        await fetchModelDetail(normalizedQuery)
+        return normalizedQuery
+      } catch {
+        // fall through to default selection
+      }
+    }
+  }
+
+  const page = await fetchModels({ limit: 20, offset: 0 })
+  const selectable = selectableModels(page.items)
+  return selectable.find((item) => item.isHot)?.id ?? selectable[0]?.id ?? ''
+}
 
 const fallbackUnitCostUsd = computed(() => model.value?.startingPriceUsd ?? 0)
 
@@ -85,32 +97,40 @@ const quoteStandardCostUsd = playgroundQuote.standardCostUsd
 const quoteLoading = playgroundQuote.loading
 const quoteUnitCostUsd = playgroundQuote.unitCostUsd
 
-function resolveInitialModelId(items: Model[]): string {
-  const queryModel = route.query.model
-  if (typeof queryModel === 'string' && items.some((item) => item.id === queryModel)) {
-    return queryModel
-  }
-  return items.find((item) => item.isHot)?.id ?? items[0]?.id ?? ''
-}
+const selectedModelDisplay = computed(() => {
+  if (!model.value) return undefined
 
-async function loadModels() {
+  return {
+    id: model.value.id,
+    label: model.value.displayName,
+    capability: model.value.capability,
+    description: model.value.description,
+    isHot: model.value.isHot,
+    isNew: model.value.isNew,
+  }
+})
+
+async function initializePage() {
   listLoading.value = true
   listError.value = null
 
   try {
-    const page = await fetchModels({ limit: 100 })
-    models.value = page.items
-    if (page.items.length === 0) {
+    const page = await fetchModels({ limit: 1, offset: 0 })
+    if (page.total === 0) {
+      hasModels.value = false
       selectedModelId.value = ''
       return
     }
-    selectedModelId.value = resolveInitialModelId(page.items)
-    if (selectedModelId.value) {
-      replace({ name: 'ai-generator', query: { model: selectedModelId.value } })
+
+    hasModels.value = true
+    selectedModelId.value = await resolveInitialModelId()
+    if (!selectedModelId.value) {
+      return
     }
+    replace({ name: 'ai-generator', query: { model: selectedModelId.value } })
   } catch {
     listError.value = t('pages.aiGenerator.loadError')
-    models.value = []
+    hasModels.value = false
     selectedModelId.value = ''
   } finally {
     listLoading.value = false
@@ -130,13 +150,20 @@ async function loadSelectedModel(id: string) {
   inputSchema.value = null
 
   try {
-    const [detail, schema] = await Promise.all([
-      fetchModelDetail(id),
-      fetchModelInputSchema(id).catch(() => null),
-    ])
+    const detail = await fetchModelDetail(id)
+    let schema: InputSchema | null = null
+
+    if (detail.inputSchema) {
+      try {
+        schema = extractInputSchema(detail.inputSchema)
+      } catch {
+        schema = null
+      }
+    }
+
+    formValues.value = createDefaultFormValues(schema ?? undefined)
     model.value = detail
     inputSchema.value = schema
-    formValues.value = createDefaultFormValues(schema ?? undefined)
   } catch {
     modelError.value = t('pages.aiGenerator.modelLoadError')
     model.value = null
@@ -162,32 +189,36 @@ function handleRun(values: SchemaFormValues, count: number) {
   })
 }
 
-watch(selectedModelId, (id, previousId) => {
-  if (!id) return
-  if (previousId && id !== previousId) {
-    trackEvent(AnalyticsEvents.MODEL_SELECTOR_CHANGE, {
-      model_id: id,
-      previous_model_id: previousId,
-    })
-    replace({ name: 'ai-generator', query: { model: id } })
-  }
-  void loadSelectedModel(id)
-})
+watch(
+  selectedModelId,
+  (id, previousId) => {
+    if (!id) return
+    if (previousId && id !== previousId) {
+      trackEvent(AnalyticsEvents.MODEL_SELECTOR_CHANGE, {
+        model_id: id,
+        previous_model_id: previousId,
+      })
+      replace({ name: 'ai-generator', query: { model: id } })
+    }
+    void loadSelectedModel(id)
+  },
+  { immediate: true },
+)
 
 watch(
   () => route.query.model,
   (queryModel) => {
-    if (typeof queryModel !== 'string' || !models.value.length) return
-    if (queryModel === selectedModelId.value) return
-    if (models.value.some((item) => item.id === queryModel)) {
-      selectedModelId.value = queryModel
+    if (typeof queryModel !== 'string') return
+    const normalizedQuery = normalizeModelSlug(queryModel)
+    if (normalizedQuery === selectedModelId.value) return
+    if (isValidModelSlug(normalizedQuery)) {
+      selectedModelId.value = normalizedQuery
     }
   },
 )
 
 onMounted(() => {
-  userStore.loadProfile()
-  void loadModels()
+  void initializePage()
 })
 </script>
 
@@ -201,7 +232,7 @@ onMounted(() => {
       <p>{{ listError }}</p>
     </div>
 
-    <div v-else-if="models.length === 0" class="ai-generator-page__state">
+    <div v-else-if="!hasModels" class="ai-generator-page__state">
       <p>{{ t('pages.aiGenerator.emptyModels') }}</p>
     </div>
 
@@ -214,9 +245,9 @@ onMounted(() => {
         v-model:batch-size="batchSize"
         v-model:form-values="formValues"
         v-model:selected-model-id="selectedModelId"
+        :selected-model-display="selectedModelDisplay"
         :schema="inputSchema"
         :model-id="model.id"
-        :model-options="modelOptions"
         :api-model-id="model.id"
         :cost-usd="quoteCostUsd"
         :standard-cost-usd="quoteStandardCostUsd"

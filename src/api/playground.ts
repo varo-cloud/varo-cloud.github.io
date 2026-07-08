@@ -1,6 +1,7 @@
 import { http, unwrap } from './http'
 import { buildPlaygroundRunBody } from '@/utils/playground-request-snippets'
 import { resolveMediaPreviewKind } from '@/utils/mediaPreview'
+import { normalizeModelSlug } from '@/utils/model-slug'
 import type { GenerationStatus, PlaygroundGenerationResult, PlaygroundQuote, PlaygroundQuotePayload } from '@/types'
 import type { SchemaFormValues } from '@/types/schema'
 
@@ -122,7 +123,7 @@ function mapPlaygroundQuote(raw: ApiPlaygroundQuote): PlaygroundQuote {
 
 export function fetchPlaygroundQuote(slug: string, payload: PlaygroundQuotePayload) {
   return unwrap<ApiPlaygroundQuote>(
-    http.post(`/models/${slug}/quote`, {
+    http.post(`/models/${normalizeModelSlug(slug)}/quote`, {
       input: payload.input,
     }),
   ).then(mapPlaygroundQuote)

@@ -1,11 +1,11 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useLocaleRouter } from '@/composables/useLocaleRouter'
 import { NSpin } from 'naive-ui'
-import { fetchModelDetail, fetchModels } from '@/api/models'
-import { fetchModelInputSchema } from '@/api/modelSchema'
+import { fetchModelDetail } from '@/api/models'
+import { fetchGenerationDetail } from '@/api/generations'
 import ModelDetailHeader from '@/components/models/ModelDetailHeader.vue'
 import ModelApiTab from '@/components/models/ModelApiTab.vue'
 import ModelHistoryTab from '@/components/models/ModelHistoryTab.vue'
@@ -17,7 +17,9 @@ import { createDefaultFormValues } from '@/utils/schema-form'
 import { extractInputSchema } from '@/utils/model-schema'
 import { usePlaygroundQuote } from '@/composables/usePlaygroundQuote'
 import { usePlaygroundGeneration } from '@/composables/usePlaygroundGeneration'
-import type { Model, ModelDetail } from '@/types'
+import { useAppMessage } from '@/composables/useAppMessage'
+import { requestToFormValues, resolveBatchSizeFromRequest } from '@/utils/restore-playground-form'
+import type { ModelDetail } from '@/types'
 import type { InputSchema, SchemaFormValues } from '@/types/schema'
 
 const route = useRoute()
@@ -25,15 +27,16 @@ const { localePath, push } = useLocaleRouter()
 const { t } = useI18n()
 const userStore = useUserStore()
 const modelPrefs = useModelPreferencesStore()
+const message = useAppMessage()
 
 const model = ref<ModelDetail | null>(null)
-const modelOptions = ref<Model[]>([])
 const inputSchema = ref<InputSchema | null>(null)
 const loading = ref(true)
 const error = ref<string | null>(null)
 const activeTab = ref<'playground' | 'api' | 'history'>('playground')
 const batchSize = ref(1)
 const formValues = ref<SchemaFormValues>({})
+const restoringHistory = ref(false)
 const estimatedSeconds = 40
 
 const {
@@ -44,6 +47,7 @@ const {
   isGenerating,
   runGeneration,
   resetGeneration,
+  restoreFromDetail,
 } = usePlaygroundGeneration()
 
 const balanceUsd = computed(() => userStore.balanceUsd ?? 0)
@@ -78,30 +82,10 @@ const quoteUnitCostUsd = playgroundQuote.unitCostUsd
 
 const displayTitle = computed(() => model.value?.displayName ?? '')
 
-const modelSwitcherOptions = computed(() =>
-  modelOptions.value.map((item) => ({
-    id: item.id,
-    label: item.displayName,
-  })),
-)
-
-async function loadModelOptions() {
-  try {
-    const page = await fetchModels({ limit: 100 })
-    modelOptions.value = page.items
-  } catch {
-    modelOptions.value = []
-  }
-}
-
 function handleModelSelect(slug: string) {
   if (slug === model.value?.id) return
   void push({ name: 'model-detail', params: { slug } })
 }
-
-watch(inputSchema, (schema) => {
-  formValues.value = createDefaultFormValues(schema ?? undefined)
-})
 
 async function loadModel(slug: string) {
   loading.value = true
@@ -113,18 +97,15 @@ async function loadModel(slug: string) {
     const detail = await fetchModelDetail(slug)
     let schema: InputSchema | null = null
 
-    try {
-      schema = await fetchModelInputSchema(slug)
-    } catch {
-      if (detail.inputSchema) {
-        try {
-          schema = extractInputSchema(detail.inputSchema)
-        } catch {
-          schema = null
-        }
+    if (detail.inputSchema) {
+      try {
+        schema = extractInputSchema(detail.inputSchema)
+      } catch {
+        schema = null
       }
     }
 
+    formValues.value = createDefaultFormValues(schema ?? undefined)
     model.value = detail
     inputSchema.value = schema
     if (userStore.isLoggedIn) {
@@ -155,6 +136,31 @@ function handleRun(values: SchemaFormValues, count: number) {
   })
 }
 
+async function handleViewHistoryDetail(taskId: string) {
+  if (restoringHistory.value || !model.value) return
+
+  restoringHistory.value = true
+  try {
+    const detail = await fetchGenerationDetail(taskId)
+
+    if (detail.requestPartial) {
+      message.warning(t('pages.modelDetail.history.partialParams'))
+    }
+
+    if (inputSchema.value) {
+      formValues.value = requestToFormValues(detail.request, inputSchema.value)
+    }
+
+    batchSize.value = resolveBatchSizeFromRequest(detail.request)
+    activeTab.value = 'playground'
+    restoreFromDetail(detail)
+  } catch {
+    message.error(t('pages.modelDetail.history.detailLoadError'))
+  } finally {
+    restoringHistory.value = false
+  }
+}
+
 watch(
   () => route.params.slug,
   (slug) => {
@@ -162,11 +168,6 @@ watch(
   },
   { immediate: true },
 )
-
-onMounted(() => {
-  userStore.loadProfile()
-  void loadModelOptions()
-})
 </script>
 
 <template>
@@ -190,7 +191,7 @@ onMounted(() => {
           :slug="model.id"
           :description="model.description"
           :thumbnail-url="model.thumbnailUrl"
-          :model-options="modelSwitcherOptions"
+          :prefilled-model="model"
           @select="handleModelSelect"
         />
       </div>
@@ -274,7 +275,11 @@ onMounted(() => {
         </p>
       </div>
 
-      <ModelHistoryTab v-else-if="activeTab === 'history'" :model-slug="model.id" />
+      <ModelHistoryTab
+        v-else-if="activeTab === 'history'"
+        :model-slug="model.id"
+        @view-detail="handleViewHistoryDetail"
+      />
     </template>
   </div>
 </template>

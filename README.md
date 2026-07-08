@@ -78,11 +78,17 @@ VITE_DEV_REFRESH_TOKEN=<staging 登录后的 refresh_token>
 | `VITE_TURNSTILE_SITE_KEY` | Secret | Turnstile site key（staging / production 共用，或按环境拆分） |
 | `VITE_GA_MEASUREMENT_ID` | Variable | GA4 测量 ID，留空则关闭统计 |
 
-**Staging / Production 固定值**（已写在 `deploy-staging.yml`、`deploy-production.yml`）：
+**Staging**（`deploy-staging.yml`）：
 
 - `VITE_USE_MOCK=false`
 - `VITE_API_BASE_URL=https://staging.api.varo.cloud/api`
 - `VITE_BASE=/staging.github.io/`
+
+**Production**（`deploy-production.yml`）：
+
+- `VITE_USE_MOCK=false`
+- `VITE_API_BASE_URL=https://api.varo.cloud/api`
+- `VITE_BASE=/`
 
 ## 路由清单
 

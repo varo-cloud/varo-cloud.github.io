@@ -64,7 +64,6 @@ watch(
     model.value = createDefaultFormValues(schema)
     promptInputMode.value = 'single'
   },
-  { immediate: true },
 )
 
 watch(promptInputMode, (mode) => {

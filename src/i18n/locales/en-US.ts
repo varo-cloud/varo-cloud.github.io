@@ -7,8 +7,14 @@ export default {
     login: 'Sign in',
     logout: 'Log out',
     close: 'Close',
+    noSearchResults: 'No results found',
     language: 'Language',
     deposit: 'Deposit',
+    pagination: {
+      label: 'Pagination',
+      prev: 'Previous',
+      next: 'Next',
+    },
   },
   header: {
     searchModels: 'Search Models',
@@ -237,7 +243,11 @@ export default {
           channel: 'Style',
           cost: 'Cost',
           time: 'Time',
+          actions: 'Actions',
         },
+        viewDetail: 'View',
+        detailLoadError: 'Failed to load generation details. Please try again.',
+        partialParams: 'Some input parameters are unavailable for this older record.',
       },
       generation: {
         queued: 'Queued',

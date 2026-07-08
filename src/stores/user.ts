@@ -18,22 +18,31 @@ export const useUserStore = defineStore('user', () => {
     persistTokenPair(tokens)
   }
 
+  let profileLoadPromise: Promise<void> | null = null
+
   async function loadProfile() {
     if (!token.value) {
       profile.value = null
       return
     }
+    if (profileLoadPromise) return profileLoadPromise
+
     loading.value = true
-    try {
-      profile.value = await fetchUserProfile()
-      if (profile.value?.id) {
-        setAnalyticsUserId(profile.value.id)
+    profileLoadPromise = (async () => {
+      try {
+        profile.value = await fetchUserProfile()
+        if (profile.value?.id) {
+          setAnalyticsUserId(profile.value.id)
+        }
+      } catch {
+        profile.value = null
+      } finally {
+        loading.value = false
+        profileLoadPromise = null
       }
-    } catch {
-      profile.value = null
-    } finally {
-      loading.value = false
-    }
+    })()
+
+    return profileLoadPromise
   }
 
   function setProfile(user: UserProfile) {

@@ -7,8 +7,14 @@ export default {
     login: '登录',
     logout: '退出登录',
     close: '关闭',
+    noSearchResults: '无匹配结果',
     language: '语言',
     deposit: '充值',
+    pagination: {
+      label: '分页',
+      prev: '上一页',
+      next: '下一页',
+    },
   },
   header: {
     searchModels: '搜索模型',
@@ -236,7 +242,11 @@ export default {
           channel: '类型',
           cost: '费用',
           time: '时间',
+          actions: '操作',
         },
+        viewDetail: '查看',
+        detailLoadError: '加载生成详情失败，请重试。',
+        partialParams: '该历史记录参数不完整，部分表单字段无法还原。',
       },
       generation: {
         queued: 'Queued',

@@ -26,6 +26,16 @@ export function usePlaygroundQuote(options: UsePlaygroundQuoteOptions) {
 
   let debounceTimer: ReturnType<typeof setTimeout> | undefined
   let requestSerial = 0
+  let inflightRequestKey: string | null = null
+  let lastSuccessfulRequestKey = ''
+
+  function quoteRequestKey(): string {
+    return JSON.stringify({
+      modelId: toValue(options.modelId),
+      batchSize: options.batchSize.value,
+      formValues: options.formValues.value,
+    })
+  }
 
   const fallbackUnitCostUsd = computed(() => toValue(options.fallbackUnitCostUsd))
   const fallbackStandardUnitCostUsd = computed(() => toValue(options.fallbackStandardUnitCostUsd))
@@ -49,10 +59,17 @@ export function usePlaygroundQuote(options: UsePlaygroundQuoteOptions) {
     if (!modelId || !enabled) {
       quote.value = null
       loading.value = false
+      inflightRequestKey = null
+      return
+    }
+
+    const requestKey = quoteRequestKey()
+    if (requestKey === inflightRequestKey || requestKey === lastSuccessfulRequestKey) {
       return
     }
 
     const serial = ++requestSerial
+    inflightRequestKey = requestKey
     loading.value = true
     error.value = null
 
@@ -63,6 +80,7 @@ export function usePlaygroundQuote(options: UsePlaygroundQuoteOptions) {
 
       if (serial === requestSerial) {
         quote.value = result
+        lastSuccessfulRequestKey = requestKey
       }
     } catch (err) {
       if (serial === requestSerial) {
@@ -71,6 +89,9 @@ export function usePlaygroundQuote(options: UsePlaygroundQuoteOptions) {
     } finally {
       if (serial === requestSerial) {
         loading.value = false
+      }
+      if (inflightRequestKey === requestKey) {
+        inflightRequestKey = null
       }
     }
   }
@@ -92,32 +113,30 @@ export function usePlaygroundQuote(options: UsePlaygroundQuoteOptions) {
   }
 
   watch(
-    () => toValue(options.modelId),
-    () => {
-      quote.value = null
-      scheduleQuote(true)
-    },
-  )
-
-  watch(
-    [options.formValues, options.batchSize],
-    () => {
-      scheduleQuote()
-    },
-    { deep: true },
-  )
-
-  watch(
-    () => toValue(options.enabled ?? true),
-    (enabled) => {
-      if (enabled) {
-        scheduleQuote(true)
-      } else {
+    () => ({
+      modelId: toValue(options.modelId),
+      enabled: toValue(options.enabled ?? true),
+      batchSize: options.batchSize.value,
+      formValues: options.formValues.value,
+    }),
+    (state, prev) => {
+      if (!state.enabled || !state.modelId) {
         quote.value = null
         loading.value = false
+        inflightRequestKey = null
+        lastSuccessfulRequestKey = ''
+        return
       }
+
+      const modelChanged = Boolean(prev && state.modelId !== prev.modelId)
+      if (modelChanged) {
+        lastSuccessfulRequestKey = ''
+      }
+
+      const enabledTurnedOn = Boolean(prev && !prev.enabled && state.enabled)
+      scheduleQuote(modelChanged || enabledTurnedOn)
     },
-    { immediate: true },
+    { deep: true },
   )
 
   onBeforeUnmount(() => {

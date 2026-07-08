@@ -1,12 +1,12 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, ref, useId, watch } from 'vue'
+import { useI18n } from 'vue-i18n'
+import { NSpin } from 'naive-ui'
 import AppIcon from '@/components/common/AppIcon.vue'
+import PlaygroundSelectPanelSearch from '@/components/playground/PlaygroundSelectPanelSearch.vue'
+import { usePaginatedModelSearch } from '@/composables/usePaginatedModelSearch'
 import { assetUrl } from '@/utils/assetUrl'
-
-export type ModelSwitcherOption = {
-  id: string
-  label: string
-}
+import type { Model } from '@/types'
 
 const props = defineProps<{
   title: string
@@ -14,28 +14,46 @@ const props = defineProps<{
   slug: string
   description: string
   thumbnailUrl?: string
-  modelOptions?: ModelSwitcherOption[]
+  prefilledModel?: Model
 }>()
 
 const emit = defineEmits<{
   select: [id: string]
 }>()
 
+const { t } = useI18n()
+
 const open = ref(false)
+const searchRef = ref<InstanceType<typeof PlaygroundSelectPanelSearch> | null>(null)
 const triggerRef = ref<HTMLElement | null>(null)
 const panelRef = ref<HTMLElement | null>(null)
 const panelStyle = ref({ top: '0px', left: '0px', width: '0px' })
 const panelId = useId()
+const SCROLL_LOAD_THRESHOLD = 48
 
 let closeTimer: ReturnType<typeof setTimeout> | null = null
+
+const {
+  total,
+  loading,
+  loadingMore,
+  searchQuery,
+  selectorOptions,
+  refresh,
+  loadMore,
+  resetSearch,
+} = usePaginatedModelSearch({
+  selectedId: () => props.modelId,
+  prefilledModel: () => props.prefilledModel,
+  enabled: () => open.value,
+  prefetchTotal: true,
+})
 
 const thumbnailSrc = computed(() =>
   assetUrl(props.thumbnailUrl || '/assets/model-detail/model-thumb.jpg'),
 )
 
-const switcherOptions = computed(() => props.modelOptions ?? [])
-
-const hasSwitcher = computed(() => switcherOptions.value.length > 1)
+const hasSwitcher = computed(() => total.value === 0 || total.value > 1)
 
 function updatePanelPosition() {
   const el = triggerRef.value
@@ -76,6 +94,12 @@ function selectOption(id: string) {
   open.value = false
 }
 
+function onListScroll(event: Event) {
+  const el = event.target as HTMLElement
+  if (el.scrollHeight - el.scrollTop - el.clientHeight > SCROLL_LOAD_THRESHOLD) return
+  void loadMore()
+}
+
 function onDocumentPointerDown(event: PointerEvent) {
   const target = event.target as Node
   if (triggerRef.value?.contains(target) || panelRef.value?.contains(target)) return
@@ -84,13 +108,19 @@ function onDocumentPointerDown(event: PointerEvent) {
 
 watch(open, (isOpen) => {
   if (!isOpen) {
+    resetSearch()
     window.removeEventListener('resize', updatePanelPosition)
     window.removeEventListener('scroll', updatePanelPosition, true)
     document.removeEventListener('pointerdown', onDocumentPointerDown)
     return
   }
 
-  nextTick(updatePanelPosition)
+  void refresh()
+
+  nextTick(() => {
+    updatePanelPosition()
+    searchRef.value?.focus()
+  })
   window.addEventListener('resize', updatePanelPosition)
   window.addEventListener('scroll', updatePanelPosition, true)
   document.addEventListener('pointerdown', onDocumentPointerDown)
@@ -141,41 +171,58 @@ onBeforeUnmount(() => {
         v-if="open && hasSwitcher"
         :id="panelId"
         ref="panelRef"
-        class="playground-select-panel model-header__panel scrollbar-subtle"
+        class="playground-select-panel model-header__panel"
         :style="panelStyle"
         role="listbox"
         @mouseenter="openDropdown"
         @mouseleave="scheduleClose"
       >
-        <button
-          v-for="opt in switcherOptions"
-          :key="opt.id"
-          type="button"
-          class="playground-select-panel__option"
-          :class="{ 'playground-select-panel__option--selected': opt.id === modelId }"
-          role="option"
-          :aria-selected="opt.id === modelId"
-          @click.stop="selectOption(opt.id)"
+        <PlaygroundSelectPanelSearch ref="searchRef" v-model="searchQuery" />
+        <div
+          class="playground-select-panel__scroll scrollbar-subtle"
+          @scroll="onListScroll"
         >
-          <span class="playground-select-panel__option-label">{{ opt.label }}</span>
-          <svg
-            v-if="opt.id === modelId"
-            class="playground-select-panel__check"
-            width="14"
-            height="14"
-            viewBox="0 0 14 14"
-            fill="none"
-            aria-hidden="true"
-          >
-            <path
-              d="M2.5 7l3 3 6-6"
-              stroke="currentColor"
-              stroke-width="1.5"
-              stroke-linecap="round"
-              stroke-linejoin="round"
-            />
-          </svg>
-        </button>
+          <div v-if="loading" class="playground-select-panel__loading">
+            <NSpin size="small" />
+          </div>
+          <template v-else>
+            <button
+              v-for="opt in selectorOptions"
+              :key="opt.id"
+              type="button"
+              class="playground-select-panel__option"
+              :class="{ 'playground-select-panel__option--selected': opt.id === modelId }"
+              role="option"
+              :aria-selected="opt.id === modelId"
+              @click.stop="selectOption(opt.id)"
+            >
+              <span class="playground-select-panel__option-label">{{ opt.label }}</span>
+              <svg
+                v-if="opt.id === modelId"
+                class="playground-select-panel__check"
+                width="14"
+                height="14"
+                viewBox="0 0 14 14"
+                fill="none"
+                aria-hidden="true"
+              >
+                <path
+                  d="M2.5 7l3 3 6-6"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+            </button>
+            <p v-if="selectorOptions.length === 0" class="playground-select-panel__empty">
+              {{ t('common.noSearchResults') }}
+            </p>
+            <div v-if="loadingMore" class="playground-select-panel__loading">
+              <NSpin size="small" />
+            </div>
+          </template>
+        </div>
       </div>
     </Teleport>
   </header>
@@ -257,8 +304,11 @@ onBeforeUnmount(() => {
 }
 
 .model-header__panel {
-  max-height: min(320px, calc(100vh - 120px));
-  overflow-y: auto;
+  overflow: hidden;
+}
+
+.model-header__panel .playground-select-panel__scroll {
+  max-height: min(280px, calc(100vh - 160px));
 }
 
 .model-header__desc {

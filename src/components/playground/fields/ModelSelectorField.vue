@@ -1,8 +1,10 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, ref, useId, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { NTooltip } from 'naive-ui'
+import { NSpin, NTooltip } from 'naive-ui'
 import AppIcon from '@/components/common/AppIcon.vue'
+import PlaygroundSelectPanelSearch from '@/components/playground/PlaygroundSelectPanelSearch.vue'
+import { usePaginatedModelSearch } from '@/composables/usePaginatedModelSearch'
 import { PLAYGROUND_SELECT_TOOLTIP_Z_INDEX } from '@/constants/overlayZIndex'
 import SchemaFieldLabel from '../SchemaFieldLabel.vue'
 
@@ -18,18 +20,21 @@ export type ModelSelectorOption = {
 const model = defineModel<string>({ required: true })
 
 const props = defineProps<{
-  options: ModelSelectorOption[]
   disabled?: boolean
+  selectedDisplay?: ModelSelectorOption
 }>()
 
 const { t } = useI18n()
 
 const open = ref(false)
+const searchRef = ref<InstanceType<typeof PlaygroundSelectPanelSearch> | null>(null)
 const triggerRef = ref<HTMLElement | null>(null)
 const panelRef = ref<HTMLElement | null>(null)
 const PANEL_MAX_HEIGHT = 320
+const SEARCH_INPUT_HEIGHT = 36
 const VIEWPORT_PADDING = 8
 const PANEL_GAP = 4
+const SCROLL_LOAD_THRESHOLD = 48
 
 const panelShellStyle = ref<Record<string, string>>({
   top: '0px',
@@ -41,13 +46,28 @@ const panelScrollStyle = ref<Record<string, string>>({
 })
 const panelId = useId()
 
-const selectedOption = computed(() => props.options.find((item) => item.id === model.value))
+const {
+  loading,
+  loadingMore,
+  searchQuery,
+  selectorOptions,
+  refresh,
+  loadMore,
+  resetSearch,
+} = usePaginatedModelSearch({
+  selectedId: () => model.value,
+  enabled: () => open.value,
+  validSlugOnly: true,
+})
+
+const selectedOption = computed(() => {
+  const fromList = selectorOptions.value.find((item) => item.id === model.value)
+  if (fromList) return fromList
+  if (props.selectedDisplay?.id === model.value) return props.selectedDisplay
+  return undefined
+})
 
 const selectedLabel = computed(() => selectedOption.value?.label ?? '')
-
-// const featuredNewOption = computed(() =>
-//   props.options.find((item) => item.isNew && item.id !== model.value),
-// )
 
 function capabilityLabel(capability?: string): string {
   if (!capability) return ''
@@ -63,10 +83,6 @@ function optionFullLabel(opt: ModelSelectorOption): string {
 
 const selectedCapabilityLabel = computed(() => capabilityLabel(selectedOption.value?.capability))
 
-// const featuredNewOptionLabel = computed(() =>
-//   featuredNewOption.value ? optionFullLabel(featuredNewOption.value) : '',
-// )
-
 function updatePanelPosition() {
   const el = triggerRef.value
   if (!el) return
@@ -75,7 +91,7 @@ function updatePanelPosition() {
   const spaceBelow = window.innerHeight - rect.bottom - VIEWPORT_PADDING
   const spaceAbove = rect.top - VIEWPORT_PADDING
   const openBelow = spaceBelow >= spaceAbove
-  const availableSpace = (openBelow ? spaceBelow : spaceAbove) - PANEL_GAP
+  const availableSpace = (openBelow ? spaceBelow : spaceAbove) - PANEL_GAP - SEARCH_INPUT_HEIGHT
   const maxHeight = Math.min(PANEL_MAX_HEIGHT, Math.max(availableSpace, 120))
 
   panelShellStyle.value = openBelow
@@ -102,6 +118,12 @@ function onViewportScroll(event: Event) {
   updatePanelPosition()
 }
 
+function onListScroll(event: Event) {
+  const el = event.target as HTMLElement
+  if (el.scrollHeight - el.scrollTop - el.clientHeight > SCROLL_LOAD_THRESHOLD) return
+  void loadMore()
+}
+
 function toggleOpen() {
   if (props.disabled) return
   open.value = !open.value
@@ -120,13 +142,19 @@ function onDocumentPointerDown(event: PointerEvent) {
 
 watch(open, (isOpen) => {
   if (!isOpen) {
+    resetSearch()
     window.removeEventListener('resize', updatePanelPosition)
     window.removeEventListener('scroll', onViewportScroll, true)
     document.removeEventListener('pointerdown', onDocumentPointerDown)
     return
   }
 
-  nextTick(updatePanelPosition)
+  void refresh()
+
+  nextTick(() => {
+    updatePanelPosition()
+    searchRef.value?.focus()
+  })
   window.addEventListener('resize', updatePanelPosition)
   window.addEventListener('scroll', onViewportScroll, true)
   document.addEventListener('pointerdown', onDocumentPointerDown)
@@ -180,77 +208,75 @@ onBeforeUnmount(() => {
           :style="panelShellStyle"
           role="listbox"
         >
+          <PlaygroundSelectPanelSearch ref="searchRef" v-model="searchQuery" />
           <div
             class="playground-select-panel__scroll scrollbar-subtle"
             :style="panelScrollStyle"
+            @scroll="onListScroll"
           >
-            <NTooltip
-              v-for="opt in options"
-              :key="opt.id"
-              to="body"
-              trigger="hover"
-              placement="right"
-              :z-index="PLAYGROUND_SELECT_TOOLTIP_Z_INDEX"
-              :disabled="!opt.description"
-            >
-            <template #trigger>
-              <button
-                type="button"
-                class="playground-select-panel__option"
-                :class="{ 'playground-select-panel__option--selected': opt.id === model }"
-                role="option"
-                :aria-selected="opt.id === model"
-                :aria-label="opt.description ? optionFullLabel(opt) : undefined"
-                @click.stop="selectOption(opt.id)"
+            <div v-if="loading" class="playground-select-panel__loading">
+              <NSpin size="small" />
+            </div>
+            <template v-else>
+              <NTooltip
+                v-for="opt in selectorOptions"
+                :key="opt.id"
+                to="body"
+                trigger="hover"
+                placement="right"
+                :z-index="PLAYGROUND_SELECT_TOOLTIP_Z_INDEX"
+                :disabled="!opt.description"
               >
-                <span class="model-selector__option-label">
-                  <span class="model-selector__option-name">{{ opt.label }}</span>
-                  <span v-if="capabilityLabel(opt.capability)" class="model-selector__capability">
-                    {{ capabilityLabel(opt.capability) }}
-                  </span>
-                  <span v-if="opt.isHot" class="model-selector__hot">{{ t('pages.aiGenerator.hot') }}</span>
-                  <span v-else-if="opt.isNew" class="model-selector__new">{{ t('pages.aiGenerator.new') }}</span>
-                </span>
-                <svg
-                  v-if="opt.id === model"
-                  class="playground-select-panel__check"
-                  width="14"
-                  height="14"
-                  viewBox="0 0 14 14"
-                  fill="none"
-                  aria-hidden="true"
-                >
-                  <path
-                    d="M2.5 7l3 3 6-6"
-                    stroke="currentColor"
-                    stroke-width="1.5"
-                    stroke-linecap="round"
-                    stroke-linejoin="round"
-                  />
-                </svg>
-              </button>
+                <template #trigger>
+                  <button
+                    type="button"
+                    class="playground-select-panel__option"
+                    :class="{ 'playground-select-panel__option--selected': opt.id === model }"
+                    role="option"
+                    :aria-selected="opt.id === model"
+                    :aria-label="opt.description ? optionFullLabel(opt) : undefined"
+                    @click.stop="selectOption(opt.id)"
+                  >
+                    <span class="model-selector__option-label">
+                      <span class="model-selector__option-name">{{ opt.label }}</span>
+                      <span v-if="capabilityLabel(opt.capability)" class="model-selector__capability">
+                        {{ capabilityLabel(opt.capability) }}
+                      </span>
+                      <span v-if="opt.isHot" class="model-selector__hot">{{ t('pages.aiGenerator.hot') }}</span>
+                      <span v-else-if="opt.isNew" class="model-selector__new">{{ t('pages.aiGenerator.new') }}</span>
+                    </span>
+                    <svg
+                      v-if="opt.id === model"
+                      class="playground-select-panel__check"
+                      width="14"
+                      height="14"
+                      viewBox="0 0 14 14"
+                      fill="none"
+                      aria-hidden="true"
+                    >
+                      <path
+                        d="M2.5 7l3 3 6-6"
+                        stroke="currentColor"
+                        stroke-width="1.5"
+                        stroke-linecap="round"
+                        stroke-linejoin="round"
+                      />
+                    </svg>
+                  </button>
+                </template>
+                <span class="model-selector__tooltip">{{ opt.description }}</span>
+              </NTooltip>
+              <p v-if="selectorOptions.length === 0" class="playground-select-panel__empty">
+                {{ t('common.noSearchResults') }}
+              </p>
+              <div v-if="loadingMore" class="playground-select-panel__loading">
+                <NSpin size="small" />
+              </div>
             </template>
-            <span class="model-selector__tooltip">{{ opt.description }}</span>
-            </NTooltip>
           </div>
         </div>
       </Teleport>
     </div>
-
-    <!--
-    <button
-      v-if="featuredNewOption"
-      type="button"
-      class="model-selector__new-hint"
-      :disabled="disabled"
-      @click="selectOption(featuredNewOption.id)"
-    >
-      <span class="model-selector__new">{{ t('pages.aiGenerator.new') }}</span>
-      <span class="model-selector__new-hint-text">
-        {{ t('pages.aiGenerator.newHint', { model: featuredNewOptionLabel }) }}
-      </span>
-    </button>
-    -->
   </div>
 </template>
 
@@ -337,41 +363,6 @@ onBeforeUnmount(() => {
   line-height: 12px;
   color: #fff;
 }
-
-/*
-.model-selector__new-hint {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: 100%;
-  margin-top: 8px;
-  padding: 8px 12px;
-  border: none;
-  border-radius: 8px;
-  background: rgba(6, 182, 212, 0.08);
-  font-family: inherit;
-  text-align: left;
-  cursor: pointer;
-  transition: background 0.15s ease;
-}
-
-.model-selector__new-hint:hover:not(:disabled) {
-  background: rgba(6, 182, 212, 0.14);
-}
-
-.model-selector__new-hint:disabled {
-  opacity: 0.6;
-  cursor: not-allowed;
-}
-
-.model-selector__new-hint-text {
-  min-width: 0;
-  font-size: 12px;
-  font-weight: 400;
-  line-height: 16px;
-  color: #9b9dab;
-}
-*/
 
 .model-selector__chevron {
   position: absolute;
