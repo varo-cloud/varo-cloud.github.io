@@ -1,4 +1,5 @@
 import { http, unwrap } from './http'
+import { normalizeModelSlug } from '@/utils/model-slug'
 import type { ModelPreferences } from '@/types'
 
 interface ApiModelRecentEntry {
@@ -22,17 +23,17 @@ function mapModelPreferences(raw: ApiModelPreferences): ModelPreferences {
 }
 
 export function addModelFavourite(modelId: string) {
-  return unwrap<ApiModelPreferences>(http.post(`/models/${modelId}/favourite`)).then(
+  return unwrap<ApiModelPreferences>(http.post(`/models/${normalizeModelSlug(modelId)}/favourite`)).then(
     mapModelPreferences,
   )
 }
 
 export function removeModelFavourite(modelId: string) {
-  return unwrap<ApiModelPreferences>(http.delete(`/models/${modelId}/favourite`)).then(
+  return unwrap<ApiModelPreferences>(http.delete(`/models/${normalizeModelSlug(modelId)}/favourite`)).then(
     mapModelPreferences,
   )
 }
 
 export function recordModelVisit(modelId: string) {
-  return unwrap<ApiModelPreferences>(http.post(`/models/${modelId}/visit`)).then(mapModelPreferences)
+  return unwrap<ApiModelPreferences>(http.post(`/models/${normalizeModelSlug(modelId)}/visit`)).then(mapModelPreferences)
 }

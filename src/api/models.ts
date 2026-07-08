@@ -1,4 +1,5 @@
 import { http, unwrap } from './http'
+import { normalizeModelSlug } from '@/utils/model-slug'
 import type {
   FetchModelHistoryParams,
   FetchModelsParams,
@@ -103,7 +104,7 @@ function normalizeModelHistoryPage(
 
 function mapModel(raw: ApiModelCard): Model {
   return {
-    id: raw.slug,
+    id: normalizeModelSlug(raw.slug),
     baseModelId: raw.model_id,
     capability: raw.capability,
     category: raw.category,
@@ -190,7 +191,7 @@ export function fetchModelFacets() {
 }
 
 export function fetchModelDetail(slug: string) {
-  return unwrap<ApiModelDetail>(http.get(`/models/${slug}`)).then(mapModelDetail)
+  return unwrap<ApiModelDetail>(http.get(`/models/${normalizeModelSlug(slug)}`)).then(mapModelDetail)
 }
 
 export function fetchModelsByIds(slugs: string[]) {
@@ -217,6 +218,6 @@ export function fetchFavouriteModels(params?: FetchModelsParams) {
 
 export function fetchModelHistory(slug: string, params?: FetchModelHistoryParams) {
   return unwrap<ApiModelHistoryPage | ApiModelHistoryEntry[]>(
-    http.get(`/models/${slug}/history`, { params }),
+    http.get(`/models/${normalizeModelSlug(slug)}/history`, { params }),
   ).then((raw) => normalizeModelHistoryPage(raw, params))
 }

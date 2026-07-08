@@ -4,7 +4,6 @@ import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { NSpin } from 'naive-ui'
 import { fetchModelDetail, fetchModels } from '@/api/models'
-import { fetchModelInputSchema } from '@/api/modelSchema'
 import PlaygroundInputPanel from '@/components/playground/PlaygroundInputPanel.vue'
 import PlaygroundOutputPanel from '@/components/playground/PlaygroundOutputPanel.vue'
 import type { ModelSelectorOption } from '@/components/playground/fields/ModelSelectorField.vue'
@@ -14,6 +13,8 @@ import { usePlaygroundQuote } from '@/composables/usePlaygroundQuote'
 import { useUserStore } from '@/stores/user'
 import { AnalyticsEvents, trackEvent } from '@/analytics'
 import { createDefaultFormValues } from '@/utils/schema-form'
+import { extractInputSchema } from '@/utils/model-schema'
+import { isValidModelSlug, normalizeModelSlug } from '@/utils/model-slug'
 import type { Model, ModelDetail } from '@/types'
 import type { InputSchema, SchemaFormValues } from '@/types/schema'
 
@@ -47,15 +48,35 @@ const {
 const balanceUsd = computed(() => userStore.balanceUsd ?? 0)
 
 const modelOptions = computed<ModelSelectorOption[]>(() =>
-  models.value.map((item) => ({
-    id: item.id,
-    label: item.displayName,
-    capability: item.capability,
-    description: item.description,
-    isHot: item.isHot,
-    isNew: item.isNew,
-  })),
+  models.value
+    .filter((item) => isValidModelSlug(item.id))
+    .map((item) => ({
+      id: item.id,
+      label: item.displayName,
+      capability: item.capability,
+      description: item.description,
+      isHot: item.isHot,
+      isNew: item.isNew,
+    })),
 )
+
+function selectableModels(items: Model[]): Model[] {
+  return items.filter((item) => isValidModelSlug(item.id))
+}
+
+function resolveInitialModelId(items: Model[]): string {
+  const selectable = selectableModels(items)
+  if (selectable.length === 0) return ''
+
+  const queryModel = route.query.model
+  if (typeof queryModel === 'string') {
+    const normalizedQuery = normalizeModelSlug(queryModel)
+    const matched = selectable.find((item) => item.id === normalizedQuery)
+    if (matched) return matched.id
+  }
+
+  return selectable.find((item) => item.isHot)?.id ?? selectable[0]?.id ?? ''
+}
 
 const fallbackUnitCostUsd = computed(() => model.value?.startingPriceUsd ?? 0)
 
@@ -85,14 +106,6 @@ const quoteStandardCostUsd = playgroundQuote.standardCostUsd
 const quoteLoading = playgroundQuote.loading
 const quoteUnitCostUsd = playgroundQuote.unitCostUsd
 
-function resolveInitialModelId(items: Model[]): string {
-  const queryModel = route.query.model
-  if (typeof queryModel === 'string' && items.some((item) => item.id === queryModel)) {
-    return queryModel
-  }
-  return items.find((item) => item.isHot)?.id ?? items[0]?.id ?? ''
-}
-
 async function loadModels() {
   listLoading.value = true
   listError.value = null
@@ -105,9 +118,10 @@ async function loadModels() {
       return
     }
     selectedModelId.value = resolveInitialModelId(page.items)
-    if (selectedModelId.value) {
-      replace({ name: 'ai-generator', query: { model: selectedModelId.value } })
+    if (!selectedModelId.value) {
+      return
     }
+    replace({ name: 'ai-generator', query: { model: selectedModelId.value } })
   } catch {
     listError.value = t('pages.aiGenerator.loadError')
     models.value = []
@@ -130,13 +144,20 @@ async function loadSelectedModel(id: string) {
   inputSchema.value = null
 
   try {
-    const [detail, schema] = await Promise.all([
-      fetchModelDetail(id),
-      fetchModelInputSchema(id).catch(() => null),
-    ])
+    const detail = await fetchModelDetail(id)
+    let schema: InputSchema | null = null
+
+    if (detail.inputSchema) {
+      try {
+        schema = extractInputSchema(detail.inputSchema)
+      } catch {
+        schema = null
+      }
+    }
+
+    formValues.value = createDefaultFormValues(schema ?? undefined)
     model.value = detail
     inputSchema.value = schema
-    formValues.value = createDefaultFormValues(schema ?? undefined)
   } catch {
     modelError.value = t('pages.aiGenerator.modelLoadError')
     model.value = null
@@ -178,9 +199,11 @@ watch(
   () => route.query.model,
   (queryModel) => {
     if (typeof queryModel !== 'string' || !models.value.length) return
-    if (queryModel === selectedModelId.value) return
-    if (models.value.some((item) => item.id === queryModel)) {
-      selectedModelId.value = queryModel
+    const normalizedQuery = normalizeModelSlug(queryModel)
+    if (normalizedQuery === selectedModelId.value) return
+    const matched = selectableModels(models.value).find((item) => item.id === normalizedQuery)
+    if (matched) {
+      selectedModelId.value = matched.id
     }
   },
 )
@@ -201,7 +224,7 @@ onMounted(() => {
       <p>{{ listError }}</p>
     </div>
 
-    <div v-else-if="models.length === 0" class="ai-generator-page__state">
+    <div v-else-if="modelOptions.length === 0" class="ai-generator-page__state">
       <p>{{ t('pages.aiGenerator.emptyModels') }}</p>
     </div>
 

@@ -5,7 +5,6 @@ import { useI18n } from 'vue-i18n'
 import { useLocaleRouter } from '@/composables/useLocaleRouter'
 import { NSpin } from 'naive-ui'
 import { fetchModelDetail, fetchModels } from '@/api/models'
-import { fetchModelInputSchema } from '@/api/modelSchema'
 import ModelDetailHeader from '@/components/models/ModelDetailHeader.vue'
 import ModelApiTab from '@/components/models/ModelApiTab.vue'
 import ModelHistoryTab from '@/components/models/ModelHistoryTab.vue'
@@ -99,10 +98,6 @@ function handleModelSelect(slug: string) {
   void push({ name: 'model-detail', params: { slug } })
 }
 
-watch(inputSchema, (schema) => {
-  formValues.value = createDefaultFormValues(schema ?? undefined)
-})
-
 async function loadModel(slug: string) {
   loading.value = true
   error.value = null
@@ -113,18 +108,15 @@ async function loadModel(slug: string) {
     const detail = await fetchModelDetail(slug)
     let schema: InputSchema | null = null
 
-    try {
-      schema = await fetchModelInputSchema(slug)
-    } catch {
-      if (detail.inputSchema) {
-        try {
-          schema = extractInputSchema(detail.inputSchema)
-        } catch {
-          schema = null
-        }
+    if (detail.inputSchema) {
+      try {
+        schema = extractInputSchema(detail.inputSchema)
+      } catch {
+        schema = null
       }
     }
 
+    formValues.value = createDefaultFormValues(schema ?? undefined)
     model.value = detail
     inputSchema.value = schema
     if (userStore.isLoggedIn) {
