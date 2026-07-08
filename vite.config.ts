@@ -42,7 +42,7 @@ export default defineConfig(({ command, mode }) => {
     : undefined
 
   return {
-    // 正式: /  |  测试 (staging.github.io 仓库): /staging.github.io/
+    // 正式 / 测试均为根路径: /（测试部署在 varo-staging.github.io）
     base: env.VITE_BASE || '/',
     plugins: [
       vue(),

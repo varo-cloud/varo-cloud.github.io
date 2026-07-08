@@ -48,7 +48,7 @@ cp .env.example .env.production    # 生产构建：npm run build
 |---|---|---|
 | `VITE_USE_MOCK` | 开发时是否启用 `mock/` 本地 Mock | `true` / `false` |
 | `VITE_API_BASE_URL` | API 基础路径（可与 `VITE_BASE` 组合） | `/api` 或完整 URL |
-| `VITE_BASE` | 部署子路径（Vite `base`） | `/` 或 `/staging.github.io/` |
+| `VITE_BASE` | 部署子路径（Vite `base`） | `/` |
 | `VITE_DEV_API_PROXY_TARGET` | **仅 dev**：将 `/api` 代理到真实后端 | `https://staging.api.varo.cloud` |
 | `VITE_DEV_AUTH_TOKEN` | **仅 dev**：本地免登录 access token | 留空或 staging 登录后填入 |
 | `VITE_DEV_REFRESH_TOKEN` | **仅 dev**：配合 access token 自动续期 | 留空或 staging 登录后填入 |
@@ -75,14 +75,15 @@ VITE_DEV_REFRESH_TOKEN=<staging 登录后的 refresh_token>
 
 | 名称 | 类型 | 用途 |
 |---|---|---|
+| `STAGING_DEPLOY_TOKEN` | Secret | PAT，需对 `varo-staging/varo-staging.github.io` 有 `contents: write` 权限 |
 | `VITE_TURNSTILE_SITE_KEY` | Secret | Turnstile site key（staging / production 共用，或按环境拆分） |
 | `VITE_GA_MEASUREMENT_ID` | Variable | GA4 测量 ID，留空则关闭统计 |
 
-**Staging**（`deploy-staging.yml`）：
+**Staging**（`deploy-staging.yml`）→ 部署到 [varo-staging.github.io](https://varo-staging.github.io/)：
 
 - `VITE_USE_MOCK=false`
 - `VITE_API_BASE_URL=https://staging.api.varo.cloud/api`
-- `VITE_BASE=/staging.github.io/`
+- `VITE_BASE=/`
 
 **Production**（`deploy-production.yml`）：
 
