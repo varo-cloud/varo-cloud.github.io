@@ -76,7 +76,7 @@ VITE_DEV_REFRESH_TOKEN=<staging 登录后的 refresh_token>
 | 名称 | 类型 | 用途 |
 |---|---|---|
 | `STAGING_DEPLOY_TOKEN` | Secret | PAT，需对 `varo-staging/varo-staging.github.io` 有 `contents: write` 权限 |
-| `VITE_TURNSTILE_SITE_KEY` | Secret | Turnstile site key（staging / production 共用，或按环境拆分） |
+| `VITE_TURNSTILE_SITE_KEY` | Secret | Turnstile Site Key（**仅 production**；staging 使用 Cloudflare 官方测试 key，见下方） |
 | `VITE_GA_MEASUREMENT_ID` | Variable | GA4 测量 ID，留空则关闭统计 |
 
 **Staging**（`deploy-staging.yml`）→ 部署到 [varo-staging.github.io](https://varo-staging.github.io/)：
@@ -84,6 +84,8 @@ VITE_DEV_REFRESH_TOKEN=<staging 登录后的 refresh_token>
 - `VITE_USE_MOCK=false`
 - `VITE_API_BASE_URL=https://staging.api.varo.cloud/api`
 - `VITE_BASE=/`
+- `VITE_TURNSTILE_SITE_KEY=1x00000000000000000000AA`（Cloudflare 官方测试 key，始终通过）
+- 后端 staging 需配置 `TURNSTILE_SECRET_KEY=1x0000000000000000000000000000000AA`（与上配对）
 
 **Production**（`deploy-production.yml`）：
 
