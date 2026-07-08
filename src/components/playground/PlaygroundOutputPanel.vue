@@ -213,7 +213,7 @@ watch(
                     class="output-panel__item-action"
                     :aria-label="t('pages.modelDetail.download')"
                     :disabled="downloadingIndex === index"
-                    @click="downloadResult(url, index)"
+                    @click.stop="downloadResult(url, index)"
                   >
                     <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
                       <path

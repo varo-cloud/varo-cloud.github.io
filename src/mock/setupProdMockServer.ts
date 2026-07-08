@@ -15,6 +15,7 @@ import playgroundGenerationsMock from '../../mock/playground-generations'
 import playgroundQuoteMock from '../../mock/playground-quote'
 import pricingMock from '../../mock/pricing'
 import uploadMock from '../../mock/upload'
+import mediaDownloadMock from '../../mock/media-download'
 
 const mockModules: MockMethod[] = [
   ...authMock,
@@ -28,6 +29,7 @@ const mockModules: MockMethod[] = [
   ...billingMock,
   ...pricingMock,
   ...uploadMock,
+  ...mediaDownloadMock,
 ]
 
 function joinUrl(base: string, path: string): string {

@@ -195,6 +195,10 @@ export function findCatalogModelById(slug: string): ModelCatalogEntry | undefine
   return findCatalogModelBySlug(slug)
 }
 
+function extractSeriesKey(slug: string): string {
+  return slug.split('/')[0]?.replace(/-v\d+$/, '') ?? slug
+}
+
 function filterModels(query: Record<string, string>) {
   let filtered = models
 
@@ -206,6 +210,11 @@ function filterModels(query: Record<string, string>) {
   const capability = query.capability?.trim()
   if (capability) {
     filtered = filtered.filter((model) => model.capability === capability)
+  }
+
+  const series = query.series?.trim()
+  if (series) {
+    filtered = filtered.filter((model) => extractSeriesKey(model.slug) === series)
   }
 
   const q = query.q?.trim().toLowerCase()
@@ -226,6 +235,7 @@ function filterModels(query: Record<string, string>) {
 function buildFacets(catalog: ModelCatalogEntry[]) {
   const categoryBaseIds = new Map<string, Set<number>>()
   const capabilityCounts = new Map<string, number>()
+  const seriesCounts = new Map<string, number>()
 
   for (const item of catalog) {
     if (!categoryBaseIds.has(item.category)) {
@@ -233,6 +243,9 @@ function buildFacets(catalog: ModelCatalogEntry[]) {
     }
     categoryBaseIds.get(item.category)!.add(item.model_id)
     capabilityCounts.set(item.capability, (capabilityCounts.get(item.capability) ?? 0) + 1)
+
+    const seriesKey = extractSeriesKey(item.slug)
+    seriesCounts.set(seriesKey, (seriesCounts.get(seriesKey) ?? 0) + 1)
   }
 
   return {
@@ -242,6 +255,9 @@ function buildFacets(catalog: ModelCatalogEntry[]) {
     capabilities: [...capabilityCounts.entries()]
       .map(([value, count]) => ({ value, count }))
       .sort((a, b) => a.value.localeCompare(b.value)),
+    series: [...seriesCounts.entries()]
+      .map(([value, count]) => ({ value, count }))
+      .sort((a, b) => b.count - a.count || a.value.localeCompare(b.value)),
   }
 }
 

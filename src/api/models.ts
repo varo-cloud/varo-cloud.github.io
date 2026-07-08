@@ -182,7 +182,11 @@ export function fetchModels(params?: FetchModelsParams) {
 }
 
 export function fetchModelFacets() {
-  return unwrap<ModelFacetsResponse>(http.get('/models/facets'))
+  return unwrap<ModelFacetsResponse>(http.get('/models/facets')).then((data) => ({
+    categories: data.categories ?? [],
+    capabilities: data.capabilities ?? [],
+    series: data.series ?? [],
+  }))
 }
 
 export function fetchModelDetail(slug: string) {
