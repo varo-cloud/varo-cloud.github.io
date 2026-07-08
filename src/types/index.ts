@@ -74,6 +74,7 @@ export interface FetchModelsParams {
   q?: string
   category?: ModelCategory
   capability?: string
+  series?: string
 }
 
 export interface FacetItem {
@@ -84,6 +85,7 @@ export interface FacetItem {
 export interface ModelFacetsResponse {
   categories: FacetItem[]
   capabilities: FacetItem[]
+  series: FacetItem[]
 }
 
 export interface ModelHistoryEntry {

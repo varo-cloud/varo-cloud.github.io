@@ -6,6 +6,7 @@ import { useLocaleRouter } from '@/composables/useLocaleRouter'
 import { NEmpty, NSpin } from 'naive-ui'
 import { fetchModels, fetchFavouriteModels, fetchModelFacets, fetchRecentModels } from '@/api/models'
 import ModelCard from '@/components/models/ModelCard.vue'
+import ModelsFilterSidebar from '@/components/models/ModelsFilterSidebar.vue'
 import ModelsHeroCarousel from '@/components/models/ModelsHeroCarousel.vue'
 import { useModelPreferencesStore } from '@/stores/modelPreferences'
 import { useUserStore } from '@/stores/user'
@@ -28,11 +29,13 @@ const loadingMore = ref(false)
 const error = ref<string | null>(null)
 const activeTab = ref<'latest' | 'favourite' | 'recent'>('latest')
 const searchQuery = ref('')
+const selectedSeries = ref<string | null>(null)
 const selectedCategory = ref<ModelCategory | null>(null)
 const selectedCapability = ref<string | null>(null)
-const facets = ref<{ categories: FacetItem[]; capabilities: FacetItem[] }>({
+const facets = ref<{ categories: FacetItem[]; capabilities: FacetItem[]; series: FacetItem[] }>({
   categories: [],
   capabilities: [],
+  series: [],
 })
 const heroActiveIndex = ref(0)
 
@@ -65,32 +68,27 @@ const tabOptions = computed(() => {
 
 const hasMore = computed(() => activeTab.value === 'latest' && models.value.length < total.value)
 
+const showFilterSidebar = computed(() => activeTab.value === 'latest')
+
+const hasActiveFilters = computed(
+  () => Boolean(selectedSeries.value || selectedCategory.value || selectedCapability.value),
+)
+
+const unfilteredTotal = computed(() =>
+  facets.value.categories.reduce((sum, item) => sum + item.count, 0),
+)
+
 const emptyDescription = computed(() => {
   if (activeTab.value === 'favourite') return t('pages.models.emptyFavourite')
   if (activeTab.value === 'recent') return t('pages.models.emptyRecent')
   return t('pages.models.empty')
 })
 
-function categoryLabel(value: string): string {
-  const key = `pages.models.categories.${value}`
-  const translated = t(key)
-  return translated === key ? value : translated
-}
-
-function capabilityLabel(value: string): string {
-  const key = `pages.models.capabilities.${value}`
-  const translated = t(key)
-  return translated === key ? value : translated
-}
-
-function isModelCategory(value: string): value is ModelCategory {
-  return value === 'video' || value === 'image' || value === 'llm'
-}
-
 function buildListQuery() {
   const query: Record<string, string> = {}
   const q = searchQuery.value.trim()
   if (q) query.q = q
+  if (selectedSeries.value) query.series = selectedSeries.value
   if (selectedCategory.value) query.category = selectedCategory.value
   if (selectedCapability.value) query.capability = selectedCapability.value
   return query
@@ -103,9 +101,14 @@ function syncRouteQuery() {
 
 async function loadFacets() {
   try {
-    facets.value = await fetchModelFacets()
+    const data = await fetchModelFacets()
+    facets.value = {
+      categories: data.categories ?? [],
+      capabilities: data.capabilities ?? [],
+      series: data.series ?? [],
+    }
   } catch {
-    facets.value = { categories: [], capabilities: [] }
+    facets.value = { categories: [], capabilities: [], series: [] }
   }
 }
 
@@ -176,6 +179,7 @@ async function loadModels(append = false) {
       offset: append ? models.value.length : 0,
       limit: PAGE_SIZE,
       q: searchQuery.value.trim() || undefined,
+      series: selectedSeries.value ?? undefined,
       category: selectedCategory.value ?? undefined,
       capability: selectedCapability.value ?? undefined,
     })
@@ -210,9 +214,18 @@ function switchTab(key: 'latest' | 'favourite' | 'recent') {
   loadModels()
 }
 
-function selectCategory(category: ModelCategory | null) {
-  if (selectedCategory.value === category) return
-  selectedCategory.value = category
+function selectSeries(series: string | null) {
+  if (selectedSeries.value === series) return
+  selectedSeries.value = series
+  syncRouteQuery()
+  loadModels()
+}
+
+function selectCategory(category: string | null) {
+  const next: ModelCategory | null =
+    category === 'video' || category === 'image' || category === 'llm' ? category : null
+  if (selectedCategory.value === next) return
+  selectedCategory.value = next
   syncRouteQuery()
   loadModels()
 }
@@ -220,6 +233,14 @@ function selectCategory(category: ModelCategory | null) {
 function selectCapability(capability: string | null) {
   if (selectedCapability.value === capability) return
   selectedCapability.value = capability
+  syncRouteQuery()
+  loadModels()
+}
+
+function clearFilters() {
+  selectedSeries.value = null
+  selectedCategory.value = null
+  selectedCapability.value = null
   syncRouteQuery()
   loadModels()
 }
@@ -303,8 +324,13 @@ onMounted(() => {
     searchQuery.value = q
   }
 
+  const series = route.query.series
+  if (typeof series === 'string' && series) {
+    selectedSeries.value = series
+  }
+
   const category = route.query.category
-  if (typeof category === 'string' && isModelCategory(category)) {
+  if (category === 'video' || category === 'image' || category === 'llm') {
     selectedCategory.value = category
   }
 
@@ -345,125 +371,101 @@ onMounted(() => {
 
     <section class="models-list">
       <div class="models-list__inner">
-        <div class="models-toolbar">
-          <div class="models-tabs" role="tablist" :aria-label="t('pages.models.filterLabel')">
+        <div class="models-layout-header" :class="{ 'has-sidebar': showFilterSidebar }">
+          <div v-if="showFilterSidebar" class="models-sidebar-header">
+            <span class="models-sidebar-header__title">{{ t('pages.models.sidebar.title') }}</span>
             <button
-              v-for="tab in tabOptions"
-              :key="tab.key"
+              v-if="hasActiveFilters"
               type="button"
-              role="tab"
-              class="models-tab"
-              :class="{ 'is-active': activeTab === tab.key }"
-              :aria-selected="activeTab === tab.key"
-              @click="switchTab(tab.key)"
+              class="models-sidebar-header__clear"
+              @click="clearFilters"
             >
-              {{ tab.label }}
-              <span v-if="activeTab === tab.key" class="models-tab__indicator" />
+              {{ t('pages.models.sidebar.clear') }}
             </button>
           </div>
 
-          <label v-if="activeTab === 'latest'" class="models-search">
-            <img :src="assetUrl('/assets/models/search.svg')" alt="" aria-hidden="true" />
-            <input
-              v-model="searchQuery"
-              type="search"
-              :placeholder="t('pages.models.searchPlaceholder')"
-            />
-          </label>
-        </div>
-
-        <div
-          v-if="activeTab === 'latest' && (facets.categories.length > 0 || facets.capabilities.length > 0)"
-          class="models-filters"
-          :aria-label="t('pages.models.filterLabel')"
-        >
-          <div v-if="facets.categories.length > 0" class="models-filter-group">
-            <span class="models-filter-group__label">{{ t('pages.models.filters.category') }}</span>
-            <div class="models-filter-chips">
+          <div class="models-main-header">
+            <div class="models-tabs" role="tablist" :aria-label="t('pages.models.filterLabel')">
               <button
+                v-for="tab in tabOptions"
+                :key="tab.key"
                 type="button"
-                class="models-filter-chip"
-                :class="{ 'is-active': !selectedCategory }"
-                @click="selectCategory(null)"
+                role="tab"
+                class="models-tab"
+                :class="{ 'is-active': activeTab === tab.key }"
+                :aria-selected="activeTab === tab.key"
+                @click="switchTab(tab.key)"
               >
-                {{ t('pages.models.filters.all') }}
-              </button>
-              <button
-                v-for="item in facets.categories"
-                :key="item.value"
-                type="button"
-                class="models-filter-chip"
-                :class="{ 'is-active': selectedCategory === item.value }"
-                @click="selectCategory(item.value as ModelCategory)"
-              >
-                {{ categoryLabel(item.value) }}
-                <span class="models-filter-chip__count">{{ item.count }}</span>
+                {{ tab.label }}
+                <span v-if="activeTab === tab.key" class="models-tab__indicator" />
               </button>
             </div>
-          </div>
 
-          <div v-if="facets.capabilities.length > 0" class="models-filter-group">
-            <span class="models-filter-group__label">{{ t('pages.models.filters.capability') }}</span>
-            <div class="models-filter-chips">
-              <button
-                type="button"
-                class="models-filter-chip"
-                :class="{ 'is-active': !selectedCapability }"
-                @click="selectCapability(null)"
-              >
-                {{ t('pages.models.filters.all') }}
-              </button>
-              <button
-                v-for="item in facets.capabilities"
-                :key="item.value"
-                type="button"
-                class="models-filter-chip"
-                :class="{ 'is-active': selectedCapability === item.value }"
-                @click="selectCapability(item.value)"
-              >
-                {{ capabilityLabel(item.value) }}
-                <span class="models-filter-chip__count">{{ item.count }}</span>
-              </button>
-            </div>
+            <label v-if="activeTab === 'latest'" class="models-search">
+              <img :src="assetUrl('/assets/models/search.svg')" alt="" aria-hidden="true" />
+              <input
+                v-model="searchQuery"
+                type="search"
+                :placeholder="t('pages.models.searchPlaceholder')"
+              />
+            </label>
           </div>
         </div>
 
-        <div v-if="loading" class="models-state">
-          <NSpin size="large" />
-        </div>
-
-        <div v-else-if="error" class="models-state">
-          <NEmpty :description="error">
-            <template #extra>
-              <button type="button" class="models-retry" @click="retryLoad">
-                {{ t('pages.models.retry') }}
-              </button>
-            </template>
-          </NEmpty>
-        </div>
-
-        <div v-else-if="models.length === 0" class="models-state">
-          <NEmpty :description="emptyDescription" />
-        </div>
-
-        <div v-else class="models-grid">
-          <ModelCard
-            v-for="model in models"
-            :key="model.id"
-            :model="model"
-            @favourite-change="handleFavouriteChange"
+        <div class="models-layout-body" :class="{ 'has-sidebar': showFilterSidebar }">
+          <ModelsFilterSidebar
+            v-if="showFilterSidebar"
+            :series="facets.series"
+            :categories="facets.categories"
+            :capabilities="facets.capabilities"
+            :selected-series="selectedSeries"
+            :selected-category="selectedCategory"
+            :selected-capability="selectedCapability"
+            :total-count="unfilteredTotal"
+            @update:selected-series="selectSeries"
+            @update:selected-category="selectCategory"
+            @update:selected-capability="selectCapability"
           />
-        </div>
 
-        <div v-if="hasMore && !loading" class="models-more">
-          <button
-            type="button"
-            class="models-more__btn"
-            :disabled="loadingMore"
-            @click="loadMore"
-          >
-            {{ t('pages.models.viewMore') }}
-          </button>
+          <div class="models-main">
+            <div v-if="loading" class="models-state">
+              <NSpin size="large" />
+            </div>
+
+            <div v-else-if="error" class="models-state">
+              <NEmpty :description="error">
+                <template #extra>
+                  <button type="button" class="models-retry" @click="retryLoad">
+                    {{ t('pages.models.retry') }}
+                  </button>
+                </template>
+              </NEmpty>
+            </div>
+
+            <div v-else-if="models.length === 0" class="models-state">
+              <NEmpty :description="emptyDescription" />
+            </div>
+
+            <div v-else class="models-grid">
+              <ModelCard
+                v-for="model in models"
+                :key="model.id"
+                :model="model"
+                @favourite-change="handleFavouriteChange"
+              />
+            </div>
+
+            <div v-if="hasMore && !loading" class="models-more">
+              <button
+                type="button"
+                class="models-more__btn"
+                :disabled="loadingMore"
+                @click="loadMore"
+              >
+                {{ t('pages.models.viewMore') }}
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </section>
@@ -568,16 +570,66 @@ onMounted(() => {
 .models-list__inner {
   max-width: 1360px;
   margin: 0 auto;
-  padding: 20px 16px 64px;
+  padding: 10px 16px 64px;
 }
 
-.models-toolbar {
+.models-layout-header {
   display: flex;
+  align-items: center;
+  margin-bottom: 21px;
+}
+
+.models-layout-header.has-sidebar {
+  gap: 24px;
+}
+
+.models-sidebar-header {
+  display: flex;
+  flex-shrink: 0;
+  align-items: center;
+  justify-content: space-between;
+  width: 224px;
+}
+
+.models-sidebar-header__title {
+  color: #222;
+  font-size: 16px;
+  font-weight: 500;
+  line-height: 16px;
+}
+
+.models-sidebar-header__clear {
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: #9b9dab;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 16px;
+  cursor: pointer;
+}
+
+.models-sidebar-header__clear:hover {
+  color: #222;
+}
+
+.models-main-header {
+  display: flex;
+  flex: 1;
   flex-wrap: wrap;
-  align-items: flex-start;
+  align-items: center;
   justify-content: space-between;
   gap: 16px;
-  margin-bottom: 24px;
+  min-width: 0;
+}
+
+.models-layout-body {
+  display: flex;
+  align-items: flex-start;
+}
+
+.models-layout-body.has-sidebar {
+  gap: 24px;
 }
 
 .models-tabs {
@@ -645,77 +697,19 @@ onMounted(() => {
   color: #9b9dab;
 }
 
-.models-filters {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-  margin-bottom: 24px;
-}
-
-.models-filter-group {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 12px;
-}
-
-.models-filter-group__label {
-  flex-shrink: 0;
-  min-width: 48px;
-  color: #9b9dab;
-  font-size: 14px;
-  font-weight: 500;
-  line-height: 20px;
-}
-
-.models-filter-chips {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 8px;
-}
-
-.models-filter-chip {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  padding: 6px 14px;
-  border: 1px solid #e8e8e8;
-  border-radius: 20px;
-  background: #fff;
-  color: #666;
-  font-size: 14px;
-  font-weight: 500;
-  line-height: 20px;
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.models-filter-chip:hover {
-  border-color: #d4d4d8;
-  color: #222;
-}
-
-.models-filter-chip.is-active {
-  border-color: #06b6d4;
-  background: rgba(6, 182, 212, 0.08);
-  color: #0891b2;
-}
-
-.models-filter-chip__count {
-  color: #9b9dab;
-  font-size: 12px;
-  font-weight: 500;
-  line-height: 16px;
-}
-
-.models-filter-chip.is-active .models-filter-chip__count {
-  color: #06b6d4;
+.models-main {
+  flex: 1;
+  min-width: 0;
 }
 
 .models-grid {
   display: grid;
   grid-template-columns: repeat(1, minmax(0, 1fr));
   gap: 24px;
+}
+
+.models-layout-body.has-sidebar .models-grid {
+  grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .models-state {
@@ -771,7 +765,7 @@ onMounted(() => {
 }
 
 @media (min-width: 1024px) {
-  .models-grid {
+  .models-layout-body.has-sidebar .models-grid {
     grid-template-columns: repeat(3, minmax(0, 1fr));
   }
 
@@ -797,6 +791,11 @@ onMounted(() => {
 @media (min-width: 1280px) {
   .models-grid {
     grid-template-columns: repeat(4, minmax(0, 1fr));
+  }
+
+  .models-layout-body.has-sidebar .models-grid {
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    max-width: 1112px;
   }
 }
 
@@ -837,18 +836,27 @@ onMounted(() => {
     justify-content: center;
   }
 
-  .models-toolbar {
-    flex-direction: column;
-    align-items: stretch;
+  .models-main-header {
+    width: 100%;
   }
 
   .models-search {
     width: 100%;
   }
 
-  .models-filter-group {
+  .models-layout-header.has-sidebar {
     flex-direction: column;
-    align-items: flex-start;
+    align-items: stretch;
+    gap: 16px;
+  }
+
+  .models-sidebar-header {
+    width: 100%;
+  }
+
+  .models-layout-body.has-sidebar {
+    flex-direction: column;
+    gap: 24px;
   }
 }
 </style>
