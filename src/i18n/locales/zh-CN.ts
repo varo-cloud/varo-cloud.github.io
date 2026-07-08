@@ -10,6 +10,11 @@ export default {
     noSearchResults: '无匹配结果',
     language: '语言',
     deposit: '充值',
+    pagination: {
+      label: '分页',
+      prev: '上一页',
+      next: '下一页',
+    },
   },
   header: {
     searchModels: '搜索模型',

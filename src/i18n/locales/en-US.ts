@@ -10,6 +10,11 @@ export default {
     noSearchResults: 'No results found',
     language: 'Language',
     deposit: 'Deposit',
+    pagination: {
+      label: 'Pagination',
+      prev: 'Previous',
+      next: 'Next',
+    },
   },
   header: {
     searchModels: 'Search Models',

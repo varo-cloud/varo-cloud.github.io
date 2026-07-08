@@ -3,6 +3,7 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { NSpin } from 'naive-ui'
 import { fetchModelHistory } from '@/api/models'
+import AppPagination from '@/components/common/AppPagination.vue'
 import { useLocaleRouter } from '@/composables/useLocaleRouter'
 import { useUserStore } from '@/stores/user'
 import { formatUsd } from '@/utils/currency'
@@ -25,16 +26,15 @@ const userStore = useUserStore()
 
 const items = ref<ModelHistoryEntry[]>([])
 const loading = ref(false)
-const loadingMore = ref(false)
 const error = ref<string | null>(null)
-const offset = ref(0)
+const currentPage = ref(1)
 const total = ref(0)
 
-const hasMore = computed(() => items.value.length < total.value)
+const pageOffset = computed(() => (currentPage.value - 1) * HISTORY_PAGE_SIZE)
 
 function resetState() {
   items.value = []
-  offset.value = 0
+  currentPage.value = 1
   total.value = 0
   error.value = null
 }
@@ -64,45 +64,38 @@ function statusClass(status: string) {
   return `model-history__status--${normalizeStatus(status)}`
 }
 
-async function loadHistory(append = false) {
+async function loadHistory() {
   if (!userStore.isLoggedIn) return
 
-  if (append) {
-    loadingMore.value = true
-  } else {
-    loading.value = true
-    error.value = null
-  }
+  loading.value = true
+  error.value = null
 
   try {
     const page = await fetchModelHistory(props.modelSlug, {
-      offset: append ? offset.value : 0,
+      offset: pageOffset.value,
       limit: HISTORY_PAGE_SIZE,
     })
 
-    if (append) {
-      items.value = [...items.value, ...page.items]
-    } else {
-      items.value = page.items
-    }
-
-    offset.value = page.offset + page.items.length
+    items.value = page.items
     total.value = page.total
-  } catch {
-    if (!append) {
-      error.value = t('pages.modelDetail.history.loadError')
-      items.value = []
-      total.value = 0
+
+    const maxPage = Math.max(1, Math.ceil(page.total / HISTORY_PAGE_SIZE))
+    if (currentPage.value > maxPage) {
+      currentPage.value = maxPage
     }
+  } catch {
+    error.value = t('pages.modelDetail.history.loadError')
+    items.value = []
+    total.value = 0
   } finally {
     loading.value = false
-    loadingMore.value = false
   }
 }
 
-function loadMore() {
-  if (!hasMore.value || loadingMore.value || loading.value) return
-  void loadHistory(true)
+function handlePageChange(page: number) {
+  if (page === currentPage.value || loading.value) return
+  currentPage.value = page
+  void loadHistory()
 }
 
 function goToAuth() {
@@ -194,16 +187,14 @@ onMounted(() => {
         </div>
       </div>
 
-      <div v-if="hasMore" class="model-history__footer">
-        <button
-          type="button"
-          class="model-history__load-more"
-          :disabled="loadingMore"
-          @click="loadMore"
-        >
-          <NSpin v-if="loadingMore" size="small" />
-          <span v-else>{{ t('pages.modelDetail.history.loadMore') }}</span>
-        </button>
+      <div v-if="total > 0" class="model-history__footer">
+        <AppPagination
+          :page="currentPage"
+          :page-size="HISTORY_PAGE_SIZE"
+          :total="total"
+          :disabled="loading"
+          @update:page="handlePageChange"
+        />
       </div>
     </template>
   </div>
@@ -231,8 +222,7 @@ onMounted(() => {
 }
 
 .model-history__auth-btn,
-.model-history__retry,
-.model-history__load-more {
+.model-history__retry {
   min-height: 36px;
   padding: 0 16px;
   border: 0;
@@ -353,13 +343,6 @@ onMounted(() => {
   display: flex;
   justify-content: center;
   margin-top: 16px;
-}
-
-.model-history__load-more {
-  min-width: 140px;
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
 }
 
 .model-history__view-btn {
