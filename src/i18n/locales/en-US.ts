@@ -7,6 +7,7 @@ export default {
     login: 'Sign in',
     logout: 'Log out',
     close: 'Close',
+    noSearchResults: 'No results found',
     language: 'Language',
     deposit: 'Deposit',
   },

@@ -7,6 +7,7 @@ export default {
     login: '登录',
     logout: '退出登录',
     close: '关闭',
+    noSearchResults: '无匹配结果',
     language: '语言',
     deposit: '充值',
   },

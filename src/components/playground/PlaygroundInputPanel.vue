@@ -20,9 +20,7 @@ import { useUserStore } from '@/stores/user'
 import { AnalyticsEvents, trackEvent } from '@/analytics'
 import PlaygroundInputViewSelect from './PlaygroundInputViewSelect.vue'
 import PlaygroundSchemaForm from './PlaygroundSchemaForm.vue'
-import ModelSelectorField, {
-  type ModelSelectorOption,
-} from './fields/ModelSelectorField.vue'
+import ModelSelectorField from './fields/ModelSelectorField.vue'
 
 const BATCH_SIZE_OPTIONS = [1, 2, 3, 4] as const
 
@@ -35,7 +33,6 @@ const props = defineProps<{
   quoteLoading?: boolean
   balanceUsd: number
   generating?: boolean
-  modelOptions?: ModelSelectorOption[]
   analyticsSource?: 'model_detail' | 'ai_generator'
   analyticsCapability?: string
 }>()
@@ -336,9 +333,8 @@ onBeforeUnmount(() => {
 
     <div ref="formPanelRef" class="input-panel__form">
       <ModelSelectorField
-        v-if="modelOptions?.length && selectedModelId != null"
+        v-if="selectedModelId != null"
         v-model="selectedModelId"
-        :options="modelOptions"
         :disabled="generating"
       />
       <PlaygroundSchemaForm
