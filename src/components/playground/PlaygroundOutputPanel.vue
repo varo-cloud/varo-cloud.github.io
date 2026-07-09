@@ -8,6 +8,9 @@ import GenerationPreviewLightbox from './GenerationPreviewLightbox.vue'
 import type { GenerationStatus, PlaygroundGenerationResult } from '@/types'
 import { downloadMediaFile, guessDownloadFilename } from '@/utils/downloadMedia'
 import { resolveMediaPreviewKind } from '@/utils/mediaPreview'
+import { assetUrl } from '@/utils/assetUrl'
+
+const emptyStateIconSrc = assetUrl('/assets/playground/no-generations.svg')
 
 const props = defineProps<{
   outputUrls?: string[]
@@ -150,7 +153,7 @@ watch(
 
     <div
       class="output-panel__body"
-      :class="{ 'output-panel__body--centered': !showOutput && !showExample && !isGenerating }"
+      :class="{ 'output-panel__body--centered': !showOutput && !showExample }"
     >
       <div
         v-if="previewUrls.length > 0 && viewMode === 'preview'"
@@ -243,7 +246,12 @@ watch(
         :estimated-seconds="estimatedSeconds"
       />
       <div v-else class="output-panel__empty">
-        {{ t('pages.modelDetail.noGenerations') }}
+        <img
+          :src="emptyStateIconSrc"
+          alt=""
+          class="output-panel__empty-icon"
+        />
+        <p class="output-panel__empty-text">{{ t('pages.modelDetail.noGenerations') }}</p>
       </div>
     </div>
 
@@ -468,9 +476,25 @@ watch(
 }
 
 .output-panel__empty {
-  font-size: 14px;
-  color: #9b9dab;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
   text-align: center;
+}
+
+.output-panel__empty-icon {
+  width: 96px;
+  height: 96px;
+  object-fit: contain;
+}
+
+.output-panel__empty-text {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.4;
+  color: #9b9dab;
 }
 
 </style>
