@@ -19,6 +19,8 @@ defineProps<{
 }>()
 
 const fileInput = ref<HTMLInputElement | null>(null)
+const isDragging = ref(false)
+const dragDepth = ref(0)
 
 const { previewUrl, uploading, uploadError, applyFile, clearMedia, onUrlInput } = useMediaUpload({
   model,
@@ -38,6 +40,32 @@ function onFileChange(event: Event) {
   void applyFile(file)
   input.value = ''
 }
+
+function onDragEnter() {
+  dragDepth.value += 1
+  isDragging.value = true
+}
+
+function onDragLeave() {
+  dragDepth.value -= 1
+  if (dragDepth.value <= 0) {
+    dragDepth.value = 0
+    isDragging.value = false
+  }
+}
+
+function onDrop(event: DragEvent) {
+  dragDepth.value = 0
+  isDragging.value = false
+  const file = event.dataTransfer?.files?.[0]
+  if (!file) return
+  void applyFile(file)
+}
+
+function clearImage() {
+  clearMedia()
+  if (fileInput.value) fileInput.value.value = ''
+}
 </script>
 
 <template>
@@ -55,9 +83,15 @@ function onFileChange(event: Event) {
       class="image-field__box"
       :class="{
         'image-field__box--compact': compact,
+        'image-field__box--dragging': isDragging,
         'image-field__box--uploading': uploading,
         'image-field__box--invalid': invalid,
       }"
+      @dragenter.capture.prevent="onDragEnter"
+      @dragleave.capture.prevent="onDragLeave"
+      @dragover.capture.prevent
+      @drop.capture.prevent="onDrop"
+      @click.self="openPicker"
     >
       <div class="image-field__url-row">
         <input
@@ -67,12 +101,13 @@ function onFileChange(event: Event) {
           placeholder="https://example.com/image.png"
           :disabled="uploading"
           @input="onUrlInput"
+          @click.stop
         />
         <button
           type="button"
           class="image-field__upload-btn"
           :disabled="uploading"
-          @click="openPicker"
+          @click.stop="openPicker"
         >
           <AppIcon name="image-add-line" :size="20" />
         </button>
@@ -99,7 +134,7 @@ function onFileChange(event: Event) {
           class="image-field__clear"
           aria-label="Remove image"
           :disabled="uploading"
-          @click="clearMedia"
+          @click.stop="clearImage"
         >
           <AppIcon name="close" :size="20" />
         </button>
@@ -117,7 +152,13 @@ function onFileChange(event: Event) {
   border-radius: 8px;
   background: #0a0a0e;
   padding: 8px;
+  cursor: pointer;
   transition: border-color 0.15s ease;
+}
+
+.image-field__box--dragging {
+  border-color: rgba(255, 255, 255, 0.45);
+  background: rgba(255, 255, 255, 0.04);
 }
 
 .image-field__box--invalid {
@@ -130,6 +171,7 @@ function onFileChange(event: Event) {
 
 .image-field__box--uploading {
   opacity: 0.75;
+  cursor: wait;
 }
 
 .image-field__url-row {

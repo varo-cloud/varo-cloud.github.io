@@ -1,7 +1,9 @@
 <script setup lang="ts">
-import { ref } from 'vue'
+import { computed, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import SchemaFieldLabel from '../SchemaFieldLabel.vue'
 import SchemaFieldError from '../SchemaFieldError.vue'
+import GenerationPreviewLightbox from '../GenerationPreviewLightbox.vue'
 import AppIcon from '@/components/common/AppIcon.vue'
 import { useMediaUpload } from '@/composables/useMediaUpload'
 
@@ -16,14 +18,29 @@ defineProps<{
   errorMessage?: string
 }>()
 
+const { t } = useI18n()
+
 const fileInput = ref<HTMLInputElement | null>(null)
 const isDragging = ref(false)
+const dragDepth = ref(0)
+const showLightbox = ref(false)
 
 const { previewUrl, uploading, uploadError, applyFile, clearMedia, onUrlInput } = useMediaUpload({
   model,
   kind: 'video',
   mimePrefix: 'video/',
 })
+
+const videoSrc = computed(() => previewUrl.value || model.value)
+
+function openPreview() {
+  if (!videoSrc.value) return
+  showLightbox.value = true
+}
+
+function closePreview() {
+  showLightbox.value = false
+}
 
 function openPicker() {
   if (uploading.value) return
@@ -38,7 +55,21 @@ function onFileChange(event: Event) {
   input.value = ''
 }
 
+function onDragEnter() {
+  dragDepth.value += 1
+  isDragging.value = true
+}
+
+function onDragLeave() {
+  dragDepth.value -= 1
+  if (dragDepth.value <= 0) {
+    dragDepth.value = 0
+    isDragging.value = false
+  }
+}
+
 function onDrop(event: DragEvent) {
+  dragDepth.value = 0
   isDragging.value = false
   const file = event.dataTransfer?.files?.[0]
   if (!file) return
@@ -69,10 +100,10 @@ function clearVideo() {
         'video-field__box--uploading': uploading,
         'video-field__box--invalid': invalid,
       }"
-      @dragenter.prevent="isDragging = true"
-      @dragover.prevent="isDragging = true"
-      @dragleave.prevent="isDragging = false"
-      @drop.prevent="onDrop"
+      @dragenter.capture.prevent="onDragEnter"
+      @dragleave.capture.prevent="onDragLeave"
+      @dragover.capture.prevent
+      @drop.capture.prevent="onDrop"
       @click.self="openPicker"
     >
       <div class="video-field__url-row">
@@ -103,17 +134,28 @@ function clearVideo() {
 
       <p v-if="uploadError" class="video-field__error">{{ uploadError }}</p>
 
-      <div v-if="previewUrl || model" class="video-field__preview-row">
-        <div class="video-field__preview-wrap">
+      <div v-if="videoSrc" class="video-field__preview-row">
+        <button
+          type="button"
+          class="video-field__preview-wrap"
+          :aria-label="t('pages.modelDetail.viewFullscreen')"
+          @click.stop="openPreview"
+        >
           <video
-            v-if="previewUrl || model"
-            :src="previewUrl || model"
+            :src="videoSrc"
             class="video-field__preview"
             muted
             playsinline
             preload="metadata"
           />
-        </div>
+          <span class="video-field__preview-overlay" aria-hidden="true">
+            <span class="video-field__preview-play">
+              <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
+                <path d="M5 3.5v9l8-4.5-8-4.5z" fill="currentColor" />
+              </svg>
+            </span>
+          </span>
+        </button>
         <button
           type="button"
           class="video-field__clear"
@@ -128,6 +170,12 @@ function clearVideo() {
       </div>
     </div>
     <SchemaFieldError v-if="invalid && errorMessage" :message="errorMessage" />
+
+    <GenerationPreviewLightbox
+      v-if="showLightbox && videoSrc"
+      :urls="[videoSrc]"
+      @close="closePreview"
+    />
   </div>
 </template>
 
@@ -224,12 +272,21 @@ function clearVideo() {
 }
 
 .video-field__preview-wrap {
+  position: relative;
   width: 100px;
   height: 65px;
   flex-shrink: 0;
+  border: none;
   border-radius: 8px;
   overflow: hidden;
   background: #21212a;
+  padding: 0;
+  cursor: pointer;
+}
+
+.video-field__preview-wrap:hover .video-field__preview-overlay,
+.video-field__preview-wrap:focus-visible .video-field__preview-overlay {
+  background: rgba(0, 0, 0, 0.45);
 }
 
 .video-field__preview {
@@ -238,6 +295,27 @@ function clearVideo() {
   object-fit: cover;
   display: block;
   pointer-events: none;
+}
+
+.video-field__preview-overlay {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: rgba(0, 0, 0, 0.28);
+  transition: background 0.15s ease;
+}
+
+.video-field__preview-play {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.92);
+  color: #0a0a0e;
 }
 
 .video-field__clear {

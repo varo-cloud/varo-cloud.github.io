@@ -26,6 +26,7 @@ const userStore = useUserStore()
 const fileInput = ref<HTMLInputElement | null>(null)
 const audioEl = ref<HTMLAudioElement | null>(null)
 const isDragging = ref(false)
+const dragDepth = ref(0)
 const isPlaying = ref(false)
 const isMuted = ref(false)
 const isRecording = ref(false)
@@ -186,7 +187,21 @@ function onFileChange(event: Event) {
   input.value = ''
 }
 
+function onDragEnter() {
+  dragDepth.value += 1
+  isDragging.value = true
+}
+
+function onDragLeave() {
+  dragDepth.value -= 1
+  if (dragDepth.value <= 0) {
+    dragDepth.value = 0
+    isDragging.value = false
+  }
+}
+
 function onDrop(event: DragEvent) {
+  dragDepth.value = 0
   isDragging.value = false
   const file = event.dataTransfer?.files?.[0]
   if (!file) return
@@ -270,10 +285,10 @@ onBeforeUnmount(() => {
         'audio-field__box--recording': isRecording,
         'audio-field__box--invalid': invalid,
       }"
-      @dragenter.prevent="isDragging = true"
-      @dragover.prevent="isDragging = true"
-      @dragleave.prevent="isDragging = false"
-      @drop.prevent="onDrop"
+      @dragenter.capture.prevent="onDragEnter"
+      @dragleave.capture.prevent="onDragLeave"
+      @dragover.capture.prevent
+      @drop.capture.prevent="onDrop"
       @click.self="openPicker"
     >
       <div class="audio-field__url-row">
