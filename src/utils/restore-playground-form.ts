@@ -28,3 +28,11 @@ export function requestToFormValues(
 
   return values
 }
+
+/** Merge offering example `input` onto schema defaults for one-click Playground load. */
+export function exampleInputToFormValues(
+  input: Record<string, unknown>,
+  schema: InputSchema | undefined,
+): SchemaFormValues {
+  return requestToFormValues(input as GenerationRequest, schema)
+}

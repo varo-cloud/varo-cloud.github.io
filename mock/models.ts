@@ -1,6 +1,7 @@
 import type { MockMethod } from 'vite-plugin-mock'
 import type { ModelCategory, PricingPriceUnit } from '../src/types'
 import { resolveModelDoc } from './model-docs'
+import { resolveOfferingExamplesApi } from './offering-examples'
 import { resolveIsFavourited } from './_userPreferences'
 import { success } from './_util'
 
@@ -262,7 +263,9 @@ function buildFacets(catalog: ModelCatalogEntry[]) {
 }
 
 function extractSlugFromPath(url: string): string | null {
-  const match = url.match(/^\/api\/models\/([^?]+?)(?:\/(?:input-schema|quote|favourite|visit))?\/?(?:\?.*)?$/)
+  const match = url.match(
+    /^\/api\/models\/([^?]+?)(?:\/(?:input-schema|examples|quote|favourite|visit))?\/?(?:\?.*)?$/,
+  )
   if (!match) return null
   return decodeURIComponent(match[1]!)
 }
@@ -309,12 +312,27 @@ export default [
       }
 
       const doc = resolveModelDoc(model.slug)
+      const examples = resolveOfferingExamplesApi(model.slug)
       return success({
         ...model,
         readme_md: doc.readme_md || null,
         faq: doc.faq.length > 0 ? doc.faq : null,
         input_schema: null,
+        examples,
       })
+    },
+  },
+  {
+    url: /^\/api\/models\/[^/]+\/[^/?]+\/examples$/,
+    method: 'get',
+    response: ({ url }: { url: string }) => {
+      const slug = extractSlugFromPath(url)
+      const model = slug ? findCatalogModelBySlug(slug) : undefined
+      if (!model) {
+        return { code: 404, message: 'Model not found', data: null }
+      }
+
+      return success(resolveOfferingExamplesApi(model.slug))
     },
   },
 ] as unknown as MockMethod[]

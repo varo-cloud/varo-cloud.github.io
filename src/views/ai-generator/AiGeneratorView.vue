@@ -10,6 +10,7 @@ import PlaygroundOutputPanel from '@/components/playground/PlaygroundOutputPanel
 import { useLocaleRouter } from '@/composables/useLocaleRouter'
 import { usePlaygroundGeneration } from '@/composables/usePlaygroundGeneration'
 import { usePlaygroundQuote } from '@/composables/usePlaygroundQuote'
+import { usePlaygroundExamples } from '@/composables/usePlaygroundExamples'
 import { useUserStore } from '@/stores/user'
 import { AnalyticsEvents, trackEvent } from '@/analytics'
 import { createDefaultFormValues } from '@/utils/schema-form'
@@ -110,6 +111,18 @@ const selectedModelDisplay = computed(() => {
   }
 })
 
+const modelExamples = computed(() => model.value?.examples ?? [])
+
+const {
+  selectedExampleId,
+  selectExample,
+} = usePlaygroundExamples({
+  examples: modelExamples,
+  inputSchema,
+  formValues,
+  resetGeneration,
+})
+
 async function initializePage() {
   listLoading.value = true
   listError.value = null
@@ -153,9 +166,11 @@ async function loadSelectedModel(id: string) {
     const detail = await fetchModelDetail(id)
     const schema = await loadModelInputSchema(id, detail.inputSchema)
 
-    formValues.value = createDefaultFormValues(schema ?? undefined)
     model.value = detail
     inputSchema.value = schema
+    if (!detail.examples?.length) {
+      formValues.value = createDefaultFormValues(schema ?? undefined)
+    }
   } catch {
     modelError.value = t('pages.aiGenerator.modelLoadError')
     model.value = null
@@ -246,6 +261,7 @@ onMounted(() => {
         :quote-loading="quoteLoading"
         :balance-usd="balanceUsd"
         :generating="isGenerating || modelLoading"
+        :form-sync-key="selectedExampleId"
         analytics-source="ai_generator"
         :analytics-capability="model.capability"
         @run="handleRun"
@@ -260,7 +276,9 @@ onMounted(() => {
         :status="generationStatus"
         :progress="generationProgress"
         :estimated-seconds="estimatedSeconds"
-        :example-url="inputSchema?.example_url"
+        :examples="modelExamples"
+        :selected-example-id="selectedExampleId"
+        @select-example="selectExample"
       />
     </div>
   </div>

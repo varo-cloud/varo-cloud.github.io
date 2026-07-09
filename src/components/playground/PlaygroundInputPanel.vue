@@ -38,6 +38,8 @@ const props = defineProps<{
   selectedModelDisplay?: ModelSelectorOption
   analyticsSource?: 'model_detail' | 'ai_generator'
   analyticsCapability?: string
+  /** Changes when an offering example is selected — forces form remount */
+  formSyncKey?: string | null
 }>()
 
 const batchSize = defineModel<number>('batchSize', { default: 1 })
@@ -119,8 +121,17 @@ function applyParsedJsonDraft() {
 }
 
 watch(
+  () => props.formSyncKey,
+  () => {
+    jsonDraftDirty.value = false
+    jsonDraft.value = buildPlaygroundJsonSnippet(props.modelId, formValues.value, batchSize.value)
+  },
+)
+
+watch(
   () => props.schema,
   (schema) => {
+    if (props.formSyncKey) return
     formValues.value = createDefaultFormValues(schema)
     jsonDraftDirty.value = false
     jsonDraft.value = buildPlaygroundJsonSnippet(props.modelId, formValues.value, batchSize.value)
@@ -343,6 +354,7 @@ onBeforeUnmount(() => {
       />
       <PlaygroundSchemaForm
         v-if="inputViewMode === 'form'"
+        :key="formSyncKey ?? modelId"
         v-model="formValues"
         :schema="schema"
         :invalid-fields="invalidFields"
