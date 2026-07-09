@@ -72,7 +72,7 @@ export default {
       },
       sidebar: {
         title: 'Categories',
-        series: 'Model Series',
+        publisher: 'Publisher',
         type: 'Model Type',
         capability: 'Capabilities',
         more: 'More',

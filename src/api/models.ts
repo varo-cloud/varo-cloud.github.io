@@ -222,7 +222,7 @@ export function fetchModelFacets() {
   return unwrap<ModelFacetsResponse>(http.get('/models/facets')).then((data) => ({
     categories: data.categories ?? [],
     capabilities: data.capabilities ?? [],
-    series: data.series ?? [],
+    publishers: data.publishers ?? [],
   }))
 }
 

@@ -196,8 +196,41 @@ export function findCatalogModelById(slug: string): ModelCatalogEntry | undefine
   return findCatalogModelBySlug(slug)
 }
 
-function extractSeriesKey(slug: string): string {
+function extractFamilyKey(slug: string): string {
   return slug.split('/')[0]?.replace(/-v\d+$/, '') ?? slug
+}
+
+const FAMILY_PUBLISHER: Record<
+  string,
+  { slug: string; name: string; logo_url?: string | null }
+> = {
+  'seedance-2.0': { slug: 'bytedance', name: 'ByteDance', logo_url: '/assets/models/seedance.svg' },
+  'kling-2.6': { slug: 'kuaishou', name: 'Kuaishou' },
+  'flux-1': { slug: 'black-forest-labs', name: 'Black Forest Labs' },
+  'gpt-4o': { slug: 'openai', name: 'OpenAI' },
+  'veo-2': { slug: 'google', name: 'Google' },
+  sora: { slug: 'openai', name: 'OpenAI' },
+  'gen-3': { slug: 'runway', name: 'Runway' },
+  'dream-machine': { slug: 'luma', name: 'Luma' },
+  hailuo: { slug: 'minimax', name: 'MiniMax' },
+  'wan-2.1': { slug: 'alibaba', name: 'Alibaba' },
+  'pika-2.0': { slug: 'pika', name: 'Pika' },
+  'stable-video': { slug: 'stability', name: 'Stability AI' },
+}
+
+function getPublisher(slug: string) {
+  const family = extractFamilyKey(slug)
+  return FAMILY_PUBLISHER[family] ?? { slug: 'other', name: 'Other', logo_url: null }
+}
+
+function withPublisherFields(item: ModelCatalogEntry) {
+  const publisher = getPublisher(item.slug)
+  return {
+    ...item,
+    publisher_slug: publisher.slug,
+    publisher_name: publisher.name,
+    publisher_logo_url: publisher.logo_url ?? null,
+  }
 }
 
 function filterModels(query: Record<string, string>) {
@@ -213,9 +246,9 @@ function filterModels(query: Record<string, string>) {
     filtered = filtered.filter((model) => model.capability === capability)
   }
 
-  const series = query.series?.trim()
-  if (series) {
-    filtered = filtered.filter((model) => extractSeriesKey(model.slug) === series)
+  const publisher = query.publisher?.trim()
+  if (publisher) {
+    filtered = filtered.filter((model) => getPublisher(model.slug).slug === publisher)
   }
 
   const q = query.q?.trim().toLowerCase()
@@ -236,7 +269,10 @@ function filterModels(query: Record<string, string>) {
 function buildFacets(catalog: ModelCatalogEntry[]) {
   const categoryBaseIds = new Map<string, Set<number>>()
   const capabilityCounts = new Map<string, number>()
-  const seriesCounts = new Map<string, number>()
+  const publisherBaseIds = new Map<
+    string,
+    { slug: string; name: string; logo_url: string | null; ids: Set<number> }
+  >()
 
   for (const item of catalog) {
     if (!categoryBaseIds.has(item.category)) {
@@ -245,8 +281,16 @@ function buildFacets(catalog: ModelCatalogEntry[]) {
     categoryBaseIds.get(item.category)!.add(item.model_id)
     capabilityCounts.set(item.capability, (capabilityCounts.get(item.capability) ?? 0) + 1)
 
-    const seriesKey = extractSeriesKey(item.slug)
-    seriesCounts.set(seriesKey, (seriesCounts.get(seriesKey) ?? 0) + 1)
+    const publisher = getPublisher(item.slug)
+    if (!publisherBaseIds.has(publisher.slug)) {
+      publisherBaseIds.set(publisher.slug, {
+        slug: publisher.slug,
+        name: publisher.name,
+        logo_url: publisher.logo_url ?? null,
+        ids: new Set(),
+      })
+    }
+    publisherBaseIds.get(publisher.slug)!.ids.add(item.model_id)
   }
 
   return {
@@ -256,9 +300,14 @@ function buildFacets(catalog: ModelCatalogEntry[]) {
     capabilities: [...capabilityCounts.entries()]
       .map(([value, count]) => ({ value, count }))
       .sort((a, b) => a.value.localeCompare(b.value)),
-    series: [...seriesCounts.entries()]
-      .map(([value, count]) => ({ value, count }))
-      .sort((a, b) => b.count - a.count || a.value.localeCompare(b.value)),
+    publishers: [...publisherBaseIds.values()]
+      .map(({ slug, name, logo_url, ids }) => ({
+        slug,
+        name,
+        logo_url,
+        count: ids.size,
+      }))
+      .sort((a, b) => b.count - a.count || a.slug.localeCompare(b.slug)),
   }
 }
 
@@ -292,7 +341,7 @@ export default [
 
       return success({
         items: filtered.slice(offset, offset + limit).map((item) => ({
-          ...item,
+          ...withPublisherFields(item),
           is_favourited: resolveIsFavourited(headers, item.slug),
         })),
         total: filtered.length,

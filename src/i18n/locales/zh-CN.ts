@@ -72,7 +72,7 @@ export default {
       },
       sidebar: {
         title: '分类',
-        series: '模型系列',
+        publisher: '发布方',
         type: '模型类型',
         capability: '能力纬度',
         more: '更多',

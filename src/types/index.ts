@@ -89,7 +89,7 @@ export interface FetchModelsParams {
   q?: string
   category?: ModelCategory
   capability?: string
-  series?: string
+  publisher?: string
 }
 
 export interface FacetItem {
@@ -97,10 +97,17 @@ export interface FacetItem {
   count: number
 }
 
+export interface PublisherFacetItem {
+  slug: string
+  name: string
+  logo_url: string | null
+  count: number
+}
+
 export interface ModelFacetsResponse {
   categories: FacetItem[]
   capabilities: FacetItem[]
-  series: FacetItem[]
+  publishers: PublisherFacetItem[]
 }
 
 export interface ModelHistoryEntry {
