@@ -29,7 +29,7 @@ defineProps<{
             </svg>
           </button>
         </template>
-        {{ description }}
+        <span class="schema-field-label__tooltip">{{ description }}</span>
       </NTooltip>
       <span v-if="counter" class="schema-field-label__counter">{{ counter }}</span>
     </div>
@@ -74,5 +74,14 @@ defineProps<{
   font-size: 12px;
   font-weight: 500;
   color: #9b9dab;
+}
+
+.schema-field-label__tooltip {
+  display: block;
+  max-width: 280px;
+  font-size: 12px;
+  line-height: 16px;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 </style>
