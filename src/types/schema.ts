@@ -1,5 +1,12 @@
 export type SchemaFieldType = 'string' | 'integer' | 'number' | 'boolean' | 'array' | 'object'
 
+export type SchemaUiWidget =
+  | 'textarea'
+  | 'slider'
+  | 'image-upload'
+  | 'video-upload'
+  | 'audio-upload'
+
 export type SchemaWidget =
   | 'textarea'
   | 'text'
@@ -19,28 +26,29 @@ export type SchemaWidget =
   | 'voice-list'
   | 'placeholder'
 
-export interface SchemaUiComponentProps {
-  accept?: string
-}
-
 export interface SchemaProperty {
   type: SchemaFieldType
+  title?: string
   description?: string
   default?: unknown
   enum?: (string | number)[]
   minimum?: number
   maximum?: number
   step?: number
+  minLength?: number
+  maxLength?: number
   minItems?: number
   maxItems?: number
+  examples?: unknown[]
   items?: SchemaProperty & {
     properties?: Record<string, SchemaProperty>
     required?: string[]
   }
   properties?: Record<string, SchemaProperty>
   required?: string[]
-  'x-ui-component'?: string
-  'x-ui-component-props'?: SchemaUiComponentProps
+  'x-ui-widget'?: SchemaUiWidget | string
+  'x-ui-rows'?: number
+  'x-placeholder'?: string
 }
 
 export interface InputSchema {

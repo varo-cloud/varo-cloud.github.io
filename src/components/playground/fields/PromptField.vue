@@ -5,22 +5,24 @@ import SchemaFieldLabel from '../SchemaFieldLabel.vue'
 import SchemaFieldError from '../SchemaFieldError.vue'
 
 const model = defineModel<string>({ required: true })
-const autoHeight = useAutoHeightTextarea(model)
+
+const props = defineProps<{
+  label: string
+  required?: boolean
+  description?: string
+  placeholder?: string
+  rows?: number
+  invalid?: boolean
+  errorMessage?: string
+}>()
+
+const autoHeight = useAutoHeightTextarea(model, props.rows)
 const { syncHeight, emptyRows } = autoHeight
 
 function bindTextareaRef(el: Element | ComponentPublicInstance | null) {
   autoHeight.textareaRef.value = el instanceof HTMLTextAreaElement ? el : null
   if (el instanceof HTMLTextAreaElement) nextTick(syncHeight)
 }
-
-defineProps<{
-  label: string
-  required?: boolean
-  description?: string
-  placeholder?: string
-  invalid?: boolean
-  errorMessage?: string
-}>()
 
 onMounted(() => nextTick(syncHeight))
 </script>

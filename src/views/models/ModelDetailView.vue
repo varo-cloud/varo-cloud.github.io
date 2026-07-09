@@ -5,6 +5,7 @@ import { useI18n } from 'vue-i18n'
 import { useLocaleRouter } from '@/composables/useLocaleRouter'
 import { NSpin } from 'naive-ui'
 import { fetchModelDetail } from '@/api/models'
+import { loadModelInputSchema } from '@/api/modelSchema'
 import { fetchGenerationDetail } from '@/api/generations'
 import ModelDetailHeader from '@/components/models/ModelDetailHeader.vue'
 import ModelApiTab from '@/components/models/ModelApiTab.vue'
@@ -14,7 +15,6 @@ import PlaygroundOutputPanel from '@/components/playground/PlaygroundOutputPanel
 import { useUserStore } from '@/stores/user'
 import { useModelPreferencesStore } from '@/stores/modelPreferences'
 import { createDefaultFormValues } from '@/utils/schema-form'
-import { extractInputSchema } from '@/utils/model-schema'
 import { usePlaygroundQuote } from '@/composables/usePlaygroundQuote'
 import { usePlaygroundGeneration } from '@/composables/usePlaygroundGeneration'
 import { useAppMessage } from '@/composables/useAppMessage'
@@ -95,15 +95,7 @@ async function loadModel(slug: string) {
 
   try {
     const detail = await fetchModelDetail(slug)
-    let schema: InputSchema | null = null
-
-    if (detail.inputSchema) {
-      try {
-        schema = extractInputSchema(detail.inputSchema)
-      } catch {
-        schema = null
-      }
-    }
+    const schema = await loadModelInputSchema(slug, detail.inputSchema)
 
     formValues.value = createDefaultFormValues(schema ?? undefined)
     model.value = detail

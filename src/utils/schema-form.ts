@@ -7,11 +7,11 @@ import type {
   SchemaWidget,
 } from '@/types/schema'
 
-const IMAGE_FIELD_KEYS = new Set([
-  'image',
-  'last_image',
-  'end_image',
-])
+const IMAGE_FIELD_KEYS = new Set(['image', 'last_image', 'end_image', 'mask'])
+
+const VIDEO_FIELD_KEYS = new Set(['video'])
+
+const AUDIO_FIELD_KEYS = new Set(['audio'])
 
 const TEXTAREA_FIELD_KEYS = new Set([
   'prompt',
@@ -29,78 +29,47 @@ const SWITCH_FIELD_KEYS = new Set([
   'keep_original_sound',
 ])
 
+const MULTI_IMAGE_ARRAY_KEYS = new Set(['images', 'reference_images'])
+
+const MULTI_VIDEO_ARRAY_KEYS = new Set(['reference_videos'])
+
+const MULTI_AUDIO_ARRAY_KEYS = new Set(['reference_audios'])
+
 const ARRAY_EDITOR_FIELD_KEYS: Record<string, SchemaWidget> = {
   multi_prompt: 'multi-prompt',
   element_list: 'element-list',
   voice_list: 'voice-list',
 }
 
-function uploaderAccept(property: SchemaProperty): string {
-  return property['x-ui-component-props']?.accept ?? ''
+function isArrayOfObjects(property: SchemaProperty): boolean {
+  return property.type === 'array' && property.items?.type === 'object'
 }
 
-function resolveSingleUploaderWidget(property: SchemaProperty): SchemaWidget {
-  const accept = uploaderAccept(property)
-  if (accept.startsWith('video/')) return 'video-uploader'
-  if (accept.startsWith('audio/')) return 'audio-uploader'
-  return 'image-uploader'
-}
-
-function resolveMultiUploaderWidget(key: string, property: SchemaProperty): SchemaWidget | null {
-  if (property.type !== 'array') return null
-
-  const isUploaders = property['x-ui-component'] === 'uploaders'
-  const isKnownMultiKey =
-    key === 'reference_images' || key === 'reference_audios' || key === 'reference_videos' || key === 'images'
-
-  if (!isUploaders && !isKnownMultiKey) return null
-
-  const accept = uploaderAccept(property)
-  if (accept.startsWith('audio/') || key === 'reference_audios') return 'multi-audio-uploader'
-  if (accept.startsWith('video/') || key === 'reference_videos') return 'multi-video-uploader'
-  if (accept.startsWith('image/') || key === 'reference_images' || key === 'images') {
-    return 'multi-image-uploader'
-  }
-
-  return isUploaders ? 'placeholder' : null
-}
-
-function resolveWidgetFromUiComponent(
-  uiComponent: string | undefined,
-  key: string,
+function resolveWidgetFromUiWidget(
+  widget: string | undefined,
   property: SchemaProperty,
 ): SchemaWidget | null {
-  if (!uiComponent) return null
+  if (!widget) return null
 
-  switch (uiComponent) {
-    case 'select':
-      return 'select'
-    case 'slider':
-      return 'slider'
-    case 'switch':
-      return 'switch'
-    case 'number':
-      return 'number'
+  switch (widget) {
     case 'textarea':
       return 'textarea'
-    case 'text':
-      return 'text'
-    case 'uploader':
-      if (property.type === 'array') {
-        return resolveMultiUploaderWidget(key, property) ?? 'placeholder'
-      }
-      return resolveSingleUploaderWidget(property)
-    case 'uploaders':
-      return resolveMultiUploaderWidget(key, property) ?? 'placeholder'
+    case 'slider':
+      return 'slider'
+    case 'image-upload':
+      return property.type === 'array' ? 'multi-image-uploader' : 'image-uploader'
+    case 'video-upload':
+      return property.type === 'array' ? 'multi-video-uploader' : 'video-uploader'
+    case 'audio-upload':
+      return property.type === 'array' ? 'multi-audio-uploader' : 'audio-uploader'
     default:
       return null
   }
 }
 
-function isImageUploaderField(key: string, property: SchemaProperty): boolean {
-  if (property.type === 'array') return false
-  if (property['x-ui-component'] === 'uploader') return true
-  return property.type === 'string' && IMAGE_FIELD_KEYS.has(key)
+export function getFieldLabel(key: string, property: SchemaProperty): string {
+  const title = property.title?.trim()
+  return title || key
 }
 
 export function resolveWidget(key: string, property: SchemaProperty): SchemaWidget {
@@ -109,14 +78,30 @@ export function resolveWidget(key: string, property: SchemaProperty): SchemaWidg
 
   if (key === 'voice_id' && property.type === 'string') return 'voice-select'
 
-  const fromUi = resolveWidgetFromUiComponent(property['x-ui-component'], key, property)
-  if (fromUi) return fromUi
+  const fromWidget = resolveWidgetFromUiWidget(property['x-ui-widget'], property)
+  if (fromWidget) return fromWidget
 
-  const multiUploader = resolveMultiUploaderWidget(key, property)
-  if (multiUploader) return multiUploader
-  if (isImageUploaderField(key, property)) return 'image-uploader'
+  if (isArrayOfObjects(property)) {
+    return 'placeholder'
+  }
+
+  if (property.type === 'array') {
+    if (MULTI_IMAGE_ARRAY_KEYS.has(key)) return 'multi-image-uploader'
+    if (MULTI_VIDEO_ARRAY_KEYS.has(key)) return 'multi-video-uploader'
+    if (MULTI_AUDIO_ARRAY_KEYS.has(key)) return 'multi-audio-uploader'
+    return 'placeholder'
+  }
+
+  if (property.type === 'string') {
+    if (IMAGE_FIELD_KEYS.has(key)) return 'image-uploader'
+    if (VIDEO_FIELD_KEYS.has(key)) return 'video-uploader'
+    if (AUDIO_FIELD_KEYS.has(key)) return 'audio-uploader'
+    if (property.enum?.length) return 'select'
+    if (TEXTAREA_FIELD_KEYS.has(key)) return 'textarea'
+    return 'textarea'
+  }
+
   if (property.type === 'boolean' || SWITCH_FIELD_KEYS.has(key)) return 'switch'
-  if (TEXTAREA_FIELD_KEYS.has(key)) return 'textarea'
 
   if (property.type === 'integer' || property.type === 'number') {
     if (key === 'seed') return 'number'
@@ -125,10 +110,7 @@ export function resolveWidget(key: string, property: SchemaProperty): SchemaWidg
     return 'number'
   }
 
-  if (property.type === 'string' && property.enum?.length) return 'select'
-  if (property.type === 'string') return 'textarea'
-
-  return 'text'
+  return 'placeholder'
 }
 
 export function resolveSchemaFields(schema: InputSchema | undefined): ResolvedSchemaField[] {
@@ -229,32 +211,61 @@ export function getArrayItemProperty(
   return items.properties?.[itemKey]
 }
 
+function isStringValueInvalid(value: string, property: SchemaProperty): boolean {
+  const trimmed = value.trim()
+  if (!trimmed) return false
+
+  const length = trimmed.length
+  if (property.minLength !== undefined && length < property.minLength) return true
+  if (property.maxLength !== undefined && length > property.maxLength) return true
+  return false
+}
+
+function isArrayValueInvalid(value: unknown[], property: SchemaProperty): boolean {
+  if (property.minItems !== undefined && value.length < property.minItems) return true
+  if (property.maxItems !== undefined && value.length > property.maxItems) return true
+  return false
+}
+
 export function validateSchemaForm(
   schema: InputSchema | undefined,
   values: SchemaFormValues,
 ): string[] {
   if (!schema) return []
 
-  const missing: string[] = []
+  const invalid = new Set<string>()
 
   for (const field of resolveSchemaFields(schema)) {
-    if (!field.required) continue
-
     const value = values[field.key]
-    if (value === undefined || value === null) {
-      missing.push(field.key)
-      continue
+
+    if (field.required) {
+      if (value === undefined || value === null) {
+        invalid.add(field.key)
+        continue
+      }
+
+      if (typeof value === 'string' && !value.trim()) {
+        invalid.add(field.key)
+        continue
+      }
+
+      if (Array.isArray(value) && value.length === 0) {
+        invalid.add(field.key)
+        continue
+      }
     }
 
-    if (typeof value === 'string' && !value.trim()) {
-      missing.push(field.key)
-      continue
+    if (typeof value === 'string') {
+      if (isStringValueInvalid(value, field.property)) {
+        invalid.add(field.key)
+        continue
+      }
     }
 
-    if (Array.isArray(value) && value.length === 0) {
-      missing.push(field.key)
+    if (Array.isArray(value) && field.property.type === 'array' && isArrayValueInvalid(value, field.property)) {
+      invalid.add(field.key)
     }
   }
 
-  return missing
+  return [...invalid]
 }

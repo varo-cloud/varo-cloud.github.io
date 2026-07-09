@@ -54,10 +54,26 @@ function parseAccessToken(token: string): string | null {
   return match?.[1] ?? null
 }
 
-function getUserIdFromAuth(headers: Record<string, string>): string | null {
+function getBearerToken(headers: Record<string, string>): string | null {
   const auth = headers.authorization || headers.Authorization
   if (!auth?.startsWith('Bearer ')) return null
-  return parseAccessToken(auth.slice(7))
+  return auth.slice(7).trim() || null
+}
+
+function getUserIdFromAuth(headers: Record<string, string>): string | null {
+  const token = getBearerToken(headers)
+  if (!token) return null
+  return parseAccessToken(token)
+}
+
+function buildDevProfile() {
+  return {
+    id: 'dev-local-user',
+    email: 'dev@local.test',
+    role: 'admin' as const,
+    balance_usd: getAccountBalanceUsd(),
+    created_at: Date.now(),
+  }
 }
 
 function getOrCreateUser(email: string): UserProfile {
@@ -200,24 +216,28 @@ export default [
     url: '/api/user/profile',
     method: 'get',
     response: ({ headers }: { headers: Record<string, string> }) => {
-      const userId = getUserIdFromAuth(headers)
-      if (!userId) {
+      const token = getBearerToken(headers)
+      if (!token) {
         return fail('Unauthorized', 401)
       }
 
-      for (const user of users.values()) {
-        if (user.id === userId) {
-          return success({
-            id: user.id,
-            email: user.email,
-            role: user.role,
-            balance_usd: getAccountBalanceUsd(),
-            created_at: user.createdAt,
-          })
+      const userId = getUserIdFromAuth(headers)
+      if (userId) {
+        for (const user of users.values()) {
+          if (user.id === userId) {
+            return success({
+              id: user.id,
+              email: user.email,
+              role: user.role,
+              balance_usd: getAccountBalanceUsd(),
+              created_at: user.createdAt,
+            })
+          }
         }
       }
 
-      return fail('Unauthorized', 401)
+      // Local dev: accept staging/.env bearer tokens that are not mock OTP sessions.
+      return success(buildDevProfile())
     },
   },
 ] as MockMethod[]

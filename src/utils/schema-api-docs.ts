@@ -1,5 +1,5 @@
 import type { InputSchema, SchemaProperty } from '@/types/schema'
-import { resolveSchemaFields } from '@/utils/schema-form'
+import { resolveSchemaFields, getFieldLabel } from '@/utils/schema-form'
 
 export interface SchemaApiParameterRow {
   name: string
@@ -52,7 +52,7 @@ export function buildSchemaParameterRows(schema: InputSchema | undefined): Schem
   if (!schema) return []
 
   return resolveSchemaFields(schema).map((field) => ({
-    name: field.key,
+    name: getFieldLabel(field.key, field.property),
     type: formatType(field.property),
     required: field.required,
     defaultValue: formatDefault(field.property),

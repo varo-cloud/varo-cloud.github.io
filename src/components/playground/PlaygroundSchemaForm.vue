@@ -5,6 +5,7 @@ import type { InputSchema, SchemaFormValues, SchemaProperty } from '@/types/sche
 import {
   createDefaultFormValues,
   getArrayItemProperty,
+  getFieldLabel,
   getSelectOptions,
   resolveSchemaFields,
 } from '@/utils/schema-form'
@@ -101,6 +102,10 @@ function multiPromptDurationMinimum(fieldProperty: SchemaProperty) {
 function multiPromptDurationMaximum(fieldProperty: SchemaProperty) {
   return getArrayItemProperty(fieldProperty, 'duration')?.maximum
 }
+
+function fieldLabel(key: string, property: SchemaProperty) {
+  return getFieldLabel(key, property)
+}
 </script>
 
 <template>
@@ -136,9 +141,11 @@ function multiPromptDurationMaximum(fieldProperty: SchemaProperty) {
       <PromptField
         v-if="field.widget === 'textarea' && shouldShowPromptField(field.key)"
         v-model="model[field.key] as string"
-        :label="field.key"
+        :label="fieldLabel(field.key, field.property)"
         :required="field.required"
         :description="field.property.description"
+        :placeholder="field.property['x-placeholder']"
+        :rows="field.property['x-ui-rows']"
         :invalid="isFieldInvalid(field.key)"
         :error-message="fieldErrorMessage"
       />
@@ -146,7 +153,7 @@ function multiPromptDurationMaximum(fieldProperty: SchemaProperty) {
       <ImageUploaderField
         v-else-if="field.widget === 'image-uploader'"
         v-model="model[field.key] as string"
-        :label="field.key"
+        :label="fieldLabel(field.key, field.property)"
         :required="field.required"
         :description="field.property.description"
         :hint="lastImageHint(field.key)"
@@ -159,7 +166,7 @@ function multiPromptDurationMaximum(fieldProperty: SchemaProperty) {
       <VideoUploaderField
         v-else-if="field.widget === 'video-uploader'"
         v-model="model[field.key] as string"
-        :label="field.key"
+        :label="fieldLabel(field.key, field.property)"
         :required="field.required"
         :description="field.property.description"
         :invalid="isFieldInvalid(field.key)"
@@ -169,7 +176,7 @@ function multiPromptDurationMaximum(fieldProperty: SchemaProperty) {
       <AudioUploaderField
         v-else-if="field.widget === 'audio-uploader'"
         v-model="model[field.key] as string"
-        :label="field.key"
+        :label="fieldLabel(field.key, field.property)"
         :required="field.required"
         :description="field.property.description"
         :invalid="isFieldInvalid(field.key)"
@@ -179,7 +186,7 @@ function multiPromptDurationMaximum(fieldProperty: SchemaProperty) {
       <MultiImageUploaderField
         v-else-if="field.widget === 'multi-image-uploader'"
         v-model="model[field.key] as string[]"
-        :label="field.key"
+        :label="fieldLabel(field.key, field.property)"
         :required="field.required"
         :description="field.property.description"
         :min-items="field.property.minItems"
@@ -191,7 +198,7 @@ function multiPromptDurationMaximum(fieldProperty: SchemaProperty) {
       <MultiPromptField
         v-else-if="field.widget === 'multi-prompt' && shouldShowMultiPromptField()"
         v-model="model[field.key] as MultiPromptItem[]"
-        :label="field.key"
+        :label="fieldLabel(field.key, field.property)"
         :required="field.required"
         :description="field.property.description"
         :min-items="field.property.minItems"
@@ -206,7 +213,7 @@ function multiPromptDurationMaximum(fieldProperty: SchemaProperty) {
       <ElementListField
         v-else-if="field.widget === 'element-list'"
         v-model="model[field.key] as ElementListItem[]"
-        :label="field.key"
+        :label="fieldLabel(field.key, field.property)"
         :required="field.required"
         :description="field.property.description"
         :min-items="field.property.minItems"
@@ -218,7 +225,7 @@ function multiPromptDurationMaximum(fieldProperty: SchemaProperty) {
       <VoiceListField
         v-else-if="field.widget === 'voice-list'"
         v-model="model[field.key] as VoiceListItem[]"
-        :label="field.key"
+        :label="fieldLabel(field.key, field.property)"
         :required="field.required"
         :description="field.property.description"
         :min-items="field.property.minItems"
@@ -231,7 +238,7 @@ function multiPromptDurationMaximum(fieldProperty: SchemaProperty) {
       <VoiceSelectorField
         v-else-if="field.widget === 'voice-select'"
         v-model="model[field.key] as string"
-        :label="field.key"
+        :label="fieldLabel(field.key, field.property)"
         :required="field.required"
         :description="field.property.description"
         :enum-values="field.property.enum"
@@ -243,7 +250,7 @@ function multiPromptDurationMaximum(fieldProperty: SchemaProperty) {
       <SelectField
         v-else-if="field.widget === 'select'"
         v-model="model[field.key] as string | number"
-        :label="field.key"
+        :label="fieldLabel(field.key, field.property)"
         :required="field.required"
         :description="field.property.description"
         :options="getSelectOptions(field.property)"
@@ -254,7 +261,7 @@ function multiPromptDurationMaximum(fieldProperty: SchemaProperty) {
       <SliderField
         v-else-if="field.widget === 'slider'"
         v-model="model[field.key] as number"
-        :label="field.key"
+        :label="fieldLabel(field.key, field.property)"
         :required="field.required"
         :description="field.property.description"
         :minimum="field.property.minimum"
@@ -267,7 +274,7 @@ function multiPromptDurationMaximum(fieldProperty: SchemaProperty) {
       <SwitchField
         v-else-if="field.widget === 'switch'"
         v-model="model[field.key] as boolean"
-        :label="field.key"
+        :label="fieldLabel(field.key, field.property)"
         :required="field.required"
         :description="field.property.description"
         :invalid="isFieldInvalid(field.key)"
@@ -277,7 +284,7 @@ function multiPromptDurationMaximum(fieldProperty: SchemaProperty) {
       <NumberField
         v-else-if="field.widget === 'number'"
         v-model="model[field.key] as number"
-        :label="field.key"
+        :label="fieldLabel(field.key, field.property)"
         :required="field.required"
         :description="field.property.description"
         :minimum="field.property.minimum"
@@ -290,7 +297,7 @@ function multiPromptDurationMaximum(fieldProperty: SchemaProperty) {
       <MultiAudioUploaderField
         v-else-if="field.widget === 'multi-audio-uploader'"
         v-model="model[field.key] as string[]"
-        :label="field.key"
+        :label="fieldLabel(field.key, field.property)"
         :required="field.required"
         :description="field.property.description"
         :min-items="field.property.minItems"
@@ -302,7 +309,7 @@ function multiPromptDurationMaximum(fieldProperty: SchemaProperty) {
       <MultiVideoUploaderField
         v-else-if="field.widget === 'multi-video-uploader'"
         v-model="model[field.key] as string[]"
-        :label="field.key"
+        :label="fieldLabel(field.key, field.property)"
         :required="field.required"
         :description="field.property.description"
         :min-items="field.property.minItems"
@@ -313,7 +320,7 @@ function multiPromptDurationMaximum(fieldProperty: SchemaProperty) {
 
       <SchemaFieldPlaceholder
         v-else-if="field.widget === 'placeholder'"
-        :label="field.key"
+        :label="fieldLabel(field.key, field.property)"
         :required="field.required"
         :description="field.property.description"
         widget-name="UnknownWidget"

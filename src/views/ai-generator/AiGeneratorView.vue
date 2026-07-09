@@ -4,6 +4,7 @@ import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { NSpin } from 'naive-ui'
 import { fetchModelDetail, fetchModels } from '@/api/models'
+import { loadModelInputSchema } from '@/api/modelSchema'
 import PlaygroundInputPanel from '@/components/playground/PlaygroundInputPanel.vue'
 import PlaygroundOutputPanel from '@/components/playground/PlaygroundOutputPanel.vue'
 import { useLocaleRouter } from '@/composables/useLocaleRouter'
@@ -12,7 +13,6 @@ import { usePlaygroundQuote } from '@/composables/usePlaygroundQuote'
 import { useUserStore } from '@/stores/user'
 import { AnalyticsEvents, trackEvent } from '@/analytics'
 import { createDefaultFormValues } from '@/utils/schema-form'
-import { extractInputSchema } from '@/utils/model-schema'
 import { isValidModelSlug, normalizeModelSlug } from '@/utils/model-slug'
 import type { ModelDetail } from '@/types'
 import type { InputSchema, SchemaFormValues } from '@/types/schema'
@@ -151,15 +151,7 @@ async function loadSelectedModel(id: string) {
 
   try {
     const detail = await fetchModelDetail(id)
-    let schema: InputSchema | null = null
-
-    if (detail.inputSchema) {
-      try {
-        schema = extractInputSchema(detail.inputSchema)
-      } catch {
-        schema = null
-      }
-    }
+    const schema = await loadModelInputSchema(id, detail.inputSchema)
 
     formValues.value = createDefaultFormValues(schema ?? undefined)
     model.value = detail
