@@ -48,6 +48,7 @@ function visibleItems<T>(items: T[]) {
 const showMoreButton = computed(() => {
   const totalItems =
     props.publishers.length +
+    (props.publishers.length > 0 ? 1 : 0) +
     props.categories.length +
     (props.categories.length > 0 ? 1 : 0) +
     props.capabilities.length +
@@ -77,6 +78,29 @@ function selectCapability(value: string | null) {
       <section v-if="publishers.length > 0" class="models-filter-section">
         <h3 class="models-filter-section__title">{{ t('pages.models.sidebar.publisher') }}</h3>
         <ul class="models-filter-list">
+          <li>
+            <button
+              type="button"
+              class="models-filter-item"
+              :class="{ 'is-active': !selectedPublisher }"
+              @click="selectPublisher(null)"
+            >
+              <img
+                :src="
+                  assetUrl(
+                    !selectedPublisher
+                      ? '/assets/models/filter-checked.svg'
+                      : '/assets/models/filter-unchecked.svg',
+                  )
+                "
+                alt=""
+                aria-hidden="true"
+                class="models-filter-item__icon"
+              />
+              <span class="models-filter-item__label">{{ t('pages.models.filters.all') }}</span>
+              <span class="models-filter-item__count">{{ totalCount }}</span>
+            </button>
+          </li>
           <li v-for="item in visibleItems(publishers)" :key="item.slug">
             <button
               type="button"
