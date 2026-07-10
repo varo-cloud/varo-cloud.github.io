@@ -72,7 +72,7 @@ export default {
       },
       sidebar: {
         title: 'Categories',
-        series: 'Model Series',
+        publisher: 'Publisher',
         type: 'Model Type',
         capability: 'Capabilities',
         more: 'More',
@@ -165,6 +165,7 @@ export default {
       code: 'Code',
       codeNoResult: 'Run the model to view the API response JSON.',
       noGenerations: 'Run the model to see your generation here.',
+      examples: 'Examples',
       viewFullscreen: 'View fullscreen',
       download: 'Download',
       downloadFailed: 'Download failed. Please try again.',

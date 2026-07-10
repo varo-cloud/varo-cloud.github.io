@@ -6,6 +6,7 @@ import type {
   Model,
   ModelCategory,
   ModelDetail,
+  ModelExample,
   ModelFacetsResponse,
   ModelFaqItem,
   ModelHistoryEntry,
@@ -33,10 +34,21 @@ interface ApiModelCard {
   is_favourited?: boolean | null
 }
 
+interface ApiModelExample {
+  id: string
+  title: string
+  description?: string | null
+  input: Record<string, unknown>
+  output_url?: string | null
+  thumbnail_url?: string | null
+  sort_order?: number | null
+}
+
 interface ApiModelDetail extends ApiModelCard {
   readme_md?: string | null
   faq?: ModelFaqItem[] | null
   input_schema?: Record<string, unknown> | null
+  examples?: ApiModelExample[] | null
 }
 
 interface ApiModelsPage {
@@ -123,12 +135,36 @@ function mapModel(raw: ApiModelCard): Model {
   }
 }
 
+function mapModelExample(raw: ApiModelExample): ModelExample {
+  return {
+    id: raw.id,
+    title: raw.title,
+    description: raw.description ?? undefined,
+    input: raw.input,
+    outputUrl: raw.output_url ?? undefined,
+    thumbnailUrl: raw.thumbnail_url ?? undefined,
+    sortOrder: raw.sort_order ?? undefined,
+  }
+}
+
+function sortModelExamples(examples: ModelExample[]): ModelExample[] {
+  return [...examples].sort((a, b) => {
+    const orderA = a.sortOrder ?? Number.MAX_SAFE_INTEGER
+    const orderB = b.sortOrder ?? Number.MAX_SAFE_INTEGER
+    if (orderA !== orderB) return orderA - orderB
+    return a.id.localeCompare(b.id)
+  })
+}
+
 function mapModelDetail(raw: ApiModelDetail): ModelDetail {
+  const examples = raw.examples?.map(mapModelExample)
+
   return {
     ...mapModel(raw),
     readmeMd: raw.readme_md ?? undefined,
     faq: raw.faq ?? undefined,
     inputSchema: raw.input_schema ?? undefined,
+    examples: examples?.length ? sortModelExamples(examples) : undefined,
   }
 }
 
@@ -186,12 +222,18 @@ export function fetchModelFacets() {
   return unwrap<ModelFacetsResponse>(http.get('/models/facets')).then((data) => ({
     categories: data.categories ?? [],
     capabilities: data.capabilities ?? [],
-    series: data.series ?? [],
+    publishers: data.publishers ?? [],
   }))
 }
 
 export function fetchModelDetail(slug: string) {
   return unwrap<ApiModelDetail>(http.get(`/models/${normalizeModelSlug(slug)}`)).then(mapModelDetail)
+}
+
+export function fetchModelExamples(slug: string) {
+  return unwrap<ApiModelExample[]>(http.get(`/models/${normalizeModelSlug(slug)}/examples`)).then(
+    (raw) => sortModelExamples((raw ?? []).map(mapModelExample)),
+  )
 }
 
 function fetchUserModelsPage(path: string, params?: FetchModelsParams) {

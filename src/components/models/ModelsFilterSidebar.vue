@@ -2,22 +2,22 @@
 import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { assetUrl } from '@/utils/assetUrl'
-import type { FacetItem } from '@/types'
+import type { FacetItem, PublisherFacetItem } from '@/types'
 
 const COLLAPSED_LIMIT = 6
 
 const props = defineProps<{
-  series: FacetItem[]
+  publishers: PublisherFacetItem[]
   categories: FacetItem[]
   capabilities: FacetItem[]
-  selectedSeries: string | null
+  selectedPublisher: string | null
   selectedCategory: string | null
   selectedCapability: string | null
   totalCount: number
 }>()
 
 const emit = defineEmits<{
-  'update:selectedSeries': [value: string | null]
+  'update:selectedPublisher': [value: string | null]
   'update:selectedCategory': [value: string | null]
   'update:selectedCapability': [value: string | null]
 }>()
@@ -25,17 +25,6 @@ const emit = defineEmits<{
 const { t } = useI18n()
 
 const expanded = ref(false)
-
-function seriesLabel(value: string): string {
-  const key = `pages.models.series.${value}`
-  const translated = t(key)
-  return translated === key ? formatSeriesFallback(value) : translated
-}
-
-function formatSeriesFallback(value: string): string {
-  const base = value.split('-')[0] ?? value
-  return base.charAt(0).toUpperCase() + base.slice(1)
-}
 
 function categoryLabel(value: string): string {
   const key = `pages.models.categories.${value}`
@@ -49,7 +38,7 @@ function capabilityLabel(value: string): string {
   return translated === key ? value : translated
 }
 
-function visibleItems(items: FacetItem[]) {
+function visibleItems<T>(items: T[]) {
   if (expanded.value || items.length <= COLLAPSED_LIMIT) {
     return items
   }
@@ -58,7 +47,8 @@ function visibleItems(items: FacetItem[]) {
 
 const showMoreButton = computed(() => {
   const totalItems =
-    props.series.length +
+    props.publishers.length +
+    (props.publishers.length > 0 ? 1 : 0) +
     props.categories.length +
     (props.categories.length > 0 ? 1 : 0) +
     props.capabilities.length +
@@ -66,9 +56,9 @@ const showMoreButton = computed(() => {
   return !expanded.value && totalItems > COLLAPSED_LIMIT * 2
 })
 
-function selectSeries(value: string | null) {
-  if (props.selectedSeries === value) return
-  emit('update:selectedSeries', value)
+function selectPublisher(value: string | null) {
+  if (props.selectedPublisher === value) return
+  emit('update:selectedPublisher', value)
 }
 
 function selectCategory(value: string | null) {
@@ -85,20 +75,20 @@ function selectCapability(value: string | null) {
 <template>
   <aside class="models-filter-sidebar" :aria-label="t('pages.models.sidebar.title')">
     <div class="models-filter-sidebar__sections">
-      <section v-if="series.length > 0" class="models-filter-section">
-        <h3 class="models-filter-section__title">{{ t('pages.models.sidebar.series') }}</h3>
+      <section v-if="publishers.length > 0" class="models-filter-section">
+        <h3 class="models-filter-section__title">{{ t('pages.models.sidebar.publisher') }}</h3>
         <ul class="models-filter-list">
-          <li v-for="item in visibleItems(series)" :key="item.value">
+          <li>
             <button
               type="button"
               class="models-filter-item"
-              :class="{ 'is-active': selectedSeries === item.value }"
-              @click="selectSeries(item.value)"
+              :class="{ 'is-active': !selectedPublisher }"
+              @click="selectPublisher(null)"
             >
               <img
                 :src="
                   assetUrl(
-                    selectedSeries === item.value
+                    !selectedPublisher
                       ? '/assets/models/filter-checked.svg'
                       : '/assets/models/filter-unchecked.svg',
                   )
@@ -107,7 +97,37 @@ function selectCapability(value: string | null) {
                 aria-hidden="true"
                 class="models-filter-item__icon"
               />
-              <span class="models-filter-item__label">{{ seriesLabel(item.value) }}</span>
+              <span class="models-filter-item__label">{{ t('pages.models.filters.all') }}</span>
+              <span class="models-filter-item__count">{{ totalCount }}</span>
+            </button>
+          </li>
+          <li v-for="item in visibleItems(publishers)" :key="item.slug">
+            <button
+              type="button"
+              class="models-filter-item"
+              :class="{ 'is-active': selectedPublisher === item.slug }"
+              @click="selectPublisher(item.slug)"
+            >
+              <img
+                :src="
+                  assetUrl(
+                    selectedPublisher === item.slug
+                      ? '/assets/models/filter-checked.svg'
+                      : '/assets/models/filter-unchecked.svg',
+                  )
+                "
+                alt=""
+                aria-hidden="true"
+                class="models-filter-item__icon"
+              />
+              <img
+                v-if="item.logo_url"
+                :src="item.logo_url"
+                alt=""
+                aria-hidden="true"
+                class="models-filter-item__logo"
+              />
+              <span class="models-filter-item__label">{{ item.name }}</span>
               <span class="models-filter-item__count">{{ item.count }}</span>
             </button>
           </li>
@@ -271,6 +291,14 @@ function selectCapability(value: string | null) {
   width: 16px;
   height: 16px;
   flex-shrink: 0;
+}
+
+.models-filter-item__logo {
+  width: 16px;
+  height: 16px;
+  flex-shrink: 0;
+  border-radius: 2px;
+  object-fit: contain;
 }
 
 .models-filter-item__label {

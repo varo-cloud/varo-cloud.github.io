@@ -1,4 +1,4 @@
-let accountBalanceUsd = 12.4
+let accountBalanceUsd = 1000
 
 export function getAccountBalanceUsd(): number {
   return accountBalanceUsd

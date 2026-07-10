@@ -11,7 +11,7 @@ import ModelsHeroCarousel from '@/components/models/ModelsHeroCarousel.vue'
 import { useModelPreferencesStore } from '@/stores/modelPreferences'
 import { useUserStore } from '@/stores/user'
 import { assetUrl } from '@/utils/assetUrl'
-import type { FacetItem, Model, ModelCategory } from '@/types'
+import type { FacetItem, Model, ModelCategory, PublisherFacetItem } from '@/types'
 
 const PAGE_SIZE = 20
 const SEARCH_DEBOUNCE_MS = 300
@@ -29,13 +29,17 @@ const loadingMore = ref(false)
 const error = ref<string | null>(null)
 const activeTab = ref<'latest' | 'favourite' | 'recent'>('latest')
 const searchQuery = ref('')
-const selectedSeries = ref<string | null>(null)
+const selectedPublisher = ref<string | null>(null)
 const selectedCategory = ref<ModelCategory | null>(null)
 const selectedCapability = ref<string | null>(null)
-const facets = ref<{ categories: FacetItem[]; capabilities: FacetItem[]; series: FacetItem[] }>({
+const facets = ref<{
+  categories: FacetItem[]
+  capabilities: FacetItem[]
+  publishers: PublisherFacetItem[]
+}>({
   categories: [],
   capabilities: [],
-  series: [],
+  publishers: [],
 })
 const heroActiveIndex = ref(0)
 
@@ -71,7 +75,7 @@ const hasMore = computed(() => activeTab.value === 'latest' && models.value.leng
 const showFilterSidebar = computed(() => activeTab.value === 'latest')
 
 const hasActiveFilters = computed(
-  () => Boolean(selectedSeries.value || selectedCategory.value || selectedCapability.value),
+  () => Boolean(selectedPublisher.value || selectedCategory.value || selectedCapability.value),
 )
 
 const unfilteredTotal = computed(() =>
@@ -88,7 +92,7 @@ function buildListQuery() {
   const query: Record<string, string> = {}
   const q = searchQuery.value.trim()
   if (q) query.q = q
-  if (selectedSeries.value) query.series = selectedSeries.value
+  if (selectedPublisher.value) query.publisher = selectedPublisher.value
   if (selectedCategory.value) query.category = selectedCategory.value
   if (selectedCapability.value) query.capability = selectedCapability.value
   return query
@@ -105,10 +109,10 @@ async function loadFacets() {
     facets.value = {
       categories: data.categories ?? [],
       capabilities: data.capabilities ?? [],
-      series: data.series ?? [],
+      publishers: data.publishers ?? [],
     }
   } catch {
-    facets.value = { categories: [], capabilities: [], series: [] }
+    facets.value = { categories: [], capabilities: [], publishers: [] }
   }
 }
 
@@ -179,7 +183,7 @@ async function loadModels(append = false) {
       offset: append ? models.value.length : 0,
       limit: PAGE_SIZE,
       q: searchQuery.value.trim() || undefined,
-      series: selectedSeries.value ?? undefined,
+      publisher: selectedPublisher.value ?? undefined,
       category: selectedCategory.value ?? undefined,
       capability: selectedCapability.value ?? undefined,
     })
@@ -214,9 +218,9 @@ function switchTab(key: 'latest' | 'favourite' | 'recent') {
   loadModels()
 }
 
-function selectSeries(series: string | null) {
-  if (selectedSeries.value === series) return
-  selectedSeries.value = series
+function selectPublisher(publisher: string | null) {
+  if (selectedPublisher.value === publisher) return
+  selectedPublisher.value = publisher
   syncRouteQuery()
   loadModels()
 }
@@ -238,7 +242,7 @@ function selectCapability(capability: string | null) {
 }
 
 function clearFilters() {
-  selectedSeries.value = null
+  selectedPublisher.value = null
   selectedCategory.value = null
   selectedCapability.value = null
   syncRouteQuery()
@@ -324,9 +328,9 @@ onMounted(() => {
     searchQuery.value = q
   }
 
-  const series = route.query.series
-  if (typeof series === 'string' && series) {
-    selectedSeries.value = series
+  const publisher = route.query.publisher
+  if (typeof publisher === 'string' && publisher) {
+    selectedPublisher.value = publisher
   }
 
   const category = route.query.category
@@ -415,14 +419,14 @@ onMounted(() => {
         <div class="models-layout-body" :class="{ 'has-sidebar': showFilterSidebar }">
           <ModelsFilterSidebar
             v-if="showFilterSidebar"
-            :series="facets.series"
+            :publishers="facets.publishers"
             :categories="facets.categories"
             :capabilities="facets.capabilities"
-            :selected-series="selectedSeries"
+            :selected-publisher="selectedPublisher"
             :selected-category="selectedCategory"
             :selected-capability="selectedCapability"
             :total-count="unfilteredTotal"
-            @update:selected-series="selectSeries"
+            @update:selected-publisher="selectPublisher"
             @update:selected-category="selectCategory"
             @update:selected-capability="selectCapability"
           />

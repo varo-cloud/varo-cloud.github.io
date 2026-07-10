@@ -47,6 +47,19 @@ export interface Model {
   isFavourited: boolean
 }
 
+export interface ModelExample {
+  id: string
+  title: string
+  description?: string
+  /** Form preset values; keys match `input_schema.properties` field names */
+  input: Record<string, unknown>
+  /** Example generation result (image/video URL) */
+  outputUrl?: string
+  /** Card thumbnail; frontend may derive from `output_url` when absent */
+  thumbnailUrl?: string
+  sortOrder?: number
+}
+
 export interface ModelDetail extends Model {
   /** Maps from API field `readme_md` — model README rendered in API tab */
   readmeMd?: string
@@ -54,6 +67,8 @@ export interface ModelDetail extends Model {
   faq?: ModelFaqItem[]
   /** Maps from API field `input_schema` */
   inputSchema?: Record<string, unknown> | null
+  /** Maps from API field `examples` — Playground one-click presets */
+  examples?: ModelExample[]
 }
 
 export interface ModelFaqItem {
@@ -74,7 +89,7 @@ export interface FetchModelsParams {
   q?: string
   category?: ModelCategory
   capability?: string
-  series?: string
+  publisher?: string
 }
 
 export interface FacetItem {
@@ -82,10 +97,17 @@ export interface FacetItem {
   count: number
 }
 
+export interface PublisherFacetItem {
+  slug: string
+  name: string
+  logo_url: string | null
+  count: number
+}
+
 export interface ModelFacetsResponse {
   categories: FacetItem[]
   capabilities: FacetItem[]
-  series: FacetItem[]
+  publishers: PublisherFacetItem[]
 }
 
 export interface ModelHistoryEntry {

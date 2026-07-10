@@ -5,7 +5,8 @@ import { NTooltip } from 'naive-ui'
 import { useAppMessage } from '@/composables/useAppMessage'
 import GenerationStatusDisplay from './GenerationStatusDisplay.vue'
 import GenerationPreviewLightbox from './GenerationPreviewLightbox.vue'
-import type { GenerationStatus, PlaygroundGenerationResult } from '@/types'
+import PlaygroundExamplesBar from './PlaygroundExamplesBar.vue'
+import type { GenerationStatus, ModelExample, PlaygroundGenerationResult } from '@/types'
 import { downloadMediaFile, guessDownloadFilename } from '@/utils/downloadMedia'
 import { resolveMediaPreviewKind } from '@/utils/mediaPreview'
 import { assetUrl } from '@/utils/assetUrl'
@@ -17,8 +18,12 @@ const props = defineProps<{
   results?: PlaygroundGenerationResult[]
   status?: GenerationStatus
   progress?: number
-  estimatedSeconds?: number
-  exampleUrl?: string
+  examples?: ModelExample[]
+  selectedExampleId?: string | null
+}>()
+
+const emit = defineEmits<{
+  'select-example': [exampleId: string]
 }>()
 
 const { t } = useI18n()
@@ -51,13 +56,27 @@ const showOutput = computed(
   () => props.status === 'completed' && (props.results?.length ?? 0) > 0,
 )
 
+const selectedExample = computed(
+  () => props.examples?.find((item) => item.id === props.selectedExampleId) ?? null,
+)
+
 const showExample = computed(
-  () => !showOutput.value && !isGenerating.value && Boolean(props.exampleUrl),
+  () =>
+    !showOutput.value &&
+    !isGenerating.value &&
+    Boolean(selectedExample.value?.outputUrl ?? selectedExample.value?.thumbnailUrl),
+)
+
+const showExamplesBar = computed(
+  () => !isGenerating.value && (props.examples?.length ?? 0) > 0,
 )
 
 const previewUrls = computed(() => {
   if (showOutput.value) return props.outputUrls ?? []
-  if (showExample.value && props.exampleUrl) return [props.exampleUrl]
+  if (showExample.value && selectedExample.value) {
+    const url = selectedExample.value.outputUrl ?? selectedExample.value.thumbnailUrl
+    return url ? [url] : []
+  }
   return []
 })
 
@@ -121,6 +140,14 @@ watch(
     }
   },
 )
+
+watch(
+  () => props.selectedExampleId,
+  () => {
+    viewMode.value = 'preview'
+    lightboxIndex.value = null
+  },
+)
 </script>
 
 <template>
@@ -153,14 +180,17 @@ watch(
 
     <div
       class="output-panel__body"
-      :class="{ 'output-panel__body--centered': !showOutput && !showExample }"
+      :class="{
+        'output-panel__body--centered': !showOutput && !showExample && !showExamplesBar,
+        'output-panel__body--with-examples': showExamplesBar,
+      }"
     >
       <div
         v-if="previewUrls.length > 0 && viewMode === 'preview'"
         class="output-panel__grid"
         :class="gridClass"
       >
-        <template v-for="(url, index) in previewUrls" :key="`${url}-${index}`">
+        <template v-for="(url, index) in previewUrls" :key="`${selectedExampleId ?? 'output'}-${url}-${index}`">
           <div
             class="output-panel__item"
             :class="{ 'output-panel__item--interactive': showOutput }"
@@ -243,7 +273,6 @@ watch(
         v-else-if="isGenerating && activeStatus"
         :status="activeStatus"
         :progress="progress"
-        :estimated-seconds="estimatedSeconds"
       />
       <div v-else class="output-panel__empty">
         <img
@@ -252,6 +281,16 @@ watch(
           class="output-panel__empty-icon"
         />
         <p class="output-panel__empty-text">{{ t('pages.modelDetail.noGenerations') }}</p>
+      </div>
+
+      <div v-if="showExamplesBar" class="output-panel__examples">
+        <p class="output-panel__examples-label">{{ t('pages.modelDetail.examples') }}</p>
+        <PlaygroundExamplesBar
+          v-if="examples"
+          :examples="examples"
+          :selected-example-id="selectedExampleId"
+          @select="emit('select-example', $event)"
+        />
       </div>
     </div>
 
@@ -336,6 +375,10 @@ watch(
   align-items: center;
   justify-content: center;
   min-height: 400px;
+}
+
+.output-panel__body--with-examples {
+  justify-content: flex-start;
 }
 
 .output-panel__grid {
@@ -495,6 +538,22 @@ watch(
   font-size: 14px;
   line-height: 1.4;
   color: #9b9dab;
+}
+
+.output-panel__examples {
+  width: 100%;
+  margin-top: auto;
+  padding-top: 16px;
+  border-top: 0.5px solid rgba(255, 255, 255, 0.08);
+}
+
+.output-panel__examples-label {
+  margin: 0 0 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #9b9dab;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
 }
 
 </style>

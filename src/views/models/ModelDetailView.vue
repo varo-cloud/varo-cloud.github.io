@@ -5,6 +5,7 @@ import { useI18n } from 'vue-i18n'
 import { useLocaleRouter } from '@/composables/useLocaleRouter'
 import { NSpin } from 'naive-ui'
 import { fetchModelDetail } from '@/api/models'
+import { loadModelInputSchema } from '@/api/modelSchema'
 import { fetchGenerationDetail } from '@/api/generations'
 import ModelDetailHeader from '@/components/models/ModelDetailHeader.vue'
 import ModelApiTab from '@/components/models/ModelApiTab.vue'
@@ -14,9 +15,9 @@ import PlaygroundOutputPanel from '@/components/playground/PlaygroundOutputPanel
 import { useUserStore } from '@/stores/user'
 import { useModelPreferencesStore } from '@/stores/modelPreferences'
 import { createDefaultFormValues } from '@/utils/schema-form'
-import { extractInputSchema } from '@/utils/model-schema'
 import { usePlaygroundQuote } from '@/composables/usePlaygroundQuote'
 import { usePlaygroundGeneration } from '@/composables/usePlaygroundGeneration'
+import { usePlaygroundExamples } from '@/composables/usePlaygroundExamples'
 import { useAppMessage } from '@/composables/useAppMessage'
 import { requestToFormValues, resolveBatchSizeFromRequest } from '@/utils/restore-playground-form'
 import type { ModelDetail } from '@/types'
@@ -37,7 +38,6 @@ const activeTab = ref<'playground' | 'api' | 'history'>('playground')
 const batchSize = ref(1)
 const formValues = ref<SchemaFormValues>({})
 const restoringHistory = ref(false)
-const estimatedSeconds = 40
 
 const {
   generationStatus,
@@ -81,6 +81,17 @@ const quoteLoading = playgroundQuote.loading
 const quoteUnitCostUsd = playgroundQuote.unitCostUsd
 
 const displayTitle = computed(() => model.value?.displayName ?? '')
+const modelExamples = computed(() => model.value?.examples ?? [])
+
+const {
+  selectedExampleId,
+  selectExample,
+} = usePlaygroundExamples({
+  examples: modelExamples,
+  inputSchema,
+  formValues,
+  resetGeneration,
+})
 
 function handleModelSelect(slug: string) {
   if (slug === model.value?.id) return
@@ -95,19 +106,13 @@ async function loadModel(slug: string) {
 
   try {
     const detail = await fetchModelDetail(slug)
-    let schema: InputSchema | null = null
+    const schema = await loadModelInputSchema(slug, detail.inputSchema)
 
-    if (detail.inputSchema) {
-      try {
-        schema = extractInputSchema(detail.inputSchema)
-      } catch {
-        schema = null
-      }
-    }
-
-    formValues.value = createDefaultFormValues(schema ?? undefined)
     model.value = detail
     inputSchema.value = schema
+    if (!detail.examples?.length) {
+      formValues.value = createDefaultFormValues(schema ?? undefined)
+    }
     if (userStore.isLoggedIn) {
       modelPrefs.recordVisit(detail.id)
     }
@@ -250,6 +255,7 @@ watch(
           :quote-loading="quoteLoading"
           :balance-usd="balanceUsd"
           :generating="isGenerating"
+          :form-sync-key="selectedExampleId"
           analytics-source="model_detail"
           :analytics-capability="model.capability"
           @run="handleRun"
@@ -262,8 +268,9 @@ watch(
           :results="generationResults"
           :status="generationStatus"
           :progress="generationProgress"
-          :estimated-seconds="estimatedSeconds"
-          :example-url="inputSchema?.example_url"
+          :examples="modelExamples"
+          :selected-example-id="selectedExampleId"
+          @select-example="selectExample"
         />
       </div>
 

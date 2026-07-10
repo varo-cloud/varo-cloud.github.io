@@ -7,7 +7,6 @@ import type { GenerationStatus } from '@/types'
 const props = defineProps<{
   status: Exclude<GenerationStatus, 'idle'>
   progress?: number
-  estimatedSeconds?: number
 }>()
 
 const { t } = useI18n()
@@ -94,10 +93,6 @@ function isTimelineActive(step: TimelineStep): boolean {
       <span :class="{ 'generation-status__timeline-step--active': isTimelineActive('completed') }">
         {{ t('pages.modelDetail.generation.completed') }}
       </span>
-      <template v-if="estimatedSeconds != null">
-        <span class="generation-status__timeline-sep"> · </span>
-        <span class="generation-status__timeline-sep">~{{ estimatedSeconds }}s</span>
-      </template>
     </p>
   </div>
 </template>

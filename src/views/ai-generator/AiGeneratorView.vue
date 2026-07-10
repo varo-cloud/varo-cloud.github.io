@@ -4,15 +4,16 @@ import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { NSpin } from 'naive-ui'
 import { fetchModelDetail, fetchModels } from '@/api/models'
+import { loadModelInputSchema } from '@/api/modelSchema'
 import PlaygroundInputPanel from '@/components/playground/PlaygroundInputPanel.vue'
 import PlaygroundOutputPanel from '@/components/playground/PlaygroundOutputPanel.vue'
 import { useLocaleRouter } from '@/composables/useLocaleRouter'
 import { usePlaygroundGeneration } from '@/composables/usePlaygroundGeneration'
 import { usePlaygroundQuote } from '@/composables/usePlaygroundQuote'
+import { usePlaygroundExamples } from '@/composables/usePlaygroundExamples'
 import { useUserStore } from '@/stores/user'
 import { AnalyticsEvents, trackEvent } from '@/analytics'
 import { createDefaultFormValues } from '@/utils/schema-form'
-import { extractInputSchema } from '@/utils/model-schema'
 import { isValidModelSlug, normalizeModelSlug } from '@/utils/model-slug'
 import type { ModelDetail } from '@/types'
 import type { InputSchema, SchemaFormValues } from '@/types/schema'
@@ -32,7 +33,6 @@ const listError = ref<string | null>(null)
 const modelError = ref<string | null>(null)
 const batchSize = ref(1)
 const formValues = ref<SchemaFormValues>({})
-const estimatedSeconds = 40
 
 const {
   generationStatus,
@@ -110,6 +110,18 @@ const selectedModelDisplay = computed(() => {
   }
 })
 
+const modelExamples = computed(() => model.value?.examples ?? [])
+
+const {
+  selectedExampleId,
+  selectExample,
+} = usePlaygroundExamples({
+  examples: modelExamples,
+  inputSchema,
+  formValues,
+  resetGeneration,
+})
+
 async function initializePage() {
   listLoading.value = true
   listError.value = null
@@ -151,19 +163,13 @@ async function loadSelectedModel(id: string) {
 
   try {
     const detail = await fetchModelDetail(id)
-    let schema: InputSchema | null = null
+    const schema = await loadModelInputSchema(id, detail.inputSchema)
 
-    if (detail.inputSchema) {
-      try {
-        schema = extractInputSchema(detail.inputSchema)
-      } catch {
-        schema = null
-      }
-    }
-
-    formValues.value = createDefaultFormValues(schema ?? undefined)
     model.value = detail
     inputSchema.value = schema
+    if (!detail.examples?.length) {
+      formValues.value = createDefaultFormValues(schema ?? undefined)
+    }
   } catch {
     modelError.value = t('pages.aiGenerator.modelLoadError')
     model.value = null
@@ -254,6 +260,7 @@ onMounted(() => {
         :quote-loading="quoteLoading"
         :balance-usd="balanceUsd"
         :generating="isGenerating || modelLoading"
+        :form-sync-key="selectedExampleId"
         analytics-source="ai_generator"
         :analytics-capability="model.capability"
         @run="handleRun"
@@ -267,8 +274,9 @@ onMounted(() => {
         :results="generationResults"
         :status="generationStatus"
         :progress="generationProgress"
-        :estimated-seconds="estimatedSeconds"
-        :example-url="inputSchema?.example_url"
+        :examples="modelExamples"
+        :selected-example-id="selectedExampleId"
+        @select-example="selectExample"
       />
     </div>
   </div>
