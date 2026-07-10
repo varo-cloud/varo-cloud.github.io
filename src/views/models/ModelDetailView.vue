@@ -38,7 +38,6 @@ const activeTab = ref<'playground' | 'api' | 'history'>('playground')
 const batchSize = ref(1)
 const formValues = ref<SchemaFormValues>({})
 const restoringHistory = ref(false)
-const estimatedSeconds = 40
 
 const {
   generationStatus,
@@ -269,7 +268,6 @@ watch(
           :results="generationResults"
           :status="generationStatus"
           :progress="generationProgress"
-          :estimated-seconds="estimatedSeconds"
           :examples="modelExamples"
           :selected-example-id="selectedExampleId"
           @select-example="selectExample"

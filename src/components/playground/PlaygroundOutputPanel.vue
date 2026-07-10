@@ -18,7 +18,6 @@ const props = defineProps<{
   results?: PlaygroundGenerationResult[]
   status?: GenerationStatus
   progress?: number
-  estimatedSeconds?: number
   examples?: ModelExample[]
   selectedExampleId?: string | null
 }>()
@@ -274,7 +273,6 @@ watch(
         v-else-if="isGenerating && activeStatus"
         :status="activeStatus"
         :progress="progress"
-        :estimated-seconds="estimatedSeconds"
       />
       <div v-else class="output-panel__empty">
         <img

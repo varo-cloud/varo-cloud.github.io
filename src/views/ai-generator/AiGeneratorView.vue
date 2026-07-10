@@ -33,7 +33,6 @@ const listError = ref<string | null>(null)
 const modelError = ref<string | null>(null)
 const batchSize = ref(1)
 const formValues = ref<SchemaFormValues>({})
-const estimatedSeconds = 40
 
 const {
   generationStatus,
@@ -275,7 +274,6 @@ onMounted(() => {
         :results="generationResults"
         :status="generationStatus"
         :progress="generationProgress"
-        :estimated-seconds="estimatedSeconds"
         :examples="modelExamples"
         :selected-example-id="selectedExampleId"
         @select-example="selectExample"
