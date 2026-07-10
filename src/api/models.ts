@@ -24,6 +24,7 @@ interface ApiModelCard {
   description: string
   thumbnail_url?: string | null
   icon_url?: string | null
+  publisher_logo_url?: string | null
   starting_price_usd?: number | null
   standard_price_usd?: number | null
   price_unit?: PricingPriceUnit | null
@@ -128,6 +129,7 @@ function mapModel(raw: ApiModelCard): Model {
     description: raw.description ?? '',
     thumbnailUrl: raw.thumbnail_url ?? undefined,
     iconUrl: raw.icon_url ?? undefined,
+    publisherLogoUrl: raw.publisher_logo_url ?? undefined,
     isHot: raw.is_hot ?? undefined,
     isNew: raw.is_new ?? undefined,
     sortOrder: raw.sort_order ?? undefined,
