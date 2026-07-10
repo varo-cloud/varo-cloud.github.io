@@ -11,7 +11,7 @@ import ModelsHeroCarousel from '@/components/models/ModelsHeroCarousel.vue'
 import { useModelPreferencesStore } from '@/stores/modelPreferences'
 import { useUserStore } from '@/stores/user'
 import { assetUrl } from '@/utils/assetUrl'
-import { openDocs } from '@/utils/docsUrl'
+import { docsUrl } from '@/utils/docsUrl'
 import type { FacetItem, Model, ModelCategory, PublisherFacetItem } from '@/types'
 
 const PAGE_SIZE = 20
@@ -43,6 +43,13 @@ const facets = ref<{
   publishers: [],
 })
 const heroActiveIndex = ref(0)
+const externalDocsUrl = computed(() => docsUrl())
+
+const heroPrimaryLabel = computed(() =>
+  userStore.isLoggedIn
+    ? t('pages.models.heroCtaPrimaryLoggedIn')
+    : t('pages.models.heroCtaPrimary'),
+)
 
 const heroSlideContent = computed(() => {
   if (heroActiveIndex.value === 1) {
@@ -267,12 +274,23 @@ function retryLoad() {
   loadRecentModels()
 }
 
-function goToAuth() {
+function goToHeroPrimary() {
+  if (userStore.isLoggedIn) {
+    document.querySelector('.models-list')?.scrollIntoView({ behavior: 'smooth' })
+    return
+  }
+
   push({ name: 'auth' })
 }
 
 function goToDocs() {
-  openDocs(() => push({ name: 'docs' }))
+  const url = docsUrl()
+  if (url) {
+    window.open(url, '_blank', 'noopener,noreferrer')
+    return
+  }
+
+  push({ name: 'docs' })
 }
 
 function handleFavouriteChange({
@@ -363,10 +381,28 @@ onMounted(() => {
             {{ heroSlideContent.subtitle }}
           </p>
           <div class="models-hero__actions">
-            <button type="button" class="models-hero__btn models-hero__btn--primary" @click="goToAuth">
-              {{ t('pages.models.heroCtaPrimary') }}
+            <button
+              type="button"
+              class="models-hero__btn models-hero__btn--primary"
+              @click="goToHeroPrimary"
+            >
+              {{ heroPrimaryLabel }}
             </button>
-            <button type="button" class="models-hero__btn models-hero__btn--secondary" @click="goToDocs">
+            <a
+              v-if="externalDocsUrl"
+              :href="externalDocsUrl"
+              target="_blank"
+              rel="noopener noreferrer"
+              class="models-hero__btn models-hero__btn--secondary"
+            >
+              {{ t('pages.models.heroCtaSecondary') }}
+            </a>
+            <button
+              v-else
+              type="button"
+              class="models-hero__btn models-hero__btn--secondary"
+              @click="goToDocs"
+            >
               {{ t('pages.models.heroCtaSecondary') }}
             </button>
           </div>
@@ -546,6 +582,7 @@ onMounted(() => {
   font-size: 16px;
   font-weight: 500;
   line-height: 16px;
+  text-decoration: none;
   cursor: pointer;
   white-space: nowrap;
 }
