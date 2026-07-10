@@ -1,4 +1,5 @@
 import type { SchemaFormValues } from '@/types/schema'
+import { inferenceApiBaseUrl } from '@/utils/inferenceApiBaseUrl'
 
 export type PlaygroundInputViewMode = 'form' | 'json' | 'http' | 'python' | 'javascript'
 export type ApiCodeViewMode = Exclude<PlaygroundInputViewMode, 'form' | 'json'>
@@ -25,10 +26,8 @@ function pruneApiValues(values: SchemaFormValues): SchemaFormValues {
   return result
 }
 
-const INFERENCE_API_BASE_URL = 'https://inference.varo.cloud/v1'
-
 export function resolveV1BaseUrl(): string {
-  return INFERENCE_API_BASE_URL
+  return inferenceApiBaseUrl()
 }
 
 export function resolveCreateGenerationUrl(): string {
