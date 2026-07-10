@@ -67,6 +67,7 @@ a {
 
 .scrollbar-subtle::-webkit-scrollbar {
   width: 6px;
+  height: 6px;
 }
 
 .scrollbar-subtle::-webkit-scrollbar-track {

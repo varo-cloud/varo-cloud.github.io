@@ -37,7 +37,7 @@ function handleSelect(exampleId: string) {
 </script>
 
 <template>
-  <div class="examples-bar" role="listbox" :aria-activedescendant="selectedExampleId ?? undefined">
+  <div class="examples-bar scrollbar-subtle" role="listbox" :aria-activedescendant="selectedExampleId ?? undefined">
     <button
       v-for="example in sortedExamples"
       :id="`example-${example.id}`"
@@ -80,7 +80,6 @@ function handleSelect(exampleId: string) {
   gap: 12px;
   width: 100%;
   overflow-x: auto;
-  scrollbar-width: thin;
 }
 
 .examples-bar__item {

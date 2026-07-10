@@ -845,7 +845,7 @@ onMounted(async () => {
           </div>
 
           <div
-            class="billing-table"
+            class="billing-table scrollbar-subtle"
             :class="{
               'billing-table--records': activeTab === 'billing',
               'billing-table--topup': activeTab === 'topup',
