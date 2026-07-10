@@ -34,7 +34,7 @@ const SCROLL_LOAD_THRESHOLD = 48
 let closeTimer: ReturnType<typeof setTimeout> | null = null
 
 const {
-  total,
+  catalogTotal,
   loading,
   loadingMore,
   searchQuery,
@@ -53,7 +53,8 @@ const thumbnailSrc = computed(() =>
   assetUrl(props.thumbnailUrl || '/assets/model-detail/model-thumb.jpg'),
 )
 
-const hasSwitcher = computed(() => total.value === 0 || total.value > 1)
+/** Use catalog-wide total so search narrowing does not disable the switcher. */
+const hasSwitcher = computed(() => catalogTotal.value === 0 || catalogTotal.value > 1)
 
 function capabilityLabel(capability?: string): string {
   if (!capability) return ''
@@ -131,6 +132,10 @@ watch(open, (isOpen) => {
   window.addEventListener('resize', updatePanelPosition)
   window.addEventListener('scroll', updatePanelPosition, true)
   document.addEventListener('pointerdown', onDocumentPointerDown)
+})
+
+watch(hasSwitcher, (enabled) => {
+  if (!enabled) open.value = false
 })
 
 onBeforeUnmount(() => {
@@ -319,6 +324,16 @@ onBeforeUnmount(() => {
 
 .model-header__panel {
   overflow: hidden;
+}
+
+/* Bridge the 4px gap between trigger and panel so hover does not drop. */
+.model-header__panel::before {
+  content: '';
+  position: absolute;
+  top: -8px;
+  left: 0;
+  right: 0;
+  height: 8px;
 }
 
 .model-header__panel .playground-select-panel__scroll {
