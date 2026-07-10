@@ -314,6 +314,8 @@ export interface BillingRecord {
   apiKey?: string | null
   amountUsd: number
   createdAt: number
+  /** Task status from usage API; empty for top-up / bonus records */
+  status?: string | null
 }
 
 export type PricingCategory = 'image-video' | 'language' | 'serverless'

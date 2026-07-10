@@ -453,6 +453,7 @@ export default {
         time: '时间',
         style: '类型',
         detail: 'Task ID',
+        status: '状态',
         apiKey: 'API Key',
         value: '金额',
       },

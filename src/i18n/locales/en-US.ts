@@ -456,6 +456,7 @@ export default {
         time: 'Time',
         style: 'Style',
         detail: 'Task ID',
+        status: 'Status',
         apiKey: 'API Key',
         value: 'Value',
       },

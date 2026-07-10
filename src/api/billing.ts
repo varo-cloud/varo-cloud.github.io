@@ -49,6 +49,7 @@ interface ApiBillingRecord {
   createdAt?: number
   apiKey?: string | null
   amountUsd?: number
+  status?: string | null
 }
 
 interface ApiBillingConfig {
@@ -103,6 +104,7 @@ function mapUsageToBillingRecord(raw: ApiUsageRecord): BillingRecord {
     apiKey: raw.api_key_prefix ? `${raw.api_key_prefix}******` : null,
     amountUsd: -Math.abs(raw.cost_usd),
     createdAt: parseTimestamp(raw.created_at),
+    status: raw.status,
   }
 }
 
@@ -121,6 +123,7 @@ function mapBillingRecord(raw: ApiBillingRecord): BillingRecord {
       apiKey: raw.apiKey ?? null,
       amountUsd: raw.amountUsd,
       createdAt: raw.createdAt ?? Date.now(),
+      status: raw.status ?? null,
     }
   }
 
@@ -131,6 +134,7 @@ function mapBillingRecord(raw: ApiBillingRecord): BillingRecord {
     apiKey: raw.api_key ?? null,
     amountUsd: raw.amount_usd ?? 0,
     createdAt: parseTimestamp(raw.created_at),
+    status: raw.status ?? null,
   }
 }
 
