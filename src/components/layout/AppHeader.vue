@@ -458,7 +458,7 @@ onUnmounted(() => {
 .app-header {
   position: sticky;
   top: 0;
-  z-index: 100;
+  z-index: var(--z-app-header);
   width: 100%;
   height: var(--app-header-height);
   color: #ebf4fb;

@@ -89,6 +89,7 @@ export function resolveWidget(key: string, property: SchemaProperty): SchemaWidg
     if (MULTI_IMAGE_ARRAY_KEYS.has(key)) return 'multi-image-uploader'
     if (MULTI_VIDEO_ARRAY_KEYS.has(key)) return 'multi-video-uploader'
     if (MULTI_AUDIO_ARRAY_KEYS.has(key)) return 'multi-audio-uploader'
+    if (property.items?.type === 'string') return 'string-array'
     return 'placeholder'
   }
 
@@ -169,6 +170,7 @@ function defaultForProperty(key: string, property: SchemaProperty, widget: Schem
     case 'multi-image-uploader':
     case 'multi-audio-uploader':
     case 'multi-video-uploader':
+    case 'string-array':
       return []
     case 'multi-prompt':
     case 'element-list':

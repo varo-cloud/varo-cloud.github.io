@@ -140,6 +140,13 @@ function onDocumentPointerDown(event: PointerEvent) {
   open.value = false
 }
 
+watch(
+  () => props.disabled,
+  (disabled) => {
+    if (disabled) open.value = false
+  },
+)
+
 watch(open, (isOpen) => {
   if (!isOpen) {
     resetSearch()

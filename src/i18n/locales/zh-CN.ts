@@ -226,6 +226,11 @@ export default {
           addItem: '添加音色',
           removeItem: '删除音色',
         },
+        stringArray: {
+          invalidJson: 'JSON 格式无效。',
+          mustBeArray: '值必须是 JSON 数组。',
+          mustBeStrings: '数组中的每一项都必须是字符串。',
+        },
       },
       tabs: {
         playground: 'Playground',

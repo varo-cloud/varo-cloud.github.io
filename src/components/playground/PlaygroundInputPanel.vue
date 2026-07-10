@@ -317,6 +317,13 @@ function onDocumentPointerDown(event: PointerEvent) {
   batchOpen.value = false
 }
 
+watch(
+  () => props.generating,
+  (generating) => {
+    if (generating) batchOpen.value = false
+  },
+)
+
 watch(batchOpen, (isOpen) => {
   if (!isOpen) {
     window.removeEventListener('resize', updateBatchPanelPosition)
@@ -342,7 +349,7 @@ onBeforeUnmount(() => {
   <aside class="input-panel">
     <div class="input-panel__header">
       <h2 class="input-panel__title">{{ t('pages.modelDetail.inputTitle') }}</h2>
-      <PlaygroundInputViewSelect v-model="inputViewMode" />
+      <PlaygroundInputViewSelect v-model="inputViewMode" :locked="generating" />
     </div>
 
     <div ref="formPanelRef" class="input-panel__form">
@@ -751,7 +758,7 @@ onBeforeUnmount(() => {
 <style>
 .input-panel__batch-panel {
   position: fixed;
-  z-index: 9999;
+  z-index: var(--z-playground-select-panel);
   padding: 8px;
   border: 0.5px solid #2d2d38;
   border-radius: 8px;

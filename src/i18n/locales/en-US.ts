@@ -227,6 +227,11 @@ export default {
           addItem: 'Add voice',
           removeItem: 'Remove voice',
         },
+        stringArray: {
+          invalidJson: 'Invalid JSON format.',
+          mustBeArray: 'Value must be a JSON array.',
+          mustBeStrings: 'All items must be strings.',
+        },
       },
       tabs: {
         playground: 'Playground',

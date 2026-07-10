@@ -9,6 +9,10 @@ import AppIcon from '@/components/common/AppIcon.vue'
 
 const model = defineModel<PlaygroundInputViewMode>({ required: true })
 
+const props = defineProps<{
+  locked?: boolean
+}>()
+
 const { t } = useI18n()
 
 const open = ref(false)
@@ -55,6 +59,13 @@ function onDocumentPointerDown(event: PointerEvent) {
   if (triggerRef.value?.contains(target) || panelRef.value?.contains(target)) return
   open.value = false
 }
+
+watch(
+  () => props.locked,
+  (locked) => {
+    if (locked) open.value = false
+  },
+)
 
 watch(open, (isOpen) => {
   if (!isOpen) {
