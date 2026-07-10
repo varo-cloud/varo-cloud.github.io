@@ -266,7 +266,7 @@ onBeforeUnmount(() => {
             {{ navSections.findIndex((s) => s.id === 'parameters') + 1 }}.
             {{ t('pages.modelDetail.apiTab.parameters') }}
           </h2>
-          <div class="model-api-tab__table-wrap">
+          <div class="model-api-tab__table-wrap scrollbar-subtle">
             <table class="model-api-tab__table">
               <thead>
                 <tr>

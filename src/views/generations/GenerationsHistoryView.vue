@@ -222,7 +222,7 @@ onMounted(() => {
       </div>
 
       <template v-else>
-        <div class="generations-history__table" role="table">
+        <div class="generations-history__table scrollbar-subtle" role="table">
           <div class="generations-history__header" role="row">
             <span role="columnheader">{{ t('pages.generations.columns.taskId') }}</span>
             <span role="columnheader">{{ t('pages.generations.columns.model') }}</span>
