@@ -61,9 +61,10 @@ export default {
             'Seedance 2.5 arrives in Early July with 30-second single-shot videos, expanded reference capacity, tighter generation and editing control, and support for up to 50 reference files.',
         },
       },
-      heroCtaPrimary: 'Star Free-$3 Credit',
+      heroCtaPrimary: 'Get Started',
+      heroCtaPrimaryLoggedIn: 'Explore Models',
       heroCtaSecondary: 'View Docs',
-      heroSignup: 'Star Free',
+      heroSignup: 'Get Started',
       filterLabel: 'Filter models',
       filters: {
         all: 'All',

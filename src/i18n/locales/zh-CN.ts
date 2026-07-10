@@ -61,9 +61,10 @@ export default {
             'Seedance 2.5 将于 7 月初上线，支持 30 秒单镜头视频、扩展参考素材容量、更精细的生成与编辑控制，以及最多 50 个参考文件。',
         },
       },
-      heroCtaPrimary: '免费开始 · $3 体验金',
+      heroCtaPrimary: '立即开始',
+      heroCtaPrimaryLoggedIn: '浏览模型',
       heroCtaSecondary: '查看文档',
-      heroSignup: '免费开始',
+      heroSignup: '立即开始',
       filterLabel: '筛选模型',
       filters: {
         all: '全部',
