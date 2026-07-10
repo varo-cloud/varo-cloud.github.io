@@ -530,7 +530,7 @@ onMounted(() => {
 
 .models-hero__inner {
   position: relative;
-  z-index: 1;
+  z-index: 3;
   width: 100%;
   max-width: 1360px;
   margin: 0 auto;

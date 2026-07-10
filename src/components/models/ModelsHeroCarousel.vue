@@ -170,7 +170,7 @@ onBeforeUnmount(() => {
   width: 100%;
   max-width: 1360px;
   margin: 0 auto;
-  pointer-events: auto;
+  pointer-events: none;
 }
 
 .hero-carousel__thumb {
@@ -183,6 +183,7 @@ onBeforeUnmount(() => {
   background: transparent;
   cursor: pointer;
   opacity: 0.4;
+  pointer-events: auto;
   transition: opacity 0.2s ease;
 }
 

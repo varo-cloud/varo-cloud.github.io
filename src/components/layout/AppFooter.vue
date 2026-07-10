@@ -31,6 +31,18 @@ const contactLinks = [
     labelKey: 'footer.youtube',
     icon: 'youtube',
   },
+  {
+    key: 'linkedin',
+    href: 'https://www.linkedin.com/company/varo-cloud/',
+    labelKey: 'footer.linkedin',
+    icon: 'linkedin',
+  },
+  {
+    key: 'reddit',
+    href: 'https://www.reddit.com/user/Ok_Vehicle3494/',
+    labelKey: 'footer.reddit',
+    icon: 'reddit',
+  },
 ] as const
 </script>
 

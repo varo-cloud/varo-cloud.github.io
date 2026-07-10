@@ -45,6 +45,8 @@ export default {
     discord: 'Discord',
     x: 'X',
     youtube: 'YouTube',
+    linkedin: 'LinkedIn',
+    reddit: 'Reddit',
     twitter: 'X (Twitter)',
     telegram: 'Telegram',
   },
