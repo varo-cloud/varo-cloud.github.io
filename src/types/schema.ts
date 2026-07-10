@@ -24,6 +24,7 @@ export type SchemaWidget =
   | 'element-list'
   | 'voice-select'
   | 'voice-list'
+  | 'string-array'
   | 'placeholder'
 
 export interface SchemaProperty {

@@ -48,6 +48,8 @@ export function usePaginatedModelSearch(options?: {
   prefetchTotal?: boolean
 }) {
   const items = ref<Model[]>([])
+  /** Unfiltered catalog size — not affected by search queries. */
+  const catalogTotal = ref(0)
   const total = ref(0)
   const fetchedCount = ref(0)
   const loading = ref(false)
@@ -182,7 +184,10 @@ export function usePaginatedModelSearch(options?: {
   if (options?.prefetchTotal) {
     void fetchModels({ limit: 1, offset: 0 })
       .then((page) => {
-        total.value = page.total
+        catalogTotal.value = page.total
+        if (!debouncedQuery.value) {
+          total.value = page.total
+        }
       })
       .catch(() => {
         // ignore
@@ -196,6 +201,7 @@ export function usePaginatedModelSearch(options?: {
 
   return {
     items,
+    catalogTotal,
     total,
     loading,
     loadingMore,

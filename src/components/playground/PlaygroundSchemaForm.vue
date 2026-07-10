@@ -18,6 +18,7 @@ import MultiPromptField, { type MultiPromptItem } from './fields/MultiPromptFiel
 import ElementListField, { type ElementListItem } from './fields/ElementListField.vue'
 import VoiceListField, { type VoiceListItem } from './fields/VoiceListField.vue'
 import VoiceSelectorField from './fields/VoiceSelectorField.vue'
+import StringArrayField from './fields/StringArrayField.vue'
 import VideoUploaderField from './fields/VideoUploaderField.vue'
 import AudioUploaderField from './fields/AudioUploaderField.vue'
 import SelectField from './fields/SelectField.vue'
@@ -243,6 +244,18 @@ function fieldLabel(key: string, property: SchemaProperty) {
         :description="field.property.description"
         :enum-values="field.property.enum"
         :default-value="field.property.default as string | undefined"
+        :invalid="isFieldInvalid(field.key)"
+        :error-message="fieldErrorMessage"
+      />
+
+      <StringArrayField
+        v-else-if="field.widget === 'string-array'"
+        v-model="model[field.key] as string[]"
+        :label="fieldLabel(field.key, field.property)"
+        :required="field.required"
+        :description="field.property.description"
+        :placeholder="field.property['x-placeholder']"
+        :rows="field.property['x-ui-rows']"
         :invalid="isFieldInvalid(field.key)"
         :error-message="fieldErrorMessage"
       />

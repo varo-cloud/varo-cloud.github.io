@@ -7,6 +7,7 @@ import { useAppMessage } from '@/composables/useAppMessage'
 import AppIcon from '@/components/common/AppIcon.vue'
 import ApiKeyTableRow from '@/components/api-keys/ApiKeyTableRow.vue'
 import { assetUrl } from '@/utils/assetUrl'
+import { openDocs } from '@/utils/docsUrl'
 import { createApiKey, deleteApiKey, fetchApiKeys } from '@/api/api-keys'
 import type { ApiKey } from '@/types'
 
@@ -118,7 +119,7 @@ async function confirmDeleteKey() {
 }
 
 function goToDocs() {
-  push({ name: 'docs' })
+  openDocs(() => push({ name: 'docs' }))
 }
 
 onMounted(loadKeys)

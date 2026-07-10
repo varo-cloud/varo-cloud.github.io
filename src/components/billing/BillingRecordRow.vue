@@ -28,6 +28,27 @@ const valueLabel = computed(() => {
 })
 
 const apiKeyLabel = computed(() => props.item.apiKey || '—')
+
+function normalizeStatus(status: string) {
+  if (status === 'succeeded' || status === 'completed') return 'completed'
+  if (status === 'failed') return 'failed'
+  if (status === 'queued') return 'queued'
+  if (status === 'running' || status === 'processing') return 'processing'
+  return status
+}
+
+const statusLabel = computed(() => {
+  if (!props.item.status) return '—'
+  const normalized = normalizeStatus(props.item.status)
+  const key = `pages.modelDetail.generation.${normalized}`
+  const translated = t(key)
+  return translated === key ? props.item.status : translated
+})
+
+const statusClass = computed(() => {
+  if (!props.item.status) return ''
+  return `billing-record-row__status--${normalizeStatus(props.item.status)}`
+})
 </script>
 
 <template>
@@ -42,6 +63,16 @@ const apiKeyLabel = computed(() => props.item.apiKey || '—')
       </span>
     </span>
     <span class="billing-record-row__key" role="cell">{{ item.key }}</span>
+    <span class="billing-record-row__status" role="cell">
+      <span
+        v-if="item.status"
+        class="billing-record-row__status-badge"
+        :class="statusClass"
+      >
+        {{ statusLabel }}
+      </span>
+      <span v-else class="billing-record-row__status-empty">—</span>
+    </span>
     <span
       class="billing-record-row__api-key"
       :class="{ 'billing-record-row__api-key--empty': !item.apiKey }"
@@ -66,6 +97,7 @@ const apiKeyLabel = computed(() => props.item.apiKey || '—')
     minmax(110px, 0.9fr)
     minmax(72px, 0.55fr)
     minmax(140px, 1.5fr)
+    minmax(88px, 0.7fr)
     minmax(120px, 1fr)
     minmax(80px, 0.65fr);
   gap: 12px;
@@ -115,6 +147,42 @@ const apiKeyLabel = computed(() => props.item.apiKey || '—')
   color: var(--text-primary);
 }
 
+.billing-record-row__status-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 24px;
+  padding: 0 8px;
+  border-radius: 4px;
+  font-size: 13px;
+  font-weight: 400;
+  white-space: nowrap;
+}
+
+.billing-record-row__status--completed {
+  background: rgba(0, 216, 141, 0.08);
+  color: #00bb83;
+}
+
+.billing-record-row__status--failed {
+  background: rgba(255, 87, 87, 0.08);
+  color: #ff5757;
+}
+
+.billing-record-row__status--queued {
+  background: rgba(255, 255, 255, 0.06);
+  color: #9b9dab;
+}
+
+.billing-record-row__status--processing {
+  background: rgba(6, 182, 212, 0.08);
+  color: #06b6d4;
+}
+
+.billing-record-row__status-empty {
+  color: var(--text-secondary);
+}
+
 .billing-record-row__api-key {
   color: var(--text-primary);
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
@@ -143,6 +211,7 @@ const apiKeyLabel = computed(() => props.item.apiKey || '—')
   }
 
   .billing-record-row__key,
+  .billing-record-row__status,
   .billing-record-row__api-key {
     grid-column: 1 / -1;
   }

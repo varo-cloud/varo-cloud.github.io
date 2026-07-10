@@ -25,12 +25,10 @@ function pruneApiValues(values: SchemaFormValues): SchemaFormValues {
   return result
 }
 
-export function resolveV1BaseUrl(): string {
-  if (typeof window !== 'undefined') {
-    return `${window.location.origin}/v1`
-  }
+const INFERENCE_API_BASE_URL = 'https://inference.varo.cloud/v1'
 
-  return 'https://<your-host>/v1'
+export function resolveV1BaseUrl(): string {
+  return INFERENCE_API_BASE_URL
 }
 
 export function resolveCreateGenerationUrl(): string {

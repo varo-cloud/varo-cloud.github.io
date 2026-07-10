@@ -37,9 +37,10 @@ const thumbnailSrc = computed(() =>
   assetUrl(props.model.thumbnailUrl ?? '/assets/models/card-thumb.jpg'),
 )
 
-const iconSrc = computed(() =>
-  assetUrl(props.model.iconUrl ?? '/assets/models/seedance.svg'),
-)
+const publisherLogoSrc = computed(() => {
+  const url = props.model.publisherLogoUrl?.trim()
+  return url ? assetUrl(url) : null
+})
 
 const capabilityBadge = computed(() => {
   const cap = props.model.capability
@@ -137,8 +138,9 @@ async function toggleFavourite(event: Event) {
       <div class="model-card__title-row">
         <h3 class="model-card__title">{{ displayName }}</h3>
         <img
+          v-if="publisherLogoSrc"
           class="model-card__icon"
-          :src="iconSrc"
+          :src="publisherLogoSrc"
           alt=""
           aria-hidden="true"
         />

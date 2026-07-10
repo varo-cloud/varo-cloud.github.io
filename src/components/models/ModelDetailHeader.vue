@@ -34,7 +34,7 @@ const SCROLL_LOAD_THRESHOLD = 48
 let closeTimer: ReturnType<typeof setTimeout> | null = null
 
 const {
-  total,
+  catalogTotal,
   loading,
   loadingMore,
   searchQuery,
@@ -53,7 +53,15 @@ const thumbnailSrc = computed(() =>
   assetUrl(props.thumbnailUrl || '/assets/model-detail/model-thumb.jpg'),
 )
 
-const hasSwitcher = computed(() => total.value === 0 || total.value > 1)
+/** Use catalog-wide total so search narrowing does not disable the switcher. */
+const hasSwitcher = computed(() => catalogTotal.value === 0 || catalogTotal.value > 1)
+
+function capabilityLabel(capability?: string): string {
+  if (!capability) return ''
+  const key = `pages.models.capabilityBadge.${capability}`
+  const translated = t(key)
+  return translated === key ? capability : translated
+}
 
 function updatePanelPosition() {
   const el = triggerRef.value
@@ -126,6 +134,10 @@ watch(open, (isOpen) => {
   document.addEventListener('pointerdown', onDocumentPointerDown)
 })
 
+watch(hasSwitcher, (enabled) => {
+  if (!enabled) open.value = false
+})
+
 onBeforeUnmount(() => {
   clearCloseTimer()
   window.removeEventListener('resize', updatePanelPosition)
@@ -196,7 +208,14 @@ onBeforeUnmount(() => {
               :aria-selected="opt.id === modelId"
               @click.stop="selectOption(opt.id)"
             >
-              <span class="playground-select-panel__option-label">{{ opt.label }}</span>
+              <span class="model-header__option-label">
+                <span class="model-header__option-name">{{ opt.label }}</span>
+                <span v-if="capabilityLabel(opt.capability)" class="model-header__capability">
+                  {{ capabilityLabel(opt.capability) }}
+                </span>
+                <span v-if="opt.isHot" class="model-header__hot">{{ t('pages.aiGenerator.hot') }}</span>
+                <span v-else-if="opt.isNew" class="model-header__new">{{ t('pages.aiGenerator.new') }}</span>
+              </span>
               <svg
                 v-if="opt.id === modelId"
                 class="playground-select-panel__check"
@@ -307,6 +326,16 @@ onBeforeUnmount(() => {
   overflow: hidden;
 }
 
+/* Bridge the 4px gap between trigger and panel so hover does not drop. */
+.model-header__panel::before {
+  content: '';
+  position: absolute;
+  top: -8px;
+  left: 0;
+  right: 0;
+  height: 8px;
+}
+
 .model-header__panel .playground-select-panel__scroll {
   max-height: min(280px, calc(100vh - 160px));
 }
@@ -316,5 +345,52 @@ onBeforeUnmount(() => {
   font-size: 12px;
   line-height: 1.4;
   color: #9b9dab;
+}
+
+.model-header__option-label {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.model-header__option-name {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.model-header__capability {
+  flex-shrink: 0;
+  padding: 1px 6px;
+  border-radius: 4px;
+  background: rgba(255, 255, 255, 0.08);
+  font-size: 10px;
+  font-weight: 400;
+  line-height: 14px;
+  color: #9b9dab;
+  white-space: nowrap;
+}
+
+.model-header__hot {
+  flex-shrink: 0;
+  padding: 1px 4px;
+  border-radius: 4px;
+  background: #ff9800;
+  font-size: 10px;
+  font-weight: 400;
+  line-height: 12px;
+  color: #fff;
+}
+
+.model-header__new {
+  flex-shrink: 0;
+  padding: 1px 4px;
+  border-radius: 4px;
+  background: #06b6d4;
+  font-size: 10px;
+  font-weight: 400;
+  line-height: 12px;
+  color: #fff;
 }
 </style>

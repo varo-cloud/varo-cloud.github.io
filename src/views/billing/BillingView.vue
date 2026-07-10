@@ -240,6 +240,22 @@ function billingStyleLabel(style: string) {
   return translated === key ? style : translated
 }
 
+function normalizeBillingStatus(status: string) {
+  if (status === 'succeeded' || status === 'completed') return 'completed'
+  if (status === 'failed') return 'failed'
+  if (status === 'queued') return 'queued'
+  if (status === 'running' || status === 'processing') return 'processing'
+  return status
+}
+
+function billingStatusLabel(status: string | null | undefined) {
+  if (!status) return '—'
+  const normalized = normalizeBillingStatus(status)
+  const key = `pages.modelDetail.generation.${normalized}`
+  const translated = t(key)
+  return translated === key ? status : translated
+}
+
 async function loadBilling(options: { silent?: boolean } = {}) {
   if (!options.silent) {
     loading.value = true
@@ -479,6 +495,7 @@ function handleExportCsv() {
     t('pages.billing.billingColumns.time'),
     t('pages.billing.billingColumns.style'),
     t('pages.billing.billingColumns.detail'),
+    t('pages.billing.billingColumns.status'),
     t('pages.billing.billingColumns.apiKey'),
     t('pages.billing.billingColumns.value'),
   ]
@@ -489,6 +506,7 @@ function handleExportCsv() {
       formatTimestamp(record.createdAt, locale.value, 'compactDatetime'),
       billingStyleLabel(record.style),
       record.key,
+      billingStatusLabel(record.status),
       record.apiKey ?? '',
       `${prefix}$${Math.abs(record.amountUsd).toFixed(2)}`,
     ]
@@ -857,6 +875,7 @@ onMounted(async () => {
               <span role="columnheader">{{ t('pages.billing.billingColumns.time') }}</span>
               <span role="columnheader">{{ t('pages.billing.billingColumns.style') }}</span>
               <span role="columnheader">{{ t('pages.billing.billingColumns.detail') }}</span>
+              <span role="columnheader">{{ t('pages.billing.billingColumns.status') }}</span>
               <span role="columnheader">{{ t('pages.billing.billingColumns.apiKey') }}</span>
               <span role="columnheader">{{ t('pages.billing.billingColumns.value') }}</span>
             </div>
@@ -1508,6 +1527,7 @@ onMounted(async () => {
     minmax(110px, 0.9fr)
     minmax(72px, 0.55fr)
     minmax(140px, 1.5fr)
+    minmax(88px, 0.7fr)
     minmax(120px, 1fr)
     minmax(80px, 0.65fr);
 }

@@ -17,6 +17,8 @@ interface ImportMetaEnv {
   readonly VITE_BASE?: string
   readonly VITE_TURNSTILE_SITE_KEY?: string
   readonly VITE_GA_MEASUREMENT_ID?: string
+  /** External API docs site (Mintlify), e.g. https://varocloudtest.mintlify.site/docs */
+  readonly VITE_DOCS_URL?: string
   /** 本地 dev server 将 /api 代理到此 origin，如 https://staging.api.varo.cloud */
   readonly VITE_DEV_API_PROXY_TARGET?: string
   /** 本地开发 access token（auth_token，过期后由 refresh_token 续期或更新此处） */

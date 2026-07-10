@@ -35,8 +35,10 @@ export interface Model {
   description: string
   /** Maps from API field `thumbnail_url` */
   thumbnailUrl?: string
-  /** Maps from API field `icon_url` — brand icon beside card title */
+  /** Maps from API field `icon_url` — model brand icon (legacy) */
   iconUrl?: string
+  /** Maps from API field `publisher_logo_url` — publisher logo beside card title */
+  publisherLogoUrl?: string
   /** Maps from API field `is_hot` */
   isHot?: boolean
   /** Maps from API field `is_new` */
@@ -314,6 +316,8 @@ export interface BillingRecord {
   apiKey?: string | null
   amountUsd: number
   createdAt: number
+  /** Task status from usage API; empty for top-up / bonus records */
+  status?: string | null
 }
 
 export type PricingCategory = 'image-video' | 'language' | 'serverless'
