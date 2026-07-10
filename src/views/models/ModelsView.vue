@@ -11,6 +11,7 @@ import ModelsHeroCarousel from '@/components/models/ModelsHeroCarousel.vue'
 import { useModelPreferencesStore } from '@/stores/modelPreferences'
 import { useUserStore } from '@/stores/user'
 import { assetUrl } from '@/utils/assetUrl'
+import { openDocs } from '@/utils/docsUrl'
 import type { FacetItem, Model, ModelCategory, PublisherFacetItem } from '@/types'
 
 const PAGE_SIZE = 20
@@ -271,7 +272,7 @@ function goToAuth() {
 }
 
 function goToDocs() {
-  push({ name: 'docs' })
+  openDocs(() => push({ name: 'docs' }))
 }
 
 function handleFavouriteChange({

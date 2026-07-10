@@ -8,6 +8,7 @@ import VaroCloudLogo from '@/components/common/VaroCloudLogo.vue'
 import AppIcon from '@/components/common/AppIcon.vue'
 import { useLocaleRouter } from '@/composables/useLocaleRouter'
 import { formatUsd } from '@/utils/currency'
+import { openDocs } from '@/utils/docsUrl'
 import type { LocaleType } from '@/i18n'
 
 const route = useRoute()
@@ -135,6 +136,11 @@ function isActive(name: string) {
 }
 
 function goTo(name: string) {
+  if (name === 'docs') {
+    openDocs(() => push({ name: 'docs' }))
+    return
+  }
+
   push({ name })
 }
 
