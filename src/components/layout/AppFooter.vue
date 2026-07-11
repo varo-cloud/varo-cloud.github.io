@@ -39,7 +39,7 @@ const contactLinks = [
   },
   {
     key: 'reddit',
-    href: 'https://www.reddit.com/user/Ok_Vehicle3494/',
+    href:'https://www.reddit.com/r/VaroCloud/',
     labelKey: 'footer.reddit',
     icon: 'reddit',
   },
