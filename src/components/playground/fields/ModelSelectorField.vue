@@ -6,6 +6,7 @@ import AppIcon from '@/components/common/AppIcon.vue'
 import PlaygroundSelectPanelSearch from '@/components/playground/PlaygroundSelectPanelSearch.vue'
 import { usePaginatedModelSearch } from '@/composables/usePaginatedModelSearch'
 import { PLAYGROUND_SELECT_TOOLTIP_Z_INDEX } from '@/constants/overlayZIndex'
+import { formatCapabilityLabel } from '@/utils/capability'
 import SchemaFieldLabel from '../SchemaFieldLabel.vue'
 
 export type ModelSelectorOption = {
@@ -69,19 +70,12 @@ const selectedOption = computed(() => {
 
 const selectedLabel = computed(() => selectedOption.value?.label ?? '')
 
-function capabilityLabel(capability?: string): string {
-  if (!capability) return ''
-  const key = `pages.models.capabilityBadge.${capability}`
-  const translated = t(key)
-  return translated === key ? capability : translated
-}
-
 function optionFullLabel(opt: ModelSelectorOption): string {
-  const cap = capabilityLabel(opt.capability)
+  const cap = formatCapabilityLabel(opt.capability)
   return cap ? `${opt.label} · ${cap}` : opt.label
 }
 
-const selectedCapabilityLabel = computed(() => capabilityLabel(selectedOption.value?.capability))
+const selectedCapabilityLabel = computed(() => formatCapabilityLabel(selectedOption.value?.capability))
 
 function updatePanelPosition() {
   const el = triggerRef.value
@@ -246,8 +240,8 @@ onBeforeUnmount(() => {
                   >
                     <span class="model-selector__option-label">
                       <span class="model-selector__option-name">{{ opt.label }}</span>
-                      <span v-if="capabilityLabel(opt.capability)" class="model-selector__capability">
-                        {{ capabilityLabel(opt.capability) }}
+                      <span v-if="formatCapabilityLabel(opt.capability)" class="model-selector__capability">
+                        {{ formatCapabilityLabel(opt.capability) }}
                       </span>
                       <span v-if="opt.isHot" class="model-selector__hot">{{ t('pages.aiGenerator.hot') }}</span>
                       <span v-else-if="opt.isNew" class="model-selector__new">{{ t('pages.aiGenerator.new') }}</span>

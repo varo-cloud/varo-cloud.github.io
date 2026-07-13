@@ -7,6 +7,7 @@ import { useModelPreferencesStore } from '@/stores/modelPreferences'
 import { useUserStore } from '@/stores/user'
 import { assetUrl } from '@/utils/assetUrl'
 import { formatPricingUsd, computeDiscountPercent, formatDiscountLabel, pricingUnitI18nKey } from '@/utils/pricing'
+import { formatCapabilityLabel } from '@/utils/capability'
 import type { Model } from '@/types'
 
 const props = defineProps<{
@@ -42,7 +43,7 @@ const publisherLogoSrc = computed(() => {
   return url ? assetUrl(url) : null
 })
 
-const capabilityBadge = computed(() => props.model.capability || '')
+const capabilityBadge = computed(() => formatCapabilityLabel(props.model.capability))
 
 const unitLabel = computed(() => t(pricingUnitI18nKey(props.model.priceUnit)))
 

@@ -6,6 +6,7 @@ import AppIcon from '@/components/common/AppIcon.vue'
 import PlaygroundSelectPanelSearch from '@/components/playground/PlaygroundSelectPanelSearch.vue'
 import { usePaginatedModelSearch } from '@/composables/usePaginatedModelSearch'
 import { assetUrl } from '@/utils/assetUrl'
+import { formatCapabilityLabel } from '@/utils/capability'
 import type { Model } from '@/types'
 
 const props = defineProps<{
@@ -55,13 +56,6 @@ const thumbnailSrc = computed(() =>
 
 /** Use catalog-wide total so search narrowing does not disable the switcher. */
 const hasSwitcher = computed(() => catalogTotal.value === 0 || catalogTotal.value > 1)
-
-function capabilityLabel(capability?: string): string {
-  if (!capability) return ''
-  const key = `pages.models.capabilityBadge.${capability}`
-  const translated = t(key)
-  return translated === key ? capability : translated
-}
 
 function updatePanelPosition() {
   const el = triggerRef.value
@@ -210,8 +204,8 @@ onBeforeUnmount(() => {
             >
               <span class="model-header__option-label">
                 <span class="model-header__option-name">{{ opt.label }}</span>
-                <span v-if="capabilityLabel(opt.capability)" class="model-header__capability">
-                  {{ capabilityLabel(opt.capability) }}
+                <span v-if="formatCapabilityLabel(opt.capability)" class="model-header__capability">
+                  {{ formatCapabilityLabel(opt.capability) }}
                 </span>
                 <span v-if="opt.isHot" class="model-header__hot">{{ t('pages.aiGenerator.hot') }}</span>
                 <span v-else-if="opt.isNew" class="model-header__new">{{ t('pages.aiGenerator.new') }}</span>
