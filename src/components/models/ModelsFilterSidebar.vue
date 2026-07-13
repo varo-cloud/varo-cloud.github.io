@@ -1,10 +1,7 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { assetUrl } from '@/utils/assetUrl'
 import type { FacetItem, PublisherFacetItem } from '@/types'
-
-const COLLAPSED_LIMIT = 6
 
 const props = defineProps<{
   publishers: PublisherFacetItem[]
@@ -23,26 +20,6 @@ const emit = defineEmits<{
 }>()
 
 const { t } = useI18n()
-
-const expanded = ref(false)
-
-function visibleItems<T>(items: T[]) {
-  if (expanded.value || items.length <= COLLAPSED_LIMIT) {
-    return items
-  }
-  return items.slice(0, COLLAPSED_LIMIT)
-}
-
-const showMoreButton = computed(() => {
-  const totalItems =
-    props.publishers.length +
-    (props.publishers.length > 0 ? 1 : 0) +
-    props.categories.length +
-    (props.categories.length > 0 ? 1 : 0) +
-    props.capabilities.length +
-    (props.capabilities.length > 0 ? 1 : 0)
-  return !expanded.value && totalItems > COLLAPSED_LIMIT * 2
-})
 
 function selectPublisher(value: string | null) {
   if (props.selectedPublisher === value) return
@@ -89,7 +66,7 @@ function selectCapability(value: string | null) {
               <span class="models-filter-item__count">{{ totalCount }}</span>
             </button>
           </li>
-          <li v-for="item in visibleItems(publishers)" :key="item.slug">
+          <li v-for="item in publishers" :key="item.slug">
             <button
               type="button"
               class="models-filter-item"
@@ -148,7 +125,7 @@ function selectCapability(value: string | null) {
               <span class="models-filter-item__count">{{ totalCount }}</span>
             </button>
           </li>
-          <li v-for="item in visibleItems(categories)" :key="`cat-${item.value}`">
+          <li v-for="item in categories" :key="`cat-${item.value}`">
             <button
               type="button"
               class="models-filter-item"
@@ -200,7 +177,7 @@ function selectCapability(value: string | null) {
               <span class="models-filter-item__count">{{ totalCount }}</span>
             </button>
           </li>
-          <li v-for="item in visibleItems(capabilities)" :key="`cap-${item.value}`">
+          <li v-for="item in capabilities" :key="`cap-${item.value}`">
             <button
               type="button"
               class="models-filter-item"
@@ -226,11 +203,6 @@ function selectCapability(value: string | null) {
         </ul>
       </section>
     </div>
-
-    <button v-if="showMoreButton" type="button" class="models-filter-more" @click="expanded = true">
-      <span>{{ t('pages.models.sidebar.more') }}</span>
-      <img :src="assetUrl('/assets/models/chevron-down.svg')" alt="" aria-hidden="true" />
-    </button>
   </aside>
 </template>
 
@@ -308,30 +280,6 @@ function selectCapability(value: string | null) {
   font-weight: 400;
   line-height: 16px;
   text-align: right;
-}
-
-.models-filter-more {
-  display: inline-flex;
-  align-items: center;
-  gap: 4px;
-  margin-top: 20px;
-  padding: 0;
-  border: none;
-  background: transparent;
-  color: #9b9dab;
-  font-size: 14px;
-  font-weight: 400;
-  line-height: 16px;
-  cursor: pointer;
-}
-
-.models-filter-more img {
-  width: 16px;
-  height: 16px;
-}
-
-.models-filter-more:hover {
-  color: #222;
 }
 
 @media (max-width: 1023px) {
