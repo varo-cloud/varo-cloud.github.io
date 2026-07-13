@@ -6,7 +6,7 @@ import { AnalyticsEvents, trackEvent } from '@/analytics'
 import { useModelPreferencesStore } from '@/stores/modelPreferences'
 import { useUserStore } from '@/stores/user'
 import { assetUrl } from '@/utils/assetUrl'
-import { formatPricingUsd, pricingUnitI18nKey } from '@/utils/pricing'
+import { formatPricingUsd, computeDiscountPercent, formatDiscountLabel, pricingUnitI18nKey } from '@/utils/pricing'
 import type { Model } from '@/types'
 
 const props = defineProps<{
@@ -50,8 +50,17 @@ const startingPriceLabel = computed(() =>
   formatPricingUsd(props.model.startingPriceUsd, props.model.priceUnit),
 )
 
+const discountPercent = computed(() =>
+  computeDiscountPercent(props.model.originalPriceUsd, props.model.startingPriceUsd),
+)
+
+const discountLabel = computed(() => {
+  const percent = discountPercent.value
+  return percent == null ? '' : formatDiscountLabel(percent)
+})
+
 const originalPriceLabel = computed(() => {
-  if (props.model.originalPriceUsd == null) return null
+  if (discountPercent.value == null || props.model.originalPriceUsd == null) return null
   return formatPricingUsd(props.model.originalPriceUsd, props.model.priceUnit)
 })
 
@@ -152,10 +161,15 @@ async function toggleFavourite(event: Event) {
           </template>
         </p>
         <p class="model-card__price">
-          <strong>{{ startingPriceLabel }}</strong><span class="model-card__unit">{{ unitLabel }}</span>
-          <template v-if="model.priceDetail">
-            <span class="model-card__detail"> · {{ model.priceDetail }}</span>
-          </template>
+          <span class="model-card__price-line">
+            <span class="model-card__price-main">
+              <strong>{{ startingPriceLabel }}</strong><span class="model-card__unit">{{ unitLabel }}</span>
+              <template v-if="model.priceDetail">
+                <span class="model-card__detail"> · {{ model.priceDetail }}</span>
+              </template>
+            </span>
+            <span v-if="discountLabel" class="model-card__discount">{{ discountLabel }}</span>
+          </span>
         </p>
       </div>
 
@@ -285,7 +299,7 @@ async function toggleFavourite(event: Event) {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: 6px;
   margin-top: auto;
   padding: 12px 16px 16px;
 }
@@ -301,6 +315,7 @@ async function toggleFavourite(event: Event) {
 }
 
 .model-card__pricing {
+  flex: 1;
   display: flex;
   flex-direction: column;
   gap: 2px;
@@ -321,9 +336,21 @@ async function toggleFavourite(event: Event) {
 
 .model-card__price {
   margin: 0;
+  min-width: 0;
   font-size: 12px;
   line-height: 20px;
   color: #9b9dab;
+}
+
+.model-card__price-line {
+  display: flex;
+  align-items: center;
+  flex-wrap: nowrap;
+  gap: 6px;
+}
+
+.model-card__price-main {
+  white-space: nowrap;
 }
 
 .model-card__price :deep(strong) {
@@ -345,24 +372,31 @@ async function toggleFavourite(event: Event) {
 .model-card__discount {
   display: inline-flex;
   align-items: center;
-  vertical-align: middle;
-  margin-left: 6px;
-  padding: 2px 8px;
+  justify-content: center;
+  flex-shrink: 0;
+  height: 16px;
+  padding: 0 8px;
   border-radius: 30px;
   background: #00bb83;
   color: #fff;
   font-size: 12px;
+  font-weight: 400;
   line-height: 12px;
+  white-space: nowrap;
 }
 
 .model-card__cta {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
   flex-shrink: 0;
-  padding: 10px 16px;
+  height: 32px;
+  padding: 0 10px;
   border: none;
   border-radius: 8px;
   background: #222;
   color: #fff;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 500;
   line-height: 16px;
   cursor: pointer;
