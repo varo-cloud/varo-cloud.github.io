@@ -26,18 +26,6 @@ const { t } = useI18n()
 
 const expanded = ref(false)
 
-function categoryLabel(value: string): string {
-  const key = `pages.models.categories.${value}`
-  const translated = t(key)
-  return translated === key ? value : translated
-}
-
-function capabilityLabel(value: string): string {
-  const key = `pages.models.capabilities.${value}`
-  const translated = t(key)
-  return translated === key ? value : translated
-}
-
 function visibleItems<T>(items: T[]) {
   if (expanded.value || items.length <= COLLAPSED_LIMIT) {
     return items
@@ -179,7 +167,7 @@ function selectCapability(value: string | null) {
                 aria-hidden="true"
                 class="models-filter-item__icon"
               />
-              <span class="models-filter-item__label">{{ categoryLabel(item.value) }}</span>
+              <span class="models-filter-item__label">{{ item.value }}</span>
               <span class="models-filter-item__count">{{ item.count }}</span>
             </button>
           </li>
@@ -231,7 +219,7 @@ function selectCapability(value: string | null) {
                 aria-hidden="true"
                 class="models-filter-item__icon"
               />
-              <span class="models-filter-item__label">{{ capabilityLabel(item.value) }}</span>
+              <span class="models-filter-item__label">{{ item.value }}</span>
               <span class="models-filter-item__count">{{ item.count }}</span>
             </button>
           </li>
