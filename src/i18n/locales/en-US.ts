@@ -115,10 +115,6 @@ export default {
         favourite: 'Favourite Models',
         recent: 'Recently Used',
       },
-      capabilityBadge: {
-        'text-to-video': 'Text → Video',
-        'image-to-video': 'Image → Video',
-      },
       capabilities: {
         'text-to-video': 'Text to Video',
         'image-to-video': 'Image to Video',

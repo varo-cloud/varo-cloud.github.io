@@ -115,10 +115,6 @@ export default {
         favourite: '收藏模型',
         recent: '最近使用',
       },
-      capabilityBadge: {
-        'text-to-video': '文本 → 视频',
-        'image-to-video': '图片 → 视频',
-      },
       capabilities: {
         'text-to-video': '文生视频',
         'image-to-video': '图生视频',
