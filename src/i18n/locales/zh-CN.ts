@@ -232,9 +232,9 @@ export default {
         },
       },
       tabs: {
-        playground: 'Playground',
+        playground: '在线体验',
         api: 'API',
-        history: 'History',
+        history: '历史',
       },
       history: {
         loadError: '加载历史记录失败，请重试。',
@@ -243,7 +243,7 @@ export default {
         loginRequired: '登录后可查看该模型的任务历史。',
         loadMore: '加载更多',
         columns: {
-          taskId: 'Task ID',
+          taskId: '任务 ID',
           status: '状态',
           channel: '类型',
           cost: '费用',
@@ -292,7 +292,7 @@ export default {
         image: '图像',
       },
       columns: {
-        taskId: 'Task ID',
+        taskId: '任务 ID',
         model: '模型',
         category: '类型',
         status: '状态',

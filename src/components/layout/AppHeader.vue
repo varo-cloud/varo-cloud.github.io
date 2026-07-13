@@ -2,7 +2,6 @@
 import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
-import { NDropdown } from 'naive-ui'
 import { useUserStore } from '@/stores/user'
 import VaroCloudLogo from '@/components/common/VaroCloudLogo.vue'
 import AppIcon from '@/components/common/AppIcon.vue'
@@ -12,14 +11,16 @@ import { openDocs } from '@/utils/docsUrl'
 import type { LocaleType } from '@/i18n'
 
 const route = useRoute()
-const { push, localePath, switchLocale } = useLocaleRouter()
+const { push, localePath, switchLocale, currentLocale } = useLocaleRouter()
 const { t } = useI18n()
 const userStore = useUserStore()
 
 // const headerSearch = ref('')
 const isScrolled = ref(false)
 const userMenuOpen = ref(false)
+const languageMenuOpen = ref(false)
 const mobileMenuOpen = ref(false)
+const languageMenuRef = ref<HTMLElement | null>(null)
 
 let userMenuCloseTimer: ReturnType<typeof setTimeout> | null = null
 
@@ -189,8 +190,25 @@ function handleUserMenuSelect(key: string) {
   }
 }
 
+function toggleLanguageMenu() {
+  languageMenuOpen.value = !languageMenuOpen.value
+}
+
+function closeLanguageMenu() {
+  languageMenuOpen.value = false
+}
+
 function handleLanguageSelect(key: string) {
+  closeLanguageMenu()
   switchLocale(key as LocaleType)
+}
+
+function handleDocumentClick(event: MouseEvent) {
+  if (!languageMenuOpen.value) return
+  const el = languageMenuRef.value
+  if (el && !el.contains(event.target as Node)) {
+    closeLanguageMenu()
+  }
 }
 
 /*
@@ -216,11 +234,20 @@ watch(
   () => {
     updateScrollState()
     closeMobileMenu()
+    closeLanguageMenu()
   },
 )
 
 watch(mobileMenuOpen, (open) => {
   setBodyScrollLocked(open)
+})
+
+watch(languageMenuOpen, (open) => {
+  if (open) {
+    document.addEventListener('click', handleDocumentClick)
+    return
+  }
+  document.removeEventListener('click', handleDocumentClick)
 })
 
 function handleMobileMenuKeydown(event: KeyboardEvent) {
@@ -237,6 +264,7 @@ onMounted(() => {
 onUnmounted(() => {
   window.removeEventListener('scroll', updateScrollState)
   window.removeEventListener('keydown', handleMobileMenuKeydown)
+  document.removeEventListener('click', handleDocumentClick)
   if (userMenuCloseTimer) clearTimeout(userMenuCloseTimer)
   setBodyScrollLocked(false)
 })
@@ -287,19 +315,36 @@ onUnmounted(() => {
       -->
 
       <div class="app-header__right">
-        <NDropdown
-          trigger="click"
-          :options="languageMenuOptions"
-          @select="handleLanguageSelect"
-        >
+        <div ref="languageMenuRef" class="app-header__language-menu">
           <button
             type="button"
             class="app-header__icon-btn"
+            :aria-expanded="languageMenuOpen"
+            aria-haspopup="menu"
             :aria-label="t('common.language')"
+            @click.stop="toggleLanguageMenu"
           >
             <AppIcon name="globe" />
           </button>
-        </NDropdown>
+
+          <div
+            v-show="languageMenuOpen"
+            class="app-header__language-dropdown"
+            role="menu"
+          >
+            <button
+              v-for="item in languageMenuOptions"
+              :key="item.key"
+              type="button"
+              class="app-header__language-dropdown-item"
+              :class="{ 'is-active': currentLocale === item.key }"
+              role="menuitem"
+              @click="handleLanguageSelect(item.key)"
+            >
+              <span>{{ item.label }}</span>
+            </button>
+          </div>
+        </div>
 
         <template v-if="userStore.isLoggedIn">
           <div class="app-header__wallet-group">
@@ -609,8 +654,44 @@ onUnmounted(() => {
   opacity: 0.85;
 }
 
+.app-header__language-menu,
 .app-header__user-menu {
   position: relative;
+}
+
+.app-header__language-dropdown {
+  position: absolute;
+  top: calc(100% + 8px);
+  right: 0;
+  z-index: 200;
+  min-width: 160px;
+  padding: 12px 20px;
+  border-radius: 8px;
+  background: #1c1c20;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.35);
+}
+
+.app-header__language-dropdown-item {
+  display: flex;
+  align-items: center;
+  width: calc(100% + 40px);
+  height: 40px;
+  margin: 0 -20px;
+  padding: 0 20px;
+  border: none;
+  border-radius: 0;
+  background: transparent;
+  color: #e0e0e0;
+  font-size: 14px;
+  line-height: 1;
+  text-align: left;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.app-header__language-dropdown-item:hover,
+.app-header__language-dropdown-item.is-active {
+  background: rgba(255, 255, 255, 0.06);
 }
 
 .app-header__user-dropdown {
