@@ -42,13 +42,7 @@ const publisherLogoSrc = computed(() => {
   return url ? assetUrl(url) : null
 })
 
-const capabilityBadge = computed(() => {
-  const cap = props.model.capability
-  if (!cap) return ''
-  const key = `pages.models.capabilityBadge.${cap}`
-  const translated = t(key)
-  return translated === key ? cap : translated
-})
+const capabilityBadge = computed(() => props.model.capability || '')
 
 const unitLabel = computed(() => t(pricingUnitI18nKey(props.model.priceUnit)))
 
