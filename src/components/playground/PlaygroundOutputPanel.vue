@@ -20,6 +20,7 @@ const props = defineProps<{
   progress?: number
   examples?: ModelExample[]
   selectedExampleId?: string | null
+  apiModelId?: string
 }>()
 
 const emit = defineEmits<{
@@ -71,6 +72,25 @@ const showExamplesBar = computed(
   () => !isGenerating.value && (props.examples?.length ?? 0) > 0,
 )
 
+const canShowCode = computed(() => showOutput.value || showExample.value)
+
+function buildExampleGenerationResult(example: ModelExample): PlaygroundGenerationResult {
+  const url = example.outputUrl ?? example.thumbnailUrl ?? ''
+  const previewKind = resolveMediaPreviewKind(url)
+
+  return {
+    id: example.id,
+    object: 'generation',
+    status: 'completed',
+    model: props.apiModelId ?? '',
+    created_at: 0,
+    output: {
+      type: previewKind === 'video' ? 'video' : 'image',
+      url,
+    },
+  }
+}
+
 const previewUrls = computed(() => {
   if (showOutput.value) return props.outputUrls ?? []
   if (showExample.value && selectedExample.value) {
@@ -91,22 +111,29 @@ const gridClass = computed(() => {
 })
 
 const formattedJson = computed(() => {
-  if (!props.results?.length) return ''
-  if (props.results.length === 1) {
-    return JSON.stringify(props.results[0], null, 2)
+  if (showOutput.value && props.results?.length) {
+    if (props.results.length === 1) {
+      return JSON.stringify(props.results[0], null, 2)
+    }
+    return JSON.stringify(
+      {
+        object: 'list',
+        data: props.results,
+      },
+      null,
+      2,
+    )
   }
-  return JSON.stringify(
-    {
-      object: 'list',
-      data: props.results,
-    },
-    null,
-    2,
-  )
+
+  if (showExample.value && selectedExample.value) {
+    return JSON.stringify(buildExampleGenerationResult(selectedExample.value), null, 2)
+  }
+
+  return ''
 })
 
 function toggleCodeView() {
-  if (!showOutput.value) return
+  if (!canShowCode.value) return
   viewMode.value = viewMode.value === 'json' ? 'preview' : 'json'
 }
 
@@ -155,14 +182,14 @@ watch(
     <div class="output-panel__header">
       <h2 class="output-panel__title">{{ t('pages.modelDetail.myGenerations') }}</h2>
       <div class="output-panel__tools">
-        <NTooltip trigger="hover" placement="top" :disabled="showOutput">
+        <NTooltip trigger="hover" placement="top" :disabled="canShowCode">
           <template #trigger>
             <span class="output-panel__tool-wrap">
               <button
                 type="button"
                 class="output-panel__tool"
                 :class="{ 'output-panel__tool--active': viewMode === 'json' }"
-                :disabled="!showOutput"
+                :disabled="!canShowCode"
                 @click="toggleCodeView"
               >
                 <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
@@ -266,7 +293,7 @@ watch(
         </template>
       </div>
       <pre
-        v-else-if="showOutput && viewMode === 'json'"
+        v-else-if="canShowCode && viewMode === 'json'"
         class="output-panel__json scrollbar-subtle"
       ><code>{{ formattedJson }}</code></pre>
       <GenerationStatusDisplay
@@ -379,6 +406,7 @@ watch(
 
 .output-panel__body--with-examples {
   justify-content: flex-start;
+  gap: 16px;
 }
 
 .output-panel__grid {

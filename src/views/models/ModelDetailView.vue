@@ -270,6 +270,7 @@ watch(
           :progress="generationProgress"
           :examples="modelExamples"
           :selected-example-id="selectedExampleId"
+          :api-model-id="model.id"
           @select-example="selectExample"
         />
       </div>
