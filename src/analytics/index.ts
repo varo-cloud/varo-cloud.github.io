@@ -46,8 +46,17 @@ export function setAnalyticsUserId(userId: string): void {
   window.gtag('set', { user_id: userId })
 }
 
+/**
+ * Only track when the route path changes.
+ * Query/hash-only updates (model picker, list filters, checkout return cleanup)
+ * should not be counted as additional page views.
+ */
 export function setupAnalytics(router: Router): void {
+  let lastTrackedPath: string | null = null
+
   router.afterEach((to) => {
-    trackPageView(to.fullPath)
+    if (to.path === lastTrackedPath) return
+    lastTrackedPath = to.path
+    trackPageView(to.path)
   })
 }
