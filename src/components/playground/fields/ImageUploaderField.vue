@@ -62,6 +62,31 @@ function onDrop(event: DragEvent) {
   void applyFile(file)
 }
 
+function getImageFromClipboard(event: ClipboardEvent): File | null {
+  const items = event.clipboardData?.items
+  if (items) {
+    for (const item of items) {
+      if (item.type.startsWith('image/')) {
+        const file = item.getAsFile()
+        if (file) return file
+      }
+    }
+  }
+
+  const files = event.clipboardData?.files
+  const file = files?.[0]
+  if (file?.type.startsWith('image/')) return file
+  return null
+}
+
+function onPaste(event: ClipboardEvent) {
+  if (uploading.value) return
+  const file = getImageFromClipboard(event)
+  if (!file) return
+  event.preventDefault()
+  void applyFile(file)
+}
+
 function clearImage() {
   clearMedia()
   if (fileInput.value) fileInput.value.value = ''
@@ -81,6 +106,7 @@ function clearImage() {
 
     <div
       class="image-field__box"
+      tabindex="0"
       :class="{
         'image-field__box--compact': compact,
         'image-field__box--dragging': isDragging,
@@ -91,6 +117,7 @@ function clearImage() {
       @dragleave.capture.prevent="onDragLeave"
       @dragover.capture.prevent
       @drop.capture.prevent="onDrop"
+      @paste="onPaste"
       @click.self="openPicker"
     >
       <div class="image-field__url-row">
@@ -101,6 +128,7 @@ function clearImage() {
           placeholder="https://example.com/image.png"
           :disabled="uploading"
           @input="onUrlInput"
+          @paste="onPaste"
           @click.stop
         />
         <button
@@ -115,7 +143,11 @@ function clearImage() {
       </div>
 
       <p class="image-field__drop-hint">
-        {{ uploading ? $t('pages.modelDetail.upload.uploading') : 'Drag & drop or click to upload' }}
+        {{
+          uploading
+            ? $t('pages.modelDetail.upload.uploading')
+            : 'Drag & drop, paste, or click to upload'
+        }}
       </p>
 
       <p v-if="uploadError" class="image-field__error">{{ uploadError }}</p>
@@ -154,6 +186,11 @@ function clearImage() {
   padding: 8px;
   cursor: pointer;
   transition: border-color 0.15s ease;
+  outline: none;
+}
+
+.image-field__box:focus-visible {
+  border-color: rgba(255, 255, 255, 0.45);
 }
 
 .image-field__box--dragging {
