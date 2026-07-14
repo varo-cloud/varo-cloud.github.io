@@ -11,12 +11,14 @@ export function loadGtag(measurementId: string): Promise<void> {
   }
 
   window.dataLayer = window.dataLayer ?? []
-  window.gtag = function gtag(...args: unknown[]) {
-    window.dataLayer!.push(args)
+  const gtag: (...args: unknown[]) => void = function () {
+    // eslint-disable-next-line prefer-rest-params
+    window.dataLayer!.push(arguments)
   }
+  window.gtag = gtag
 
-  window.gtag('js', new Date())
-  window.gtag('config', measurementId, { send_page_view: false })
+  gtag('js', new Date())
+  gtag('config', measurementId, { send_page_view: false })
 
   return new Promise((resolve, reject) => {
     const script = document.createElement('script')

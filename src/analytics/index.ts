@@ -27,9 +27,10 @@ export function trackPageView(path: string, title?: string): void {
   if (!enabled || !window.gtag) return
 
   window.gtag('event', 'page_view', {
+    send_to: measurementId,
     page_path: path,
     page_title: title ?? document.title,
-    page_location: `${window.location.origin}${path}`,
+    page_location: window.location.href,
   })
 }
 
