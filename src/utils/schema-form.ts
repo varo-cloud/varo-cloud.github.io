@@ -229,29 +229,58 @@ function isArrayValueInvalid(value: unknown[], property: SchemaProperty): boolea
   return false
 }
 
+function isNonEmptyString(value: unknown): boolean {
+  return typeof value === 'string' && value.trim().length > 0
+}
+
+/** multi_prompt 中是否存在可用镜头（有非空 prompt） */
+export function hasUsableMultiPrompt(values: SchemaFormValues): boolean {
+  const shots = values.multi_prompt
+  if (!Array.isArray(shots) || shots.length === 0) return false
+  return shots.some(
+    (shot) =>
+      shot != null &&
+      typeof shot === 'object' &&
+      isNonEmptyString((shot as { prompt?: unknown }).prompt),
+  )
+}
+
+function hasPromptMultiExclusivity(schema: InputSchema): boolean {
+  const properties = schema.properties
+  return Boolean(properties?.prompt && properties?.multi_prompt)
+}
+
 export function validateSchemaForm(
   schema: InputSchema | undefined,
   values: SchemaFormValues,
 ): string[] {
   if (!schema) return []
 
+  const fields = resolveSchemaFields(schema)
   const invalid = new Set<string>()
+  const exclusivePromptPair = hasPromptMultiExclusivity(schema)
+  const usablePrompt = isNonEmptyString(values.prompt)
+  const usableMultiPrompt = hasUsableMultiPrompt(values)
 
-  for (const field of resolveSchemaFields(schema)) {
+  for (const field of fields) {
     const value = values[field.key]
 
     if (field.required) {
-      if (value === undefined || value === null) {
+      // prompt / multi_prompt 二选一：任一可用即可满足 prompt 的必填约束
+      if (
+        exclusivePromptPair &&
+        field.key === 'prompt' &&
+        !usablePrompt &&
+        usableMultiPrompt
+      ) {
+        // skip required check
+      } else if (value === undefined || value === null) {
         invalid.add(field.key)
         continue
-      }
-
-      if (typeof value === 'string' && !value.trim()) {
+      } else if (typeof value === 'string' && !value.trim()) {
         invalid.add(field.key)
         continue
-      }
-
-      if (Array.isArray(value) && value.length === 0) {
+      } else if (Array.isArray(value) && value.length === 0) {
         invalid.add(field.key)
         continue
       }
@@ -264,9 +293,22 @@ export function validateSchemaForm(
       }
     }
 
-    if (Array.isArray(value) && field.property.type === 'array' && isArrayValueInvalid(value, field.property)) {
-      invalid.add(field.key)
+    if (Array.isArray(value) && field.property.type === 'array') {
+      if (isArrayValueInvalid(value, field.property)) {
+        invalid.add(field.key)
+        continue
+      }
+
+      // 已添加镜头但未填写 prompt，视为无效
+      if (field.key === 'multi_prompt' && value.length > 0 && !usableMultiPrompt) {
+        invalid.add(field.key)
+      }
     }
+  }
+
+  if (exclusivePromptPair && usablePrompt && usableMultiPrompt) {
+    invalid.add('prompt')
+    invalid.add('multi_prompt')
   }
 
   return [...invalid]

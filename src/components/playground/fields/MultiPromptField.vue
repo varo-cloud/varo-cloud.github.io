@@ -61,20 +61,13 @@ function createItem(): MultiPromptItem {
   return { prompt: '', duration: defaultDuration.value }
 }
 
-function ensureAtLeastOneItem() {
-  if (model.value.length === 0) {
-    model.value = [createItem()]
-  }
-}
-
 function addItem() {
   if (!canAdd.value) return
   model.value = [...model.value, createItem()]
 }
 
 function removeItem(index: number) {
-  const next = model.value.filter((_, i) => i !== index)
-  model.value = next.length > 0 ? next : [createItem()]
+  model.value = model.value.filter((_, i) => i !== index)
 }
 
 function updatePrompt(index: number, prompt: string) {
@@ -88,8 +81,6 @@ function updateDuration(index: number, duration: number) {
   next[index] = { ...next[index], duration: Number(duration) }
   model.value = next
 }
-
-ensureAtLeastOneItem()
 </script>
 
 <template>
@@ -102,11 +93,19 @@ ensureAtLeastOneItem()
       :invalid="invalid"
     />
 
-    <p class="multi-prompt-field__duration-hint" :class="{ 'multi-prompt-field__duration-hint--warn': durationExceeded }">
+    <p
+      v-if="model.length > 0"
+      class="multi-prompt-field__duration-hint"
+      :class="{ 'multi-prompt-field__duration-hint--warn': durationExceeded }"
+    >
       {{ t('pages.modelDetail.fields.multiPrompt.totalDuration', { current: totalDuration, max: totalCap }) }}
     </p>
 
-    <div class="multi-prompt-field__list">
+    <div v-if="model.length === 0" class="multi-prompt-field__empty">
+      {{ t('pages.modelDetail.fields.multiPrompt.empty') }}
+    </div>
+
+    <div v-else class="multi-prompt-field__list">
       <div
         v-for="(item, index) in model"
         :key="index"
@@ -117,7 +116,6 @@ ensureAtLeastOneItem()
             {{ t('pages.modelDetail.fields.multiPrompt.shotLabel', { index: index + 1 }) }}
           </span>
           <button
-            v-if="model.length > 1"
             type="button"
             class="multi-prompt-field__remove"
             :aria-label="t('pages.modelDetail.fields.multiPrompt.removeShot')"
@@ -180,6 +178,15 @@ ensureAtLeastOneItem()
 
 .multi-prompt-field__duration-hint--warn {
   color: #fbbf24;
+}
+
+.multi-prompt-field__empty {
+  padding: 16px 12px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  font-size: 12px;
+  color: #9b9dab;
+  text-align: center;
 }
 
 .multi-prompt-field__list {

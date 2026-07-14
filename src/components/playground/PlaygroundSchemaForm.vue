@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue'
+import { computed, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { InputSchema, SchemaFormValues, SchemaProperty } from '@/types/schema'
 import {
@@ -7,6 +7,7 @@ import {
   getArrayItemProperty,
   getFieldLabel,
   getSelectOptions,
+  hasUsableMultiPrompt,
   resolveSchemaFields,
 } from '@/utils/schema-form'
 import PromptField from './fields/PromptField.vue'
@@ -38,53 +39,36 @@ const { t } = useI18n()
 const fields = computed(() => resolveSchemaFields(props.schema))
 const fieldErrorMessage = computed(() => t('pages.modelDetail.fieldRequired'))
 
-const hasPromptField = computed(() => fields.value.some((field) => field.key === 'prompt'))
-const hasMultiPromptField = computed(() => fields.value.some((field) => field.key === 'multi_prompt'))
-const showPromptModeToggle = computed(() => hasPromptField.value && hasMultiPromptField.value)
-const promptInputMode = ref<'single' | 'multi'>('single')
+const hasPromptMultiConflict = computed(() => {
+  const prompt = model.value.prompt
+  return (
+    typeof prompt === 'string' &&
+    prompt.trim().length > 0 &&
+    hasUsableMultiPrompt(model.value)
+  )
+})
 
 function isFieldInvalid(key: string): boolean {
   return props.invalidFields?.includes(key) ?? false
 }
 
-function shouldShowPromptField(key: string): boolean {
-  if (key !== 'prompt') return true
-  return !hasMultiPromptField.value || promptInputMode.value === 'single'
-}
-
-function shouldShowMultiPromptField(): boolean {
-  return !hasPromptField.value || promptInputMode.value === 'multi'
-}
-
-function setPromptInputMode(mode: 'single' | 'multi') {
-  promptInputMode.value = mode
+function errorMessageForField(key: string): string {
+  if (
+    (key === 'prompt' || key === 'multi_prompt') &&
+    hasPromptMultiConflict.value &&
+    isFieldInvalid(key)
+  ) {
+    return t('pages.modelDetail.fields.multiPrompt.exclusiveWithPrompt')
+  }
+  return fieldErrorMessage.value
 }
 
 watch(
   () => props.schema,
   (schema) => {
     model.value = createDefaultFormValues(schema)
-    promptInputMode.value = 'single'
   },
 )
-
-watch(promptInputMode, (mode) => {
-  if (!showPromptModeToggle.value) return
-
-  if (mode === 'single') {
-    model.value = { ...model.value, multi_prompt: [] }
-    return
-  }
-
-  model.value = { ...model.value, prompt: '' }
-  const shots = model.value.multi_prompt
-  if (!Array.isArray(shots) || shots.length === 0) {
-    model.value = {
-      ...model.value,
-      multi_prompt: [{ prompt: '', duration: 5 }],
-    }
-  }
-})
 
 function lastImageHint(key: string): string | undefined {
   if (key !== 'last_image' && key !== 'end_image') return undefined
@@ -117,30 +101,8 @@ function fieldLabel(key: string, property: SchemaProperty) {
       class="schema-form__field"
       :data-invalid-field="isFieldInvalid(field.key) || undefined"
     >
-      <div
-        v-if="field.key === 'prompt' && showPromptModeToggle"
-        class="schema-form__prompt-mode"
-      >
-        <button
-          type="button"
-          class="schema-form__prompt-mode-btn"
-          :class="{ 'schema-form__prompt-mode-btn--active': promptInputMode === 'single' }"
-          @click="setPromptInputMode('single')"
-        >
-          {{ t('pages.modelDetail.fields.promptMode.single') }}
-        </button>
-        <button
-          type="button"
-          class="schema-form__prompt-mode-btn"
-          :class="{ 'schema-form__prompt-mode-btn--active': promptInputMode === 'multi' }"
-          @click="setPromptInputMode('multi')"
-        >
-          {{ t('pages.modelDetail.fields.promptMode.multi') }}
-        </button>
-      </div>
-
       <PromptField
-        v-if="field.widget === 'textarea' && shouldShowPromptField(field.key)"
+        v-if="field.widget === 'textarea'"
         v-model="model[field.key] as string"
         :label="fieldLabel(field.key, field.property)"
         :required="field.required"
@@ -148,7 +110,7 @@ function fieldLabel(key: string, property: SchemaProperty) {
         :placeholder="field.property['x-placeholder']"
         :rows="field.property['x-ui-rows']"
         :invalid="isFieldInvalid(field.key)"
-        :error-message="fieldErrorMessage"
+        :error-message="errorMessageForField(field.key)"
       />
 
       <ImageUploaderField
@@ -197,7 +159,7 @@ function fieldLabel(key: string, property: SchemaProperty) {
       />
 
       <MultiPromptField
-        v-else-if="field.widget === 'multi-prompt' && shouldShowMultiPromptField()"
+        v-else-if="field.widget === 'multi-prompt'"
         v-model="model[field.key] as MultiPromptItem[]"
         :label="fieldLabel(field.key, field.property)"
         :required="field.required"
@@ -208,7 +170,7 @@ function fieldLabel(key: string, property: SchemaProperty) {
         :duration-minimum="multiPromptDurationMinimum(field.property)"
         :duration-maximum="multiPromptDurationMaximum(field.property)"
         :invalid="isFieldInvalid(field.key)"
-        :error-message="fieldErrorMessage"
+        :error-message="errorMessageForField(field.key)"
       />
 
       <ElementListField
@@ -354,33 +316,5 @@ function fieldLabel(key: string, property: SchemaProperty) {
 
 .schema-form__field:last-child {
   margin-bottom: 0;
-}
-
-.schema-form__prompt-mode {
-  display: flex;
-  gap: 8px;
-  margin-bottom: 12px;
-  padding: 4px;
-  border-radius: 8px;
-  background: rgba(255, 255, 255, 0.06);
-}
-
-.schema-form__prompt-mode-btn {
-  flex: 1;
-  height: 32px;
-  border: none;
-  border-radius: 6px;
-  background: transparent;
-  font-family: inherit;
-  font-size: 12px;
-  font-weight: 500;
-  color: #9b9dab;
-  cursor: pointer;
-  transition: background 0.15s ease, color 0.15s ease;
-}
-
-.schema-form__prompt-mode-btn--active {
-  background: rgba(255, 255, 255, 0.12);
-  color: #ebf4fb;
 }
 </style>

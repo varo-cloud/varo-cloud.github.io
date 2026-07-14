@@ -200,11 +200,8 @@ export default {
         unknownWidget: 'Unsupported field type — implementation pending.',
       },
       fields: {
-        promptMode: {
-          single: 'Single prompt',
-          multi: 'Multi-shot',
-        },
         multiPrompt: {
+          empty: 'No shots added yet. Add shots for multi-shot generation.',
           shotLabel: 'Shot {index}',
           promptPlaceholder: 'Describe this shot…',
           durationLabel: 'Duration',
@@ -212,6 +209,7 @@ export default {
           removeShot: 'Remove shot',
           totalDuration: 'Total duration: {current}/{max}s',
           durationExceeded: 'Total shot duration cannot exceed {max}s.',
+          exclusiveWithPrompt: 'Use either Prompt or Multi Prompt, not both.',
         },
         elementList: {
           empty: 'No elements added yet.',

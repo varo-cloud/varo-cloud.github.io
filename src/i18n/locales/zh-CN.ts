@@ -199,11 +199,8 @@ export default {
         unknownWidget: '暂不支持的字段类型，待实现。',
       },
       fields: {
-        promptMode: {
-          single: '单段提示词',
-          multi: '多镜头分镜',
-        },
         multiPrompt: {
+          empty: '尚未添加镜头。添加后将按多镜头分镜生成。',
           shotLabel: '镜头 {index}',
           promptPlaceholder: '描述该镜头内容…',
           durationLabel: '时长',
@@ -211,6 +208,7 @@ export default {
           removeShot: '删除镜头',
           totalDuration: '总时长：{current}/{max} 秒',
           durationExceeded: '各镜头时长总和不能超过 {max} 秒。',
+          exclusiveWithPrompt: '请只填写 Prompt 或 Multi Prompt 其中一项。',
         },
         elementList: {
           empty: '尚未添加元素引用。',
