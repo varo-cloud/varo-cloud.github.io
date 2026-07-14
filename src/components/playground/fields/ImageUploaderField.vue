@@ -7,16 +7,19 @@ import { useMediaUpload } from '@/composables/useMediaUpload'
 
 const model = defineModel<string>({ required: true })
 
-defineProps<{
-  label: string
-  required?: boolean
-  description?: string
-  hint?: string
-  compact?: boolean
-  showLabel?: boolean
-  invalid?: boolean
-  errorMessage?: string
-}>()
+withDefaults(
+  defineProps<{
+    label: string
+    required?: boolean
+    description?: string
+    hint?: string
+    compact?: boolean
+    showLabel?: boolean
+    invalid?: boolean
+    errorMessage?: string
+  }>(),
+  { showLabel: true },
+)
 
 const fileInput = ref<HTMLInputElement | null>(null)
 const isDragging = ref(false)

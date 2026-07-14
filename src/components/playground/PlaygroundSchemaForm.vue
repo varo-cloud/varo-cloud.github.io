@@ -134,6 +134,7 @@ function fieldLabel(key: string, property: SchemaProperty) {
         :description="field.property.description"
         :invalid="isFieldInvalid(field.key)"
         :error-message="fieldErrorMessage"
+        :show-label="true"
       />
 
       <AudioUploaderField
@@ -144,6 +145,7 @@ function fieldLabel(key: string, property: SchemaProperty) {
         :description="field.property.description"
         :invalid="isFieldInvalid(field.key)"
         :error-message="fieldErrorMessage"
+        :show-label="true"
       />
 
       <MultiImageUploaderField

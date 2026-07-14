@@ -10,14 +10,17 @@ import { useUserStore } from '@/stores/user'
 
 const model = defineModel<string>({ required: true })
 
-defineProps<{
-  label?: string
-  required?: boolean
-  description?: string
-  showLabel?: boolean
-  invalid?: boolean
-  errorMessage?: string
-}>()
+withDefaults(
+  defineProps<{
+    label?: string
+    required?: boolean
+    description?: string
+    showLabel?: boolean
+    invalid?: boolean
+    errorMessage?: string
+  }>(),
+  { showLabel: true },
+)
 
 const { t } = useI18n()
 const { push } = useLocaleRouter()
