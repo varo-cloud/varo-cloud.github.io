@@ -1,11 +1,17 @@
 <script setup lang="ts">
+import { computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import LegalDocument from '@/components/legal/LegalDocument.vue'
-import termsContent from '../../../隐私政策文件/Varo-Terms-of-Service.md?raw'
+import { useLocaleRouter } from '@/composables/useLocaleRouter'
+import { getLegalContent } from '@/content/legal'
+
+const { t } = useI18n()
+const { currentLocale } = useLocaleRouter()
+
+const content = computed(() => getLegalContent('terms', currentLocale.value))
+const pageTitle = computed(() => t('pages.terms.documentTitle'))
 </script>
 
 <template>
-  <LegalDocument
-    :content="termsContent"
-    page-title="Varo.cloud Terms of Service"
-  />
+  <LegalDocument :content="content" :page-title="pageTitle" />
 </template>

@@ -540,12 +540,10 @@ export default {
       githubComingSoon: 'GitHub sign-in is coming soon.',
     },
     terms: {
-      title: 'Terms of Service',
-      placeholder: 'Terms of Service content placeholder.',
+      documentTitle: 'Varo.cloud Terms of Service',
     },
     privacy: {
-      title: 'Privacy Policy',
-      placeholder: 'Privacy Policy content placeholder.',
+      documentTitle: 'Varo.cloud Privacy Policy',
     },
   },
 }

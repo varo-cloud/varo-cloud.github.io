@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted } from 'vue'
+import { computed, onUnmounted, watch } from 'vue'
 import { marked } from 'marked'
 import '@/styles/legal-document.css'
 
@@ -35,11 +35,15 @@ const html = computed(() => {
   return marked.parse(props.content) as string
 })
 
-onMounted(() => {
-  if (props.pageTitle) {
-    document.title = props.pageTitle
-  }
-})
+watch(
+  () => props.pageTitle,
+  (title) => {
+    if (title) {
+      document.title = title
+    }
+  },
+  { immediate: true },
+)
 
 onUnmounted(() => {
   document.title = SITE_TITLE
