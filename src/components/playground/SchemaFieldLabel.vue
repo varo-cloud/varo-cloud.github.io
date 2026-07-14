@@ -52,7 +52,7 @@ defineProps<{
 }
 
 .schema-field-label__req {
-  color: #ebf4fb;
+  color: #f87171;
 }
 
 .schema-field-label--invalid .schema-field-label__text,
