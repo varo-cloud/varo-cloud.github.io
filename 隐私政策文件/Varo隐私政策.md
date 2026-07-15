@@ -132,7 +132,7 @@ We do not share Customer Data with third parties for their own model training pu
 
 **7.2**. We generally retain account, billing, and support-related personal information for as long as necessary to provide our Services, comply with law, and for our legitimate interests such as abuse detection and prevention, and defending ourselves from legal claims. Residual copies of personal data may be stored in backup systems for a limited period as a security measure to protect against data loss.
 
-**7.3**. We do not long-term store Customer Data (Inputs, uploaded files, or Outputs). Specific retention periods for temporary processing, logging, and backups are being finalized and will be updated in this Policy when determined.
+**7.3**. We retain Customer Data (Inputs, uploaded files, or Outputs) for up to one (1) month for temporary processing, service delivery, logging, and backups. After that period, we delete Customer Data, except where longer retention is required by law or needed to resolve disputes, enforce our agreements, or investigate abuse or security incidents.
 
 ## 8. Children's Privacy
 

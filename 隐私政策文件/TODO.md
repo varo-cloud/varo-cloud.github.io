@@ -17,17 +17,17 @@
 
 ## Customer Data 保留
 
-- [ ] **具体保留天数**  
-  - 现状：隐私政策 §7.3、ToS §9.2 均写「不长期存储，日期待定」。  
-  - 待决：prompt / 上传文件 / Output 的临时处理、日志、备份各保留多久（例如 7 天、30 天等），确认后同步更新隐私政策与服务条款。
+- [x] **具体保留天数**  
+  - 已确认：Customer Data（Inputs / 上传文件 / Outputs）保留**一个月**；其后删除，法律要求或争议/滥用调查等例外除外。  
+  - 已同步：隐私政策 §7.3、ToS §9.2。
 
 ---
 
 ## 生效与发布
 
-- [ ] **法律页面上线 markdown 内容**  
+- [x] **法律页面上线 markdown 内容**  
   - 已确认：生效日期 **June 25, 2026**；对外 URL 为 `https://varo.cloud/privacy`、`https://varo.cloud/terms`（以前端 `/privacy`、`/terms` 路由为准）。  
-  - 待办：`PrivacyView.vue` / `TermsView.vue` 仍为 placeholder，需将 markdown 发布到对应页面。
+  - 已完成：`PrivacyView.vue` / `TermsView.vue` 已接入 markdown。
 
 ---
 
@@ -57,4 +57,4 @@
 
 ---
 
-_最后更新：生效日期确认为 June 25, 2026；对外 URL 统一为 `/privacy`、`/terms`。_
+_最后更新：Customer Data 保留期确认为一个月；隐私政策 §7.3、ToS §9.2 已同步。_
