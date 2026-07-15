@@ -537,12 +537,10 @@ export default {
       githubComingSoon: 'Github 登录即将上线。',
     },
     terms: {
-      title: '服务条款',
-      placeholder: '服务条款内容占位。',
+      documentTitle: 'Varo.cloud 服务条款',
     },
     privacy: {
-      title: '隐私政策',
-      placeholder: '隐私政策内容占位。',
+      documentTitle: 'Varo.cloud 隐私政策',
     },
   },
 }
