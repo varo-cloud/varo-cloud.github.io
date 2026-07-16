@@ -10,12 +10,14 @@ import { useUserStore } from '@/stores/user'
 import AppHeader from '@/components/layout/AppHeader.vue'
 import AppFooter from '@/components/layout/AppFooter.vue'
 import TurnstileWidget from '@/components/auth/TurnstileWidget.vue'
-// import { assetUrl } from '@/utils/assetUrl'
+import { assetUrl } from '@/utils/assetUrl'
 import {
   getLastAuthMethod,
   setLastAuthMethod,
   type AuthLoginMethod,
 } from '@/utils/lastAuthMethod'
+import { startOAuthLogin } from '@/utils/oauth'
+import type { OAuthProvider } from '@/types'
 
 const route = useRoute()
 const { push, replace, localePath } = useLocaleRouter()
@@ -187,19 +189,28 @@ async function handleLogin() {
   }
 }
 
-/*
+async function handleOAuthLogin(provider: OAuthProvider) {
+  loading.value = true
+  error.value = null
+  try {
+    const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : null
+    await startOAuthLogin(provider, {
+      callbackPath: localePath('/auth/callback'),
+      returnTo: redirect,
+    })
+  } catch (err) {
+    error.value = resolveErrorMessage(err, t('pages.auth.oauthStartError'))
+    loading.value = false
+  }
+}
+
 function handleGoogleLogin() {
-  if (!ensureHumanVerified()) return
-  // rememberAuthMethod('google') — call after OAuth succeeds
-  message.info(t('pages.auth.googleComingSoon'))
+  void handleOAuthLogin('google')
 }
 
 function handleGithubLogin() {
-  if (!ensureHumanVerified()) return
-  // rememberAuthMethod('github') — call after OAuth succeeds
-  message.info(t('pages.auth.githubComingSoon'))
+  void handleOAuthLogin('github')
 }
-*/
 
 onMounted(() => {
   lastAuthMethod.value = getLastAuthMethod()
@@ -288,7 +299,6 @@ onUnmounted(() => {
             {{ t('pages.auth.loginButton') }}
           </button>
 
-          <!-- OAuth login hidden for this release
           <div class="auth-card__divider" aria-hidden="true">
             <span class="auth-card__divider-line" />
             <span class="auth-card__divider-text">{{ t('pages.auth.or') }}</span>
@@ -302,7 +312,7 @@ onUnmounted(() => {
             <button
               type="button"
               class="auth-card__social auth-card__social--google"
-              :disabled="loading || !isHumanVerified"
+              :disabled="loading"
               @click="handleGoogleLogin"
             >
               <img
@@ -322,7 +332,7 @@ onUnmounted(() => {
             <button
               type="button"
               class="auth-card__social auth-card__social--github"
-              :disabled="loading || !isHumanVerified"
+              :disabled="loading"
               @click="handleGithubLogin"
             >
               <img
@@ -334,7 +344,6 @@ onUnmounted(() => {
               <span>{{ t('pages.auth.githubLogin') }}</span>
             </button>
           </div>
-          -->
 
           <p class="auth-card__terms">
             {{ t('pages.auth.termsPrefix') }}
