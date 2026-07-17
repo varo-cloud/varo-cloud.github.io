@@ -31,7 +31,6 @@ const props = defineProps<{
   modelId: string
   apiModelId: string
   costUsd: number
-  standardCostUsd?: number
   quoteLoading?: boolean
   balanceUsd: number
   generating?: boolean
@@ -78,9 +77,6 @@ const showResetButton = computed(() => inputViewMode.value === 'form')
 const showRunActions = computed(() => !isCodeViewMode.value)
 
 const formattedPrice = computed(() => `$${props.costUsd.toFixed(2)}`)
-const formattedOriginal = computed(() =>
-  props.standardCostUsd != null ? `$${props.standardCostUsd.toFixed(2)}` : null,
-)
 
 const runLabel = computed(() =>
   userStore.isLoggedIn ? t('pages.modelDetail.run') : t('pages.modelDetail.startForFree'),
@@ -432,7 +428,6 @@ onBeforeUnmount(() => {
                   :class="{ 'input-panel__run-price--loading': quoteLoading }"
                 >
                   {{ formattedPrice }}
-                  <span v-if="formattedOriginal" class="input-panel__run-original">{{ formattedOriginal }}</span>
                 </span>
               </button>
 
@@ -684,13 +679,6 @@ onBeforeUnmount(() => {
 
 .input-panel__run-price--loading {
   opacity: 0.65;
-}
-
-.input-panel__run-original {
-  margin-left: 4px;
-  font-size: 12px;
-  text-decoration: line-through;
-  opacity: 0.5;
 }
 
 .input-panel__run-divider {

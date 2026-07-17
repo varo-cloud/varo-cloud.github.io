@@ -54,29 +54,17 @@ const balanceUsd = computed(() => userStore.balanceUsd ?? 0)
 
 const fallbackUnitCostUsd = computed(() => model.value?.startingPriceUsd ?? 0)
 
-const fallbackStandardUnitCostUsd = computed(() => {
-  const current = model.value
-  if (!current || current.originalPriceUsd == null || !current.startingPriceUsd) {
-    return undefined
-  }
-
-  if (current.originalPriceUsd <= current.startingPriceUsd) return undefined
-  return current.originalPriceUsd
-})
-
 const playgroundQuote = usePlaygroundQuote({
   modelId: computed(() => model.value?.id ?? ''),
   formValues,
   batchSize,
   fallbackUnitCostUsd,
-  fallbackStandardUnitCostUsd,
   enabled: computed(
     () => userStore.isLoggedIn && Boolean(model.value?.id && inputSchema.value),
   ),
 })
 
 const quoteCostUsd = playgroundQuote.costUsd
-const quoteStandardCostUsd = playgroundQuote.standardCostUsd
 const quoteLoading = playgroundQuote.loading
 const quoteUnitCostUsd = playgroundQuote.unitCostUsd
 
@@ -251,7 +239,6 @@ watch(
           :model-id="model.id"
           :api-model-id="model.id"
           :cost-usd="quoteCostUsd"
-          :standard-cost-usd="quoteStandardCostUsd"
           :quote-loading="quoteLoading"
           :balance-usd="balanceUsd"
           :generating="isGenerating"

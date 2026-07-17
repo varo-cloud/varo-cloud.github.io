@@ -11,7 +11,6 @@ export interface UsePlaygroundQuoteOptions {
   batchSize: Ref<number>
   /** Single-run fallback before the first quote returns */
   fallbackUnitCostUsd: MaybeRefOrGetter<number>
-  fallbackStandardUnitCostUsd?: MaybeRefOrGetter<number | undefined>
   enabled?: MaybeRefOrGetter<boolean>
 }
 
@@ -38,19 +37,12 @@ export function usePlaygroundQuote(options: UsePlaygroundQuoteOptions) {
   }
 
   const fallbackUnitCostUsd = computed(() => toValue(options.fallbackUnitCostUsd))
-  const fallbackStandardUnitCostUsd = computed(() => toValue(options.fallbackStandardUnitCostUsd))
 
   const unitCostUsd = computed(() => quote.value?.cost_usd ?? fallbackUnitCostUsd.value)
 
   const costUsd = computed(() =>
     roundUsd(unitCostUsd.value * options.batchSize.value),
   )
-
-  const standardCostUsd = computed(() => {
-    const fallbackUnit = fallbackStandardUnitCostUsd.value
-    if (fallbackUnit == null) return undefined
-    return roundUsd(fallbackUnit * options.batchSize.value)
-  })
 
   async function runQuoteRequest() {
     const modelId = toValue(options.modelId)
@@ -149,7 +141,6 @@ export function usePlaygroundQuote(options: UsePlaygroundQuoteOptions) {
     loading,
     error,
     costUsd,
-    standardCostUsd,
     unitCostUsd,
     refresh: () => scheduleQuote(true),
   }
