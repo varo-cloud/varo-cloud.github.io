@@ -111,6 +111,7 @@ export function usePlaygroundGeneration() {
 
   const generationStatus = ref<GenerationStatus>('idle')
   const generationProgress = ref(0)
+  const generationError = ref<string | null>(null)
   const outputUrls = ref<string[]>([])
   const generationResults = ref<PlaygroundGenerationResult[]>([])
 
@@ -128,11 +129,22 @@ export function usePlaygroundGeneration() {
     }
   }
 
+  function markFailed(errorMessage?: string | null) {
+    clearProgressInterval()
+    generationStatus.value = 'failed'
+    generationProgress.value = 0
+    const resolved =
+      errorMessage?.trim() || t('pages.modelDetail.generationFailed')
+    generationError.value = resolved
+    message.error(resolved)
+  }
+
   function resetGeneration() {
     pollAbort.aborted = true
     clearProgressInterval()
     generationStatus.value = 'idle'
     generationProgress.value = 0
+    generationError.value = null
     outputUrls.value = []
     generationResults.value = []
   }
@@ -168,6 +180,7 @@ export function usePlaygroundGeneration() {
     clearProgressInterval()
     generationStatus.value = 'completed'
     generationProgress.value = 100
+    generationError.value = null
     generationResults.value = snapshots.map((snapshot) =>
       mapPlaygroundGenerationResult(snapshot, unitCostUsd),
     )
@@ -202,13 +215,7 @@ export function usePlaygroundGeneration() {
 
       if (allTerminal) {
         if (hasFailed) {
-          clearProgressInterval()
-          generationStatus.value = 'failed'
-          generationProgress.value = 0
-          const failedMessage =
-            snapshots.find((item) => item.errorMessage)?.errorMessage
-            ?? t('pages.modelDetail.generationFailed')
-          message.error(failedMessage)
+          markFailed(snapshots.find((item) => item.errorMessage)?.errorMessage)
           return
         }
 
@@ -228,6 +235,7 @@ export function usePlaygroundGeneration() {
 
     generationStatus.value = 'queued'
     generationProgress.value = 0
+    generationError.value = null
     outputUrls.value = []
     generationResults.value = []
 
@@ -250,8 +258,7 @@ export function usePlaygroundGeneration() {
       if (allTerminal) {
         const hasFailed = created.some((item) => item.status === 'failed')
         if (hasFailed) {
-          generationStatus.value = 'failed'
-          message.error(t('pages.modelDetail.generationFailed'))
+          markFailed(created.find((item) => item.errorMessage)?.errorMessage)
           return
         }
 
@@ -270,9 +277,7 @@ export function usePlaygroundGeneration() {
     } catch (error) {
       if (pollAbort.aborted) return
 
-      generationStatus.value = 'failed'
-      generationProgress.value = 0
-      message.error(
+      markFailed(
         resolveRunErrorMessage(
           error,
           t('pages.modelDetail.insufficientBalance'),
@@ -295,6 +300,7 @@ export function usePlaygroundGeneration() {
         clearProgressInterval()
         generationStatus.value = 'completed'
         generationProgress.value = 100
+        generationError.value = null
         generationResults.value = [mapPlaygroundGenerationResult(snapshot, unitCostUsd)]
         outputUrls.value = generationResults.value
           .map((item) => item.output.url)
@@ -303,12 +309,9 @@ export function usePlaygroundGeneration() {
       }
 
       if (snapshot.status === 'failed') {
-        clearProgressInterval()
-        generationStatus.value = 'failed'
-        generationProgress.value = 0
         outputUrls.value = []
         generationResults.value = []
-        message.error(snapshot.errorMessage ?? t('pages.modelDetail.generationFailed'))
+        markFailed(snapshot.errorMessage)
         return
       }
 
@@ -328,6 +331,7 @@ export function usePlaygroundGeneration() {
     if (status === 'completed') {
       generationStatus.value = 'completed'
       generationProgress.value = 100
+      generationError.value = null
 
       if (detail.result.output_url) {
         generationResults.value = [mapDetailToResult(detail, unitCostUsd)]
@@ -340,18 +344,15 @@ export function usePlaygroundGeneration() {
     }
 
     if (status === 'failed') {
-      generationStatus.value = 'failed'
-      generationProgress.value = 0
       outputUrls.value = []
       generationResults.value = []
-      if (detail.result.error?.message) {
-        message.error(detail.result.error.message)
-      }
+      markFailed(detail.result.error?.message)
       return
     }
 
     generationStatus.value = status
     generationProgress.value = 0
+    generationError.value = null
     outputUrls.value = []
     generationResults.value = []
 
@@ -372,6 +373,7 @@ export function usePlaygroundGeneration() {
   return {
     generationStatus,
     generationProgress,
+    generationError,
     outputUrls,
     generationResults,
     isGenerating,

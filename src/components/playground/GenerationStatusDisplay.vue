@@ -7,6 +7,7 @@ import type { GenerationStatus } from '@/types'
 const props = defineProps<{
   status: Exclude<GenerationStatus, 'idle'>
   progress?: number
+  errorMessage?: string | null
 }>()
 
 const { t } = useI18n()
@@ -25,6 +26,12 @@ const statusIconSrc = computed(() => {
 })
 
 const statusTitle = computed(() => t(`pages.modelDetail.generation.${props.status}`))
+
+const failedDetail = computed(() => {
+  if (props.status !== 'failed') return null
+  const message = props.errorMessage?.trim()
+  return message || null
+})
 
 const progressPercent = computed(() => Math.min(100, Math.max(0, props.progress ?? 0)))
 
@@ -80,6 +87,8 @@ function isTimelineActive(step: TimelineStep): boolean {
     </div>
 
     <p class="generation-status__title">{{ statusTitle }}</p>
+
+    <p v-if="failedDetail" class="generation-status__error">{{ failedDetail }}</p>
 
     <p class="generation-status__timeline">
       <span :class="{ 'generation-status__timeline-step--active': isTimelineActive('queued') }">
@@ -144,6 +153,16 @@ function isTimelineActive(step: TimelineStep): boolean {
   font-weight: 500;
   line-height: 18px;
   color: #ebf4fb;
+}
+
+.generation-status__error {
+  margin: 0;
+  max-width: 420px;
+  padding: 0 16px;
+  font-size: 13px;
+  line-height: 1.5;
+  color: #f87171;
+  word-break: break-word;
 }
 
 .generation-status__timeline {
