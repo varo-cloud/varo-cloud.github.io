@@ -35,9 +35,6 @@ async function loadFacets() {
   try {
     const data = await fetchModelFacets()
     capabilities.value = data.capabilities ?? []
-    if (!activeCapability.value && capabilities.value.length > 0) {
-      activeCapability.value = capabilities.value[0]!.value
-    }
   } catch {
     capabilities.value = []
   }
@@ -57,8 +54,7 @@ async function loadModels() {
 }
 
 function selectChip(value: string) {
-  if (activeCapability.value === value) return
-  activeCapability.value = value
+  activeCapability.value = activeCapability.value === value ? null : value
 }
 
 function goModels() {
@@ -74,9 +70,7 @@ watch(activeCapability, () => {
 
 onMounted(async () => {
   await loadFacets()
-  if (!activeCapability.value) {
-    void loadModels()
-  }
+  void loadModels()
 })
 </script>
 
