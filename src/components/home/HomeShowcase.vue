@@ -1,14 +1,15 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { fetchModelFacets } from '@/api/models'
+import { useLocaleRouter } from '@/composables/useLocaleRouter'
 import { assetUrl } from '@/utils/assetUrl'
+import type { PublisherFacetItem } from '@/types'
 
-const { t } = useI18n()
+const PAGE_SIZE = 8
+const PAGINATION_MIN = 8
 
-const page = ref(0)
-const pageCount = 5
-
-const SHOWCASE_IMAGES = [
+const DEFAULT_COVERS = [
   '/assets/home/showcase-01.png',
   '/assets/home/showcase-02.jpeg',
   '/assets/home/showcase-03.png',
@@ -21,18 +22,60 @@ const SHOWCASE_IMAGES = [
   '/assets/home/showcase-10.png',
 ] as const
 
+const { t } = useI18n()
+const { push } = useLocaleRouter()
+
+const publishers = ref<PublisherFacetItem[]>([])
+const page = ref(0)
+
+const showPagination = computed(() => publishers.value.length >= PAGINATION_MIN)
+const pageCount = computed(() =>
+  showPagination.value ? Math.ceil(publishers.value.length / PAGE_SIZE) : 1,
+)
+
+const visiblePublishers = computed(() => {
+  if (!showPagination.value) return publishers.value
+  const start = page.value * PAGE_SIZE
+  return publishers.value.slice(start, start + PAGE_SIZE)
+})
+
 const items = computed(() =>
-  SHOWCASE_IMAGES.map((image, index) => ({
-    id: index + 1,
-    image: assetUrl(image),
-    title: t('pages.home.showcase.itemTitle'),
-    meta: t('pages.home.showcase.itemMeta'),
+  visiblePublishers.value.map((publisher, index) => ({
+    slug: publisher.slug,
+    name: publisher.name,
+    meta: t('pages.home.showcase.itemMeta', { count: publisher.count }),
+    image: resolveCover(publisher, page.value * PAGE_SIZE + index),
   })),
 )
 
-function goPage(next: number) {
-  page.value = next
+function resolveCover(publisher: PublisherFacetItem, index: number) {
+  const cover = (publisher.coverUrl ?? publisher.cover_url)?.trim()
+  if (cover) return assetUrl(cover)
+  return assetUrl(DEFAULT_COVERS[index % DEFAULT_COVERS.length]!)
 }
+
+function goPage(next: number) {
+  if (!showPagination.value) return
+  page.value = Math.min(Math.max(0, next), pageCount.value - 1)
+}
+
+function openPublisher(slug: string) {
+  push({ name: 'models', query: { publisher: slug } })
+}
+
+async function loadPublishers() {
+  try {
+    const data = await fetchModelFacets()
+    publishers.value = data.publishers ?? []
+    page.value = 0
+  } catch {
+    publishers.value = []
+  }
+}
+
+onMounted(() => {
+  void loadPublishers()
+})
 </script>
 
 <template>
@@ -43,17 +86,28 @@ function goPage(next: number) {
       </h2>
       <p class="home-showcase__subtitle">{{ t('pages.home.showcase.subtitle') }}</p>
 
-      <div class="home-showcase__grid">
-        <article v-for="item in items" :key="item.id" class="home-showcase__card">
-          <img class="home-showcase__img" :src="item.image" :alt="item.title" loading="lazy" />
+      <div v-if="items.length" class="home-showcase__grid">
+        <button
+          v-for="item in items"
+          :key="item.slug"
+          type="button"
+          class="home-showcase__card"
+          @click="openPublisher(item.slug)"
+        >
+          <img class="home-showcase__img" :src="item.image" :alt="item.name" loading="lazy" />
           <div class="home-showcase__body">
-            <p class="home-showcase__name">{{ item.title }}</p>
+            <p class="home-showcase__name">{{ item.name }}</p>
             <p class="home-showcase__meta">{{ item.meta }}</p>
           </div>
-        </article>
+        </button>
       </div>
 
-      <div class="home-showcase__dots" role="tablist" :aria-label="t('pages.home.showcase.pagination')">
+      <div
+        v-if="showPagination && pageCount > 1"
+        class="home-showcase__dots"
+        role="tablist"
+        :aria-label="t('pages.home.showcase.pagination')"
+      >
         <button
           v-for="n in pageCount"
           :key="n"
@@ -106,10 +160,16 @@ function goPage(next: number) {
 
 .home-showcase__card {
   position: relative;
+  display: block;
   overflow: hidden;
+  width: 100%;
+  padding: 0;
   aspect-ratio: 1;
+  border: 0;
   border-radius: 20px;
   background: #111;
+  cursor: pointer;
+  text-align: left;
 }
 
 .home-showcase__img {

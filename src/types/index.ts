@@ -104,6 +104,9 @@ export interface PublisherFacetItem {
   name: string
   logo_url: string | null
   count: number
+  /** Cover image for homepage showcase; may arrive as camelCase or snake_case. */
+  coverUrl?: string | null
+  cover_url?: string | null
 }
 
 export interface ModelFacetsResponse {

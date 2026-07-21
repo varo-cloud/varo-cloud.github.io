@@ -1,51 +1,83 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { fetchModelFacets, fetchModels } from '@/api/models'
 import { useLocaleRouter } from '@/composables/useLocaleRouter'
 import { assetUrl } from '@/utils/assetUrl'
-import type { Model } from '@/types'
+import { formatCapabilityLabel } from '@/utils/capability'
+import type { FacetItem, Model } from '@/types'
 import HomeFeaturedCard from '@/components/home/HomeFeaturedCard.vue'
 
-const props = defineProps<{
-  models: Model[]
-}>()
+const FEATURED_LIMIT = 4
 
-const { t } = useI18n()
+const { t, te } = useI18n()
 const { push } = useLocaleRouter()
 
-const chipKeys = [
-  'aiVideoGenerator',
-  'textToVideo',
-  'imageToVideo',
-  'aiVideoModels',
-  'aiAvatar',
-  'dubbingAi',
-  'textToSpeech',
-  'clipGenerator',
-  'fabric',
-  'sora',
-  'veo',
-  'kling',
-  'reelGenerator',
-  'voiceGenerator',
-  'videoEditor',
-  'editor',
-] as const
-
-const activeChip = ref<(typeof chipKeys)[number]>('aiVideoGenerator')
+const capabilities = ref<FacetItem[]>([])
+const models = ref<Model[]>([])
+const activeCapability = ref<string | null>(null)
 
 const chips = computed(() =>
-  chipKeys.map((key) => ({
-    key,
-    label: t(`pages.home.featured.chips.${key}`),
+  capabilities.value.map((item) => ({
+    key: item.value,
+    label: capabilityLabel(item.value),
   })),
 )
 
-const displayModels = computed(() => props.models)
+const displayModels = computed(() => models.value)
+
+function capabilityLabel(value: string) {
+  const key = `pages.models.capabilities.${value}`
+  return te(key) ? t(key) : formatCapabilityLabel(value)
+}
+
+async function loadFacets() {
+  try {
+    const data = await fetchModelFacets()
+    capabilities.value = data.capabilities ?? []
+    if (!activeCapability.value && capabilities.value.length > 0) {
+      activeCapability.value = capabilities.value[0]!.value
+    }
+  } catch {
+    capabilities.value = []
+  }
+}
+
+async function loadModels() {
+  try {
+    const page = await fetchModels({
+      offset: 0,
+      limit: FEATURED_LIMIT,
+      ...(activeCapability.value ? { capability: activeCapability.value } : {}),
+    })
+    models.value = page.items
+  } catch {
+    models.value = []
+  }
+}
+
+function selectChip(value: string) {
+  if (activeCapability.value === value) return
+  activeCapability.value = value
+}
 
 function goModels() {
-  push({ name: 'models' })
+  push({
+    name: 'models',
+    query: activeCapability.value ? { capability: activeCapability.value } : {},
+  })
 }
+
+watch(activeCapability, () => {
+  void loadModels()
+})
+
+onMounted(async () => {
+  await loadFacets()
+  if (!activeCapability.value) {
+    void loadModels()
+  }
+})
 </script>
 
 <template>
@@ -57,15 +89,15 @@ function goModels() {
       </h2>
       <p class="home-featured__subtitle">{{ t('pages.home.featured.subtitle') }}</p>
 
-      <div class="home-featured__chips" role="list">
+      <div v-if="chips.length" class="home-featured__chips" role="list">
         <button
           v-for="chip in chips"
           :key="chip.key"
           type="button"
           role="listitem"
           class="home-featured__chip"
-          :class="{ 'is-active': activeChip === chip.key }"
-          @click="activeChip = chip.key"
+          :class="{ 'is-active': activeCapability === chip.key }"
+          @click="selectChip(chip.key)"
         >
           {{ chip.label }}
         </button>

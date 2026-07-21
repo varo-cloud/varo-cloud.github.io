@@ -56,7 +56,7 @@ export default {
         title: 'The Generative AI Cloud for Creators',
         subtitle:
           "Access the world's leading generative AI models in one cloud platform — built for faster creation, smoother workflows, and unlimited creative output.",
-        ctaPrimary: 'Start Free — $3 Credit',
+        ctaPrimary: 'Get Started',
         ctaPrimaryLoggedIn: 'Explore Models',
         ctaSecondary: 'View Docs',
       },
@@ -67,24 +67,6 @@ export default {
         viewMore: 'View More',
         fallbackName: 'Featured Model',
         fallbackDesc: 'Explore production-ready generative AI models on Varo.cloud.',
-        chips: {
-          aiVideoGenerator: 'AI Video Generator',
-          textToVideo: 'Text to Video AI',
-          imageToVideo: 'Image to Video AI',
-          aiVideoModels: 'AI Video Models',
-          aiAvatar: 'AI Avatar',
-          dubbingAi: 'Dubbing AI',
-          textToSpeech: 'AI Text to Speech',
-          clipGenerator: 'AI Clip Generator',
-          fabric: 'Fabric 1.0',
-          sora: 'Sora 2',
-          veo: 'Veo 3.1',
-          kling: 'Kling AI',
-          reelGenerator: 'AI Reel Generator',
-          voiceGenerator: 'AI Voice Generator',
-          videoEditor: 'AI Video Editor',
-          editor: 'Video Editor',
-        },
       },
       developers: {
         eyebrow: 'For Developers',
@@ -93,22 +75,6 @@ export default {
           'Build and deploy AI-powered creative products without managing the full infrastructure stack. Varo.cloud brings models, workflows, and production deployment into one cloud platform.',
         getApiKey: 'Get API Key',
         previewAlt: 'AI-generated preview from Varo.cloud API',
-        tabs: {
-          image: 'image.ts',
-          video: 'video.ts',
-          speech: 'speech.ts',
-          chat: 'chat.ts',
-        },
-        code: {
-          image:
-            '# Parameters:\n#   prompt — Required. string\n#   image_url — Required. string\n#   duration — integer. default: 8\n#   resolution — string. default: "720p"\n\n# Step 1: Start image generation\ncurl -X POST "https://api.varo.cloud/api/v1/model/generateImage" \\\n  -H "Authorization: Bearer $VARO_API_KEY" \\\n  -H "Content-Type: application/json"',
-          video:
-            '# Parameters:\n#   prompt — Required. string\n#   image_url — Required. string\n#   duration — integer. default: 8\n\n# Step 1: Start video generation\ncurl -X POST "https://api.varo.cloud/api/v1/model/generateVideo" \\\n  -H "Authorization: Bearer $VARO_API_KEY" \\\n  -H "Content-Type: application/json"',
-          speech:
-            '# Parameters:\n#   text — Required. string\n#   voice — string. default: "alloy"\n\ncurl -X POST "https://api.varo.cloud/api/v1/model/generateSpeech" \\\n  -H "Authorization: Bearer $VARO_API_KEY" \\\n  -H "Content-Type: application/json"',
-          chat:
-            '# Parameters:\n#   messages — Required. array\n#   model — string\n\ncurl -X POST "https://api.varo.cloud/api/v1/chat/completions" \\\n  -H "Authorization: Bearer $VARO_API_KEY" \\\n  -H "Content-Type: application/json"',
-        },
       },
       creators: {
         eyebrow: 'For Creators',
@@ -150,14 +116,13 @@ export default {
         subtitle:
           'Varo.cloud helps small businesses access production-ready image, video, and audio models through one simple platform — reducing tool sprawl, lowering generation costs, and making professional AI creation easier to scale.',
         empty: 'Pricing will appear here once models are loaded.',
-        viewMore: 'View 100+ Models',
+        viewMore: 'View More Models',
       },
       showcase: {
         title: 'What people are Creating',
         subtitle:
           'Varo.cloud helps small businesses access production-ready image, video, and audio models through one simple platform — reducing tool sprawl, lowering generation costs, and making professional AI creation easier to scale.',
-        itemTitle: 'Black Forest Labs',
-        itemMeta: '1 series · 25 models',
+        itemMeta: '{count} models',
         pagination: 'Showcase pages',
         page: 'Page {n}',
       },

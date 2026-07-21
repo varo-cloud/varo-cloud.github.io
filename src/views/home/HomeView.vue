@@ -2,7 +2,7 @@
 import { onMounted, ref } from 'vue'
 import { fetchModels } from '@/api/models'
 import { modelToPricingItem } from '@/utils/pricing'
-import type { Model, PricingItem } from '@/types'
+import type { PricingItem } from '@/types'
 import HomeHero from '@/components/home/HomeHero.vue'
 import HomeFeatured from '@/components/home/HomeFeatured.vue'
 import HomeDevelopers from '@/components/home/HomeDevelopers.vue'
@@ -12,32 +12,28 @@ import HomePricing from '@/components/home/HomePricing.vue'
 import HomeShowcase from '@/components/home/HomeShowcase.vue'
 import HomeCta from '@/components/home/HomeCta.vue'
 
-const FEATURED_LIMIT = 4
 const PRICING_LIMIT = 5
 
-const featuredModels = ref<Model[]>([])
 const pricingItems = ref<PricingItem[]>([])
 
-async function loadCatalog() {
+async function loadPricing() {
   try {
-    const page = await fetchModels({ offset: 0, limit: 20 })
-    featuredModels.value = page.items.slice(0, FEATURED_LIMIT)
-    pricingItems.value = page.items.slice(0, PRICING_LIMIT).map(modelToPricingItem)
+    const page = await fetchModels({ offset: 0, limit: PRICING_LIMIT })
+    pricingItems.value = page.items.map(modelToPricingItem)
   } catch {
-    featuredModels.value = []
     pricingItems.value = []
   }
 }
 
 onMounted(() => {
-  void loadCatalog()
+  void loadPricing()
 })
 </script>
 
 <template>
   <div class="home-page" data-home-ready>
     <HomeHero />
-    <HomeFeatured :models="featuredModels" />
+    <HomeFeatured />
     <HomeDevelopers />
     <HomeCreators />
     <HomeValueProps />

@@ -6,26 +6,43 @@ import { useUserStore } from '@/stores/user'
 import { assetUrl } from '@/utils/assetUrl'
 import HighlightedCodeBlock from '@/components/common/HighlightedCodeBlock.vue'
 import type { CodeHighlightLanguage } from '@/utils/code-highlight'
+import {
+  API_CODE_VIEW_MODES,
+  buildApiSubmitSnippet,
+  type ApiCodeViewMode,
+} from '@/utils/playground-request-snippets'
+
+/** Demo sample aligned with model detail API examples. */
+const DEMO_MODEL_SLUG = 'seedance-2.0/image-to-video'
+const DEMO_FORM_VALUES = {
+  prompt: 'A cinematic shot of a futuristic city at sunset',
+  image_url: 'https://example.com/input.jpg',
+  duration: 8,
+  resolution: '720p',
+}
 
 const { t } = useI18n()
 const { push } = useLocaleRouter()
 const userStore = useUserStore()
 
-type TabKey = 'image' | 'video' | 'speech' | 'chat'
+const codeViewMode = ref<ApiCodeViewMode>('http')
 
-const tabs: { key: TabKey; labelKey: string; language: CodeHighlightLanguage }[] = [
-  { key: 'image', labelKey: 'pages.home.developers.tabs.image', language: 'http' },
-  { key: 'video', labelKey: 'pages.home.developers.tabs.video', language: 'http' },
-  { key: 'speech', labelKey: 'pages.home.developers.tabs.speech', language: 'http' },
-  { key: 'chat', labelKey: 'pages.home.developers.tabs.chat', language: 'http' },
-]
-
-const activeTab = ref<TabKey>('image')
-
-const activeCode = computed(() => t(`pages.home.developers.code.${activeTab.value}`))
-const activeLanguage = computed(
-  () => tabs.find((tab) => tab.key === activeTab.value)?.language ?? 'http',
+const codeModeOptions = computed(() =>
+  API_CODE_VIEW_MODES.map((mode) => ({
+    value: mode,
+    label: t(`pages.modelDetail.inputViewModes.${mode}`),
+  })),
 )
+
+const activeCode = computed(() =>
+  buildApiSubmitSnippet(codeViewMode.value, DEMO_MODEL_SLUG, DEMO_FORM_VALUES),
+)
+
+const activeLanguage = computed<CodeHighlightLanguage>(() => {
+  if (codeViewMode.value === 'http') return 'http'
+  if (codeViewMode.value === 'python') return 'python'
+  return 'javascript'
+})
 
 function getApiKey() {
   push({ name: userStore.isLoggedIn ? 'api-keys' : 'auth' })
@@ -44,16 +61,16 @@ function getApiKey() {
       <div class="home-developers__panel">
         <div class="home-developers__tabs" role="tablist">
           <button
-            v-for="tab in tabs"
-            :key="tab.key"
+            v-for="opt in codeModeOptions"
+            :key="opt.value"
             type="button"
             role="tab"
             class="home-developers__tab"
-            :class="{ 'is-active': activeTab === tab.key }"
-            :aria-selected="activeTab === tab.key"
-            @click="activeTab = tab.key"
+            :class="{ 'is-active': codeViewMode === opt.value }"
+            :aria-selected="codeViewMode === opt.value"
+            @click="codeViewMode = opt.value"
           >
-            {{ t(tab.labelKey) }}
+            {{ opt.label }}
           </button>
         </div>
 

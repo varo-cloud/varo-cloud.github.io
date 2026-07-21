@@ -56,7 +56,7 @@ export default {
         title: '面向创作者的生成式 AI 云',
         subtitle:
           '在一个云平台中接入全球领先的生成式 AI 模型——为更快创作、更顺畅工作流与无限创意输出而生。',
-        ctaPrimary: '免费开始 — $3 额度',
+        ctaPrimary: '立即开始',
         ctaPrimaryLoggedIn: '浏览模型',
         ctaSecondary: '查看文档',
       },
@@ -67,24 +67,6 @@ export default {
         viewMore: '查看更多',
         fallbackName: '精选模型',
         fallbackDesc: '在 Varo.cloud 探索可用于生产的生成式 AI 模型。',
-        chips: {
-          aiVideoGenerator: 'AI 视频生成',
-          textToVideo: '文本生成视频',
-          imageToVideo: '图片生成视频',
-          aiVideoModels: 'AI 视频模型',
-          aiAvatar: 'AI 数字人',
-          dubbingAi: 'AI 配音',
-          textToSpeech: 'AI 语音合成',
-          clipGenerator: 'AI 短片生成',
-          fabric: 'Fabric 1.0',
-          sora: 'Sora 2',
-          veo: 'Veo 3.1',
-          kling: 'Kling AI',
-          reelGenerator: 'AI Reel 生成',
-          voiceGenerator: 'AI 音色生成',
-          videoEditor: 'AI 视频剪辑',
-          editor: '视频剪辑',
-        },
       },
       developers: {
         eyebrow: '面向开发者',
@@ -93,22 +75,6 @@ export default {
           '无需自建完整基础设施，即可构建并部署 AI 创意产品。Varo.cloud 将模型、工作流与生产部署整合到同一云平台。',
         getApiKey: '获取 API Key',
         previewAlt: 'Varo.cloud API 生成结果预览',
-        tabs: {
-          image: 'image.ts',
-          video: 'video.ts',
-          speech: 'speech.ts',
-          chat: 'chat.ts',
-        },
-        code: {
-          image:
-            '# 参数:\n#   prompt — 必填. string\n#   image_url — 必填. string\n#   duration — integer. 默认: 8\n#   resolution — string. 默认: "720p"\n\n# 步骤 1: 发起图片生成\ncurl -X POST "https://api.varo.cloud/api/v1/model/generateImage" \\\n  -H "Authorization: Bearer $VARO_API_KEY" \\\n  -H "Content-Type: application/json"',
-          video:
-            '# 参数:\n#   prompt — 必填. string\n#   image_url — 必填. string\n#   duration — integer. 默认: 8\n\n# 步骤 1: 发起视频生成\ncurl -X POST "https://api.varo.cloud/api/v1/model/generateVideo" \\\n  -H "Authorization: Bearer $VARO_API_KEY" \\\n  -H "Content-Type: application/json"',
-          speech:
-            '# 参数:\n#   text — 必填. string\n#   voice — string. 默认: "alloy"\n\ncurl -X POST "https://api.varo.cloud/api/v1/model/generateSpeech" \\\n  -H "Authorization: Bearer $VARO_API_KEY" \\\n  -H "Content-Type: application/json"',
-          chat:
-            '# 参数:\n#   messages — 必填. array\n#   model — string\n\ncurl -X POST "https://api.varo.cloud/api/v1/chat/completions" \\\n  -H "Authorization: Bearer $VARO_API_KEY" \\\n  -H "Content-Type: application/json"',
-        },
       },
       creators: {
         eyebrow: '面向创作者',
@@ -150,14 +116,13 @@ export default {
         subtitle:
           'Varo.cloud 帮助中小企业通过一个简单平台访问可用于生产的图像、视频与音频模型——减少工具分散、降低生成成本，让专业 AI 创作更易扩展。',
         empty: '模型加载后将显示价格信息。',
-        viewMore: '查看 100+ 模型',
+        viewMore: '查看更多模型',
       },
       showcase: {
         title: '大家在用什么创作',
         subtitle:
           'Varo.cloud 帮助中小企业通过一个简单平台访问可用于生产的图像、视频与音频模型——减少工具分散、降低生成成本，让专业 AI 创作更易扩展。',
-        itemTitle: 'Black Forest Labs',
-        itemMeta: '1 个系列 · 25 个模型',
+        itemMeta: '{count} 个模型',
         pagination: '作品展示分页',
         page: '第 {n} 页',
       },
