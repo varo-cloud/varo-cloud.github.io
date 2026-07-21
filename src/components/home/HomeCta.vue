@@ -104,17 +104,27 @@ function getStarted() {
 }
 
 .home-cta__btn {
+  box-sizing: border-box;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  height: 40px;
   min-height: 40px;
-  padding: 12px 24px;
+  padding: 0 24px;
   border-radius: 8px;
+  font: inherit;
   font-size: 16px;
   font-weight: 500;
+  line-height: 1;
   text-decoration: none;
   cursor: pointer;
   border: 1px solid transparent;
+  appearance: none;
+  -webkit-appearance: none;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    opacity 0.15s ease;
 }
 
 .home-cta__btn--primary {
@@ -122,9 +132,47 @@ function getStarted() {
   color: #fff;
 }
 
+.home-cta__btn--primary:hover {
+  background: #333;
+}
+
 .home-cta__btn--ghost {
   background: #fff;
   border-color: #ebf4fb;
   color: #222;
+}
+
+.home-cta__btn--ghost:hover {
+  background: #f8f8f8;
+}
+
+@media (max-width: 767px) {
+  .home-cta {
+    padding: 24px 16px 56px;
+  }
+
+  .home-cta__inner,
+  .home-cta__content {
+    min-height: 320px;
+  }
+
+  .home-cta__content {
+    padding: 32px 16px;
+  }
+
+  .home-cta__subtitle {
+    font-size: 14px;
+  }
+
+  .home-cta__actions {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+    max-width: 320px;
+  }
+
+  .home-cta__btn {
+    width: 100%;
+  }
 }
 </style>

@@ -103,12 +103,22 @@ async function toggleFavourite(event: Event) {
   aspect-ratio: 322 / 341;
   background: #111;
   cursor: pointer;
+  transition: transform 0.2s ease;
+}
+
+.home-featured-card:hover {
+  transform: translateY(-2px);
+}
+
+.home-featured-card:hover .home-featured-card__img {
+  transform: scale(1.04);
 }
 
 .home-featured-card__img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  transition: transform 0.25s ease;
 }
 
 .home-featured-card__fav {
@@ -125,6 +135,11 @@ async function toggleFavourite(event: Event) {
   background: rgba(0, 0, 0, 0.4);
   color: #fff;
   cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.home-featured-card__fav:hover {
+  background: rgba(0, 0, 0, 0.6);
 }
 
 .home-featured-card__fav.is-active {
@@ -145,21 +160,31 @@ async function toggleFavourite(event: Event) {
 
 .home-featured-card__title-row {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   gap: 8px;
+  min-height: 32px;
 }
 
 .home-featured-card__name {
+  flex: 1;
+  min-width: 0;
+  display: -webkit-box;
   margin: 0;
+  overflow: hidden;
   font-size: 16px;
   font-weight: 600;
   line-height: 16px;
+  min-height: 32px;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
 }
 
 .home-featured-card__logo {
+  flex-shrink: 0;
   width: 16px;
   height: 16px;
+  margin-top: 0;
   border-radius: 50%;
   object-fit: cover;
 }
@@ -170,7 +195,8 @@ async function toggleFavourite(event: Event) {
   overflow: hidden;
   font-size: 12px;
   line-height: 16px;
+  min-height: 32px;
   -webkit-box-orient: vertical;
-  -webkit-line-clamp: 3;
+  -webkit-line-clamp: 2;
 }
 </style>

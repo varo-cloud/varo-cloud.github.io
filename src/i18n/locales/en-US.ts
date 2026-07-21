@@ -209,6 +209,8 @@ export default {
         'video-to-video': 'Video to Video',
         'text-to-image': 'Text to Image',
         'image-to-image': 'Image to Image',
+        'reference-to-video': 'Reference to Video',
+        'edit-video': 'Edit Video',
       },
       seo: {
         title: 'AI Models — Varo.cloud',

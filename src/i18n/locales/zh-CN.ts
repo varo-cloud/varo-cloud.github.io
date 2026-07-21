@@ -208,6 +208,8 @@ export default {
         'video-to-video': '视频编辑',
         'text-to-image': '文生图',
         'image-to-image': '图生图',
+        'reference-to-video': '参考图生视频',
+        'edit-video': '视频编辑',
       },
       seo: {
         title: 'AI 模型 — Varo.cloud',

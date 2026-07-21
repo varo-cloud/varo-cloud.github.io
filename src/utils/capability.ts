@@ -5,7 +5,7 @@ function titleCaseSegment(segment: string): string {
   return segment.charAt(0).toUpperCase() + segment.slice(1).toLowerCase()
 }
 
-/** Format capability slug like `text-to-image` as `Text -> Image`. */
+/** Format capability slug like `text-to-image` as `Text to Image`. */
 export function formatCapabilityLabel(capability?: string | null): string {
   if (!capability) return ''
 
@@ -20,5 +20,5 @@ export function formatCapabilityLabel(capability?: string | null): string {
 
   const from = capability.slice(0, markerIndex)
   const to = capability.slice(markerIndex + CAPABILITY_TO_MARKER.length)
-  return `${titleCaseSegment(from)} -> ${titleCaseSegment(to)}`
+  return `${titleCaseSegment(from)} to ${titleCaseSegment(to)}`
 }

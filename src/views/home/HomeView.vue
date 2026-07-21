@@ -46,6 +46,8 @@ onMounted(() => {
 <style scoped>
 .home-page {
   width: 100%;
+  max-width: 100%;
+  overflow-x: clip;
   background: #fff;
   color: #222;
 }

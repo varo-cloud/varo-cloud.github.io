@@ -132,6 +132,7 @@ onMounted(async () => {
   max-width: 1360px;
   margin: 0 auto;
   text-align: center;
+  min-width: 0;
 }
 
 .home-featured__eyebrow {
@@ -165,6 +166,7 @@ onMounted(async () => {
   justify-content: center;
   gap: 12px;
   margin-top: 40px;
+  max-width: 100%;
 }
 
 .home-featured__chip {
@@ -180,11 +182,22 @@ onMounted(async () => {
   font-weight: 500;
   line-height: 14px;
   cursor: pointer;
+  transition:
+    background 0.15s ease,
+    color 0.15s ease;
+}
+
+.home-featured__chip:hover:not(.is-active) {
+  background: #ececec;
 }
 
 .home-featured__chip.is-active {
   background: #101010;
   color: #fff;
+}
+
+.home-featured__chip.is-active:hover {
+  background: #333;
 }
 
 .home-featured__grid {
@@ -244,10 +257,14 @@ onMounted(async () => {
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease;
 }
 
 .home-featured__more:hover {
   background: #f8f8f8;
+  border-color: #d8dee6;
 }
 
 @media (max-width: 1100px) {
@@ -261,19 +278,30 @@ onMounted(async () => {
     padding: 56px 16px;
   }
 
+  .home-featured__eyebrow {
+    font-size: 16px;
+    line-height: 22px;
+  }
+
+  .home-featured__subtitle {
+    font-size: 15px;
+  }
+
   .home-featured__grid {
     grid-template-columns: 1fr;
   }
 
   .home-featured__chips {
-    justify-content: flex-start;
-    flex-wrap: nowrap;
-    overflow-x: auto;
-    padding-bottom: 4px;
+    justify-content: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 28px;
   }
 
   .home-featured__chip {
-    flex: 0 0 auto;
+    min-height: 36px;
+    padding: 8px 12px;
+    font-size: 13px;
   }
 }
 </style>

@@ -6,8 +6,8 @@ import { useLocaleRouter } from '@/composables/useLocaleRouter'
 import { assetUrl } from '@/utils/assetUrl'
 import type { PublisherFacetItem } from '@/types'
 
-const PAGE_SIZE = 8
-const PAGINATION_MIN = 8
+const PAGE_SIZE = 10
+const PAGINATION_MIN = 10
 
 const DEFAULT_COVERS = [
   '/assets/home/showcase-01.png',
@@ -28,7 +28,7 @@ const { push } = useLocaleRouter()
 const publishers = ref<PublisherFacetItem[]>([])
 const page = ref(0)
 
-const showPagination = computed(() => publishers.value.length >= PAGINATION_MIN)
+const showPagination = computed(() => publishers.value.length > PAGINATION_MIN)
 const pageCount = computed(() =>
   showPagination.value ? Math.ceil(publishers.value.length / PAGE_SIZE) : 1,
 )
@@ -49,7 +49,7 @@ const items = computed(() =>
 )
 
 function resolveCover(publisher: PublisherFacetItem, index: number) {
-  const cover = (publisher.coverUrl ?? publisher.cover_url)?.trim()
+  const cover = publisher.cover_url?.trim()
   if (cover) return assetUrl(cover)
   return assetUrl(DEFAULT_COVERS[index % DEFAULT_COVERS.length]!)
 }
@@ -170,12 +170,22 @@ onMounted(() => {
   background: #111;
   cursor: pointer;
   text-align: left;
+  transition: transform 0.2s ease;
+}
+
+.home-showcase__card:hover {
+  transform: translateY(-2px);
+}
+
+.home-showcase__card:hover .home-showcase__img {
+  transform: scale(1.04);
 }
 
 .home-showcase__img {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  transition: transform 0.25s ease;
 }
 
 .home-showcase__body {
@@ -214,6 +224,11 @@ onMounted(() => {
   border-radius: 2px;
   background: #eee;
   cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.home-showcase__dot:hover:not(.is-active) {
+  background: #d0d0d0;
 }
 
 .home-showcase__dot.is-active {
@@ -227,9 +242,29 @@ onMounted(() => {
 }
 
 @media (max-width: 700px) {
+  .home-showcase {
+    padding: 56px 16px;
+  }
+
+  .home-showcase__subtitle {
+    font-size: 14px;
+  }
+
   .home-showcase__grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 12px;
+  }
+
+  .home-showcase__body {
+    padding: 10px 12px 12px;
+  }
+
+  .home-showcase__name {
+    font-size: 13px;
+  }
+
+  .home-showcase__meta {
+    font-size: 11px;
   }
 }
 </style>

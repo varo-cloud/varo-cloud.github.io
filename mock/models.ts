@@ -316,8 +316,10 @@ function buildFacets(catalog: ModelCatalogEntry[]) {
         name,
         logo_url,
         count: ids.size,
-        // Prefer camelCase to match production facets; leave some empty to exercise fallback covers.
-        coverUrl: index % 3 === 0 ? null : `/assets/home/showcase-${String((index % 10) + 1).padStart(2, '0')}.${index % 10 === 1 ? 'jpeg' : 'png'}`,
+        cover_url:
+          index % 3 === 0
+            ? null
+            : `/assets/home/showcase-${String((index % 10) + 1).padStart(2, '0')}.${index % 10 === 1 ? 'jpeg' : 'png'}`,
       }))
       .sort((a, b) => b.count - a.count || a.slug.localeCompare(b.slug)),
   }

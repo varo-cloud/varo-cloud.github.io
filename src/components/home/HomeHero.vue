@@ -29,25 +29,27 @@ function onPrimaryCta() {
 <template>
   <section class="home-hero" aria-labelledby="home-hero-title">
     <ModelsHeroCarousel v-model:active-index="heroActiveIndex" />
-    <div class="home-hero__content">
-      <h1 id="home-hero-title" class="home-hero__title">
-        {{ t('pages.home.hero.title') }}
-      </h1>
-      <p class="home-hero__subtitle">
-        {{ t('pages.home.hero.subtitle') }}
-      </p>
-      <div class="home-hero__actions">
-        <button type="button" class="home-hero__btn home-hero__btn--primary" @click="onPrimaryCta">
-          {{ primaryLabel }}
-        </button>
-        <a
-          class="home-hero__btn home-hero__btn--ghost"
-          :href="externalDocsUrl"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          {{ t('pages.home.hero.ctaSecondary') }}
-        </a>
+    <div class="home-hero__inner">
+      <div class="home-hero__content">
+        <h1 id="home-hero-title" class="home-hero__title">
+          {{ t('pages.home.hero.title') }}
+        </h1>
+        <p class="home-hero__subtitle">
+          {{ t('pages.home.hero.subtitle') }}
+        </p>
+        <div class="home-hero__actions">
+          <button type="button" class="home-hero__btn home-hero__btn--primary" @click="onPrimaryCta">
+            {{ primaryLabel }}
+          </button>
+          <a
+            class="home-hero__btn home-hero__btn--ghost"
+            :href="externalDocsUrl"
+            target="_blank"
+            rel="noopener noreferrer"
+          >
+            {{ t('pages.home.hero.ctaSecondary') }}
+          </a>
+        </div>
       </div>
     </div>
   </section>
@@ -57,20 +59,29 @@ function onPrimaryCta() {
 .home-hero {
   position: relative;
   display: flex;
-  flex-direction: column;
-  justify-content: flex-end;
+  align-items: flex-end;
+  justify-content: center;
   min-height: 724px;
-  padding: 0 16px 72px;
+  padding: 0 16px 49px;
   overflow: hidden;
   color: #fff;
 }
 
-.home-hero__content {
+.home-hero__inner {
   position: relative;
-  z-index: 2;
+  z-index: 3;
   width: 100%;
   max-width: 1360px;
   margin: 0 auto;
+  pointer-events: none;
+}
+
+.home-hero__content {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  max-width: 100%;
+  pointer-events: auto;
 }
 
 .home-hero__title {
@@ -80,6 +91,7 @@ function onPrimaryCta() {
   font-weight: 900;
   line-height: 1.14;
   letter-spacing: -0.02em;
+  word-break: break-word;
 }
 
 .home-hero__subtitle {
@@ -123,7 +135,8 @@ function onPrimaryCta() {
 }
 
 .home-hero__btn--primary:hover {
-  opacity: 0.92;
+  background: #0891b2;
+  opacity: 1;
 }
 
 .home-hero__btn--ghost {
@@ -136,15 +149,36 @@ function onPrimaryCta() {
   background: rgba(255, 255, 255, 0.08);
 }
 
+@media (min-width: 1024px) {
+  .home-hero {
+    padding-inline: 24px;
+  }
+}
+
 @media (max-width: 767px) {
   .home-hero {
-    min-height: 560px;
-    padding-bottom: 48px;
+    min-height: min(calc(100svh - var(--app-header-height, 64px)), 640px);
+    padding: 72px 16px 16px;
+  }
+
+  .home-hero__inner {
+    padding-bottom: 52px;
+  }
+
+  .home-hero__subtitle {
+    margin-top: 16px;
   }
 
   .home-hero__actions {
     flex-direction: column;
     align-items: stretch;
+    width: 100%;
+    margin-top: 16px;
+    gap: 12px;
+  }
+
+  .home-hero__btn {
+    width: 100%;
   }
 }
 </style>

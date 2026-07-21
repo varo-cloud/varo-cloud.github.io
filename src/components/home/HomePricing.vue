@@ -75,12 +75,7 @@ function viewMore() {
               </td>
               <td>{{ row.standardLabel }}</td>
               <td>
-                <div class="home-pricing__price">
-                  <span class="home-pricing__price-label">{{ t('pages.pricing.startFrom') }}</span>
-                  <span>
-                    <strong>{{ row.priceLabel }}</strong>{{ row.unitLabel }}
-                  </span>
-                </div>
+                <strong class="home-pricing__price-value">{{ row.priceLabel }}</strong>{{ row.unitLabel }}
               </td>
               <td>
                 <span
@@ -98,6 +93,41 @@ function viewMore() {
             </tr>
           </tbody>
         </table>
+      </div>
+
+      <div class="home-pricing__cards" aria-label="Pricing">
+        <p v-if="!rows.length" class="home-pricing__empty home-pricing__empty--card">
+          {{ t('pages.home.pricing.empty') }}
+        </p>
+        <article v-for="row in rows" :key="`card-${row.id}`" class="home-pricing__card">
+          <div class="home-pricing__card-head">
+            <div class="home-pricing__model">
+              <span class="home-pricing__model-name">{{ row.name }}</span>
+              <span class="home-pricing__model-use">{{ row.useCase }}</span>
+            </div>
+            <span
+              class="home-pricing__discount"
+              :class="{ 'is-active': row.discountLabel !== '—' }"
+            >
+              {{ row.discountLabel }}
+            </span>
+          </div>
+          <dl class="home-pricing__card-prices">
+            <div>
+              <dt>{{ t('pages.pricing.columns.standardPrice') }}</dt>
+              <dd>{{ row.standardLabel }}{{ row.unitLabel }}</dd>
+            </div>
+            <div>
+              <dt>{{ t('pages.pricing.columns.price') }}</dt>
+              <dd>
+                <strong class="home-pricing__price-value">{{ row.priceLabel }}</strong>{{ row.unitLabel }}
+              </dd>
+            </div>
+          </dl>
+          <button type="button" class="home-pricing__view" @click="viewModel(row.modelId)">
+            {{ t('pages.pricing.view') }}
+          </button>
+        </article>
       </div>
 
       <button type="button" class="home-pricing__more" @click="viewMore">
@@ -118,6 +148,7 @@ function viewMore() {
   max-width: 1360px;
   margin: 0 auto;
   text-align: center;
+  min-width: 0;
 }
 
 .home-pricing__title {
@@ -143,6 +174,7 @@ function viewMore() {
   border-radius: 16px;
   background: #fff;
   text-align: left;
+  -webkit-overflow-scrolling: touch;
 }
 
 .home-pricing__table {
@@ -164,7 +196,7 @@ function viewMore() {
 .home-pricing__table th {
   color: #9b9dab;
   font-weight: 500;
-  background: #fafafa;
+  background: transparent;
 }
 
 .home-pricing__table tr:last-child td {
@@ -176,10 +208,20 @@ function viewMore() {
   color: #9b9dab !important;
 }
 
+.home-pricing__empty--card {
+  margin: 0;
+  padding: 24px 16px;
+}
+
 .home-pricing__model {
   display: flex;
   flex-direction: column;
   gap: 4px;
+  min-width: 0;
+}
+
+.home-pricing__model-name {
+  word-break: break-word;
 }
 
 .home-pricing__model-use {
@@ -187,17 +229,7 @@ function viewMore() {
   font-size: 12px;
 }
 
-.home-pricing__price {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.home-pricing__price-label {
-  color: #9b9dab;
-}
-
-.home-pricing__price strong {
+.home-pricing__price-value {
   color: #06b6d4;
   font-weight: 600;
 }
@@ -207,6 +239,7 @@ function viewMore() {
   align-items: center;
   justify-content: center;
   min-width: 40px;
+  flex-shrink: 0;
 }
 
 .home-pricing__discount.is-active {
@@ -226,6 +259,15 @@ function viewMore() {
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.home-pricing__view:hover {
+  background: rgba(6, 182, 212, 0.18);
+}
+
+.home-pricing__cards {
+  display: none;
 }
 
 .home-pricing__more {
@@ -242,5 +284,81 @@ function viewMore() {
   font-size: 14px;
   font-weight: 500;
   cursor: pointer;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease;
+}
+
+.home-pricing__more:hover {
+  background: #f8f8f8;
+  border-color: #d8dee6;
+}
+
+@media (max-width: 767px) {
+  .home-pricing {
+    padding: 56px 16px;
+  }
+
+  .home-pricing__subtitle {
+    font-size: 14px;
+  }
+
+  .home-pricing__table-wrap {
+    display: none;
+  }
+
+  .home-pricing__cards {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 28px;
+    text-align: left;
+  }
+
+  .home-pricing__card {
+    display: flex;
+    flex-direction: column;
+    gap: 16px;
+    padding: 16px;
+    border: 1px solid #eee;
+    border-radius: 16px;
+    background: #fff;
+  }
+
+  .home-pricing__card-head {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
+  }
+
+  .home-pricing__card-prices {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin: 0;
+  }
+
+  .home-pricing__card-prices dt {
+    margin: 0 0 4px;
+    color: #9b9dab;
+    font-size: 12px;
+    font-weight: 500;
+  }
+
+  .home-pricing__card-prices dd {
+    margin: 0;
+    font-size: 14px;
+    font-weight: 500;
+    color: #222;
+  }
+
+  .home-pricing__card .home-pricing__view {
+    width: 100%;
+  }
+
+  .home-pricing__more {
+    width: 100%;
+  }
 }
 </style>

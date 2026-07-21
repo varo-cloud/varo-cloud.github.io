@@ -7,17 +7,17 @@ const { t } = useI18n()
 const cards = [
   {
     key: 'models',
-    image: '/assets/home/feature-models.png',
+    image: '/assets/home/models.jpg',
     points: ['point1', 'point2', 'point3'] as const,
   },
   {
     key: 'scale',
-    image: '/assets/home/feature-scale.png',
+    image: '/assets/home/scale.jpg',
     points: ['point1', 'point2', 'point3'] as const,
   },
   {
     key: 'cost',
-    image: '/assets/home/feature-cost.png',
+    image: '/assets/home/cost.jpg',
     points: ['point1', 'point2', 'point3'] as const,
   },
 ] as const
@@ -169,6 +169,14 @@ const cards = [
 }
 
 @media (max-width: 1000px) {
+  .home-value {
+    padding: 56px 16px;
+  }
+
+  .home-value__subtitle {
+    font-size: 14px;
+  }
+
   .home-value__grid {
     grid-template-columns: 1fr;
   }
