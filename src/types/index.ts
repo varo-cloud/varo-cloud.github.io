@@ -28,6 +28,11 @@ export interface Model {
   startingPriceUsd: number
   /** Maps from API field `standard_price_usd` — strikethrough reference price */
   originalPriceUsd?: number
+  /**
+   * Maps from API field `discount` — price multiplier vs standard.
+   * e.g. `0.9` means pay 90% of standard → show `-10%`.
+   */
+  discount?: number | null
   /** Maps from API field `price_unit` */
   priceUnit: PricingPriceUnit
   /** Maps from API field `price_detail` — optional run context; for per_second, resolution only e.g. "720p" */
@@ -356,6 +361,11 @@ export interface PricingItem {
   name: string
   /** Maps from API `capability`, e.g. `text-to-video` */
   capability: string
+  /**
+   * Maps from API field `discount` — price multiplier vs standard.
+   * e.g. `0.9` → show `-10%`; omit / null / ≥1 → no badge.
+   */
+  discount?: number | null
   /** Maps from API field `standard_price_usd` */
   standardPriceUsd: number
   /** Maps from API field `starting_price_usd` */

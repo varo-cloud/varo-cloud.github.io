@@ -27,6 +27,8 @@ interface ApiModelCard {
   publisher_logo_url?: string | null
   starting_price_usd?: number | null
   standard_price_usd?: number | null
+  /** Price multiplier vs standard, e.g. 0.9 → 10% off */
+  discount?: number | null
   price_unit?: PricingPriceUnit | null
   price_detail?: string | null
   is_hot?: boolean | null
@@ -124,6 +126,7 @@ function mapModel(raw: ApiModelCard): Model {
     displayName: raw.display_name,
     startingPriceUsd: raw.starting_price_usd ?? 0,
     originalPriceUsd: raw.standard_price_usd ?? undefined,
+    discount: raw.discount ?? null,
     priceUnit: raw.price_unit ?? 'per_second',
     priceDetail: raw.price_detail ?? undefined,
     description: raw.description ?? '',
