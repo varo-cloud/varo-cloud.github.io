@@ -366,8 +366,9 @@ export default {
       },
       columns: {
         model: 'Model',
+        useCase: 'Use Case',
         standardPrice: 'Standard Price (USD)',
-        price: 'Price',
+        price: 'Our Price(USD)',
         discount: 'Discount',
       },
     },

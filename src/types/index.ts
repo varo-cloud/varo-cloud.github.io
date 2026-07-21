@@ -354,6 +354,8 @@ export interface PricingItem {
   modelId: string
   /** Maps from API `name` (`display_name`) */
   name: string
+  /** Maps from API `capability`, e.g. `text-to-video` */
+  capability: string
   /** Maps from API field `standard_price_usd` */
   standardPriceUsd: number
   /** Maps from API field `starting_price_usd` */

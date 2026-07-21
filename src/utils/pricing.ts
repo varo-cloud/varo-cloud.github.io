@@ -1,8 +1,4 @@
-import type { PricingPriceUnit } from '@/types'
-
-export function isLlmPricingUnit(unit: PricingPriceUnit): boolean {
-  return unit === 'per_million_tokens'
-}
+import type { Model, PricingItem, PricingPriceUnit } from '@/types'
 
 /** Format USD for pricing table — precision varies by billing unit. */
 export function formatPricingUsd(value: number, unit: PricingPriceUnit): string {
@@ -19,8 +15,17 @@ export function pricingUnitI18nKey(unit: PricingPriceUnit): string {
   return `pages.pricing.priceUnits.${unit}`
 }
 
-export function pricingLabelI18nKey(unit: PricingPriceUnit): 'inputPrice' | 'startFrom' {
-  return isLlmPricingUnit(unit) ? 'inputPrice' : 'startFrom'
+/** Map a catalog model card into the pricing table row shape. */
+export function modelToPricingItem(model: Model): PricingItem {
+  return {
+    id: model.id,
+    modelId: model.id,
+    name: model.displayName,
+    capability: model.capability,
+    standardPriceUsd: model.originalPriceUsd ?? model.startingPriceUsd,
+    startingPriceUsd: model.startingPriceUsd,
+    priceUnit: model.priceUnit,
+  }
 }
 
 /** Discount percent from standard vs starting price; null when no discount applies. */

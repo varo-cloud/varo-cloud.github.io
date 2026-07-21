@@ -2,9 +2,11 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import type { PricingItem } from '@/types'
+import { formatCapabilityLabel } from '@/utils/capability'
 import {
+  computeDiscountPercent,
+  formatDiscountLabel,
   formatPricingUsd,
-  pricingLabelI18nKey,
   pricingUnitI18nKey,
 } from '@/utils/pricing'
 
@@ -19,9 +21,13 @@ const emit = defineEmits<{
 const { t } = useI18n()
 
 const unitLabel = computed(() => t(pricingUnitI18nKey(props.item.priceUnit)))
-const priceLabel = computed(() => t(`pages.pricing.${pricingLabelI18nKey(props.item.priceUnit)}`))
+const useCaseLabel = computed(() => formatCapabilityLabel(props.item.capability))
 const standardPrice = computed(() => formatPricingUsd(props.item.standardPriceUsd, props.item.priceUnit))
 const startingPrice = computed(() => formatPricingUsd(props.item.startingPriceUsd, props.item.priceUnit))
+const discountLabel = computed(() => {
+  const percent = computeDiscountPercent(props.item.standardPriceUsd, props.item.startingPriceUsd)
+  return percent == null ? '' : formatDiscountLabel(percent)
+})
 
 function handleView() {
   emit('view', props.item.modelId)
@@ -33,14 +39,19 @@ function handleView() {
     <div class="pricing-row__cell pricing-row__cell--model">
       {{ item.name }}
     </div>
+    <div class="pricing-row__cell pricing-row__cell--use-case">
+      {{ useCaseLabel }}
+    </div>
     <div class="pricing-row__cell pricing-row__cell--standard">
       {{ standardPrice }}<span class="pricing-row__unit">{{ unitLabel }}</span>
     </div>
     <div class="pricing-row__cell pricing-row__cell--price">
-      <span class="pricing-row__price-label">{{ priceLabel }}</span>
       <span class="pricing-row__price-value">
         <strong>{{ startingPrice }}</strong><span class="pricing-row__unit">{{ unitLabel }}</span>
       </span>
+    </div>
+    <div class="pricing-row__cell pricing-row__cell--discount">
+      <span v-if="discountLabel" class="pricing-row__discount">{{ discountLabel }}</span>
     </div>
     <div class="pricing-row__cell pricing-row__cell--action">
       <button type="button" class="pricing-row__view-btn" @click="handleView">
@@ -53,7 +64,7 @@ function handleView() {
 <style scoped>
 .pricing-row {
   display: grid;
-  grid-template-columns: minmax(0, 1.6fr) minmax(0, 0.9fr) minmax(0, 1.1fr) 71px;
+  grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr) minmax(0, 0.9fr) minmax(0, 1fr) minmax(0, 0.7fr) 71px;
   align-items: center;
   min-height: 80px;
   padding: 0 24px;
@@ -80,7 +91,15 @@ function handleView() {
   word-break: break-word;
 }
 
+.pricing-row__cell--use-case {
+  padding-right: 16px;
+  color: #9b9dab;
+  font-weight: 400;
+  white-space: nowrap;
+}
+
 .pricing-row__cell--standard {
+  text-align: center;
   white-space: nowrap;
 }
 
@@ -91,26 +110,39 @@ function handleView() {
 }
 
 .pricing-row__cell--price {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.pricing-row__price-label {
-  font-size: 14px;
-  line-height: 20px;
-  color: #9b9dab;
+  text-align: center;
+  white-space: nowrap;
 }
 
 .pricing-row__price-value {
   font-size: 14px;
-  line-height: 20px;
+  line-height: 14px;
   color: #9b9dab;
 }
 
 .pricing-row__price-value :deep(strong) {
   font-weight: 500;
   color: #06b6d4;
+}
+
+.pricing-row__cell--discount {
+  display: flex;
+  justify-content: center;
+}
+
+.pricing-row__discount {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  height: 16px;
+  padding: 0 8px;
+  border-radius: 30px;
+  background: #00bb83;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 12px;
+  white-space: nowrap;
 }
 
 .pricing-row__cell--action {
@@ -142,6 +174,10 @@ function handleView() {
     grid-template-columns: 1fr;
     gap: 8px;
     padding: 16px 24px;
+  }
+
+  .pricing-row__cell--discount {
+    justify-content: flex-start;
   }
 
   .pricing-row__cell--action {

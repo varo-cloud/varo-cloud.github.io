@@ -364,8 +364,9 @@ export default {
       },
       columns: {
         model: '模型',
+        useCase: '用途',
         standardPrice: '标准价格（USD）',
-        price: '价格',
+        price: '我们的价格（USD）',
         discount: '折扣',
       },
     },
