@@ -154,7 +154,7 @@ onBeforeUnmount(() => {
 .hero-carousel__nav-wrap {
   position: absolute;
   inset: 0;
-  z-index: 2;
+  z-index: 4;
   display: flex;
   align-items: flex-end;
   justify-content: center;

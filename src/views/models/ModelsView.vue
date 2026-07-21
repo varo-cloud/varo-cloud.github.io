@@ -534,6 +534,7 @@ onMounted(() => {
   width: 100%;
   max-width: 1360px;
   margin: 0 auto;
+  pointer-events: none;
 }
 
 .models-hero__content {
@@ -569,6 +570,7 @@ onMounted(() => {
   flex-wrap: wrap;
   align-items: center;
   gap: 16px;
+  pointer-events: auto;
 }
 
 .models-hero__btn {
