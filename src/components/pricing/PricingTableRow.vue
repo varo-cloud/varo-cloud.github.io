@@ -4,7 +4,7 @@ import { useI18n } from 'vue-i18n'
 import type { PricingItem } from '@/types'
 import { formatCapabilityLabel } from '@/utils/capability'
 import {
-  computeDiscountPercent,
+  discountToPercent,
   formatDiscountLabel,
   formatPricingUsd,
   pricingUnitI18nKey,
@@ -25,7 +25,7 @@ const useCaseLabel = computed(() => formatCapabilityLabel(props.item.capability)
 const standardPrice = computed(() => formatPricingUsd(props.item.standardPriceUsd, props.item.priceUnit))
 const startingPrice = computed(() => formatPricingUsd(props.item.startingPriceUsd, props.item.priceUnit))
 const discountLabel = computed(() => {
-  const percent = computeDiscountPercent(props.item.standardPriceUsd, props.item.startingPriceUsd)
+  const percent = discountToPercent(props.item.discount)
   return percent == null ? '' : formatDiscountLabel(percent)
 })
 

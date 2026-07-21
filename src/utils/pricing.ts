@@ -22,21 +22,22 @@ export function modelToPricingItem(model: Model): PricingItem {
     modelId: model.id,
     name: model.displayName,
     capability: model.capability,
+    discount: model.discount,
     standardPriceUsd: model.originalPriceUsd ?? model.startingPriceUsd,
     startingPriceUsd: model.startingPriceUsd,
     priceUnit: model.priceUnit,
   }
 }
 
-/** Discount percent from standard vs starting price; null when no discount applies. */
-export function computeDiscountPercent(
-  standardPriceUsd: number | null | undefined,
-  startingPriceUsd: number | null | undefined,
-): number | null {
-  if (standardPriceUsd == null || startingPriceUsd == null) return null
-  if (standardPriceUsd <= 0 || startingPriceUsd <= 0) return null
-  if (standardPriceUsd <= startingPriceUsd) return null
-  return Math.round((1 - startingPriceUsd / standardPriceUsd) * 100)
+/**
+ * Convert API `discount` multiplier to a display percent.
+ * e.g. `0.9` → `10` (10% off). Returns null when there is no meaningful discount.
+ */
+export function discountToPercent(discount: number | null | undefined): number | null {
+  if (discount == null || !Number.isFinite(discount)) return null
+  if (discount <= 0 || discount >= 1) return null
+  const percent = Math.round((1 - discount) * 100)
+  return percent > 0 ? percent : null
 }
 
 export function formatDiscountLabel(percent: number): string {

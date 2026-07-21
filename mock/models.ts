@@ -16,6 +16,8 @@ interface ModelCatalogEntry {
   icon_url?: string
   starting_price_usd: number
   standard_price_usd?: number
+  /** Price multiplier vs standard, e.g. 0.9 → 10% off */
+  discount?: number
   price_unit: PricingPriceUnit
   price_detail?: string
   is_hot?: boolean
@@ -32,6 +34,7 @@ const baseModels: ModelCatalogEntry[] = [
     display_name: 'Seedance 2.0 Image-to-Video',
     starting_price_usd: 0.084,
     standard_price_usd: 0.1,
+    discount: 0.84,
     price_unit: 'per_second',
     price_detail: '720p',
     is_hot: true,
@@ -49,6 +52,7 @@ const baseModels: ModelCatalogEntry[] = [
     display_name: 'Seedance 2.0 Text-to-Video',
     starting_price_usd: 0.072,
     standard_price_usd: 0.09,
+    discount: 0.8,
     price_unit: 'per_second',
     price_detail: '480p',
     is_new: true,
@@ -66,6 +70,7 @@ const baseModels: ModelCatalogEntry[] = [
     display_name: 'Kling 2.6 Text-to-Video',
     starting_price_usd: 0.066,
     standard_price_usd: 0.08,
+    discount: 0.825,
     price_unit: 'per_second',
     price_detail: '720p',
     sort_order: 20,
@@ -82,6 +87,7 @@ const baseModels: ModelCatalogEntry[] = [
     display_name: 'Kling 2.6 Image-to-Video',
     starting_price_usd: 0.066,
     standard_price_usd: 0.08,
+    discount: 0.825,
     price_unit: 'per_second',
     price_detail: '720p',
     sort_order: 21,
@@ -97,6 +103,7 @@ const baseModels: ModelCatalogEntry[] = [
     category: 'image',
     display_name: 'Flux 1 Text-to-Image',
     starting_price_usd: 0.02,
+    discount: 1,
     price_unit: 'per_image',
     sort_order: 30,
     description: 'High-quality text-to-image generation with Flux.',
@@ -110,6 +117,7 @@ const baseModels: ModelCatalogEntry[] = [
     category: 'image',
     display_name: 'Flux 1 Image-to-Image',
     starting_price_usd: 0.025,
+    discount: 1,
     price_unit: 'per_image',
     sort_order: 31,
     description: 'Image editing and transformation with Flux image-to-image.',
@@ -123,6 +131,7 @@ const baseModels: ModelCatalogEntry[] = [
     category: 'llm',
     display_name: 'GPT-4o',
     starting_price_usd: 0.005,
+    discount: 1,
     price_unit: 'per_million_tokens',
     sort_order: 40,
     description: 'Multimodal large language model for text generation.',
@@ -169,6 +178,7 @@ function buildModelCatalog(): ModelCatalogEntry[] {
       display_name: `${family.replace(/-/g, ' ')} ${template.capability.replace(/-/g, ' ')}${variant > 0 ? ` v${variant + 1}` : ''}`,
       starting_price_usd: pricePerSecond,
       standard_price_usd: standardPerSecond,
+      discount: Number((pricePerSecond / standardPerSecond).toFixed(3)),
       price_unit: 'per_second',
       price_detail: ['480p', '720p', '1080p'][index % 3],
       is_hot: index % 7 === 0,

@@ -6,7 +6,7 @@ import { AnalyticsEvents, trackEvent } from '@/analytics'
 import { useModelPreferencesStore } from '@/stores/modelPreferences'
 import { useUserStore } from '@/stores/user'
 import { assetUrl } from '@/utils/assetUrl'
-import { formatPricingUsd, computeDiscountPercent, formatDiscountLabel, pricingUnitI18nKey } from '@/utils/pricing'
+import { formatPricingUsd, discountToPercent, formatDiscountLabel, pricingUnitI18nKey } from '@/utils/pricing'
 import { formatCapabilityLabel } from '@/utils/capability'
 import type { Model } from '@/types'
 
@@ -51,9 +51,7 @@ const startingPriceLabel = computed(() =>
   formatPricingUsd(props.model.startingPriceUsd, props.model.priceUnit),
 )
 
-const discountPercent = computed(() =>
-  computeDiscountPercent(props.model.originalPriceUsd, props.model.startingPriceUsd),
-)
+const discountPercent = computed(() => discountToPercent(props.model.discount))
 
 const discountLabel = computed(() => {
   const percent = discountPercent.value
