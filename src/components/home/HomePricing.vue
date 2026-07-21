@@ -3,7 +3,7 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useLocaleRouter } from '@/composables/useLocaleRouter'
 import {
-  computeDiscountPercent,
+  discountToPercent,
   formatDiscountLabel,
   formatPricingUsd,
   pricingUnitI18nKey,
@@ -20,7 +20,7 @@ const { push } = useLocaleRouter()
 
 const rows = computed(() =>
   props.items.map((item) => {
-    const discount = computeDiscountPercent(item.standardPriceUsd, item.startingPriceUsd)
+    const discount = discountToPercent(item.discount)
     return {
       ...item,
       useCase: formatCapabilityLabel(item.capability),
