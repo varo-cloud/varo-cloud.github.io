@@ -5,6 +5,12 @@ import { setupGuards } from './guards'
 const appLayoutChildren: RouteRecordRaw[] = [
   {
     path: '',
+    name: 'home',
+    meta: { fullBleed: true, transparentHeader: true, lightPage: true },
+    component: () => import('@/views/home/HomeView.vue'),
+  },
+  {
+    path: 'models',
     name: 'models',
     meta: { fullBleed: true, transparentHeader: true },
     component: () => import('@/views/models/ModelsView.vue'),

@@ -179,7 +179,7 @@ watch(
 
     <div v-else-if="error || !model" class="model-detail-page__state">
       <p>{{ error || t('pages.modelDetail.notFound') }}</p>
-      <RouterLink :to="localePath('/')" class="model-detail-page__back">
+      <RouterLink :to="localePath('/models')" class="model-detail-page__back">
         {{ t('pages.modelDetail.backToModels') }}
       </RouterLink>
     </div>

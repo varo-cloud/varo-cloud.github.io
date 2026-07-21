@@ -5,12 +5,16 @@
   "type": "module",
   "scripts": {
     "dev": "vite",
-    "build": "vue-tsc -b && vite build",
-    "build:staging": "vue-tsc -b && vite build --mode staging",
+    "build": "vue-tsc -b && vite build && npm run finalize-dist",
+    "build:staging": "vue-tsc -b && vite build --mode staging && npm run finalize-dist",
+    "finalize-dist": "npm run spa-fallback && npm run prerender",
+    "spa-fallback": "cp dist/index.html dist/404.html",
+    "prerender": "node scripts/prerender.mjs",
     "preview": "vite preview",
     "preview:staging": "npm run build:staging && vite preview"
   },
   "dependencies": {
+    "@unhead/vue": "^3.2.1",
     "axios": "^1.9.0",
     "highlight.js": "^11.11.1",
     "marked": "^18.0.5",
@@ -28,6 +32,7 @@
     "@vitejs/plugin-vue": "^6.0.6",
     "@vue/tsconfig": "^0.9.1",
     "mockjs": "^1.1.0",
+    "playwright": "^1.61.1",
     "typescript": "~6.0.2",
     "unocss": "^66.1.2",
     "vite": "^8.0.12",

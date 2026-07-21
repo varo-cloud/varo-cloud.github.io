@@ -51,6 +51,128 @@ export default {
     telegram: 'Telegram',
   },
   pages: {
+    home: {
+      hero: {
+        title: '面向创作者的生成式 AI 云',
+        subtitle:
+          '在一个云平台中接入全球领先的生成式 AI 模型——为更快创作、更顺畅工作流与无限创意输出而生。',
+        ctaPrimary: '免费开始 — $3 额度',
+        ctaPrimaryLoggedIn: '浏览模型',
+        ctaSecondary: '查看文档',
+      },
+      featured: {
+        eyebrow: '新品 · Day-0 SOTA 即用',
+        title: '精选模型',
+        subtitle: '业界领先的 AI 模型，开箱即可用于生产——每一次发布，零日可用。',
+        viewMore: '查看更多',
+        fallbackName: '精选模型',
+        fallbackDesc: '在 Varo.cloud 探索可用于生产的生成式 AI 模型。',
+        chips: {
+          aiVideoGenerator: 'AI 视频生成',
+          textToVideo: '文本生成视频',
+          imageToVideo: '图片生成视频',
+          aiVideoModels: 'AI 视频模型',
+          aiAvatar: 'AI 数字人',
+          dubbingAi: 'AI 配音',
+          textToSpeech: 'AI 语音合成',
+          clipGenerator: 'AI 短片生成',
+          fabric: 'Fabric 1.0',
+          sora: 'Sora 2',
+          veo: 'Veo 3.1',
+          kling: 'Kling AI',
+          reelGenerator: 'AI Reel 生成',
+          voiceGenerator: 'AI 音色生成',
+          videoEditor: 'AI 视频剪辑',
+          editor: '视频剪辑',
+        },
+      },
+      developers: {
+        eyebrow: '面向开发者',
+        title: '一站式创意 AI 生产云',
+        subtitle:
+          '无需自建完整基础设施，即可构建并部署 AI 创意产品。Varo.cloud 将模型、工作流与生产部署整合到同一云平台。',
+        getApiKey: '获取 API Key',
+        previewAlt: 'Varo.cloud API 生成结果预览',
+        tabs: {
+          image: 'image.ts',
+          video: 'video.ts',
+          speech: 'speech.ts',
+          chat: 'chat.ts',
+        },
+        code: {
+          image:
+            '# 参数:\n#   prompt — 必填. string\n#   image_url — 必填. string\n#   duration — integer. 默认: 8\n#   resolution — string. 默认: "720p"\n\n# 步骤 1: 发起图片生成\ncurl -X POST "https://api.varo.cloud/api/v1/model/generateImage" \\\n  -H "Authorization: Bearer $VARO_API_KEY" \\\n  -H "Content-Type: application/json"',
+          video:
+            '# 参数:\n#   prompt — 必填. string\n#   image_url — 必填. string\n#   duration — integer. 默认: 8\n\n# 步骤 1: 发起视频生成\ncurl -X POST "https://api.varo.cloud/api/v1/model/generateVideo" \\\n  -H "Authorization: Bearer $VARO_API_KEY" \\\n  -H "Content-Type: application/json"',
+          speech:
+            '# 参数:\n#   text — 必填. string\n#   voice — string. 默认: "alloy"\n\ncurl -X POST "https://api.varo.cloud/api/v1/model/generateSpeech" \\\n  -H "Authorization: Bearer $VARO_API_KEY" \\\n  -H "Content-Type: application/json"',
+          chat:
+            '# 参数:\n#   messages — 必填. array\n#   model — string\n\ncurl -X POST "https://api.varo.cloud/api/v1/chat/completions" \\\n  -H "Authorization: Bearer $VARO_API_KEY" \\\n  -H "Content-Type: application/json"',
+        },
+      },
+      creators: {
+        eyebrow: '面向创作者',
+        title: '创作，不必复杂',
+        subtitle: '把 AI 媒体生成能力带到桌面——无需写代码、无需复杂配置，即刻开创。',
+        ctaPrimary: '立即开始',
+        ctaSecondary: '联系销售',
+        imageAlt: '创作者使用 Varo.cloud 进行 AI 创作',
+      },
+      valueProps: {
+        title: '任意场景，都能找到合适模型',
+        subtitle: '统一接入、统一计费、轻松切换模型，跑通每一条 AI 工作流。',
+        cards: {
+          models: {
+            title: '海量 AI 模型',
+            desc: '精选 500+ 多模态模型，集成前即可即时试用',
+            point1: '告别供应商碎片化',
+            point2: '告别工具割裂',
+            point3: '开源与闭源模型兼备',
+          },
+          scale: {
+            title: '为规模而生',
+            desc: '把生成式 AI 能力从想法带到上线，以分钟计而非月计。',
+            point1: '跨媒体即刻扩容',
+            point2: '无需自建基础设施',
+            point3: '无需容量规划',
+          },
+          cost: {
+            title: '更低 AI 成本',
+            desc: '通过优化接入与按量计费，将创意 AI 成本最高降低 10 倍。',
+            point1: '单次生成成本可降达 10×',
+            point2: '按使用付费',
+            point3: '不牺牲质量',
+          },
+        },
+      },
+      pricing: {
+        title: '高性价比的 AI 模型云',
+        subtitle:
+          'Varo.cloud 帮助中小企业通过一个简单平台访问可用于生产的图像、视频与音频模型——减少工具分散、降低生成成本，让专业 AI 创作更易扩展。',
+        empty: '模型加载后将显示价格信息。',
+        viewMore: '查看 100+ 模型',
+      },
+      showcase: {
+        title: '大家在用什么创作',
+        subtitle:
+          'Varo.cloud 帮助中小企业通过一个简单平台访问可用于生产的图像、视频与音频模型——减少工具分散、降低生成成本，让专业 AI 创作更易扩展。',
+        itemTitle: 'Black Forest Labs',
+        itemMeta: '1 个系列 · 25 个模型',
+        pagination: '作品展示分页',
+        page: '第 {n} 页',
+      },
+      cta: {
+        title: '开始用 Varo.cloud 创作',
+        subtitle: '用顶尖 AI 模型与面向生产的云工作流，创作更多、花费更少、扩展更快',
+        ctaPrimary: '立即开始',
+        ctaSecondary: '联系销售',
+      },
+      seo: {
+        title: 'Varo.cloud — 面向创作者的生成式 AI 云',
+        description:
+          '在一个云中接入领先的生成式 AI 模型——图像、视频、音频与语言——提供生产级 API、创作者工具与高性价比计费。',
+      },
+    },
     models: {
       title: '模型',
       placeholder: '浏览可用的视频生成模型。',
@@ -122,6 +244,11 @@ export default {
         'text-to-image': '文生图',
         'image-to-image': '图生图',
       },
+      seo: {
+        title: 'AI 模型 — Varo.cloud',
+        detailTitle: '{name} — Varo.cloud',
+        description: '在 Varo.cloud 浏览可用于生产的视频、图像、音频与语言模型，统一计费与 API。',
+      },
     },
     aiGenerator: {
       model: '模型',
@@ -131,6 +258,10 @@ export default {
       loadError: '加载模型列表失败，请重试。',
       modelLoadError: '加载模型失败，请重试。',
       emptyModels: '暂无可用模型。',
+      seo: {
+        title: 'AI 生成器 — Varo.cloud',
+        description: '使用 Varo.cloud AI 模型生成图像、视频等内容——无需自建基础设施。',
+      },
     },
     modelDetail: {
       title: '模型详情',
@@ -300,6 +431,10 @@ export default {
         time: '时间',
         actions: '操作',
       },
+      seo: {
+        title: '生成历史 — Varo.cloud',
+        description: '查看你在 Varo.cloud 的生成历史。',
+      },
     },
     apiKeys: {
       title: 'API 密钥',
@@ -345,6 +480,10 @@ export default {
         usage: '调用 / 消费',
         lastUsed: '最近使用',
       },
+      seo: {
+        title: 'API 密钥 — Varo.cloud',
+        description: '管理你的 Varo.cloud API 密钥。',
+      },
     },
     pricing: {
       title: '价格',
@@ -368,6 +507,10 @@ export default {
         standardPrice: '标准价格（USD）',
         price: '我们的价格（USD）',
         discount: '折扣',
+      },
+      seo: {
+        title: '价格 — Varo.cloud',
+        description: '对比 Varo.cloud 图像、视频与音频模型价格，按量计费透明可查。',
       },
     },
     billing: {
@@ -498,10 +641,18 @@ export default {
           custom: '自定义',
         },
       },
+      seo: {
+        title: '账单 — Varo.cloud',
+        description: '管理你的 Varo.cloud 余额与账单。',
+      },
     },
     docs: {
       title: '文档',
       placeholder: 'API 文档占位 — 后续可跳转独立文档站。',
+      seo: {
+        title: '文档 — Varo.cloud',
+        description: 'Varo.cloud 生成式 AI 模型接入文档与指南。',
+      },
     },
     auth: {
       title: '账户',
@@ -541,12 +692,24 @@ export default {
       oauthError: '第三方登录失败，请重试。',
       oauthInvalidCallback: '登录回调无效或已过期，请重新登录。',
       oauthBackToLogin: '返回登录',
+      seo: {
+        title: '登录 — Varo.cloud',
+        description: '登录 Varo.cloud，使用生成式 AI 模型与 API。',
+      },
     },
     terms: {
       documentTitle: 'Varo.cloud 服务条款',
+      seo: {
+        title: '服务条款 — Varo.cloud',
+        description: 'Varo.cloud 服务条款。',
+      },
     },
     privacy: {
       documentTitle: 'Varo.cloud 隐私政策',
+      seo: {
+        title: '隐私政策 — Varo.cloud',
+        description: 'Varo.cloud 隐私政策。',
+      },
     },
   },
 }

@@ -1,0 +1,100 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9"
+        xmlns:xhtml="http://www.w3.org/1999/xhtml">
+  <url>
+    <loc>https://varo.cloud/</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://varo.cloud/" />
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://varo.cloud/zh-CN" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://varo.cloud/" />
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://varo.cloud/zh-CN</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://varo.cloud/" />
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://varo.cloud/zh-CN" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://varo.cloud/" />
+    <changefreq>daily</changefreq>
+    <priority>1.0</priority>
+  </url>
+  <url>
+    <loc>https://varo.cloud/models</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://varo.cloud/models" />
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://varo.cloud/zh-CN/models" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://varo.cloud/models" />
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://varo.cloud/zh-CN/models</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://varo.cloud/models" />
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://varo.cloud/zh-CN/models" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://varo.cloud/models" />
+    <changefreq>daily</changefreq>
+    <priority>0.9</priority>
+  </url>
+  <url>
+    <loc>https://varo.cloud/pricing</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://varo.cloud/pricing" />
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://varo.cloud/zh-CN/pricing" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://varo.cloud/pricing" />
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://varo.cloud/zh-CN/pricing</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://varo.cloud/pricing" />
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://varo.cloud/zh-CN/pricing" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://varo.cloud/pricing" />
+    <changefreq>weekly</changefreq>
+    <priority>0.8</priority>
+  </url>
+  <url>
+    <loc>https://varo.cloud/ai-generator</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://varo.cloud/ai-generator" />
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://varo.cloud/zh-CN/ai-generator" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://varo.cloud/ai-generator" />
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://varo.cloud/zh-CN/ai-generator</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://varo.cloud/ai-generator" />
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://varo.cloud/zh-CN/ai-generator" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://varo.cloud/ai-generator" />
+    <changefreq>weekly</changefreq>
+    <priority>0.7</priority>
+  </url>
+  <url>
+    <loc>https://varo.cloud/terms</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://varo.cloud/terms" />
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://varo.cloud/zh-CN/terms" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://varo.cloud/terms" />
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  <url>
+    <loc>https://varo.cloud/zh-CN/terms</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://varo.cloud/terms" />
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://varo.cloud/zh-CN/terms" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://varo.cloud/terms" />
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  <url>
+    <loc>https://varo.cloud/privacy</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://varo.cloud/privacy" />
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://varo.cloud/zh-CN/privacy" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://varo.cloud/privacy" />
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+  <url>
+    <loc>https://varo.cloud/zh-CN/privacy</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://varo.cloud/privacy" />
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://varo.cloud/zh-CN/privacy" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://varo.cloud/privacy" />
+    <changefreq>yearly</changefreq>
+    <priority>0.3</priority>
+  </url>
+</urlset>

@@ -1,5 +1,6 @@
 import { createApp } from 'vue'
 import { createPinia } from 'pinia'
+import { createHead } from '@unhead/vue/client'
 import 'virtual:uno.css'
 import '@/styles/global.css'
 import '@/styles/code-highlight.css'
@@ -21,10 +22,12 @@ async function bootstrap() {
   setupAnalytics(router)
 
   const app = createApp(App)
+  const head = createHead()
 
   app.use(createPinia())
   app.use(router)
   app.use(i18n)
+  app.use(head)
 
   app.mount('#app')
 }
