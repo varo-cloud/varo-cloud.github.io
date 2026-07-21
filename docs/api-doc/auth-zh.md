@@ -1,6 +1,6 @@
 # Varo — genflow-api 认证 API 文档
 
-无密码（邮箱 OTP）认证。用户通过邮箱接收一次性验证码登录，服务端颁发 JWT access token 与可轮换的 refresh token。系统无密码，账号在首次验证验证码时自动创建。
+无密码（邮箱 OTP）与 Google / GitHub OAuth 认证。用户通过邮箱验证码或第三方授权登录，服务端颁发 JWT access token 与可轮换的 refresh token。系统无密码，账号在首次验证验证码或首次完成 OAuth 时自动创建。
 
 - Base URL：部署相关，形如 `https://<your-host>`
 - 交互式文档（Swagger）：`<Base URL>/docs`
@@ -51,6 +51,75 @@ access token 过期（15 分钟）后：
 ```
 POST /api/auth/logout   { refresh_token }   -> 撤销该 refresh token
 ```
+
+### Google / GitHub OAuth
+
+```
+1. 前端 GET /api/auth/oauth/{google|github}/authorize?redirect_uri=<前端回调>&state=<csrf>
+   -> { authorize_url }   （后端缓存 state；authorize_url 指向 IdP 或后端跳转页）
+2. 浏览器跳转到 authorize_url，用户在 Google / GitHub 授权
+3. IdP 回调后端；后端换 token、创建/绑定用户，再 302 到前端 redirect_uri：
+   ?code=<一次性登录码>&state=<原 state>
+   失败时：?error=access_denied&error_description=...&state=...
+4. 前端校验 sessionStorage 中的 state，再 POST /api/auth/oauth/exchange { code }
+   -> 返回与 verify-otp 相同的 TokenPair
+```
+
+> 请勿把 access/refresh token 直接放在 URL query 中（会进历史记录 / Referer）。改用短时、单次有效的 `code`。
+
+### 在 Google / GitHub 注册 OAuth 应用（必做）
+
+Client ID / Secret **只放后端环境变量**，不要写进前端仓库。注册时填写的 **Authorized redirect URI 必须是后端 callback**，不是前端的 `/auth/callback`。
+
+#### Google Cloud
+
+1. 打开 [Google Cloud Console](https://console.cloud.google.com/) → 选中或新建项目  
+2. **APIs & Services → OAuth consent screen**  
+   - User Type：外部产品用 External；内部员工可用 Internal  
+   - 填写 App name、User support email、Developer contact  
+   - Scopes：至少 `openid`、`email`、`profile`  
+   - 测试阶段把测试账号加进 Test users；上线前做 Verification（仅需基础 scope 时通常较简单）  
+3. **APIs & Services → Credentials → Create Credentials → OAuth client ID**  
+   - Application type：**Web application**  
+   - Authorized JavaScript origins（可选，前端域名）：  
+     - 本地：`http://localhost:5173`  
+     - 正式：`https://varo.cloud`（及 staging 域名）  
+     - 测试: `https://varo-staging.github.io/`
+   - Authorized redirect URIs（**后端**）：  
+     - 本地：`http://localhost:<api-port>/api/auth/oauth/google/callback`  
+     - 正式：`https://api.varo.cloud/api/auth/oauth/google/callback`
+     - 测试: `https://staging.api.varo.cloud/api/auth/oauth/google/callback`
+4. 创建后得到 **Client ID**、**Client Secret** → 配到后端，例如：  
+   - `GOOGLE_OAUTH_CLIENT_ID`  
+   - `GOOGLE_OAUTH_CLIENT_SECRET`  
+   - `GOOGLE_OAUTH_REDIRECT_URI`（与上表 redirect URI 完全一致）
+
+#### GitHub
+
+1. 打开 [GitHub Developer Settings → OAuth Apps](https://github.com/settings/developers) → **New OAuth App**  
+2. 填写：  
+   - Application name：如 `Varo`  
+   - Homepage URL：如 `https://varo.cloud`  
+   - Authorization callback URL（**后端**）：  
+     - 本地：`http://localhost:<api-port>/api/auth/oauth/github/callback`  
+     - 正式：`https://api.varo.cloud/api/auth/oauth/github/callback` 
+     - 测试: `https://staging.api.varo.cloud/api/auth/oauth/github/callback`
+3. 创建后记下 **Client ID**，再 **Generate a new client secret**  
+4. 配到后端，例如：  
+   - `GITHUB_OAUTH_CLIENT_ID`  
+   - `GITHUB_OAUTH_CLIENT_SECRET`  
+   - `GITHUB_OAUTH_REDIRECT_URI`  
+5. Scope：登录建议 `read:user` + `user:email`（否则可能拿不到主邮箱）
+
+#### 环境对照建议
+
+| 环境 | Google / GitHub Redirect URI | 前端 callback（后端 302 目标） |
+|---|---|---|
+| 本地 | `http://localhost:<api>/api/auth/oauth/{provider}/callback` | `http://localhost:5173/auth/callback` |
+| Staging | `https://staging.api.varo.cloud/api/auth/oauth/{provider}/callback` | `https://varo-staging.github.io/auth/callback` |
+| Production | `https://api.varo.cloud/api/auth/oauth/{provider}/callback` | `https://varo.cloud/auth/callback` |
+
+每个环境通常各自建一套 OAuth Client（或同一 Client 里加多条 redirect URI）。本地 mock（`VITE_USE_MOCK=true`）不访问真实 IdP，**不必**先完成上述注册即可点按钮联调前端。
 
 ---
 
@@ -163,3 +232,70 @@ POST /api/auth/logout   { refresh_token }   -> 撤销该 refresh token
 ```json
 { "revoked": true }
 ```
+
+---
+
+### GET /api/auth/oauth/{provider}/authorize
+
+发起 Google / GitHub OAuth。`provider` 为 `google` 或 `github`。
+
+前端传入自身回调地址与 CSRF `state`；后端返回浏览器应跳转的 `authorize_url`（通常为 IdP 授权页，或后端再 302 到 IdP）。
+
+**Query**
+
+| 字段 | 类型 | 必填 | 说明 |
+|---|---|---|---|
+| `redirect_uri` | string | 是 | 前端回调绝对地址，如 `https://varo.cloud/auth/callback` 或 `https://varo.cloud/zh-CN/auth/callback`。须在后端白名单内 |
+| `state` | string | 是 | 前端生成的随机串；后端在 IdP 回调后原样带回 |
+
+**响应 200**
+```json
+{
+  "authorize_url": "https://accounts.google.com/o/oauth2/v2/auth?..."
+}
+```
+
+**错误码**
+| 状态码 | 原因 |
+|---|---|
+| 404 | 不支持的 `provider` |
+| 422 | `redirect_uri` / `state` 缺失或非法 |
+
+---
+
+### GET /api/auth/oauth/{provider}/callback
+
+**仅后端使用**（注册在 Google / GitHub 控制台的 Redirect URI）。前端不直接调用。
+
+处理完成后对前端 `redirect_uri` 做 302：
+
+- 成功：`?code=<one_time_login_code>&state=<原 state>`
+- 失败：`?error=<code>&error_description=<msg>&state=<原 state>`（可选）
+
+`code` 建议：**5 分钟内有效、仅可兑换一次**，服务端仅存哈希。
+
+---
+
+### POST /api/auth/oauth/exchange
+
+用后端颁发的一次性登录码换取与 OTP 登录相同的 TokenPair。
+
+**请求体**
+```json
+{ "code": "oauth_..." }
+```
+
+**响应 200**
+```json
+{
+  "access_token": "eyJ...",
+  "refresh_token": "dGhpcyBpcyBhIHJlZnJlc2ggdG9rZW4...",
+  "token_type": "bearer"
+}
+```
+
+**错误码**
+| 状态码 | 原因 |
+|---|---|
+| 400 | `code` 无效、已过期或已使用 |
+| 422 | 请求体不合法 |

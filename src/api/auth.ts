@@ -9,6 +9,10 @@ import {
 } from './http'
 import type {
   LogoutResult,
+  OAuthAuthorizeParams,
+  OAuthAuthorizeResult,
+  OAuthExchangePayload,
+  OAuthProvider,
   OtpRequestPayload,
   OtpRequestResult,
   OtpVerifyPayload,
@@ -22,6 +26,23 @@ export function requestOtp(payload: OtpRequestPayload) {
 
 export function verifyOtp(payload: OtpVerifyPayload) {
   return unwrap<TokenPair>(authHttp.post('/auth/verify-otp', payload))
+}
+
+/** Fetch the URL to redirect the browser to for Google / GitHub OAuth. */
+export function getOAuthAuthorizeUrl(provider: OAuthProvider, params: OAuthAuthorizeParams) {
+  return unwrap<OAuthAuthorizeResult>(
+    authHttp.get(`/auth/oauth/${provider}/authorize`, {
+      params: {
+        redirect_uri: params.redirect_uri,
+        state: params.state,
+      },
+    }),
+  )
+}
+
+/** Exchange a one-time OAuth login code for the same TokenPair as verify-otp. */
+export function exchangeOAuthCode(payload: OAuthExchangePayload) {
+  return unwrap<TokenPair>(authHttp.post('/auth/oauth/exchange', payload))
 }
 
 export function refreshAuthToken(refreshToken: string) {

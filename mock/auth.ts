@@ -28,6 +28,21 @@ const users = new Map<string, UserProfile>()
 const otpStore = new Map<string, OtpEntry>()
 const otpRateStore = new Map<string, OtpRateEntry>()
 const refreshTokens = new Map<string, RefreshTokenEntry>()
+/** One-time OAuth login codes → user email (simulates backend post-callback code). */
+const oauthCodes = new Map<string, { email: string; expiresAt: number }>()
+
+const OAUTH_CODE_TTL_MS = 5 * 60 * 1000
+const OAUTH_PROVIDERS = new Set(['google', 'github'])
+
+function oauthEmailForProvider(provider: string): string {
+  return provider === 'github' ? 'oauth-github@local.test' : 'oauth-google@local.test'
+}
+
+function issueOAuthCode(email: string): string {
+  const code = `oauth_${Date.now()}_${Math.random().toString(36).slice(2, 14)}`
+  oauthCodes.set(code, { email, expiresAt: Date.now() + OAUTH_CODE_TTL_MS })
+  return code
+}
 
 function isValidEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)
@@ -184,6 +199,54 @@ export default [
       otpStore.delete(email)
 
       const user = getOrCreateUser(email)
+      return success(issueTokenPair(user.id))
+    },
+  },
+  {
+    // Local mock skips the real IdP: authorize_url points straight at the frontend
+    // callback with a short-lived one-time code (same contract the real backend should use).
+    url: '/api/auth/oauth/:provider/authorize',
+    method: 'get',
+    response: ({ query }: { query: Record<string, string> }) => {
+      const provider = (query.provider ?? '').toLowerCase()
+      const redirectUri = (query.redirect_uri ?? '').trim()
+      const state = (query.state ?? '').trim()
+
+      if (!OAUTH_PROVIDERS.has(provider)) {
+        return fail('Unsupported OAuth provider', 404)
+      }
+      if (!redirectUri || !state) {
+        return fail('redirect_uri and state are required', 422)
+      }
+
+      let parsed: URL
+      try {
+        parsed = new URL(redirectUri)
+      } catch {
+        return fail('Invalid redirect_uri', 422)
+      }
+
+      const code = issueOAuthCode(oauthEmailForProvider(provider))
+      parsed.searchParams.set('code', code)
+      parsed.searchParams.set('state', state)
+
+      return success({ authorize_url: parsed.toString() })
+    },
+  },
+  {
+    url: '/api/auth/oauth/exchange',
+    method: 'post',
+    response: ({ body }: { body: { code?: string } }) => {
+      const code = (body.code ?? '').trim()
+      const entry = oauthCodes.get(code)
+
+      if (!entry || Date.now() > entry.expiresAt) {
+        oauthCodes.delete(code)
+        return fail('Invalid or expired OAuth code', 400)
+      }
+
+      oauthCodes.delete(code)
+      const user = getOrCreateUser(entry.email)
       return success(issueTokenPair(user.id))
     },
   },

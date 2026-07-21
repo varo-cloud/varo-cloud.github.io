@@ -80,6 +80,11 @@ const router = createRouter({
           name: 'auth',
           component: () => import('@/views/auth/AuthView.vue'),
         },
+        {
+          path: 'auth/callback',
+          name: 'auth-callback',
+          component: () => import('@/views/auth/AuthCallbackView.vue'),
+        },
       ],
     },
     {
