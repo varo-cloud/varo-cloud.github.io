@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
 import { assetUrl } from '@/utils/assetUrl'
+import CheckIcon from '@/components/icons/CheckIcon.vue'
 
 const { t } = useI18n()
 
@@ -48,7 +49,8 @@ const cards = [
             </p>
             <ul class="home-value__card-list">
               <li v-for="point in card.points" :key="point">
-                {{ t(`pages.home.valueProps.cards.${card.key}.${point}`) }}
+                <CheckIcon class="home-value__check" :size="16" />
+                <span>{{ t(`pages.home.valueProps.cards.${card.key}.${point}`) }}</span>
               </li>
             </ul>
           </div>
@@ -93,13 +95,14 @@ const cards = [
   gap: 24px;
   margin-top: 40px;
   text-align: left;
+  align-items: stretch;
 }
 
 .home-value__card {
   position: relative;
   overflow: hidden;
-  min-height: 463px;
-  border: 1px solid #eee;
+  height: 463px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 24px;
   background: #111;
   color: #ebf4fb;
@@ -111,7 +114,6 @@ const cards = [
   width: 100%;
   height: 100%;
   object-fit: cover;
-  opacity: 0.85;
 }
 
 .home-value__card-body {
@@ -119,10 +121,10 @@ const cards = [
   z-index: 1;
   display: flex;
   flex-direction: column;
-  justify-content: flex-end;
+  justify-content: flex-start;
+  box-sizing: border-box;
   height: 100%;
-  min-height: 463px;
-  padding: 24px 20px;
+  padding: 271px 20px 24px;
   background: linear-gradient(transparent 35%, rgba(0, 0, 0, 0.78));
 }
 
@@ -130,42 +132,42 @@ const cards = [
   margin: 0;
   font-size: 24px;
   font-weight: 700;
-  line-height: 1.2;
+  line-height: 40px;
+  min-height: 40px;
 }
 
 .home-value__card-desc {
-  margin: 12px 0 0;
+  margin: 8px 0 0;
+  min-height: 52px;
   font-size: 16px;
   font-weight: 500;
-  line-height: 1.4;
+  line-height: 16px;
   color: #9b9dab;
 }
 
 .home-value__card-list {
-  margin: 20px 0 0;
+  margin: 0;
   padding: 0;
   list-style: none;
 }
 
 .home-value__card-list li {
-  position: relative;
-  margin-top: 10px;
-  padding-left: 28px;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-top: 14px;
   font-size: 14px;
   font-weight: 500;
+  line-height: 14px;
   color: #9b9dab;
 }
 
-.home-value__card-list li::before {
-  content: '';
-  position: absolute;
-  left: 0;
-  top: 2px;
-  width: 16px;
-  height: 16px;
-  border-radius: 50%;
-  background: rgba(6, 182, 212, 0.25);
-  box-shadow: inset 0 0 0 4px #06b6d4;
+.home-value__card-list li:first-child {
+  margin-top: 0;
+}
+
+.home-value__check {
+  flex-shrink: 0;
 }
 
 @media (max-width: 1000px) {
@@ -179,6 +181,34 @@ const cards = [
 
   .home-value__grid {
     grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .home-value__card {
+    height: 320px;
+    min-height: 0;
+    border-radius: 16px;
+  }
+
+  .home-value__card-body {
+    padding: 140px 16px 16px;
+  }
+
+  .home-value__card-title {
+    font-size: 20px;
+    line-height: 28px;
+    min-height: 28px;
+  }
+
+  .home-value__card-desc {
+    min-height: 40px;
+    font-size: 14px;
+    line-height: 20px;
+  }
+
+  .home-value__card-list li {
+    margin-top: 10px;
+    font-size: 13px;
   }
 }
 </style>

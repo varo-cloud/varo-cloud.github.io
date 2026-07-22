@@ -1,28 +1,75 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { fetchModelFacets, fetchModels } from '@/api/models'
 import { useLocaleRouter } from '@/composables/useLocaleRouter'
 import { assetUrl } from '@/utils/assetUrl'
 import { formatCapabilityLabel } from '@/utils/capability'
-import type { FacetItem, Model } from '@/types'
+import type { FacetItem, Model, PublisherFacetItem } from '@/types'
 import HomeFeaturedCard from '@/components/home/HomeFeaturedCard.vue'
+import ArrowRightIcon from '@/components/icons/ArrowRightIcon.vue'
 
 const FEATURED_LIMIT = 4
+/** Avoid flooding the chip row when many publishers exist. */
+const PUBLISHER_CHIP_LIMIT = 12
+
+type ChipKind = 'capability' | 'category' | 'publisher'
+
+interface FeaturedChip {
+  id: string
+  kind: ChipKind
+  value: string
+  label: string
+  count: number
+}
 
 const { t, te } = useI18n()
 const { push } = useLocaleRouter()
 
+const categories = ref<FacetItem[]>([])
 const capabilities = ref<FacetItem[]>([])
+const publishers = ref<PublisherFacetItem[]>([])
 const models = ref<Model[]>([])
-const activeCapability = ref<string | null>(null)
 
-const chips = computed(() =>
-  capabilities.value.map((item) => ({
-    key: item.value,
-    label: capabilityLabel(item.value),
-  })),
-)
+const chips = computed(() => {
+  const items: FeaturedChip[] = []
+
+  for (const item of capabilities.value) {
+    items.push({
+      id: `capability:${item.value}`,
+      kind: 'capability',
+      value: item.value,
+      label: capabilityLabel(item.value),
+      count: item.count,
+    })
+  }
+
+  for (const item of categories.value) {
+    items.push({
+      id: `category:${item.value}`,
+      kind: 'category',
+      value: item.value,
+      label: categoryLabel(item.value),
+      count: item.count,
+    })
+  }
+
+  const topPublishers = [...publishers.value]
+    .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name))
+    .slice(0, PUBLISHER_CHIP_LIMIT)
+
+  for (const item of topPublishers) {
+    items.push({
+      id: `publisher:${item.slug}`,
+      kind: 'publisher',
+      value: item.slug,
+      label: item.name,
+      count: item.count,
+    })
+  }
+
+  return items
+})
 
 const displayModels = computed(() => models.value)
 
@@ -31,45 +78,47 @@ function capabilityLabel(value: string) {
   return te(key) ? t(key) : formatCapabilityLabel(value)
 }
 
+function categoryLabel(value: string) {
+  const key = `pages.models.categories.${value}`
+  return te(key) ? t(key) : formatCapabilityLabel(value)
+}
+
 async function loadFacets() {
   try {
     const data = await fetchModelFacets()
+    categories.value = data.categories ?? []
     capabilities.value = data.capabilities ?? []
+    publishers.value = data.publishers ?? []
   } catch {
+    categories.value = []
     capabilities.value = []
+    publishers.value = []
   }
 }
 
 async function loadModels() {
   try {
-    const page = await fetchModels({
-      offset: 0,
-      limit: FEATURED_LIMIT,
-      ...(activeCapability.value ? { capability: activeCapability.value } : {}),
-    })
+    const page = await fetchModels({ offset: 0, limit: FEATURED_LIMIT })
     models.value = page.items
   } catch {
     models.value = []
   }
 }
 
-function selectChip(value: string) {
-  activeCapability.value = activeCapability.value === value ? null : value
+function openChip(chip: FeaturedChip) {
+  const query: Record<string, string> = {}
+  if (chip.kind === 'capability') query.capability = chip.value
+  if (chip.kind === 'category') query.category = chip.value
+  if (chip.kind === 'publisher') query.publisher = chip.value
+  push({ name: 'models', query })
 }
 
 function goModels() {
-  push({
-    name: 'models',
-    query: activeCapability.value ? { capability: activeCapability.value } : {},
-  })
+  push({ name: 'models' })
 }
 
-watch(activeCapability, () => {
-  void loadModels()
-})
-
-onMounted(async () => {
-  await loadFacets()
+onMounted(() => {
+  void loadFacets()
   void loadModels()
 })
 </script>
@@ -86,14 +135,14 @@ onMounted(async () => {
       <div v-if="chips.length" class="home-featured__chips" role="list">
         <button
           v-for="chip in chips"
-          :key="chip.key"
+          :key="chip.id"
           type="button"
           role="listitem"
           class="home-featured__chip"
-          :class="{ 'is-active': activeCapability === chip.key }"
-          @click="selectChip(chip.key)"
+          @click="openChip(chip)"
         >
-          {{ chip.label }}
+          <span>{{ chip.label }}</span>
+          <ArrowRightIcon class="home-featured__chip-arrow" :size="16" />
         </button>
       </div>
 
@@ -153,11 +202,12 @@ onMounted(async () => {
 
 .home-featured__subtitle {
   margin: 20px auto 0;
-  max-width: 720px;
+  max-width: 100%;
   font-size: 20px;
   font-weight: 500;
   line-height: 1.4;
   color: #9b9dab;
+  white-space: nowrap;
 }
 
 .home-featured__chips {
@@ -172,8 +222,9 @@ onMounted(async () => {
 .home-featured__chip {
   display: inline-flex;
   align-items: center;
+  gap: 4px;
   min-height: 44px;
-  padding: 10px 14px;
+  padding: 10px 14px 10px 10px;
   border: 0;
   border-radius: 30px;
   background: #f8f8f8;
@@ -187,17 +238,14 @@ onMounted(async () => {
     color 0.15s ease;
 }
 
-.home-featured__chip:hover:not(.is-active) {
-  background: #ececec;
+.home-featured__chip-arrow {
+  flex-shrink: 0;
+  color: currentColor;
 }
 
-.home-featured__chip.is-active {
+.home-featured__chip:hover {
   background: #101010;
   color: #fff;
-}
-
-.home-featured__chip.is-active:hover {
-  background: #333;
 }
 
 .home-featured__grid {
@@ -285,10 +333,18 @@ onMounted(async () => {
 
   .home-featured__subtitle {
     font-size: 15px;
+    white-space: normal;
   }
 
   .home-featured__grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+    margin-top: 28px;
+  }
+
+  .home-featured__fallback-card {
+    aspect-ratio: 3 / 4;
+    border-radius: 12px;
   }
 
   .home-featured__chips {

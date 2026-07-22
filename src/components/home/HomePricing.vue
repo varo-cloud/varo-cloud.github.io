@@ -75,7 +75,10 @@ function viewMore() {
               </td>
               <td>{{ row.standardLabel }}</td>
               <td>
-                <strong class="home-pricing__price-value">{{ row.priceLabel }}</strong>{{ row.unitLabel }}
+                <span class="home-pricing__price">
+                  <strong class="home-pricing__price-value">{{ row.priceLabel }}</strong>
+                  <span class="home-pricing__unit">{{ row.unitLabel }}</span>
+                </span>
               </td>
               <td>
                 <span
@@ -115,12 +118,17 @@ function viewMore() {
           <dl class="home-pricing__card-prices">
             <div>
               <dt>{{ t('pages.pricing.columns.standardPrice') }}</dt>
-              <dd>{{ row.standardLabel }}{{ row.unitLabel }}</dd>
+              <dd>
+                {{ row.standardLabel }}<span class="home-pricing__unit">{{ row.unitLabel }}</span>
+              </dd>
             </div>
             <div>
               <dt>{{ t('pages.pricing.columns.price') }}</dt>
               <dd>
-                <strong class="home-pricing__price-value">{{ row.priceLabel }}</strong>{{ row.unitLabel }}
+                <span class="home-pricing__price">
+                  <strong class="home-pricing__price-value">{{ row.priceLabel }}</strong>
+                  <span class="home-pricing__unit">{{ row.unitLabel }}</span>
+                </span>
               </dd>
             </div>
           </dl>
@@ -227,11 +235,22 @@ function viewMore() {
 .home-pricing__model-use {
   color: #9b9dab;
   font-size: 12px;
+  font-weight: 400;
+}
+
+.home-pricing__price {
+  white-space: nowrap;
 }
 
 .home-pricing__price-value {
   color: #06b6d4;
   font-weight: 600;
+}
+
+.home-pricing__unit {
+  margin-left: 2px;
+  color: #9b9dab;
+  font-weight: 400;
 }
 
 .home-pricing__discount {

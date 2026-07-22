@@ -199,4 +199,40 @@ async function toggleFavourite(event: Event) {
   -webkit-box-orient: vertical;
   -webkit-line-clamp: 2;
 }
+
+@media (max-width: 640px) {
+  .home-featured-card {
+    aspect-ratio: 3 / 4;
+    border-radius: 12px;
+  }
+
+  .home-featured-card__fav {
+    top: 8px;
+    right: 8px;
+    width: 28px;
+    height: 28px;
+  }
+
+  .home-featured-card__heart {
+    width: 16px;
+    height: 16px;
+  }
+
+  .home-featured-card__body {
+    padding: 12px 10px 10px;
+  }
+
+  .home-featured-card__name {
+    font-size: 13px;
+    line-height: 15px;
+    min-height: 30px;
+  }
+
+  .home-featured-card__desc {
+    margin-top: 6px;
+    font-size: 11px;
+    line-height: 14px;
+    min-height: 28px;
+  }
+}
 </style>

@@ -85,7 +85,7 @@ export default {
         imageAlt: 'Creator working with AI tools on Varo.cloud',
       },
       valueProps: {
-        title: 'Any use case. The right model.',
+        title: 'Any Use Case. The Right Model.',
         subtitle: 'Run every AI workflow with unified provider access, billing, and simple model switching.',
         cards: {
           models: {

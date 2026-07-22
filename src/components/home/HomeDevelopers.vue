@@ -5,6 +5,7 @@ import { useLocaleRouter } from '@/composables/useLocaleRouter'
 import { useUserStore } from '@/stores/user'
 import { assetUrl } from '@/utils/assetUrl'
 import HighlightedCodeBlock from '@/components/common/HighlightedCodeBlock.vue'
+import CodeTabIcon from '@/components/icons/CodeTabIcon.vue'
 import type { CodeHighlightLanguage } from '@/utils/code-highlight'
 import {
   API_CODE_VIEW_MODES,
@@ -21,6 +22,12 @@ const DEMO_FORM_VALUES = {
   resolution: '720p',
 }
 
+const TAB_LABELS: Record<ApiCodeViewMode, string> = {
+  http: 'HTTP',
+  python: 'Python',
+  javascript: 'Node.js',
+}
+
 const { t } = useI18n()
 const { push } = useLocaleRouter()
 const userStore = useUserStore()
@@ -30,7 +37,7 @@ const codeViewMode = ref<ApiCodeViewMode>('http')
 const codeModeOptions = computed(() =>
   API_CODE_VIEW_MODES.map((mode) => ({
     value: mode,
-    label: t(`pages.modelDetail.inputViewModes.${mode}`),
+    label: TAB_LABELS[mode],
   })),
 )
 
@@ -59,19 +66,22 @@ function getApiKey() {
       <p class="home-developers__subtitle">{{ t('pages.home.developers.subtitle') }}</p>
 
       <div class="home-developers__panel">
-        <div class="home-developers__tabs" role="tablist">
-          <button
-            v-for="opt in codeModeOptions"
-            :key="opt.value"
-            type="button"
-            role="tab"
-            class="home-developers__tab"
-            :class="{ 'is-active': codeViewMode === opt.value }"
-            :aria-selected="codeViewMode === opt.value"
-            @click="codeViewMode = opt.value"
-          >
-            {{ opt.label }}
-          </button>
+        <div class="home-developers__tabs-wrap">
+          <div class="home-developers__tabs" role="tablist">
+            <button
+              v-for="opt in codeModeOptions"
+              :key="opt.value"
+              type="button"
+              role="tab"
+              class="home-developers__tab"
+              :class="{ 'is-active': codeViewMode === opt.value }"
+              :aria-selected="codeViewMode === opt.value"
+              @click="codeViewMode = opt.value"
+            >
+              <CodeTabIcon class="home-developers__tab-icon" :name="opt.value" :size="20" />
+              <span>{{ opt.label }}</span>
+            </button>
+          </div>
         </div>
 
         <div class="home-developers__body">
@@ -139,10 +149,16 @@ function getApiKey() {
   min-width: 0;
 }
 
+.home-developers__tabs-wrap {
+  display: flex;
+  justify-content: center;
+}
+
 .home-developers__tabs {
   display: inline-flex;
   flex-wrap: wrap;
-  gap: 4px;
+  justify-content: center;
+  gap: 12px;
   max-width: 100%;
   padding: 4px;
   border: 1px solid #ebf4fb;
@@ -153,6 +169,7 @@ function getApiKey() {
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  gap: 4px;
   min-height: 36px;
   padding: 8px 12px;
   border: 0;
@@ -161,10 +178,16 @@ function getApiKey() {
   color: #9b9dab;
   font-size: 14px;
   font-weight: 500;
+  line-height: 16px;
   cursor: pointer;
   transition:
     background 0.15s ease,
     color 0.15s ease;
+}
+
+.home-developers__tab-icon {
+  flex-shrink: 0;
+  color: currentColor;
 }
 
 .home-developers__tab:hover:not(.is-active) {
@@ -186,7 +209,7 @@ function getApiKey() {
   grid-template-columns: 1fr 1fr;
   gap: 24px;
   margin-top: 24px;
-  align-items: stretch;
+  align-items: start;
 }
 
 .home-developers__code {
@@ -197,8 +220,69 @@ function getApiKey() {
 }
 
 .home-developers__code :deep(.highlighted-code-block) {
-  min-height: 240px;
-  background: #0f1115;
+  height: 360px;
+  min-height: 360px;
+  overflow: auto;
+  border: 1px solid #eee;
+  background: #fff;
+  color: #222;
+}
+
+.home-developers__code :deep(.hljs) {
+  color: #222;
+  background: transparent;
+}
+
+.home-developers__code :deep(.hljs-comment),
+.home-developers__code :deep(.hljs-quote) {
+  color: #6a9955;
+}
+
+.home-developers__code :deep(.hljs-keyword),
+.home-developers__code :deep(.hljs-selector-tag),
+.home-developers__code :deep(.hljs-meta) {
+  color: #7c3aed;
+}
+
+.home-developers__code :deep(.hljs-string),
+.home-developers__code :deep(.hljs-regexp),
+.home-developers__code :deep(.hljs-symbol),
+.home-developers__code :deep(.hljs-template-tag),
+.home-developers__code :deep(.hljs-template-variable) {
+  color: #ce9178;
+}
+
+.home-developers__code :deep(.hljs-number),
+.home-developers__code :deep(.hljs-literal),
+.home-developers__code :deep(.hljs-built_in),
+.home-developers__code :deep(.hljs-type) {
+  color: #b45309;
+}
+
+.home-developers__code :deep(.hljs-title),
+.home-developers__code :deep(.hljs-title.class_),
+.home-developers__code :deep(.hljs-title.function_),
+.home-developers__code :deep(.hljs-name),
+.home-developers__code :deep(.hljs-attr),
+.home-developers__code :deep(.hljs-attribute),
+.home-developers__code :deep(.hljs-property) {
+  color: #0284c7;
+}
+
+.home-developers__code :deep(.hljs-variable),
+.home-developers__code :deep(.hljs-params),
+.home-developers__code :deep(.hljs-subst) {
+  color: #222;
+}
+
+.home-developers__code :deep(.hljs-punctuation),
+.home-developers__code :deep(.hljs-operator) {
+  color: #64748b;
+}
+
+.home-developers__code :deep(.hljs-section),
+.home-developers__code :deep(.hljs-bullet) {
+  color: #06b6d4;
 }
 
 .home-developers__api-btn {
@@ -222,11 +306,13 @@ function getApiKey() {
 .home-developers__preview {
   overflow: hidden;
   border-radius: 12px;
-  min-height: 240px;
+  height: 360px;
+  min-height: 360px;
   background: #111;
 }
 
 .home-developers__preview img {
+  display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -245,12 +331,22 @@ function getApiKey() {
     padding: 16px;
   }
 
+  .home-developers__tabs {
+    gap: 4px;
+  }
+
   .home-developers__body {
     grid-template-columns: 1fr;
   }
 
+  .home-developers__code :deep(.highlighted-code-block) {
+    height: 280px;
+    min-height: 280px;
+  }
+
   .home-developers__preview {
-    min-height: 200px;
+    height: 220px;
+    min-height: 220px;
   }
 }
 </style>
