@@ -19,81 +19,177 @@ const slides = [
   },
 ] as const
 
+type NetworkInformationLike = {
+  saveData?: boolean
+  effectiveType?: string
+}
+
 const activeIndex = defineModel<number>('activeIndex', { default: 0 })
 const progressKey = ref(0)
+/** Only show the progress bar after the current slide is ready to display. */
+const progressVisible = ref(false)
 const videoRef = ref<HTMLVideoElement | null>(null)
+/** Mobile / save-data / slow network / reduced-motion: poster only, no video decode. */
+const posterOnly = ref(false)
 
-let timer: ReturnType<typeof setInterval> | undefined
+let timer: ReturnType<typeof setTimeout> | undefined
+let loadToken = 0
+
+function shouldPreferPosterOnly(): boolean {
+  if (typeof window === 'undefined') return true
+
+  if (window.matchMedia('(prefers-reduced-motion: reduce)').matches) return true
+  if (window.matchMedia('(max-width: 767px)').matches) return true
+
+  const connection = (navigator as Navigator & { connection?: NetworkInformationLike }).connection
+  if (connection?.saveData) return true
+
+  const effectiveType = connection?.effectiveType
+  if (effectiveType === 'slow-2g' || effectiveType === '2g') return true
+
+  return false
+}
 
 function clearTimer() {
-  if (timer) {
-    clearInterval(timer)
+  if (timer !== undefined) {
+    clearTimeout(timer)
     timer = undefined
   }
 }
 
 function startTimer() {
   clearTimer()
-  timer = setInterval(() => {
+  timer = setTimeout(() => {
     activeIndex.value = (activeIndex.value + 1) % slides.length
   }, SLIDE_DURATION_MS)
 }
 
-function resetProgress() {
+function beginProgress() {
+  progressVisible.value = true
   progressKey.value += 1
 }
 
-async function playActiveVideo() {
+function releaseVideo(video: HTMLVideoElement) {
+  video.pause()
+  video.removeAttribute('src')
+  // Detach buffered media data from the element.
+  video.load()
+}
+
+const PLAYBACK_WAIT_MS = 12_000
+
+/** Wait until the active video can play (or fail / time out), then resolve. */
+function waitUntilPlayable(video: HTMLVideoElement, token: number): Promise<boolean> {
+  if (video.readyState >= HTMLMediaElement.HAVE_FUTURE_DATA && !video.paused) {
+    return Promise.resolve(true)
+  }
+
+  return new Promise((resolve) => {
+    let settled = false
+
+    const settle = (ok: boolean) => {
+      if (settled) return
+      settled = true
+      video.removeEventListener('canplay', onReady)
+      video.removeEventListener('playing', onReady)
+      video.removeEventListener('error', onError)
+      window.clearTimeout(timeoutId)
+      resolve(ok && token === loadToken)
+    }
+
+    const onReady = () => settle(true)
+    const onError = () => settle(false)
+    const timeoutId = window.setTimeout(() => settle(false), PLAYBACK_WAIT_MS)
+
+    video.addEventListener('canplay', onReady)
+    video.addEventListener('playing', onReady)
+    video.addEventListener('error', onError)
+
+    // play() starts buffering beyond metadata-only preload.
+    void video.play().then(
+      () => {
+        if (!video.paused) settle(true)
+      },
+      () => {
+        // Autoplay may be blocked; keep waiting for canplay/timeout.
+      },
+    )
+  })
+}
+
+async function activateSlide(index: number) {
+  const token = ++loadToken
+  clearTimer()
+  progressVisible.value = false
+
+  if (posterOnly.value) {
+    beginProgress()
+    startTimer()
+    return
+  }
+
   await nextTick()
   const video = videoRef.value
-  if (!video) return
+  if (!video || token !== loadToken) return
 
+  releaseVideo(video)
+  if (token !== loadToken) return
+
+  video.poster = slides[index].poster
+  video.preload = 'metadata'
+  video.src = slides[index].video
   video.load()
-  try {
-    await video.play()
-  } catch {
-    // 浏览器可能拦截自动播放，忽略即可
-  }
+
+  await waitUntilPlayable(video, token)
+  if (token !== loadToken) return
+
+  beginProgress()
+  startTimer()
 }
 
 function goToSlide(index: number) {
   if (index === activeIndex.value) {
-    resetProgress()
-    startTimer()
-    void playActiveVideo()
+    void activateSlide(index)
     return
   }
 
   activeIndex.value = index
 }
 
-watch(activeIndex, () => {
-  resetProgress()
-  startTimer()
-  void playActiveVideo()
+watch(activeIndex, (index) => {
+  void activateSlide(index)
 })
 
 onMounted(() => {
-  startTimer()
-  void playActiveVideo()
+  posterOnly.value = shouldPreferPosterOnly()
+  void activateSlide(activeIndex.value)
 })
 
 onBeforeUnmount(() => {
+  loadToken += 1
   clearTimer()
+  const video = videoRef.value
+  if (video) releaseVideo(video)
 })
 </script>
 
 <template>
   <div class="hero-carousel" aria-hidden="true">
+    <img
+      v-if="posterOnly"
+      class="hero-carousel__poster"
+      :src="slides[activeIndex].poster"
+      alt=""
+    />
     <video
+      v-else
       ref="videoRef"
       class="hero-carousel__video"
-      :src="slides[activeIndex].video"
       :poster="slides[activeIndex].poster"
       muted
       loop
       playsinline
-      preload="auto"
+      preload="metadata"
     />
   </div>
 
@@ -113,7 +209,7 @@ onBeforeUnmount(() => {
         <span class="hero-carousel__thumb-image">
           <img :src="slide.poster" alt="" />
         </span>
-        <span v-if="index === activeIndex" class="hero-carousel__progress">
+        <span v-if="index === activeIndex && progressVisible" class="hero-carousel__progress">
           <span
             :key="progressKey"
             class="hero-carousel__progress-fill"
@@ -141,7 +237,8 @@ onBeforeUnmount(() => {
   pointer-events: none;
 }
 
-.hero-carousel__video {
+.hero-carousel__video,
+.hero-carousel__poster {
   position: absolute;
   inset: 0;
   width: 100%;
@@ -241,7 +338,8 @@ onBeforeUnmount(() => {
 }
 
 @media (max-width: 767px) {
-  .hero-carousel__video {
+  .hero-carousel__video,
+  .hero-carousel__poster {
     object-position: center 35%;
   }
 
