@@ -153,7 +153,7 @@ const cards = [
 
 .home-value__card-list li {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 12px;
   margin-top: 14px;
   font-size: 14px;
