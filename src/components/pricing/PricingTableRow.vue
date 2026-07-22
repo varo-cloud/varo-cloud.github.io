@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
+import DiscountTag from '@/components/common/DiscountTag.vue'
 import type { PricingItem } from '@/types'
 import { formatCapabilityLabel } from '@/utils/capability'
 import {
@@ -51,7 +52,7 @@ function handleView() {
       </span>
     </div>
     <div class="pricing-row__cell pricing-row__cell--discount">
-      <span v-if="discountLabel" class="pricing-row__discount">{{ discountLabel }}</span>
+      <DiscountTag v-if="discountLabel" :content="discountLabel" />
     </div>
     <div class="pricing-row__cell pricing-row__cell--action">
       <button type="button" class="pricing-row__view-btn" @click="handleView">
@@ -99,7 +100,7 @@ function handleView() {
 }
 
 .pricing-row__cell--standard {
-  text-align: center;
+  text-align: left;
   white-space: nowrap;
 }
 
@@ -110,7 +111,7 @@ function handleView() {
 }
 
 .pricing-row__cell--price {
-  text-align: center;
+  text-align: left;
   white-space: nowrap;
 }
 
@@ -127,22 +128,7 @@ function handleView() {
 
 .pricing-row__cell--discount {
   display: flex;
-  justify-content: center;
-}
-
-.pricing-row__discount {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  height: 16px;
-  padding: 0 8px;
-  border-radius: 30px;
-  background: #00bb83;
-  color: #fff;
-  font-size: 12px;
-  font-weight: 400;
-  line-height: 12px;
-  white-space: nowrap;
+  justify-content: flex-start;
 }
 
 .pricing-row__cell--action {
