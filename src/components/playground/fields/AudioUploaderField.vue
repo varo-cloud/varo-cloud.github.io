@@ -299,7 +299,7 @@ onBeforeUnmount(() => {
           v-model="model"
           type="text"
           class="audio-field__url"
-          placeholder="https://static.wavespeed.ai/examples/5679"
+          placeholder="https://example.com/sample.mp3"
           :disabled="uploading || isRecording"
           @input="onUrlInputWithReset"
           @click.stop

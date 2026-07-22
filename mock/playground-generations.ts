@@ -13,7 +13,7 @@ interface MockGenerationTask {
   outputUrl?: string
 }
 
-const SAMPLE_OUTPUT_URL = 'https://static.wavespeed.ai/examples/567920'
+const SAMPLE_OUTPUT_URL = 'https://example.com/sample.mp4'
 
 const tasks = new Map<string, MockGenerationTask>()
 

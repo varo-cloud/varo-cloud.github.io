@@ -350,8 +350,7 @@ export default {
     pricing: {
       title: 'Pricing',
       heroTitle: 'Image & Video Models',
-      heroSubtitle:
-        'State-of-the-art generation with models from WaveSpeed, OpenAI, Google, and more.',
+      heroSubtitle: 'State-of-the-art generation with the latest image and video models.',
       startFrom: 'Start from',
       inputPrice: 'Input price',
       view: 'View',

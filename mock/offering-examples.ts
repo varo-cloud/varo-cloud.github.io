@@ -39,11 +39,11 @@ const offeringExamplesBySlug: Record<string, ModelExample[]> = {
       description: 'Animate a portrait with gentle camera push-in.',
       input: {
         prompt: 'Subtle breathing motion, soft wind in hair, cinematic shallow depth of field',
-        image: 'https://static.wavespeed.ai/examples/567920',
+        image: 'https://example.com/sample.mp4',
         duration: 5,
         resolution: '720p',
       },
-      outputUrl: 'https://static.wavespeed.ai/examples/567920',
+      outputUrl: 'https://example.com/sample.mp4',
       sortOrder: 0,
     },
   ],

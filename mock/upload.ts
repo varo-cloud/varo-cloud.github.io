@@ -3,8 +3,8 @@ import { success } from './_util'
 
 const MOCK_URLS: Record<string, string> = {
   image: '/assets/model-detail/sample-output.jpg',
-  video: 'https://static.wavespeed.ai/examples/567920',
-  audio: 'https://static.wavespeed.ai/examples/5679',
+  video: 'https://example.com/sample.mp4',
+  audio: 'https://example.com/sample.mp3',
 }
 
 function resolveKind(query: Record<string, string>): string {
