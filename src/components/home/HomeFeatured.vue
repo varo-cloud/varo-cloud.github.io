@@ -3,7 +3,6 @@ import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { fetchModelFacets, fetchModels } from '@/api/models'
 import { useLocaleRouter } from '@/composables/useLocaleRouter'
-import { assetUrl } from '@/utils/assetUrl'
 import { formatCapabilityLabel } from '@/utils/capability'
 import type { FacetItem, Model, PublisherFacetItem } from '@/types'
 import HomeFeaturedCard from '@/components/home/HomeFeaturedCard.vue'
@@ -12,6 +11,8 @@ import ArrowRightIcon from '@/components/icons/ArrowRightIcon.vue'
 const FEATURED_LIMIT = 4
 /** Avoid flooding the chip row when many publishers exist. */
 const PUBLISHER_CHIP_LIMIT = 12
+const SKELETON_CARD_COUNT = 4
+const SKELETON_CHIP_COUNT = 8
 
 type ChipKind = 'capability' | 'category' | 'publisher'
 
@@ -30,6 +31,8 @@ const categories = ref<FacetItem[]>([])
 const capabilities = ref<FacetItem[]>([])
 const publishers = ref<PublisherFacetItem[]>([])
 const models = ref<Model[]>([])
+const modelsLoading = ref(true)
+const facetsLoading = ref(true)
 
 const chips = computed(() => {
   const items: FeaturedChip[] = []
@@ -84,6 +87,7 @@ function categoryLabel(value: string) {
 }
 
 async function loadFacets() {
+  facetsLoading.value = true
   try {
     const data = await fetchModelFacets()
     categories.value = data.categories ?? []
@@ -93,15 +97,20 @@ async function loadFacets() {
     categories.value = []
     capabilities.value = []
     publishers.value = []
+  } finally {
+    facetsLoading.value = false
   }
 }
 
 async function loadModels() {
+  modelsLoading.value = true
   try {
     const page = await fetchModels({ offset: 0, limit: FEATURED_LIMIT })
     models.value = page.items
   } catch {
     models.value = []
+  } finally {
+    modelsLoading.value = false
   }
 }
 
@@ -132,7 +141,19 @@ onMounted(() => {
       </h2>
       <p class="home-featured__subtitle">{{ t('pages.home.featured.subtitle') }}</p>
 
-      <div v-if="chips.length" class="home-featured__chips" role="list">
+      <div
+        v-if="facetsLoading"
+        class="home-featured__chips home-featured__chips--skeleton"
+        aria-hidden="true"
+      >
+        <span
+          v-for="n in SKELETON_CHIP_COUNT"
+          :key="n"
+          class="home-featured__chip-skeleton"
+          :style="{ width: `${72 + (n % 4) * 18}px` }"
+        />
+      </div>
+      <div v-else-if="chips.length" class="home-featured__chips" role="list">
         <button
           v-for="chip in chips"
           :key="chip.id"
@@ -146,21 +167,27 @@ onMounted(() => {
         </button>
       </div>
 
-      <div v-if="displayModels.length" class="home-featured__grid">
-        <HomeFeaturedCard v-for="model in displayModels" :key="model.id" :model="model" />
-      </div>
-      <div v-else class="home-featured__grid home-featured__grid--fallback">
-        <article v-for="n in 4" :key="n" class="home-featured__fallback-card">
-          <img
-            class="home-featured__fallback-img"
-            :src="assetUrl(`/assets/cover/${(n % 4) + 1}.jpg`)"
-            alt=""
-          />
-          <div class="home-featured__fallback-body">
-            <p class="home-featured__fallback-name">{{ t('pages.home.featured.fallbackName') }}</p>
-            <p class="home-featured__fallback-desc">{{ t('pages.home.featured.fallbackDesc') }}</p>
+      <div
+        v-if="modelsLoading"
+        class="home-featured__grid"
+        aria-busy="true"
+        aria-label="Loading"
+      >
+        <div
+          v-for="n in SKELETON_CARD_COUNT"
+          :key="n"
+          class="home-featured__skeleton-card"
+        >
+          <span class="home-featured__skeleton-fav" />
+          <div class="home-featured__skeleton-body">
+            <span class="home-featured__skeleton-line home-featured__skeleton-line--title" />
+            <span class="home-featured__skeleton-line home-featured__skeleton-line--desc" />
+            <span class="home-featured__skeleton-line home-featured__skeleton-line--desc-short" />
           </div>
-        </article>
+        </div>
+      </div>
+      <div v-else-if="displayModels.length" class="home-featured__grid">
+        <HomeFeaturedCard v-for="model in displayModels" :key="model.id" :model="model" />
       </div>
 
       <button type="button" class="home-featured__more" @click="goModels">
@@ -248,6 +275,15 @@ onMounted(() => {
   color: #fff;
 }
 
+.home-featured__chip-skeleton {
+  display: inline-block;
+  height: 44px;
+  border-radius: 30px;
+  background: linear-gradient(90deg, #f0f1f3 25%, #e6e7eb 37%, #f0f1f3 63%);
+  background-size: 400% 100%;
+  animation: home-featured-shimmer 1.4s ease infinite;
+}
+
 .home-featured__grid {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
@@ -256,39 +292,55 @@ onMounted(() => {
   text-align: left;
 }
 
-.home-featured__fallback-card {
+.home-featured__skeleton-card {
   position: relative;
   overflow: hidden;
   border-radius: 16px;
   aspect-ratio: 322 / 341;
-  background: #111;
+  background: linear-gradient(90deg, #eceef2 25%, #e2e4e9 37%, #eceef2 63%);
+  background-size: 400% 100%;
+  animation: home-featured-shimmer 1.4s ease infinite;
 }
 
-.home-featured__fallback-img {
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
+.home-featured__skeleton-fav {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 32px;
+  height: 32px;
+  border-radius: 30px;
+  background: rgba(255, 255, 255, 0.55);
 }
 
-.home-featured__fallback-body {
+.home-featured__skeleton-body {
   position: absolute;
   inset: auto 0 0;
-  padding: 16px;
-  background: linear-gradient(transparent, rgba(0, 0, 0, 0.75));
-  color: #fff;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px 12px 14px;
+  background: linear-gradient(transparent, rgba(0, 0, 0, 0.08));
 }
 
-.home-featured__fallback-name {
-  margin: 0;
-  font-size: 16px;
-  font-weight: 600;
+.home-featured__skeleton-line {
+  display: block;
+  height: 12px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.72);
 }
 
-.home-featured__fallback-desc {
-  margin: 8px 0 0;
-  font-size: 12px;
-  line-height: 16px;
-  opacity: 0.9;
+.home-featured__skeleton-line--title {
+  width: 78%;
+  height: 14px;
+}
+
+.home-featured__skeleton-line--desc {
+  width: 92%;
+  margin-top: 2px;
+}
+
+.home-featured__skeleton-line--desc-short {
+  width: 64%;
 }
 
 .home-featured__more {
@@ -313,6 +365,15 @@ onMounted(() => {
 .home-featured__more:hover {
   background: #f8f8f8;
   border-color: #d8dee6;
+}
+
+@keyframes home-featured-shimmer {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: 0 0;
+  }
 }
 
 @media (max-width: 1100px) {
@@ -342,9 +403,16 @@ onMounted(() => {
     margin-top: 28px;
   }
 
-  .home-featured__fallback-card {
+  .home-featured__skeleton-card {
     aspect-ratio: 3 / 4;
     border-radius: 12px;
+  }
+
+  .home-featured__skeleton-fav {
+    top: 8px;
+    right: 8px;
+    width: 28px;
+    height: 28px;
   }
 
   .home-featured__chips {
@@ -358,6 +426,10 @@ onMounted(() => {
     min-height: 36px;
     padding: 8px 12px;
     font-size: 13px;
+  }
+
+  .home-featured__chip-skeleton {
+    height: 36px;
   }
 }
 </style>

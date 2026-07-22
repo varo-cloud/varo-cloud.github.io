@@ -12,12 +12,18 @@ import {
 import { formatCapabilityLabel } from '@/utils/capability'
 import type { PricingItem } from '@/types'
 
-const props = defineProps<{
-  items: PricingItem[]
-}>()
+const props = withDefaults(
+  defineProps<{
+    items: PricingItem[]
+    loading?: boolean
+  }>(),
+  { loading: false },
+)
 
 const { t } = useI18n()
 const { push } = useLocaleRouter()
+
+const SKELETON_ROW_COUNT = 5
 
 const rows = computed(() =>
   props.items.map((item) => {
@@ -62,71 +68,109 @@ function viewMore() {
             </tr>
           </thead>
           <tbody>
-            <tr v-if="!rows.length">
+            <template v-if="loading">
+              <tr v-for="n in SKELETON_ROW_COUNT" :key="`sk-${n}`" class="home-pricing__skeleton-row">
+                <td>
+                  <div class="home-pricing__model">
+                    <span class="home-pricing__skel home-pricing__skel--name" />
+                    <span class="home-pricing__skel home-pricing__skel--use" />
+                  </div>
+                </td>
+                <td><span class="home-pricing__skel home-pricing__skel--price" /></td>
+                <td><span class="home-pricing__skel home-pricing__skel--price" /></td>
+                <td><span class="home-pricing__skel home-pricing__skel--tag" /></td>
+                <td><span class="home-pricing__skel home-pricing__skel--btn" /></td>
+              </tr>
+            </template>
+            <tr v-else-if="!rows.length">
               <td colspan="5" class="home-pricing__empty">
                 {{ t('pages.home.pricing.empty') }}
               </td>
             </tr>
-            <tr v-for="row in rows" :key="row.id">
-              <td>
-                <div class="home-pricing__model">
-                  <span class="home-pricing__model-name">{{ row.name }}</span>
-                  <span class="home-pricing__model-use">{{ row.useCase }}</span>
-                </div>
-              </td>
-              <td>{{ row.standardLabel }}</td>
-              <td>
-                <span class="home-pricing__price">
-                  <strong class="home-pricing__price-value">{{ row.priceLabel }}</strong>
-                  <span class="home-pricing__unit">{{ row.unitLabel }}</span>
-                </span>
-              </td>
-              <td>
-                <DiscountTag v-if="row.discountLabel" :content="row.discountLabel" />
-              </td>
-              <td>
-                <button type="button" class="home-pricing__view" @click="viewModel(row.modelId)">
-                  {{ t('pages.pricing.view') }}
-                </button>
-              </td>
-            </tr>
+            <template v-else>
+              <tr v-for="row in rows" :key="row.id">
+                <td>
+                  <div class="home-pricing__model">
+                    <span class="home-pricing__model-name">{{ row.name }}</span>
+                    <span class="home-pricing__model-use">{{ row.useCase }}</span>
+                  </div>
+                </td>
+                <td>{{ row.standardLabel }}</td>
+                <td>
+                  <span class="home-pricing__price">
+                    <strong class="home-pricing__price-value">{{ row.priceLabel }}</strong>
+                    <span class="home-pricing__unit">{{ row.unitLabel }}</span>
+                  </span>
+                </td>
+                <td>
+                  <DiscountTag v-if="row.discountLabel" :content="row.discountLabel" />
+                </td>
+                <td>
+                  <button type="button" class="home-pricing__view" @click="viewModel(row.modelId)">
+                    {{ t('pages.pricing.view') }}
+                  </button>
+                </td>
+              </tr>
+            </template>
           </tbody>
         </table>
       </div>
 
-      <div class="home-pricing__cards" aria-label="Pricing">
-        <p v-if="!rows.length" class="home-pricing__empty home-pricing__empty--card">
+      <div class="home-pricing__cards" aria-label="Pricing" :aria-busy="loading || undefined">
+        <template v-if="loading">
+          <article
+            v-for="n in SKELETON_ROW_COUNT"
+            :key="`card-sk-${n}`"
+            class="home-pricing__card home-pricing__card--skeleton"
+          >
+            <div class="home-pricing__card-head">
+              <div class="home-pricing__model">
+                <span class="home-pricing__skel home-pricing__skel--name" />
+                <span class="home-pricing__skel home-pricing__skel--use" />
+              </div>
+              <span class="home-pricing__skel home-pricing__skel--tag" />
+            </div>
+            <div class="home-pricing__card-prices home-pricing__card-prices--skeleton">
+              <span class="home-pricing__skel home-pricing__skel--block" />
+              <span class="home-pricing__skel home-pricing__skel--block" />
+            </div>
+            <span class="home-pricing__skel home-pricing__skel--btn-full" />
+          </article>
+        </template>
+        <p v-else-if="!rows.length" class="home-pricing__empty home-pricing__empty--card">
           {{ t('pages.home.pricing.empty') }}
         </p>
-        <article v-for="row in rows" :key="`card-${row.id}`" class="home-pricing__card">
-          <div class="home-pricing__card-head">
-            <div class="home-pricing__model">
-              <span class="home-pricing__model-name">{{ row.name }}</span>
-              <span class="home-pricing__model-use">{{ row.useCase }}</span>
+        <template v-else>
+          <article v-for="row in rows" :key="`card-${row.id}`" class="home-pricing__card">
+            <div class="home-pricing__card-head">
+              <div class="home-pricing__model">
+                <span class="home-pricing__model-name">{{ row.name }}</span>
+                <span class="home-pricing__model-use">{{ row.useCase }}</span>
+              </div>
+              <DiscountTag v-if="row.discountLabel" :content="row.discountLabel" />
             </div>
-            <DiscountTag v-if="row.discountLabel" :content="row.discountLabel" />
-          </div>
-          <dl class="home-pricing__card-prices">
-            <div>
-              <dt>{{ t('pages.pricing.columns.standardPrice') }}</dt>
-              <dd>
-                {{ row.standardLabel }}<span class="home-pricing__unit">{{ row.unitLabel }}</span>
-              </dd>
-            </div>
-            <div>
-              <dt>{{ t('pages.pricing.columns.price') }}</dt>
-              <dd>
-                <span class="home-pricing__price">
-                  <strong class="home-pricing__price-value">{{ row.priceLabel }}</strong>
-                  <span class="home-pricing__unit">{{ row.unitLabel }}</span>
-                </span>
-              </dd>
-            </div>
-          </dl>
-          <button type="button" class="home-pricing__view" @click="viewModel(row.modelId)">
-            {{ t('pages.pricing.view') }}
-          </button>
-        </article>
+            <dl class="home-pricing__card-prices">
+              <div>
+                <dt>{{ t('pages.pricing.columns.standardPrice') }}</dt>
+                <dd>
+                  {{ row.standardLabel }}<span class="home-pricing__unit">{{ row.unitLabel }}</span>
+                </dd>
+              </div>
+              <div>
+                <dt>{{ t('pages.pricing.columns.price') }}</dt>
+                <dd>
+                  <span class="home-pricing__price">
+                    <strong class="home-pricing__price-value">{{ row.priceLabel }}</strong>
+                    <span class="home-pricing__unit">{{ row.unitLabel }}</span>
+                  </span>
+                </dd>
+              </div>
+            </dl>
+            <button type="button" class="home-pricing__view" @click="viewModel(row.modelId)">
+              {{ t('pages.pricing.view') }}
+            </button>
+          </article>
+        </template>
       </div>
 
       <button type="button" class="home-pricing__more" @click="viewMore">
@@ -244,6 +288,58 @@ function viewMore() {
   font-weight: 400;
 }
 
+.home-pricing__skel {
+  display: inline-block;
+  border-radius: 6px;
+  background: linear-gradient(90deg, #f0f1f3 25%, #e6e7eb 37%, #f0f1f3 63%);
+  background-size: 400% 100%;
+  animation: home-pricing-shimmer 1.4s ease infinite;
+}
+
+.home-pricing__skel--name {
+  width: 140px;
+  height: 14px;
+}
+
+.home-pricing__skel--use {
+  width: 96px;
+  height: 12px;
+}
+
+.home-pricing__skel--price {
+  width: 72px;
+  height: 14px;
+}
+
+.home-pricing__skel--tag {
+  width: 48px;
+  height: 22px;
+  border-radius: 30px;
+}
+
+.home-pricing__skel--btn {
+  width: 64px;
+  height: 36px;
+  border-radius: 8px;
+}
+
+.home-pricing__skel--block {
+  width: 100%;
+  height: 40px;
+}
+
+.home-pricing__skel--btn-full {
+  width: 100%;
+  height: 36px;
+  border-radius: 8px;
+}
+
+.home-pricing__card-prices--skeleton {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 12px;
+}
+
 .home-pricing__view {
   min-height: 36px;
   padding: 8px 18px;
@@ -287,6 +383,15 @@ function viewMore() {
 .home-pricing__more:hover {
   background: #f8f8f8;
   border-color: #d8dee6;
+}
+
+@keyframes home-pricing-shimmer {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: 0 0;
+  }
 }
 
 @media (max-width: 767px) {

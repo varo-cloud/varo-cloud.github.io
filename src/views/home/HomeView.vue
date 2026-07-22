@@ -15,13 +15,17 @@ import HomeCta from '@/components/home/HomeCta.vue'
 const PRICING_LIMIT = 5
 
 const pricingItems = ref<PricingItem[]>([])
+const pricingLoading = ref(true)
 
 async function loadPricing() {
+  pricingLoading.value = true
   try {
     const page = await fetchModels({ offset: 0, limit: PRICING_LIMIT })
     pricingItems.value = page.items.map(modelToPricingItem)
   } catch {
     pricingItems.value = []
+  } finally {
+    pricingLoading.value = false
   }
 }
 
@@ -37,7 +41,7 @@ onMounted(() => {
     <HomeDevelopers />
     <HomeCreators />
     <HomeValueProps />
-    <HomePricing :items="pricingItems" />
+    <HomePricing :items="pricingItems" :loading="pricingLoading" />
     <HomeShowcase />
     <HomeCta />
   </div>

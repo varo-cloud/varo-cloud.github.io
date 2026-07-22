@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { fetchModelFacets } from '@/api/models'
 import { useLocaleRouter } from '@/composables/useLocaleRouter'
@@ -8,25 +8,15 @@ import type { PublisherFacetItem } from '@/types'
 
 const PAGE_SIZE = 10
 const PAGINATION_MIN = 10
-
-const DEFAULT_COVERS = [
-  '/assets/home/showcase-01.png',
-  '/assets/home/showcase-02.jpeg',
-  '/assets/home/showcase-03.png',
-  '/assets/home/showcase-04.png',
-  '/assets/home/showcase-05.png',
-  '/assets/home/showcase-06.png',
-  '/assets/home/showcase-07.png',
-  '/assets/home/showcase-08.png',
-  '/assets/home/showcase-09.png',
-  '/assets/home/showcase-10.png',
-] as const
+const SKELETON_COUNT = 10
 
 const { t } = useI18n()
 const { push } = useLocaleRouter()
 
 const publishers = ref<PublisherFacetItem[]>([])
 const page = ref(0)
+const loading = ref(true)
+const loadedImages = ref<Record<string, boolean>>({})
 
 const showPagination = computed(() => publishers.value.length > PAGINATION_MIN)
 const pageCount = computed(() =>
@@ -40,18 +30,17 @@ const visiblePublishers = computed(() => {
 })
 
 const items = computed(() =>
-  visiblePublishers.value.map((publisher, index) => ({
+  visiblePublishers.value.map((publisher) => ({
     slug: publisher.slug,
     name: publisher.name,
     meta: t('pages.home.showcase.itemMeta', { count: publisher.count }),
-    image: resolveCover(publisher, page.value * PAGE_SIZE + index),
+    image: resolveCover(publisher),
   })),
 )
 
-function resolveCover(publisher: PublisherFacetItem, index: number) {
+function resolveCover(publisher: PublisherFacetItem) {
   const cover = publisher.cover_url?.trim()
-  if (cover) return assetUrl(cover)
-  return assetUrl(DEFAULT_COVERS[index % DEFAULT_COVERS.length]!)
+  return cover ? assetUrl(cover) : null
 }
 
 function goPage(next: number) {
@@ -63,15 +52,33 @@ function openPublisher(slug: string) {
   push({ name: 'models', query: { publisher: slug } })
 }
 
+function onImageLoad(slug: string) {
+  loadedImages.value = { ...loadedImages.value, [slug]: true }
+}
+
+function onImageRef(slug: string, el: unknown) {
+  const img = el as HTMLImageElement | null
+  if (img?.complete && img.naturalWidth > 0) {
+    onImageLoad(slug)
+  }
+}
+
 async function loadPublishers() {
+  loading.value = true
   try {
     const data = await fetchModelFacets()
     publishers.value = data.publishers ?? []
     page.value = 0
   } catch {
     publishers.value = []
+  } finally {
+    loading.value = false
   }
 }
+
+watch(page, () => {
+  loadedImages.value = {}
+})
 
 onMounted(() => {
   void loadPublishers()
@@ -86,7 +93,20 @@ onMounted(() => {
       </h2>
       <p class="home-showcase__subtitle">{{ t('pages.home.showcase.subtitle') }}</p>
 
-      <div v-if="items.length" class="home-showcase__grid">
+      <div
+        v-if="loading"
+        class="home-showcase__grid"
+        aria-busy="true"
+        aria-label="Loading"
+      >
+        <div v-for="n in SKELETON_COUNT" :key="n" class="home-showcase__skeleton-card">
+          <div class="home-showcase__skeleton-body">
+            <span class="home-showcase__skeleton-line home-showcase__skeleton-line--title" />
+            <span class="home-showcase__skeleton-line home-showcase__skeleton-line--meta" />
+          </div>
+        </div>
+      </div>
+      <div v-else-if="items.length" class="home-showcase__grid">
         <button
           v-for="item in items"
           :key="item.slug"
@@ -94,7 +114,16 @@ onMounted(() => {
           class="home-showcase__card"
           @click="openPublisher(item.slug)"
         >
-          <img class="home-showcase__img" :src="item.image" :alt="item.name" loading="lazy" />
+          <img
+            v-if="item.image"
+            class="home-showcase__img"
+            :class="{ 'is-loaded': loadedImages[item.slug] }"
+            :src="item.image"
+            :alt="item.name"
+            loading="lazy"
+            :ref="(el) => onImageRef(item.slug, el)"
+            @load="onImageLoad(item.slug)"
+          />
           <div class="home-showcase__body">
             <p class="home-showcase__name">{{ item.name }}</p>
             <p class="home-showcase__meta">{{ item.meta }}</p>
@@ -103,7 +132,7 @@ onMounted(() => {
       </div>
 
       <div
-        v-if="showPagination && pageCount > 1"
+        v-if="!loading && showPagination && pageCount > 1"
         class="home-showcase__dots"
         role="tablist"
         :aria-label="t('pages.home.showcase.pagination')"
@@ -167,7 +196,7 @@ onMounted(() => {
   aspect-ratio: 1;
   border: 0;
   border-radius: 20px;
-  background: #111;
+  background: #eceef2;
   cursor: pointer;
   text-align: left;
   transition: transform 0.2s ease;
@@ -177,7 +206,7 @@ onMounted(() => {
   transform: translateY(-2px);
 }
 
-.home-showcase__card:hover .home-showcase__img {
+.home-showcase__card:hover .home-showcase__img.is-loaded {
   transform: scale(1.04);
 }
 
@@ -185,7 +214,14 @@ onMounted(() => {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  transition: transform 0.25s ease;
+  opacity: 0;
+  transition:
+    opacity 0.35s ease,
+    transform 0.25s ease;
+}
+
+.home-showcase__img.is-loaded {
+  opacity: 1;
 }
 
 .home-showcase__body {
@@ -208,6 +244,42 @@ onMounted(() => {
   margin: 4px 0 0;
   font-size: 12px;
   opacity: 0.9;
+}
+
+.home-showcase__skeleton-card {
+  position: relative;
+  overflow: hidden;
+  aspect-ratio: 1;
+  border-radius: 20px;
+  background: linear-gradient(90deg, #e8eaee 25%, #dde0e6 37%, #e8eaee 63%);
+  background-size: 400% 100%;
+  animation: home-showcase-shimmer 1.4s ease infinite;
+}
+
+.home-showcase__skeleton-body {
+  position: absolute;
+  inset: auto 0 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 16px 16px;
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.home-showcase__skeleton-line {
+  display: block;
+  height: 12px;
+  border-radius: 6px;
+  background: rgba(255, 255, 255, 0.75);
+}
+
+.home-showcase__skeleton-line--title {
+  width: 58%;
+  height: 14px;
+}
+
+.home-showcase__skeleton-line--meta {
+  width: 36%;
 }
 
 .home-showcase__dots {
@@ -233,6 +305,15 @@ onMounted(() => {
 
 .home-showcase__dot.is-active {
   background: #06b6d4;
+}
+
+@keyframes home-showcase-shimmer {
+  0% {
+    background-position: 100% 0;
+  }
+  100% {
+    background-position: 0 0;
+  }
 }
 
 @media (max-width: 1100px) {
