@@ -80,7 +80,7 @@ export default [
           type: 'video',
           output_url:
             status === 'succeeded'
-              ? 'https://static.wavespeed.ai/examples/567920'
+              ? 'https://example.com/sample.mp4'
               : null,
           error: status === 'failed' ? { message: 'Generation failed' } : null,
         },

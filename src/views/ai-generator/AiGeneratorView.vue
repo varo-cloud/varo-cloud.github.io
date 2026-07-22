@@ -37,6 +37,7 @@ const formValues = ref<SchemaFormValues>({})
 const {
   generationStatus,
   generationProgress,
+  generationError,
   outputUrls,
   generationResults,
   isGenerating,
@@ -261,6 +262,7 @@ onMounted(() => {
         :results="generationResults"
         :status="generationStatus"
         :progress="generationProgress"
+        :error-message="generationError"
         :examples="modelExamples"
         :selected-example-id="selectedExampleId"
         :api-model-id="model?.id"

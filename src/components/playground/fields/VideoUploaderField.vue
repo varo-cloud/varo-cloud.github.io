@@ -114,7 +114,7 @@ function clearVideo() {
           v-model="model"
           type="text"
           class="video-field__url"
-          placeholder="https://static.wavespeed.ai/examples/567920"
+          placeholder="https://example.com/sample.mp4"
           :disabled="uploading"
           @input="onUrlInput"
           @click.stop

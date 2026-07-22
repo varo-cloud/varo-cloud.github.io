@@ -1,6 +1,6 @@
 import type { InputSchema } from '../src/types/schema'
 
-/** Source: wavespeed.ai model_schema/bytedance/seedance-2.0/text-to-video */
+/** Source: bytedance/seedance-2.0/text-to-video input schema */
 export const seedance20T2vSchema: InputSchema = {
   type: 'object',
   example_url: '',
@@ -113,7 +113,7 @@ export const seedanceI2vSchema: InputSchema = {
       type: 'string',
       title: 'Image',
       description: 'The starting image for image-to-video generation.',
-      default: 'https://static.wavespeed.ai/examples/567920',
+      default: 'https://example.com/sample.mp4',
       'x-ui-widget': 'image-upload',
     },
     last_image: {

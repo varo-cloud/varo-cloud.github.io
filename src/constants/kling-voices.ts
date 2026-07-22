@@ -3,7 +3,7 @@ export type KlingVoiceOption = {
   value: string
 }
 
-/** Kling TTS voice IDs (WaveSpeed kling-lipsync schema). */
+/** Kling TTS voice IDs (kling-lipsync schema). */
 export const KLING_VOICE_OPTIONS: KlingVoiceOption[] = [
   { value: 'genshin_vindi2', label: 'Genshin — Vindi' },
   { value: 'zhinen_xuesheng', label: '稚嫩学生' },
