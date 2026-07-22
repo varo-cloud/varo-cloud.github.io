@@ -350,7 +350,8 @@ export default {
     pricing: {
       title: 'Pricing',
       heroTitle: 'Image & Video Models',
-      heroSubtitle: 'State-of-the-art generation with the latest image and video models.',
+      heroSubtitle:
+        'State-of-the-art generation with models from Byteplus, OpenAI, Google, and more.',
       startFrom: 'Start from',
       inputPrice: 'Input price',
       view: 'View',

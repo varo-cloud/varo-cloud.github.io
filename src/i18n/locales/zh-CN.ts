@@ -349,7 +349,7 @@ export default {
     pricing: {
       title: '价格',
       heroTitle: '图像与视频模型',
-      heroSubtitle: '顶尖图像与视频模型的最新生成能力。',
+      heroSubtitle: 'Byteplus、OpenAI、Google 等顶尖模型的最新生成能力。',
       startFrom: '起价',
       inputPrice: '输入价格',
       view: '查看',
