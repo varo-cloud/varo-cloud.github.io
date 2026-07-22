@@ -2,6 +2,7 @@
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useLocaleRouter } from '@/composables/useLocaleRouter'
+import DiscountTag from '@/components/common/DiscountTag.vue'
 import {
   discountToPercent,
   formatDiscountLabel,
@@ -27,7 +28,7 @@ const rows = computed(() =>
       standardLabel: formatPricingUsd(item.standardPriceUsd ?? item.startingPriceUsd, item.priceUnit),
       priceLabel: formatPricingUsd(item.startingPriceUsd, item.priceUnit),
       unitLabel: t(pricingUnitI18nKey(item.priceUnit)),
-      discountLabel: discount == null ? '—' : formatDiscountLabel(discount),
+      discountLabel: discount == null ? '' : formatDiscountLabel(discount),
     }
   }),
 )
@@ -81,12 +82,7 @@ function viewMore() {
                 </span>
               </td>
               <td>
-                <span
-                  class="home-pricing__discount"
-                  :class="{ 'is-active': row.discountLabel !== '—' }"
-                >
-                  {{ row.discountLabel }}
-                </span>
+                <DiscountTag v-if="row.discountLabel" :content="row.discountLabel" />
               </td>
               <td>
                 <button type="button" class="home-pricing__view" @click="viewModel(row.modelId)">
@@ -108,12 +104,7 @@ function viewMore() {
               <span class="home-pricing__model-name">{{ row.name }}</span>
               <span class="home-pricing__model-use">{{ row.useCase }}</span>
             </div>
-            <span
-              class="home-pricing__discount"
-              :class="{ 'is-active': row.discountLabel !== '—' }"
-            >
-              {{ row.discountLabel }}
-            </span>
+            <DiscountTag v-if="row.discountLabel" :content="row.discountLabel" />
           </div>
           <dl class="home-pricing__card-prices">
             <div>
@@ -251,21 +242,6 @@ function viewMore() {
   margin-left: 2px;
   color: #9b9dab;
   font-weight: 400;
-}
-
-.home-pricing__discount {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-width: 40px;
-  flex-shrink: 0;
-}
-
-.home-pricing__discount.is-active {
-  padding: 4px 8px;
-  border-radius: 30px;
-  background: #ff9800;
-  color: #fff;
 }
 
 .home-pricing__view {
