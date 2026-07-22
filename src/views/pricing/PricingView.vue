@@ -465,7 +465,7 @@ onMounted(() => {
 }
 
 .pricing-table {
-  border: 1px solid #d7d7d7;
+  border: 1px solid #eee;
   border-radius: 8px;
   overflow: hidden;
   background: #fff;
@@ -486,7 +486,7 @@ onMounted(() => {
 }
 
 .pricing-table__header-price {
-  text-align: center;
+  text-align: left;
 }
 
 .pricing-table__header-action {
