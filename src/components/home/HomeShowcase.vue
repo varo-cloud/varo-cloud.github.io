@@ -10,6 +10,19 @@ const PAGE_SIZE = 10
 const PAGINATION_MIN = 10
 const SKELETON_COUNT = 10
 
+const DEFAULT_COVERS = [
+  '/assets/home/showcase-01.png',
+  '/assets/home/showcase-02.jpeg',
+  '/assets/home/showcase-03.png',
+  '/assets/home/showcase-04.png',
+  '/assets/home/showcase-05.png',
+  '/assets/home/showcase-06.png',
+  '/assets/home/showcase-07.png',
+  '/assets/home/showcase-08.png',
+  '/assets/home/showcase-09.png',
+  '/assets/home/showcase-10.png',
+] as const
+
 const { t } = useI18n()
 const { push } = useLocaleRouter()
 
@@ -30,17 +43,18 @@ const visiblePublishers = computed(() => {
 })
 
 const items = computed(() =>
-  visiblePublishers.value.map((publisher) => ({
+  visiblePublishers.value.map((publisher, index) => ({
     slug: publisher.slug,
     name: publisher.name,
     meta: t('pages.home.showcase.itemMeta', { count: publisher.count }),
-    image: resolveCover(publisher),
+    image: resolveCover(publisher, page.value * PAGE_SIZE + index),
   })),
 )
 
-function resolveCover(publisher: PublisherFacetItem) {
+function resolveCover(publisher: PublisherFacetItem, index: number) {
   const cover = publisher.cover_url?.trim()
-  return cover ? assetUrl(cover) : null
+  if (cover) return assetUrl(cover)
+  return assetUrl(DEFAULT_COVERS[index % DEFAULT_COVERS.length]!)
 }
 
 function goPage(next: number) {
@@ -115,7 +129,6 @@ onMounted(() => {
           @click="openPublisher(item.slug)"
         >
           <img
-            v-if="item.image"
             class="home-showcase__img"
             :class="{ 'is-loaded': loadedImages[item.slug] }"
             :src="item.image"

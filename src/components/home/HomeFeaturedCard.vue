@@ -25,10 +25,9 @@ watch(
   },
 )
 
-const thumb = computed(() => {
-  const url = props.model.thumbnailUrl?.trim()
-  return url ? assetUrl(url) : null
-})
+const thumb = computed(() =>
+  assetUrl(props.model.thumbnailUrl?.trim() || '/assets/models/card-thumb.jpg'),
+)
 
 const logo = computed(() => {
   const url = props.model.publisherLogoUrl?.trim()
@@ -76,7 +75,6 @@ async function toggleFavourite(event: Event) {
 <template>
   <article class="home-featured-card" @click="goDetail">
     <img
-      v-if="thumb"
       class="home-featured-card__img"
       :class="{ 'is-loaded': imageLoaded }"
       :src="thumb"
