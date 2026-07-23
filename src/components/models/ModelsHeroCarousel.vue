@@ -7,15 +7,15 @@ const SLIDE_DURATION_MS = 5000
 const slides = [
   {
     poster: assetUrl('/assets/cover/2.jpg'),
-    video: assetUrl('/assets/cover/2.mp4'),
+    video: assetUrl('https://assets.varo.cloud/uploads/341660b97a8f440f91a1877b137db50f.mp4'),
   },
   {
     poster: assetUrl('/assets/cover/3.jpg'),
-    video: assetUrl('/assets/cover/3.mp4'),
+    video: assetUrl('https://assets.varo.cloud/uploads/b86288c2f7ef49ac93df5451f55b00d5.mp4'),
   },
   {
     poster: assetUrl('/assets/cover/4.jpg'),
-    video: assetUrl('/assets/cover/4.mp4'),
+    video: assetUrl('https://assets.varo.cloud/uploads/c5879cd9bf7e4a71a4ef1c100f723889.mp4'),
   },
 ] as const
 
