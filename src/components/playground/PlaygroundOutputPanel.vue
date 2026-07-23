@@ -73,6 +73,16 @@ const showExamplesBar = computed(
   () => !isGenerating.value && (props.examples?.length ?? 0) > 0,
 )
 
+const textOutputs = computed(() => {
+  if (!showOutput.value) return []
+  return (props.results ?? [])
+    .filter((item) => item.output.type === 'text' || Boolean(item.output.text?.trim()))
+    .map((item) => item.output.text?.trim() ?? '')
+    .filter((text) => text.length > 0)
+})
+
+const hasTextOutput = computed(() => textOutputs.value.length > 0)
+
 const canShowCode = computed(() => showOutput.value || showExample.value)
 
 function buildExampleGenerationResult(example: ModelExample): PlaygroundGenerationResult {
@@ -93,7 +103,10 @@ function buildExampleGenerationResult(example: ModelExample): PlaygroundGenerati
 }
 
 const previewUrls = computed(() => {
-  if (showOutput.value) return props.outputUrls ?? []
+  if (showOutput.value) {
+    if (hasTextOutput.value) return []
+    return props.outputUrls ?? []
+  }
   if (showExample.value && selectedExample.value) {
     const url = selectedExample.value.outputUrl ?? selectedExample.value.thumbnailUrl
     return url ? [url] : []
@@ -159,6 +172,15 @@ async function downloadResult(url: string, index: number) {
   }
 }
 
+async function copyTextOutput(text: string) {
+  try {
+    await navigator.clipboard.writeText(text)
+    message.success(t('pages.modelDetail.codeCopied'))
+  } catch {
+    message.error(t('pages.modelDetail.copyFailed'))
+  }
+}
+
 watch(
   () => props.status,
   (status) => {
@@ -214,7 +236,27 @@ watch(
       }"
     >
       <div
-        v-if="previewUrls.length > 0 && viewMode === 'preview'"
+        v-if="hasTextOutput && viewMode === 'preview'"
+        class="output-panel__text-list"
+      >
+        <div
+          v-for="(text, index) in textOutputs"
+          :key="`text-${index}`"
+          class="output-panel__text-item"
+        >
+          <pre class="output-panel__text scrollbar-subtle">{{ text }}</pre>
+          <button
+            type="button"
+            class="output-panel__text-copy"
+            :aria-label="t('pages.modelDetail.copyCode')"
+            @click="copyTextOutput(text)"
+          >
+            {{ t('pages.modelDetail.copyCode') }}
+          </button>
+        </div>
+      </div>
+      <div
+        v-else-if="previewUrls.length > 0 && viewMode === 'preview'"
         class="output-panel__grid"
         :class="gridClass"
       >
@@ -542,6 +584,51 @@ watch(
   text-align: left;
   white-space: pre-wrap;
   word-break: break-word;
+}
+
+.output-panel__text-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+}
+
+.output-panel__text-item {
+  position: relative;
+  border-radius: 8px;
+  background: rgba(0, 0, 0, 0.35);
+  border: 0.5px solid rgba(255, 255, 255, 0.08);
+}
+
+.output-panel__text {
+  margin: 0;
+  padding: 16px;
+  max-height: 480px;
+  overflow: auto;
+  font-family: inherit;
+  font-size: 14px;
+  line-height: 1.6;
+  color: #ebf4fb;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.output-panel__text-copy {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  padding: 6px 10px;
+  border: none;
+  border-radius: 6px;
+  background: rgba(19, 19, 28, 0.9);
+  font-family: inherit;
+  font-size: 12px;
+  color: #ebf4fb;
+  cursor: pointer;
+}
+
+.output-panel__text-copy:hover {
+  background: rgba(45, 45, 56, 0.95);
 }
 
 .output-panel__json code {

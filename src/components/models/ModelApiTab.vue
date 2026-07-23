@@ -5,13 +5,14 @@ import { useAppMessage } from '@/composables/useAppMessage'
 import { AnalyticsEvents, trackEvent } from '@/analytics'
 import AppIcon from '@/components/common/AppIcon.vue'
 import HighlightedCodeBlock from '@/components/common/HighlightedCodeBlock.vue'
-import type { ModelFaqItem } from '@/types'
+import type { ModelCategory, ModelFaqItem } from '@/types'
 import type { InputSchema, SchemaFormValues } from '@/types/schema'
 import type { CodeHighlightLanguage } from '@/utils/code-highlight'
 import {
   API_CODE_VIEW_MODES,
   buildApiPollSnippet,
   buildApiSubmitSnippet,
+  resolveChatCompletionsUrl,
   resolveCreateGenerationUrl,
   resolveGetGenerationUrl,
   type ApiCodeViewMode,
@@ -26,6 +27,7 @@ const props = defineProps<{
   apiModelId: string
   modelName: string
   formValues: SchemaFormValues
+  category?: ModelCategory
   readmeMd?: string
   faq?: ModelFaqItem[]
 }>()
@@ -37,13 +39,28 @@ const codeViewMode = ref<ApiCodeViewMode>('http')
 const expandedFaq = ref<number | null>(0)
 const activeSection = ref<ApiSectionId>('quick-start')
 
+const isLlm = computed(() => props.category === 'llm')
+const snippetCategory = computed(() => props.category ?? 'video')
+
 const parameterRows = computed(() => buildSchemaParameterRows(props.schema))
 
 const submitCodeSnippet = computed(() =>
-  buildApiSubmitSnippet(codeViewMode.value, props.apiModelId, props.formValues),
+  buildApiSubmitSnippet(
+    codeViewMode.value,
+    props.apiModelId,
+    props.formValues,
+    snippetCategory.value,
+  ),
 )
 
-const pollCodeSnippet = computed(() => buildApiPollSnippet(codeViewMode.value))
+const pollCodeSnippet = computed(() =>
+  buildApiPollSnippet(
+    codeViewMode.value,
+    snippetCategory.value,
+    props.apiModelId,
+    props.formValues,
+  ),
+)
 
 const codeLanguage = computed<CodeHighlightLanguage>(() => {
   if (codeViewMode.value === 'http') return 'http'
@@ -53,7 +70,14 @@ const codeLanguage = computed<CodeHighlightLanguage>(() => {
 
 const hasReadme = computed(() => Boolean(props.readmeMd?.trim()))
 const hasFaq = computed(() => (props.faq?.length ?? 0) > 0)
-const pollUrl = computed(() => resolveGetGenerationUrl('{id}'))
+
+const submitUrl = computed(() =>
+  isLlm.value ? resolveChatCompletionsUrl() : resolveCreateGenerationUrl(),
+)
+
+const resultUrl = computed(() =>
+  isLlm.value ? resolveChatCompletionsUrl() : resolveGetGenerationUrl('{id}'),
+)
 
 const codeModeOptions = computed(() =>
   API_CODE_VIEW_MODES.map((mode) => ({
@@ -72,8 +96,18 @@ const navSections = computed(() => {
       id: 'quick-start',
       label: t('pages.modelDetail.apiTab.quickStart'),
       children: [
-        { id: 'quick-start', label: t('pages.modelDetail.apiTab.submitRequest') },
-        { id: 'query-result', label: t('pages.modelDetail.apiTab.queryResult') },
+        {
+          id: 'quick-start',
+          label: isLlm.value
+            ? t('pages.modelDetail.apiTab.streamTrueExample')
+            : t('pages.modelDetail.apiTab.submitRequest'),
+        },
+        {
+          id: 'query-result',
+          label: isLlm.value
+            ? t('pages.modelDetail.apiTab.streamFalseExample')
+            : t('pages.modelDetail.apiTab.queryResult'),
+        },
       ],
     },
   ]
@@ -216,9 +250,19 @@ onBeforeUnmount(() => {
           1. {{ t('pages.modelDetail.apiTab.quickStart') }}
         </h2>
         <div :id="`api-section-quick-start`" class="model-api-tab__subsection">
-          <h3 class="model-api-tab__subsection-title">{{ t('pages.modelDetail.apiTab.submitRequest') }}</h3>
+          <h3 class="model-api-tab__subsection-title">
+            {{
+              isLlm
+                ? t('pages.modelDetail.apiTab.streamTrueExample')
+                : t('pages.modelDetail.apiTab.submitRequest')
+            }}
+          </h3>
           <p class="model-api-tab__text">
-            {{ t('pages.modelDetail.apiTab.submitHint', { url: resolveCreateGenerationUrl() }) }}
+            {{
+              isLlm
+                ? t('pages.modelDetail.apiTab.streamTrueHint', { url: submitUrl })
+                : t('pages.modelDetail.apiTab.submitHint', { url: submitUrl })
+            }}
           </p>
 
           <div class="model-api-tab__code-wrap">
@@ -235,9 +279,19 @@ onBeforeUnmount(() => {
         </div>
 
         <div :id="`api-section-query-result`" class="model-api-tab__subsection">
-          <h3 class="model-api-tab__subsection-title">{{ t('pages.modelDetail.apiTab.queryResult') }}</h3>
+          <h3 class="model-api-tab__subsection-title">
+            {{
+              isLlm
+                ? t('pages.modelDetail.apiTab.streamFalseExample')
+                : t('pages.modelDetail.apiTab.queryResult')
+            }}
+          </h3>
           <p class="model-api-tab__text">
-            {{ t('pages.modelDetail.apiTab.pollHint', { url: pollUrl }) }}
+            {{
+              isLlm
+                ? t('pages.modelDetail.apiTab.streamFalseHint', { url: resultUrl })
+                : t('pages.modelDetail.apiTab.pollHint', { url: resultUrl })
+            }}
           </p>
 
           <div class="model-api-tab__code-wrap">

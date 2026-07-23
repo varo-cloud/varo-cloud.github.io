@@ -176,11 +176,20 @@ export default {
         codeExample: 'Code Example',
         submitRequest: 'Submit a request',
         queryResult: 'Query result',
+        streamResult: 'Read the stream',
+        streamTrueExample: 'stream: true',
+        streamFalseExample: 'stream: false',
         quickStart: 'Quick Start',
         quickStartDesc:
           'Copy ready-to-run examples. Code reflects your current Playground inputs.',
         submitHint: 'Create a task: {url}',
+        llmSubmitHint: 'Create a streaming chat completion: {url}',
         pollHint: 'Poll until completed: {url}',
+        streamHint: 'Consume the SSE token stream from the same request (no polling): {url}',
+        streamTrueHint:
+          'stream=true: the same request returns SSE. Read choices[0].delta.content until data: [DONE]. Endpoint: {url}',
+        streamFalseHint:
+          'stream=false: wait for the full JSON, then read choices[0].message.content. Endpoint: {url}',
         syncHint: 'Examples stay in sync with the Playground form.',
         parameters: 'Parameters',
         colName: 'Parameter',
@@ -228,6 +237,22 @@ export default {
           invalidJson: 'Invalid JSON format.',
           mustBeArray: 'Value must be a JSON array.',
           mustBeStrings: 'All items must be strings.',
+        },
+        jsonValue: {
+          invalidJson: 'Invalid JSON format.',
+          mustBeArray: 'Value must be a JSON array.',
+          mustBeObject: 'Value must be a JSON object.',
+        },
+        messages: {
+          empty: 'No messages yet. Add a message to start the conversation.',
+          contentPlaceholder: 'Enter message content…',
+          addMessage: 'Add message',
+          removeMessage: 'Remove message',
+          roles: {
+            system: 'System',
+            user: 'User',
+            assistant: 'Assistant',
+          },
         },
       },
       tabs: {
@@ -289,6 +314,7 @@ export default {
         allStatuses: 'All statuses',
         video: 'Video',
         image: 'Image',
+        llm: 'LLM',
       },
       columns: {
         taskId: 'Task ID',

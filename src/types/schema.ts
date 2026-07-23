@@ -21,10 +21,12 @@ export type SchemaWidget =
   | 'multi-audio-uploader'
   | 'multi-video-uploader'
   | 'multi-prompt'
+  | 'messages'
   | 'element-list'
   | 'voice-select'
   | 'voice-list'
   | 'string-array'
+  | 'json'
   | 'placeholder'
 
 export interface SchemaProperty {

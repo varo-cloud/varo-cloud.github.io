@@ -30,6 +30,7 @@ function normalizeCreatedAt(value: number): number {
 }
 
 function mapDetailToResult(detail: GenerationDetail, unitCostUsd: number): PlaygroundGenerationResult {
+  const isText = detail.result.type === 'text' || Boolean(detail.result.text)
   return {
     id: detail.taskId,
     object: 'generation',
@@ -37,8 +38,9 @@ function mapDetailToResult(detail: GenerationDetail, unitCostUsd: number): Playg
     model: detail.model,
     created_at: normalizeCreatedAt(detail.createdAt),
     output: {
-      type: detail.result.type,
+      type: isText ? 'text' : detail.result.type,
       url: detail.result.output_url ?? '',
+      text: detail.result.text ?? undefined,
     },
     usage: { cost_usd: unitCostUsd },
   }
@@ -333,9 +335,10 @@ export function usePlaygroundGeneration() {
       generationProgress.value = 100
       generationError.value = null
 
-      if (detail.result.output_url) {
+      const hasOutput = Boolean(detail.result.output_url || detail.result.text)
+      if (hasOutput) {
         generationResults.value = [mapDetailToResult(detail, unitCostUsd)]
-        outputUrls.value = [detail.result.output_url]
+        outputUrls.value = detail.result.output_url ? [detail.result.output_url] : []
       } else {
         generationResults.value = []
         outputUrls.value = []

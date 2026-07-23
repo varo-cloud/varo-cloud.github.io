@@ -14,7 +14,7 @@ import type { GenerationListItem, GenerationTaskStatus } from '@/types'
 
 const PAGE_SIZE = 20
 
-type CategoryFilter = '' | 'video' | 'image'
+type CategoryFilter = '' | 'video' | 'image' | 'llm'
 type StatusFilter = '' | GenerationTaskStatus
 
 const { t, locale } = useI18n()
@@ -37,6 +37,7 @@ const categoryOptions = computed(() => [
   { value: '' as CategoryFilter, label: t('pages.generations.filters.allCategories') },
   { value: 'video' as CategoryFilter, label: t('pages.generations.filters.video') },
   { value: 'image' as CategoryFilter, label: t('pages.generations.filters.image') },
+  { value: 'llm' as CategoryFilter, label: t('pages.generations.filters.llm') },
 ])
 
 const statusOptions = computed(() => [

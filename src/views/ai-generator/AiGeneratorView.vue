@@ -174,7 +174,7 @@ function handleRun(values: SchemaFormValues, count: number) {
   void runGeneration({
     modelSlug: model.value.id,
     values,
-    batchSize: count,
+    batchSize: model.value.category === 'llm' ? 1 : count,
     unitCostUsd: quoteUnitCostUsd.value,
     analyticsSource: 'ai_generator',
     analyticsCapability: model.value.capability,
@@ -248,6 +248,8 @@ onMounted(() => {
         :quote-loading="quoteLoading"
         :balance-usd="balanceUsd"
         :generating="isGenerating || modelLoading"
+        :allow-batch="model.category !== 'llm'"
+        :category="model.category"
         :form-sync-key="selectedExampleId"
         analytics-source="ai_generator"
         :analytics-capability="model.capability"

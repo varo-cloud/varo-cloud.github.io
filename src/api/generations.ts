@@ -9,8 +9,10 @@ import type {
 } from '@/types'
 
 interface ApiGenerationResult {
-  type: 'video' | 'image'
+  type: 'video' | 'image' | 'text'
   output_url: string | null
+  text?: string | null
+  content?: string | null
   error: { message: string } | null
 }
 
@@ -30,9 +32,14 @@ interface ApiGenerationDetail {
 }
 
 function mapGenerationResult(raw: ApiGenerationResult): GenerationResult {
+  const text =
+    (typeof raw.text === 'string' && raw.text.trim() ? raw.text : null)
+    ?? (typeof raw.content === 'string' && raw.content.trim() ? raw.content : null)
+
   return {
     type: raw.type,
     output_url: raw.output_url,
+    text,
     error: raw.error,
   }
 }
@@ -63,7 +70,7 @@ export function fetchGenerationDetail(taskId: string) {
 interface ApiGenerationListItem {
   task_id: string
   model: string
-  category: 'video' | 'image'
+  category: ModelCategory
   capability: string
   status: 'queued' | 'processing' | 'succeeded' | 'failed'
   duration: number | null

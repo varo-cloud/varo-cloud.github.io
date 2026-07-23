@@ -38,11 +38,30 @@ export function resolveGetGenerationUrl(taskId: string): string {
   return `${resolveV1BaseUrl()}/generations/${taskId}`
 }
 
+/** OpenAI-compatible chat completions endpoint for LLM models. */
+export function resolveChatCompletionsUrl(): string {
+  return `${resolveV1BaseUrl()}/chat/completions`
+}
+
+export type ApiSnippetCategory = 'video' | 'image' | 'llm'
+
 /** External API Key calls — flat body with `model` (catalog slug). */
 export function buildExternalApiBody(modelSlug: string, values: SchemaFormValues) {
   return {
     model: modelSlug,
     ...pruneApiValues(values),
+  }
+}
+
+/** LLM request body — prefer stream:true for docs/examples that consume SSE. */
+export function buildLlmApiBody(
+  modelSlug: string,
+  values: SchemaFormValues,
+  options?: { stream?: boolean },
+) {
+  return {
+    ...buildExternalApiBody(modelSlug, values),
+    stream: options?.stream ?? true,
   }
 }
 
@@ -150,6 +169,34 @@ export function buildHttpSubmitSnippet(apiModelId: string, values: SchemaFormVal
   -d '${escapedBody}'`
 }
 
+export function buildHttpLlmSubmitSnippet(apiModelId: string, values: SchemaFormValues): string {
+  const url = resolveChatCompletionsUrl()
+  const body = JSON.stringify(buildLlmApiBody(apiModelId, values, { stream: true }), null, 2)
+  const escapedBody = body.replace(/'/g, "'\\''")
+
+  return `# stream: true — SSE token stream on the same response
+curl -N -X POST "${url}" \\
+  -H "Authorization: Bearer sk_live_..." \\
+  -H "Content-Type: application/json" \\
+  -H "Accept: text/event-stream" \\
+  -d '${escapedBody}'`
+}
+
+export function buildHttpLlmNonStreamSnippet(apiModelId: string, values: SchemaFormValues): string {
+  const url = resolveChatCompletionsUrl()
+  const body = JSON.stringify(buildLlmApiBody(apiModelId, values, { stream: false }), null, 2)
+  const escapedBody = body.replace(/'/g, "'\\''")
+
+  return `# stream: false — wait for the full JSON response
+response=$(curl -s -X POST "${url}" \\
+  -H "Authorization: Bearer sk_live_..." \\
+  -H "Content-Type: application/json" \\
+  -d '${escapedBody}')
+
+# Read the assistant message from choices[0].message.content
+echo "$response" | jq -r '.choices[0].message.content'`
+}
+
 export function buildHttpPollSnippet(taskId = '{id}'): string {
   const url = resolveGetGenerationUrl(taskId)
 
@@ -170,7 +217,33 @@ while true; do
 done`
 }
 
-export function buildHttpSnippet(apiModelId: string, values: SchemaFormValues): string {
+export function buildHttpLlmStreamSnippet(): string {
+  return `# How to read stream:true results (SSE)
+# Each line: data: <chat.completion.chunk JSON>
+# Terminal: data: [DONE]
+#
+# Pipe the curl -N response to print tokens:
+#   ... | while IFS= read -r line; do
+#     [[ "$line" == data:\\ [DONE]* ]] && break
+#     [[ "$line" == data:* ]] || continue
+#     echo "\${line#data: }" | jq -rj '.choices[0].delta.content // empty'
+#   done
+#   echo`
+}
+
+export function buildHttpSnippet(
+  apiModelId: string,
+  values: SchemaFormValues,
+  category: ApiSnippetCategory = 'video',
+): string {
+  if (category === 'llm') {
+    return `${buildHttpLlmSubmitSnippet(apiModelId, values)}
+
+${buildHttpLlmStreamSnippet()}
+
+${buildHttpLlmNonStreamSnippet(apiModelId, values)}`
+  }
+
   return `${buildHttpSubmitSnippet(apiModelId, values)}
 
 # Replace {id} with the task id from the creation response
@@ -206,6 +279,38 @@ function toPythonLiteral(value: unknown, indent = 0): string {
   return JSON.stringify(value)
 }
 
+function buildPythonLlmCreateCall(
+  apiModelId: string,
+  values: SchemaFormValues,
+  stream: boolean,
+): { clientSetup: string; createCall: string; resultVar: string } {
+  const baseUrl = resolveV1BaseUrl()
+  const body = buildLlmApiBody(apiModelId, values, { stream })
+  const messages = body.messages ?? []
+  const kwargs: string[] = [
+    `    model=${JSON.stringify(body.model)},`,
+    `    messages=${toPythonLiteral(messages, 1)},`,
+    `    stream=${stream ? 'True' : 'False'},`,
+  ]
+
+  for (const [key, value] of Object.entries(body)) {
+    if (key === 'model' || key === 'messages' || key === 'stream') continue
+    kwargs.push(`    ${key}=${toPythonLiteral(value, 1)},`)
+  }
+
+  const resultVar = stream ? 'stream' : 'completion'
+  return {
+    clientSetup: `from openai import OpenAI
+
+API_KEY = "sk_live_..."
+client = OpenAI(api_key=API_KEY, base_url="${baseUrl}")`,
+    createCall: `${resultVar} = client.chat.completions.create(
+${kwargs.join('\n')}
+)`,
+    resultVar,
+  }
+}
+
 export function buildPythonSubmitSnippet(apiModelId: string, values: SchemaFormValues): string {
   const baseUrl = resolveV1BaseUrl()
   const body = toPythonLiteral(buildExternalApiBody(apiModelId, values))
@@ -222,6 +327,25 @@ generation = client.post("/generations", body=body, cast_to=dict)
 task_id = generation["id"]`
 }
 
+export function buildPythonLlmSubmitSnippet(apiModelId: string, values: SchemaFormValues): string {
+  const { clientSetup, createCall } = buildPythonLlmCreateCall(apiModelId, values, true)
+  return `${clientSetup}
+
+# stream=True — iterate chunks as they arrive
+${createCall}`
+}
+
+export function buildPythonLlmNonStreamSnippet(apiModelId: string, values: SchemaFormValues): string {
+  const { clientSetup, createCall } = buildPythonLlmCreateCall(apiModelId, values, false)
+  return `${clientSetup}
+
+# stream=False — one shot JSON response
+${createCall}
+
+# Read the assistant message
+print(completion.choices[0].message.content)`
+}
+
 export function buildPythonPollSnippet(): string {
   return `# Poll until the task completes
 while True:
@@ -234,10 +358,55 @@ while True:
     time.sleep(5)`
 }
 
-export function buildPythonSnippet(apiModelId: string, values: SchemaFormValues): string {
+export function buildPythonLlmStreamSnippet(): string {
+  return `# How to read stream=True results
+for event in stream:
+    delta = event.choices[0].delta.content if event.choices else None
+    if delta:
+        print(delta, end="", flush=True)
+print()`
+}
+
+export function buildPythonSnippet(
+  apiModelId: string,
+  values: SchemaFormValues,
+  category: ApiSnippetCategory = 'video',
+): string {
+  if (category === 'llm') {
+    return `${buildPythonLlmSubmitSnippet(apiModelId, values)}
+
+${buildPythonLlmStreamSnippet()}
+
+${buildPythonLlmNonStreamSnippet(apiModelId, values)}`
+  }
+
   return `${buildPythonSubmitSnippet(apiModelId, values)}
 
 ${buildPythonPollSnippet()}`
+}
+
+function buildJavaScriptLlmCreateCall(
+  apiModelId: string,
+  values: SchemaFormValues,
+  stream: boolean,
+): { clientSetup: string; createCall: string; resultVar: string } {
+  const baseUrl = resolveV1BaseUrl()
+  const body = JSON.stringify(buildLlmApiBody(apiModelId, values, { stream }), null, 2)
+    .split('\n')
+    .map((line, index) => (index === 0 ? line : `  ${line}`))
+    .join('\n')
+
+  const resultVar = stream ? 'stream' : 'completion'
+  return {
+    clientSetup: `import OpenAI from "openai";
+
+const client = new OpenAI({
+  apiKey: "sk_live_...",
+  baseURL: "${baseUrl}",
+});`,
+    createCall: `const ${resultVar} = await client.chat.completions.create(${body});`,
+    resultVar,
+  }
 }
 
 export function buildJavaScriptSubmitSnippet(apiModelId: string, values: SchemaFormValues): string {
@@ -259,6 +428,31 @@ const generation = await client.post("/generations", {
 });`
 }
 
+export function buildJavaScriptLlmSubmitSnippet(
+  apiModelId: string,
+  values: SchemaFormValues,
+): string {
+  const { clientSetup, createCall } = buildJavaScriptLlmCreateCall(apiModelId, values, true)
+  return `${clientSetup}
+
+// stream: true — iterate chunks as they arrive
+${createCall}`
+}
+
+export function buildJavaScriptLlmNonStreamSnippet(
+  apiModelId: string,
+  values: SchemaFormValues,
+): string {
+  const { clientSetup, createCall } = buildJavaScriptLlmCreateCall(apiModelId, values, false)
+  return `${clientSetup}
+
+// stream: false — one shot JSON response
+${createCall}
+
+// Read the assistant message
+console.log(completion.choices[0]?.message?.content ?? "");`
+}
+
 export function buildJavaScriptPollSnippet(): string {
   return `// Poll until the task completes
 let status = generation;
@@ -272,7 +466,28 @@ if (status.status === "completed" || status.status === "succeeded") {
 }`
 }
 
-export function buildJavaScriptSnippet(apiModelId: string, values: SchemaFormValues): string {
+export function buildJavaScriptLlmStreamSnippet(): string {
+  return `// How to read stream:true results
+for await (const event of stream) {
+  const delta = event.choices?.[0]?.delta?.content;
+  if (delta) process.stdout.write(delta);
+}
+process.stdout.write("\\n");`
+}
+
+export function buildJavaScriptSnippet(
+  apiModelId: string,
+  values: SchemaFormValues,
+  category: ApiSnippetCategory = 'video',
+): string {
+  if (category === 'llm') {
+    return `${buildJavaScriptLlmSubmitSnippet(apiModelId, values)}
+
+${buildJavaScriptLlmStreamSnippet()}
+
+${buildJavaScriptLlmNonStreamSnippet(apiModelId, values)}`
+  }
+
   return `${buildJavaScriptSubmitSnippet(apiModelId, values)}
 
 ${buildJavaScriptPollSnippet()}`
@@ -282,7 +497,25 @@ function buildApiSubmitSnippetForMode(
   mode: ApiCodeViewMode,
   apiModelId: string,
   values: SchemaFormValues,
+  category: ApiSnippetCategory = 'video',
 ): string {
+  if (category === 'llm') {
+    switch (mode) {
+      case 'http':
+        return `${buildHttpLlmSubmitSnippet(apiModelId, values)}
+
+${buildHttpLlmStreamSnippet()}`
+      case 'python':
+        return `${buildPythonLlmSubmitSnippet(apiModelId, values)}
+
+${buildPythonLlmStreamSnippet()}`
+      case 'javascript':
+        return `${buildJavaScriptLlmSubmitSnippet(apiModelId, values)}
+
+${buildJavaScriptLlmStreamSnippet()}`
+    }
+  }
+
   switch (mode) {
     case 'http':
       return buildHttpSubmitSnippet(apiModelId, values)
@@ -293,7 +526,23 @@ function buildApiSubmitSnippetForMode(
   }
 }
 
-function buildApiPollSnippetForMode(mode: ApiCodeViewMode): string {
+function buildApiPollSnippetForMode(
+  mode: ApiCodeViewMode,
+  category: ApiSnippetCategory = 'video',
+  apiModelId = '',
+  values: SchemaFormValues = {},
+): string {
+  if (category === 'llm') {
+    switch (mode) {
+      case 'http':
+        return buildHttpLlmNonStreamSnippet(apiModelId, values)
+      case 'python':
+        return buildPythonLlmNonStreamSnippet(apiModelId, values)
+      case 'javascript':
+        return buildJavaScriptLlmNonStreamSnippet(apiModelId, values)
+    }
+  }
+
   switch (mode) {
     case 'http':
       return buildHttpPollSnippet()
@@ -308,12 +557,18 @@ export function buildApiSubmitSnippet(
   mode: ApiCodeViewMode,
   apiModelId: string,
   values: SchemaFormValues,
+  category: ApiSnippetCategory = 'video',
 ): string {
-  return buildApiSubmitSnippetForMode(mode, apiModelId, values)
+  return buildApiSubmitSnippetForMode(mode, apiModelId, values, category)
 }
 
-export function buildApiPollSnippet(mode: ApiCodeViewMode): string {
-  return buildApiPollSnippetForMode(mode)
+export function buildApiPollSnippet(
+  mode: ApiCodeViewMode,
+  category: ApiSnippetCategory = 'video',
+  apiModelId = '',
+  values: SchemaFormValues = {},
+): string {
+  return buildApiPollSnippetForMode(mode, category, apiModelId, values)
 }
 
 export function buildInputViewSnippet(
@@ -322,16 +577,17 @@ export function buildInputViewSnippet(
   apiModelId: string,
   values: SchemaFormValues,
   batchSize = 1,
+  category: ApiSnippetCategory = 'video',
 ): string {
   switch (mode) {
     case 'json':
       return buildPlaygroundJsonSnippet(modelId, values, batchSize)
     case 'http':
-      return buildHttpSnippet(apiModelId, values)
+      return buildHttpSnippet(apiModelId, values, category)
     case 'python':
-      return buildPythonSnippet(apiModelId, values)
+      return buildPythonSnippet(apiModelId, values, category)
     case 'javascript':
-      return buildJavaScriptSnippet(apiModelId, values)
+      return buildJavaScriptSnippet(apiModelId, values, category)
   }
 }
 
@@ -340,6 +596,7 @@ export function buildApiCodeSnippet(
   mode: ApiCodeViewMode,
   apiModelId: string,
   values: SchemaFormValues,
+  category: ApiSnippetCategory = 'video',
 ): string {
-  return buildInputViewSnippet(mode, '', apiModelId, values)
+  return buildInputViewSnippet(mode, '', apiModelId, values, 1, category)
 }

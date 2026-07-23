@@ -176,10 +176,19 @@ export default {
         codeExample: '代码示例',
         submitRequest: '提交请求',
         queryResult: '查询结果',
+        streamResult: '读取流式结果',
+        streamTrueExample: 'stream: true（流式）',
+        streamFalseExample: 'stream: false（非流式）',
         quickStart: '快速开始',
         quickStartDesc: '复制即可运行的示例代码，内容与 Playground 当前输入保持同步。',
         submitHint: '创建任务：{url}',
+        llmSubmitHint: '发起对话补全（SSE 流式）：{url}',
         pollHint: '轮询任务状态：{url}',
+        streamHint: '以 SSE 消费 token 流（同一请求，无需轮询）：{url}',
+        streamTrueHint:
+          'stream=true：同一请求返回 SSE。逐条读取 choices[0].delta.content，直到 data: [DONE]。接口：{url}',
+        streamFalseHint:
+          'stream=false：等待完整 JSON 后，从 choices[0].message.content 取整段回复。接口：{url}',
         syncHint: '代码示例与 Playground 表单输入实时同步。',
         parameters: '参数说明',
         colName: '参数',
@@ -227,6 +236,22 @@ export default {
           invalidJson: 'JSON 格式无效。',
           mustBeArray: '值必须是 JSON 数组。',
           mustBeStrings: '数组中的每一项都必须是字符串。',
+        },
+        jsonValue: {
+          invalidJson: 'JSON 格式无效。',
+          mustBeArray: '值必须是 JSON 数组。',
+          mustBeObject: '值必须是 JSON 对象。',
+        },
+        messages: {
+          empty: '尚未添加消息。添加一条消息以开始对话。',
+          contentPlaceholder: '输入消息内容…',
+          addMessage: '添加消息',
+          removeMessage: '删除消息',
+          roles: {
+            system: 'System',
+            user: 'User',
+            assistant: 'Assistant',
+          },
         },
       },
       tabs: {
@@ -288,6 +313,7 @@ export default {
         allStatuses: '全部状态',
         video: '视频',
         image: '图像',
+        llm: '大语言模型',
       },
       columns: {
         taskId: '任务 ID',

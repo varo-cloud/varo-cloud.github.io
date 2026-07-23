@@ -8,6 +8,7 @@ import AppIcon from '@/components/common/AppIcon.vue'
 import HighlightedCodeBlock from '@/components/common/HighlightedCodeBlock.vue'
 import HighlightedCodeEditor from '@/components/common/HighlightedCodeEditor.vue'
 import type { CodeHighlightLanguage } from '@/utils/code-highlight'
+import type { ModelCategory } from '@/types'
 import type { InputSchema, SchemaFormValues } from '@/types/schema'
 import { createDefaultFormValues, validateSchemaForm } from '@/utils/schema-form'
 import {
@@ -34,6 +35,9 @@ const props = defineProps<{
   quoteLoading?: boolean
   balanceUsd: number
   generating?: boolean
+  /** When false, hide batch multiplier and force 1x (e.g. LLM models). */
+  allowBatch?: boolean
+  category?: ModelCategory
   selectedModelDisplay?: ModelSelectorOption
   analyticsSource?: 'model_detail' | 'ai_generator'
   analyticsCapability?: string
@@ -75,6 +79,7 @@ const isCodeViewMode = computed(() =>
 
 const showResetButton = computed(() => inputViewMode.value === 'form')
 const showRunActions = computed(() => !isCodeViewMode.value)
+const batchEnabled = computed(() => props.allowBatch !== false)
 
 const formattedPrice = computed(() => `$${props.costUsd.toFixed(2)}`)
 
@@ -96,6 +101,7 @@ const codeSnippet = computed(() => {
     props.apiModelId,
     formValues.value,
     batchSize.value,
+    props.category ?? 'video',
   )
 })
 
@@ -110,8 +116,10 @@ function applyParsedJsonDraft() {
   if (!parsed) return false
 
   formValues.value = parsed.values
-  if (parsed.batchSize != null) {
+  if (batchEnabled.value && parsed.batchSize != null) {
     batchSize.value = parsed.batchSize
+  } else if (!batchEnabled.value) {
+    batchSize.value = 1
   }
   return true
 }
@@ -156,6 +164,16 @@ watch(batchSize, (size) => {
     jsonDraft.value = buildPlaygroundJsonSnippet(props.modelId, formValues.value, size)
   }
 })
+
+watch(
+  () => props.allowBatch,
+  (allow) => {
+    if (allow === false && batchSize.value !== 1) {
+      batchSize.value = 1
+    }
+  },
+  { immediate: true },
+)
 
 watch(
   () => props.modelId,
@@ -417,7 +435,10 @@ onBeforeUnmount(() => {
               <button
                 type="button"
                 class="input-panel__run"
-                :class="{ 'input-panel__run--cta': !userStore.isLoggedIn }"
+                :class="{
+                  'input-panel__run--cta': !userStore.isLoggedIn,
+                  'input-panel__run--solo': userStore.isLoggedIn && !batchEnabled,
+                }"
                 :disabled="isRunDisabled"
                 @click="handleRun"
               >
@@ -431,7 +452,7 @@ onBeforeUnmount(() => {
                 </span>
               </button>
 
-              <template v-if="userStore.isLoggedIn">
+              <template v-if="userStore.isLoggedIn && batchEnabled">
                 <span class="input-panel__run-divider" aria-hidden="true" />
                 <button
                   ref="batchTriggerRef"
@@ -665,6 +686,10 @@ onBeforeUnmount(() => {
 
 .input-panel__run--cta {
   justify-content: center;
+}
+
+.input-panel__run--solo {
+  border-radius: 8px;
 }
 
 .input-panel__run-label {

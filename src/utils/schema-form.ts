@@ -37,9 +37,22 @@ const MULTI_AUDIO_ARRAY_KEYS = new Set(['reference_audios'])
 
 const ARRAY_EDITOR_FIELD_KEYS: Record<string, SchemaWidget> = {
   multi_prompt: 'multi-prompt',
+  messages: 'messages',
   element_list: 'element-list',
   voice_list: 'voice-list',
 }
+
+/** Preferred form order for chat/LLM schemas (messages present). */
+const LLM_FIELD_ORDER = [
+  'messages',
+  'temperature',
+  'max_tokens',
+  'stream',
+  'stop',
+  'tool_choice',
+  'tools',
+  'response_format',
+]
 
 function isArrayOfObjects(property: SchemaProperty): boolean {
   return property.type === 'array' && property.items?.type === 'object'
@@ -90,8 +103,12 @@ export function resolveWidget(key: string, property: SchemaProperty): SchemaWidg
     if (MULTI_VIDEO_ARRAY_KEYS.has(key)) return 'multi-video-uploader'
     if (MULTI_AUDIO_ARRAY_KEYS.has(key)) return 'multi-audio-uploader'
     if (property.items?.type === 'string') return 'string-array'
+    // Bare / loosely typed arrays (e.g. LLM tools) — edit as JSON
+    if (!property.items || !property.items.type) return 'json'
     return 'placeholder'
   }
+
+  if (property.type === 'object') return 'json'
 
   if (property.type === 'string') {
     if (IMAGE_FIELD_KEYS.has(key)) return 'image-uploader'
@@ -114,11 +131,24 @@ export function resolveWidget(key: string, property: SchemaProperty): SchemaWidg
   return 'placeholder'
 }
 
+function resolvePropertyOrder(schema: InputSchema): string[] {
+  if (schema['x-order-properties']?.length) {
+    return schema['x-order-properties']
+  }
+
+  const keys = Object.keys(schema.properties)
+  if (!schema.properties.messages) return keys
+
+  const preferred = LLM_FIELD_ORDER.filter((key) => keys.includes(key))
+  const preferredSet = new Set(preferred)
+  return [...preferred, ...keys.filter((key) => !preferredSet.has(key))]
+}
+
 export function resolveSchemaFields(schema: InputSchema | undefined): ResolvedSchemaField[] {
   if (!schema?.properties) return []
 
   const requiredSet = new Set(schema.required ?? [])
-  const order = schema['x-order-properties'] ?? Object.keys(schema.properties)
+  const order = resolvePropertyOrder(schema)
   const seen = new Set<string>()
 
   const fields: ResolvedSchemaField[] = []
@@ -172,10 +202,14 @@ function defaultForProperty(key: string, property: SchemaProperty, widget: Schem
     case 'multi-video-uploader':
     case 'string-array':
       return []
+    case 'json':
+      return property.type === 'array' ? [] : null
     case 'multi-prompt':
     case 'element-list':
     case 'voice-list':
       return []
+    case 'messages':
+      return [{ role: 'user', content: '' }]
     case 'voice-select':
       return property.default ?? property.enum?.[0] ?? DEFAULT_KLING_VOICE_ID
     case 'placeholder':
@@ -245,6 +279,18 @@ export function hasUsableMultiPrompt(values: SchemaFormValues): boolean {
   )
 }
 
+/** messages 中是否存在可用对话内容（有非空 content） */
+export function hasUsableMessages(values: SchemaFormValues): boolean {
+  const messages = values.messages
+  if (!Array.isArray(messages) || messages.length === 0) return false
+  return messages.some(
+    (message) =>
+      message != null &&
+      typeof message === 'object' &&
+      isNonEmptyString((message as { content?: unknown }).content),
+  )
+}
+
 function hasPromptMultiExclusivity(schema: InputSchema): boolean {
   const properties = schema.properties
   return Boolean(properties?.prompt && properties?.multi_prompt)
@@ -301,6 +347,11 @@ export function validateSchemaForm(
 
       // 已添加镜头但未填写 prompt，视为无效
       if (field.key === 'multi_prompt' && value.length > 0 && !usableMultiPrompt) {
+        invalid.add(field.key)
+      }
+
+      // messages 必填或已添加但内容为空，视为无效
+      if (field.key === 'messages' && value.length > 0 && !hasUsableMessages(values)) {
         invalid.add(field.key)
       }
     }

@@ -12,10 +12,13 @@ interface ApiPlaygroundGeneration {
   model: string
   created_at: number
   output?: {
-    type?: 'image' | 'video'
+    type?: 'image' | 'video' | 'text'
     url?: string
+    text?: string
+    content?: string
   }
   output_url?: string
+  output_text?: string
   progress?: number
   usage?: {
     cost_usd: number
@@ -37,7 +40,8 @@ export interface PlaygroundGenerationSnapshot {
   createdAt: number
   progress?: number
   outputUrl?: string
-  outputType?: 'image' | 'video'
+  outputText?: string
+  outputType?: 'image' | 'video' | 'text'
   usage?: {
     cost_usd: number
   }
@@ -60,9 +64,19 @@ function resolveOutputUrl(raw: ApiPlaygroundGeneration): string | undefined {
   return raw.output?.url ?? raw.output_url
 }
 
+function resolveOutputText(raw: ApiPlaygroundGeneration): string | undefined {
+  const fromOutput = raw.output?.text ?? raw.output?.content
+  if (typeof fromOutput === 'string' && fromOutput.trim()) return fromOutput
+  if (typeof raw.output_text === 'string' && raw.output_text.trim()) return raw.output_text
+  return undefined
+}
+
 function mapPlaygroundGenerationSnapshot(raw: ApiPlaygroundGeneration): PlaygroundGenerationSnapshot {
   const outputUrl = resolveOutputUrl(raw)
-  const outputType = raw.output?.type
+  const outputText = resolveOutputText(raw)
+  const outputType =
+    raw.output?.type
+    ?? (outputText ? 'text' as const : undefined)
     ?? (outputUrl ? resolveMediaPreviewKind(outputUrl) as 'image' | 'video' : undefined)
 
   return {
@@ -72,6 +86,7 @@ function mapPlaygroundGenerationSnapshot(raw: ApiPlaygroundGeneration): Playgrou
     createdAt: normalizeCreatedAt(raw.created_at),
     progress: raw.progress,
     outputUrl,
+    outputText,
     outputType,
     usage: raw.usage,
     errorMessage: raw.error?.message,
@@ -82,6 +97,7 @@ export function mapPlaygroundGenerationResult(
   snapshot: PlaygroundGenerationSnapshot,
   fallbackUnitCostUsd = 0,
 ): PlaygroundGenerationResult {
+  const type = snapshot.outputType ?? (snapshot.outputText ? 'text' : 'image')
   return {
     id: snapshot.id,
     object: 'generation',
@@ -89,8 +105,9 @@ export function mapPlaygroundGenerationResult(
     model: snapshot.model,
     created_at: snapshot.createdAt,
     output: {
-      type: snapshot.outputType ?? 'image',
+      type,
       url: snapshot.outputUrl ?? '',
+      text: snapshot.outputText,
     },
     usage: snapshot.usage ?? { cost_usd: fallbackUnitCostUsd },
   }

@@ -71,6 +71,7 @@ const quoteUnitCostUsd = playgroundQuote.unitCostUsd
 
 const displayTitle = computed(() => model.value?.displayName ?? '')
 const modelExamples = computed(() => model.value?.examples ?? [])
+const isLlmModel = computed(() => model.value?.category === 'llm')
 
 const {
   selectedExampleId,
@@ -92,6 +93,7 @@ async function loadModel(slug: string) {
   error.value = null
   resetGeneration()
   inputSchema.value = null
+  batchSize.value = 1
 
   try {
     const detail = await fetchModelDetail(slug)
@@ -99,6 +101,9 @@ async function loadModel(slug: string) {
 
     model.value = detail
     inputSchema.value = schema
+    if (detail.category === 'llm') {
+      batchSize.value = 1
+    }
     if (!detail.examples?.length) {
       formValues.value = createDefaultFormValues(schema ?? undefined)
     }
@@ -128,7 +133,7 @@ function handleRun(values: SchemaFormValues, count: number) {
   void runGeneration({
     modelSlug: model.value.id,
     values,
-    batchSize: count,
+    batchSize: model.value.category === 'llm' ? 1 : count,
     unitCostUsd: quoteUnitCostUsd.value,
     analyticsSource: 'model_detail',
     analyticsCapability: model.value.capability,
@@ -153,7 +158,8 @@ async function handleViewHistoryDetail(taskId: string) {
       formValues.value = requestToFormValues(detail.request, inputSchema.value)
     }
 
-    batchSize.value = resolveBatchSizeFromRequest(detail.request)
+    batchSize.value =
+      model.value.category === 'llm' ? 1 : resolveBatchSizeFromRequest(detail.request)
     activeTab.value = 'playground'
     restoreFromDetail(detail)
   } catch {
@@ -243,6 +249,8 @@ watch(
           :quote-loading="quoteLoading"
           :balance-usd="balanceUsd"
           :generating="isGenerating"
+          :allow-batch="!isLlmModel"
+          :category="model.category"
           :form-sync-key="selectedExampleId"
           analytics-source="model_detail"
           :analytics-capability="model.capability"
@@ -270,6 +278,7 @@ watch(
         :api-model-id="model.id"
         :model-name="model.displayName"
         :form-values="formValues"
+        :category="model.category"
         :readme-md="model.readmeMd"
         :faq="model.faq"
       />

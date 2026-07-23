@@ -710,7 +710,7 @@ cost_usd = credits ÷ 100
 
 ## OpenAI 兼容接口（`/v1`）
 
-`/v1` 路由提供与 OpenAI API 格式兼容的视频生成接口，可直接使用 OpenAI Python 客户端或任何支持 OpenAI API 格式的工具对接。
+`/v1` 路由提供与 OpenAI API 格式兼容的接口：视频/图片生成走 `/generations`（创建 + 轮询），LLM 对话走 `/chat/completions`（同请求 SSE 流式返回）。可直接使用 OpenAI Python / Node 客户端对接。
 
 **认证方式：** `sk_live_` API Key，与 `/v2/*` 相同。`GET /v1/models` 无需认证。计费与结算规则同 `/v2`。
 
@@ -823,6 +823,199 @@ cost_usd = credits ÷ 100
 
 > 别名：`POST /v1/generations`、`GET /v1/generations/{id}` 等价于
 > `/v1/videos/generations`（前端使用前者，旧路径保留）。
+
+---
+
+### POST /v1/chat/completions
+
+LLM（`category=llm`）对话补全接口，OpenAI Chat Completions 兼容。与视频/图片的「创建任务 + 轮询」不同，**结果通过同一请求的 SSE 流返回**，无需再轮询。
+
+**认证方式：** `sk_live_` API Key。
+
+**请求体（核心字段）**
+```json
+{
+  "model": "openai/gpt-5.2",
+  "messages": [
+    { "role": "user", "content": "Explain this paradox through a mathematical proof" }
+  ],
+  "stream": true,
+  "temperature": 1,
+  "max_tokens": 1024,
+  "stop": [],
+  "tools": [],
+  "tool_choice": "auto",
+  "response_format": { "type": "text" }
+}
+```
+
+| 字段 | 类型 | 必填 | 说明 |
+|---|---|---|---|
+| `model` | string | ✅ | 目录 slug（与模型详情页 `id` 一致） |
+| `messages` | array | ✅ | 对话消息，每项含 `role`（`system`/`user`/`assistant`）与 `content` |
+| `stream` | boolean | — | 默认 `false`；为 `true` 时返回 `text/event-stream` |
+| `temperature` | number | — | `0`–`2` |
+| `max_tokens` | integer | — | 生成上限 |
+| `stop` | string[] | — | 停止序列 |
+| `tools` / `tool_choice` / `response_format` | — | — | 可选高级参数，结构与 OpenAI 兼容 |
+
+**流式响应（`stream: true`）**
+
+响应头：`Content-Type: text/event-stream`。正文为 SSE，每行 `data: <json>`，结束行为 `data: [DONE]`。
+
+```text
+data: {"id":"chatcmpl-...","object":"chat.completion.chunk","created":1781179001,"model":"openai/gpt-5.2","choices":[{"index":0,"delta":{"role":"assistant","content":""},"finish_reason":null}]}
+
+data: {"id":"chatcmpl-...","object":"chat.completion.chunk","choices":[{"index":0,"delta":{"content":"The"},"finish_reason":null}]}
+
+data: {"id":"chatcmpl-...","object":"chat.completion.chunk","choices":[{"index":0,"delta":{"content":" picture"},"finish_reason":null}]}
+
+data: [DONE]
+```
+
+消费方式：逐条读取 `choices[0].delta.content` 并拼接，直到 `[DONE]`。
+
+**非流式响应（`stream: false`）**
+```json
+{
+  "id": "chatcmpl-...",
+  "object": "chat.completion",
+  "created": 1781179001,
+  "model": "openai/gpt-5.2",
+  "choices": [
+    {
+      "index": 0,
+      "message": { "role": "assistant", "content": "The picture is the usual “ball”..." },
+      "finish_reason": "stop"
+    }
+  ],
+  "usage": {
+    "prompt_tokens": 42,
+    "completion_tokens": 128,
+    "total_tokens": 170
+  }
+}
+```
+
+**错误码**
+| 状态码 | 原因 |
+|---|---|
+| 400 | 参数非法（如缺少 `messages`） |
+| 401 | API Key 无效或缺失 |
+| 402 | 余额不足 |
+| 500 | 模型上游未配置（已退款） |
+| 502 | 上游请求失败（已退款） |
+
+**Python 示例（`stream: true`）**
+```python
+from openai import OpenAI
+
+client = OpenAI(api_key="sk_live_...", base_url="https://<your-host>/v1")
+
+stream = client.chat.completions.create(
+    model="openai/gpt-5.2",
+    messages=[
+        {"role": "user", "content": "Explain this paradox through a mathematical proof"},
+    ],
+    stream=True,
+)
+
+# 逐 chunk 读取 delta.content
+for event in stream:
+    delta = event.choices[0].delta.content if event.choices else None
+    if delta:
+        print(delta, end="", flush=True)
+print()
+```
+
+**Python 示例（`stream: false`）**
+```python
+from openai import OpenAI
+
+client = OpenAI(api_key="sk_live_...", base_url="https://<your-host>/v1")
+
+completion = client.chat.completions.create(
+    model="openai/gpt-5.2",
+    messages=[
+        {"role": "user", "content": "Explain this paradox through a mathematical proof"},
+    ],
+    stream=False,
+)
+
+# 一次性读取完整回复
+print(completion.choices[0].message.content)
+```
+
+**JavaScript 示例（`stream: true`）**
+```javascript
+import OpenAI from "openai";
+
+const client = new OpenAI({
+  apiKey: "sk_live_...",
+  baseURL: "https://<your-host>/v1",
+});
+
+const stream = await client.chat.completions.create({
+  model: "openai/gpt-5.2",
+  messages: [
+    { role: "user", content: "Explain this paradox through a mathematical proof" },
+  ],
+  stream: true,
+});
+
+for await (const event of stream) {
+  const delta = event.choices?.[0]?.delta?.content;
+  if (delta) process.stdout.write(delta);
+}
+process.stdout.write("\n");
+```
+
+**JavaScript 示例（`stream: false`）**
+```javascript
+import OpenAI from "openai";
+
+const client = new OpenAI({
+  apiKey: "sk_live_...",
+  baseURL: "https://<your-host>/v1",
+});
+
+const completion = await client.chat.completions.create({
+  model: "openai/gpt-5.2",
+  messages: [
+    { role: "user", content: "Explain this paradox through a mathematical proof" },
+  ],
+  stream: false,
+});
+
+console.log(completion.choices[0]?.message?.content ?? "");
+```
+
+**cURL 示例（`stream: true`）**
+```bash
+curl -N -X POST "https://<your-host>/v1/chat/completions" \
+  -H "Authorization: Bearer sk_live_..." \
+  -H "Content-Type: application/json" \
+  -H "Accept: text/event-stream" \
+  -d '{
+    "model": "openai/gpt-5.2",
+    "messages": [{"role":"user","content":"Hello"}],
+    "stream": true
+  }'
+# 逐行解析 data: {...}，取 choices[0].delta.content，直到 data: [DONE]
+```
+
+**cURL 示例（`stream: false`）**
+```bash
+response=$(curl -s -X POST "https://<your-host>/v1/chat/completions" \
+  -H "Authorization: Bearer sk_live_..." \
+  -H "Content-Type: application/json" \
+  -d '{
+    "model": "openai/gpt-5.2",
+    "messages": [{"role":"user","content":"Hello"}],
+    "stream": false
+  }')
+echo "$response" | jq -r '.choices[0].message.content'
+```
 
 ---
 

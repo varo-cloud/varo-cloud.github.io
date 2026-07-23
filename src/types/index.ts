@@ -391,8 +391,9 @@ export interface PlaygroundGenerationResult {
   model: string
   created_at: number
   output: {
-    type: 'image' | 'video'
+    type: 'image' | 'video' | 'text'
     url: string
+    text?: string
   }
   usage?: {
     cost_usd: number
@@ -441,8 +442,9 @@ export interface ImageGenerationRequest {
 export type GenerationRequest = VideoGenerationRequest | ImageGenerationRequest
 
 export interface GenerationResult {
-  type: 'video' | 'image'
+  type: 'video' | 'image' | 'text'
   output_url: string | null
+  text?: string | null
   error: { message: string } | null
 }
 
@@ -466,7 +468,7 @@ export type GenerationTaskStatus = 'queued' | 'processing' | 'succeeded' | 'fail
 export interface GenerationListItem {
   taskId: string
   model: string
-  category: 'video' | 'image'
+  category: ModelCategory
   capability: string
   status: GenerationTaskStatus
   duration: number | null
@@ -493,5 +495,5 @@ export interface FetchGenerationsParams {
   status?: GenerationTaskStatus
   model?: string
   invocationChannel?: string
-  category?: 'video' | 'image'
+  category?: ModelCategory
 }
