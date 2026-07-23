@@ -16,7 +16,6 @@ const { t } = useI18n()
 const userStore = useUserStore()
 const modelPrefs = useModelPreferencesStore()
 const isFavourite = ref(props.model.isFavourited)
-const imageLoaded = ref(false)
 
 watch(
   () => props.model.isFavourited,
@@ -33,21 +32,6 @@ const logo = computed(() => {
   const url = props.model.publisherLogoUrl?.trim()
   return url ? assetUrl(url) : null
 })
-
-watch(thumb, () => {
-  imageLoaded.value = false
-})
-
-function onImageLoad() {
-  imageLoaded.value = true
-}
-
-function onImageRef(el: unknown) {
-  const img = el as HTMLImageElement | null
-  if (img?.complete && img.naturalWidth > 0) {
-    imageLoaded.value = true
-  }
-}
 
 function goDetail() {
   if (userStore.isLoggedIn) {
@@ -76,11 +60,8 @@ async function toggleFavourite(event: Event) {
   <article class="home-featured-card" @click="goDetail">
     <img
       class="home-featured-card__img"
-      :class="{ 'is-loaded': imageLoaded }"
       :src="thumb"
       :alt="model.displayName"
-      :ref="onImageRef"
-      @load="onImageLoad"
     />
     <button
       type="button"
@@ -136,7 +117,7 @@ async function toggleFavourite(event: Event) {
   transform: translateY(-2px);
 }
 
-.home-featured-card:hover .home-featured-card__img.is-loaded {
+.home-featured-card:hover .home-featured-card__img {
   transform: scale(1.04);
 }
 
@@ -144,14 +125,7 @@ async function toggleFavourite(event: Event) {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  opacity: 0;
-  transition:
-    opacity 0.35s ease,
-    transform 0.25s ease;
-}
-
-.home-featured-card__img.is-loaded {
-  opacity: 1;
+  transition: transform 0.25s ease;
 }
 
 .home-featured-card__fav {

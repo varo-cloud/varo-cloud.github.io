@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onMounted, ref, watch } from 'vue'
+import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { fetchModelFacets } from '@/api/models'
 import { useLocaleRouter } from '@/composables/useLocaleRouter'
@@ -29,7 +29,6 @@ const { push } = useLocaleRouter()
 const publishers = ref<PublisherFacetItem[]>([])
 const page = ref(0)
 const loading = ref(true)
-const loadedImages = ref<Record<string, boolean>>({})
 
 const showPagination = computed(() => publishers.value.length > PAGINATION_MIN)
 const pageCount = computed(() =>
@@ -46,7 +45,7 @@ const items = computed(() =>
   visiblePublishers.value.map((publisher, index) => ({
     slug: publisher.slug,
     name: publisher.name,
-    meta: t('pages.home.showcase.itemMeta', { count: publisher.count }),
+    count: publisher.count,
     image: resolveCover(publisher, page.value * PAGE_SIZE + index),
   })),
 )
@@ -66,19 +65,6 @@ function openPublisher(slug: string) {
   push({ name: 'models', query: { publisher: slug } })
 }
 
-function onImageLoad(slug: string) {
-  // Avoid reassigning when already loaded — inline :ref rebinds each render.
-  if (loadedImages.value[slug]) return
-  loadedImages.value = { ...loadedImages.value, [slug]: true }
-}
-
-function onImageRef(slug: string, el: unknown) {
-  const img = el as HTMLImageElement | null
-  if (img?.complete && img.naturalWidth > 0) {
-    onImageLoad(slug)
-  }
-}
-
 async function loadPublishers() {
   loading.value = true
   try {
@@ -91,10 +77,6 @@ async function loadPublishers() {
     loading.value = false
   }
 }
-
-watch(page, () => {
-  loadedImages.value = {}
-})
 
 onMounted(() => {
   void loadPublishers()
@@ -132,16 +114,15 @@ onMounted(() => {
         >
           <img
             class="home-showcase__img"
-            :class="{ 'is-loaded': loadedImages[item.slug] }"
             :src="item.image"
             :alt="item.name"
             loading="lazy"
-            :ref="(el) => onImageRef(item.slug, el)"
-            @load="onImageLoad(item.slug)"
           />
           <div class="home-showcase__body">
             <p class="home-showcase__name">{{ item.name }}</p>
-            <p class="home-showcase__meta">{{ item.meta }}</p>
+            <p class="home-showcase__meta">
+              {{ t('pages.home.showcase.itemMeta', { count: item.count }) }}
+            </p>
           </div>
         </button>
       </div>
@@ -221,7 +202,7 @@ onMounted(() => {
   transform: translateY(-2px);
 }
 
-.home-showcase__card:hover .home-showcase__img.is-loaded {
+.home-showcase__card:hover .home-showcase__img {
   transform: scale(1.04);
 }
 
@@ -229,14 +210,7 @@ onMounted(() => {
   width: 100%;
   height: 100%;
   object-fit: cover;
-  opacity: 0;
-  transition:
-    opacity 0.35s ease,
-    transform 0.25s ease;
-}
-
-.home-showcase__img.is-loaded {
-  opacity: 1;
+  transition: transform 0.25s ease;
 }
 
 .home-showcase__body {
