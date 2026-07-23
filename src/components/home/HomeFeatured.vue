@@ -216,7 +216,7 @@ onMounted(() => {
   font-size: 24px;
   font-weight: 500;
   line-height: 30px;
-  color: #ff9800;
+  color: #06b6d4;
 }
 
 .home-featured__title {
