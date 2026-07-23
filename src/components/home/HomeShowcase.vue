@@ -67,6 +67,8 @@ function openPublisher(slug: string) {
 }
 
 function onImageLoad(slug: string) {
+  // Avoid reassigning when already loaded — inline :ref rebinds each render.
+  if (loadedImages.value[slug]) return
   loadedImages.value = { ...loadedImages.value, [slug]: true }
 }
 
