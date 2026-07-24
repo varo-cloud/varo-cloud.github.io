@@ -353,7 +353,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="models-page">
+  <div class="models-page" data-seo-ready="models">
     <section class="models-hero" aria-labelledby="models-hero-title">
       <img
         class="models-hero__bg"

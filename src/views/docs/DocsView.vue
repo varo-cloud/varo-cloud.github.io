@@ -7,6 +7,8 @@ import { docsUrl } from '@/utils/docsUrl'
 const { t } = useI18n()
 
 onMounted(() => {
+  // Skip external redirect during Playwright prerender so meta stays on this host.
+  if (navigator.webdriver) return
   const url = docsUrl()
   if (url) {
     window.location.replace(url)
@@ -15,8 +17,10 @@ onMounted(() => {
 </script>
 
 <template>
-  <PagePlaceholder
-    :title="t('pages.docs.title')"
-    :description="t('pages.docs.placeholder')"
-  />
+  <div data-seo-ready="docs">
+    <PagePlaceholder
+      :title="t('pages.docs.title')"
+      :description="t('pages.docs.placeholder')"
+    />
+  </div>
 </template>

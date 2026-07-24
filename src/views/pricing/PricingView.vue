@@ -212,7 +212,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="pricing-page">
+  <div class="pricing-page" data-seo-ready="pricing">
     <section class="pricing-hero" aria-labelledby="pricing-hero-title">
       <img
         class="pricing-hero__bg"

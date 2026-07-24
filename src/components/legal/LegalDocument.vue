@@ -1,14 +1,11 @@
 <script setup lang="ts">
-import { computed, onUnmounted, watch } from 'vue'
+import { computed } from 'vue'
 import { marked } from 'marked'
 import '@/styles/legal-document.css'
 
 const props = defineProps<{
   content: string
-  pageTitle?: string
 }>()
-
-const SITE_TITLE = 'Varo.cloud — The Port of AI Value'
 
 const renderer = new marked.Renderer()
 
@@ -33,20 +30,6 @@ marked.setOptions({
 const html = computed(() => {
   if (!props.content.trim()) return ''
   return marked.parse(props.content) as string
-})
-
-watch(
-  () => props.pageTitle,
-  (title) => {
-    if (title) {
-      document.title = title
-    }
-  },
-  { immediate: true },
-)
-
-onUnmounted(() => {
-  document.title = SITE_TITLE
 })
 </script>
 

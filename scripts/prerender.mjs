@@ -1,6 +1,6 @@
 /**
- * Post-build prerender for marketing home routes.
- * Order: SPA shell already copied to 404.html; this overwrites index.html / zh-CN/index.html.
+ * Post-build prerender for public (no-auth) marketing routes.
+ * Order: SPA shell already copied to 404.html; this writes route HTML under dist/.
  */
 import { createServer } from 'node:http'
 import { readFileSync, writeFileSync, mkdirSync, existsSync, statSync } from 'node:fs'
@@ -27,9 +27,98 @@ const MIME = {
   '.ico': 'image/x-icon',
 }
 
+/** Public marketing routes (no login). Model detail is dynamic — runtime Head only. */
 const ROUTES = [
-  { path: '/', outFile: 'index.html', waitText: 'The Generative AI Cloud for Creators' },
-  { path: '/zh-CN', outFile: join('zh-CN', 'index.html'), waitText: '面向创作者的生成式 AI 云' },
+  {
+    path: '/',
+    outFile: 'index.html',
+    ready: '[data-seo-ready="home"]',
+    waitSelector: '#home-hero-title',
+    waitText: 'The Generative AI Cloud for Creators',
+  },
+  {
+    path: '/zh-CN',
+    outFile: join('zh-CN', 'index.html'),
+    ready: '[data-seo-ready="home"]',
+    waitSelector: '#home-hero-title',
+    waitText: '面向创作者的生成式 AI 云',
+  },
+  {
+    path: '/models',
+    outFile: join('models', 'index.html'),
+    ready: '[data-seo-ready="models"]',
+    waitSelector: '#models-hero-title',
+    waitText: 'All Your AI Models, in One Place',
+  },
+  {
+    path: '/zh-CN/models',
+    outFile: join('zh-CN', 'models', 'index.html'),
+    ready: '[data-seo-ready="models"]',
+    waitSelector: '#models-hero-title',
+    waitText: '所有 AI 模型，集于一处',
+  },
+  {
+    path: '/pricing',
+    outFile: join('pricing', 'index.html'),
+    ready: '[data-seo-ready="pricing"]',
+    waitSelector: '#pricing-hero-title',
+    waitText: 'Image & Video Models',
+  },
+  {
+    path: '/zh-CN/pricing',
+    outFile: join('zh-CN', 'pricing', 'index.html'),
+    ready: '[data-seo-ready="pricing"]',
+    waitSelector: '#pricing-hero-title',
+    waitText: '图像与视频模型',
+  },
+  {
+    path: '/ai-generator',
+    outFile: join('ai-generator', 'index.html'),
+    ready: '[data-seo-ready="ai-generator"]',
+    titleIncludes: 'AI Generator',
+  },
+  {
+    path: '/zh-CN/ai-generator',
+    outFile: join('zh-CN', 'ai-generator', 'index.html'),
+    ready: '[data-seo-ready="ai-generator"]',
+    titleIncludes: 'AI 生成器',
+  },
+  {
+    path: '/docs',
+    outFile: join('docs', 'index.html'),
+    ready: '[data-seo-ready="docs"]',
+    titleIncludes: 'Documentation',
+  },
+  {
+    path: '/zh-CN/docs',
+    outFile: join('zh-CN', 'docs', 'index.html'),
+    ready: '[data-seo-ready="docs"]',
+    titleIncludes: '文档',
+  },
+  {
+    path: '/terms',
+    outFile: join('terms', 'index.html'),
+    ready: '[data-seo-ready="terms"]',
+    titleIncludes: 'Terms of Service',
+  },
+  {
+    path: '/zh-CN/terms',
+    outFile: join('zh-CN', 'terms', 'index.html'),
+    ready: '[data-seo-ready="terms"]',
+    titleIncludes: '服务条款',
+  },
+  {
+    path: '/privacy',
+    outFile: join('privacy', 'index.html'),
+    ready: '[data-seo-ready="privacy"]',
+    titleIncludes: 'Privacy Policy',
+  },
+  {
+    path: '/zh-CN/privacy',
+    outFile: join('zh-CN', 'privacy', 'index.html'),
+    ready: '[data-seo-ready="privacy"]',
+    titleIncludes: '隐私政策',
+  },
 ]
 
 function contentType(filePath) {
@@ -78,15 +167,27 @@ async function prerenderRoute(browser, baseUrl, route) {
   console.log(`[prerender] visiting ${url}`)
 
   await page.goto(url, { waitUntil: 'load', timeout: 60_000 })
-  await page.waitForSelector('[data-home-ready]', { timeout: 30_000 })
-  await page.waitForFunction(
-    (text) => {
-      const h1 = document.querySelector('#home-hero-title')
-      return Boolean(h1 && h1.textContent && h1.textContent.includes(text))
-    },
-    route.waitText,
-    { timeout: 30_000 },
-  )
+  await page.waitForSelector(route.ready, { timeout: 30_000 })
+
+  if (route.waitSelector && route.waitText) {
+    await page.waitForFunction(
+      ({ selector, text }) => {
+        const el = document.querySelector(selector)
+        return Boolean(el && el.textContent && el.textContent.includes(text))
+      },
+      { selector: route.waitSelector, text: route.waitText },
+      { timeout: 30_000 },
+    )
+  }
+
+  if (route.titleIncludes) {
+    await page.waitForFunction(
+      (fragment) => typeof document.title === 'string' && document.title.includes(fragment),
+      route.titleIncludes,
+      { timeout: 30_000 },
+    )
+  }
+
   // Allow unhead to flush meta tags
   await new Promise((r) => setTimeout(r, 500))
 

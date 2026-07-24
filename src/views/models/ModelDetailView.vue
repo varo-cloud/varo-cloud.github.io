@@ -2,6 +2,7 @@
 import { computed, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import { useHead } from '@unhead/vue'
 import { useLocaleRouter } from '@/composables/useLocaleRouter'
 import { NSpin } from 'naive-ui'
 import { fetchModelDetail } from '@/api/models'
@@ -71,6 +72,28 @@ const quoteUnitCostUsd = playgroundQuote.unitCostUsd
 
 const displayTitle = computed(() => model.value?.displayName ?? '')
 const modelExamples = computed(() => model.value?.examples ?? [])
+
+const slugParam = computed(() =>
+  typeof route.params.slug === 'string' ? route.params.slug : '',
+)
+
+useHead(
+  computed(() => {
+    const name = model.value?.displayName || slugParam.value || 'Model'
+    const description =
+      model.value?.description?.trim() || t('pages.models.seo.description')
+    return {
+      title: t('pages.models.seo.detailTitle', { name }),
+      meta: [
+        { name: 'description', content: description },
+        { property: 'og:title', content: t('pages.models.seo.detailTitle', { name }) },
+        { property: 'og:description', content: description },
+        { name: 'twitter:title', content: t('pages.models.seo.detailTitle', { name }) },
+        { name: 'twitter:description', content: description },
+      ],
+    }
+  }),
+)
 
 const {
   selectedExampleId,
@@ -173,7 +196,7 @@ watch(
 </script>
 
 <template>
-  <div class="model-detail-page">
+  <div class="model-detail-page" data-seo-ready="model-detail">
     <div v-if="loading" class="model-detail-page__state">
       <NSpin size="large" />
     </div>

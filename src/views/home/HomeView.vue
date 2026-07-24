@@ -35,7 +35,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="home-page" data-home-ready>
+  <div class="home-page" data-home-ready data-seo-ready="home">
     <HomeHero />
     <HomeFeatured />
     <HomeDevelopers />
