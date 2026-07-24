@@ -207,7 +207,7 @@ function viewMore() {
   font-size: 16px;
   font-weight: 500;
   line-height: 1.5;
-  color: #9b9dab;
+  color: #222;
 }
 
 .home-pricing__table-wrap {

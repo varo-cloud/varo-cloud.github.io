@@ -105,10 +105,10 @@ function getStarted() {
 .home-creators__subtitle {
   margin: 20px 0 0;
   max-width: 507px;
-  font-size: 20px;
+  font-size: 16px;
   font-weight: 500;
   line-height: 1.4;
-  color: #9b9dab;
+  color: #222;
 }
 
 .home-creators__actions {
