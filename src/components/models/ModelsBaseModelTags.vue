@@ -42,8 +42,8 @@ function selectBaseModel(slug: string) {
       @click="selectBaseModel(item.slug)"
     >
       <img
-        v-if="item.icon_url || item.thumbnail_url"
-        :src="item.icon_url || item.thumbnail_url || undefined"
+        v-if="item.icon_url"
+        :src="item.icon_url"
         alt=""
         aria-hidden="true"
         class="models-base-tag__icon"
