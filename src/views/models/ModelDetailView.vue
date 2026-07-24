@@ -193,7 +193,6 @@ watch(
           :slug="model.id"
           :description="model.description"
           :thumbnail-url="model.thumbnailUrl"
-          :prefilled-model="model"
           @select="handleModelSelect"
         />
       </div>
