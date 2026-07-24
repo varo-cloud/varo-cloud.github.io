@@ -97,6 +97,8 @@ export interface FetchModelsParams {
   category?: ModelCategory
   capability?: string
   publisher?: string
+  /** Filter by base model slug, e.g. `seedance-2.0` */
+  base_model?: string
 }
 
 export interface FacetItem {
@@ -113,10 +115,19 @@ export interface PublisherFacetItem {
   cover_url?: string | null
 }
 
+export interface BaseModelFacetItem {
+  slug: string
+  category: ModelCategory
+  icon_url: string | null
+  thumbnail_url: string | null
+  count: number
+}
+
 export interface ModelFacetsResponse {
   categories: FacetItem[]
   capabilities: FacetItem[]
   publishers: PublisherFacetItem[]
+  base_models: BaseModelFacetItem[]
 }
 
 export interface ModelHistoryEntry {

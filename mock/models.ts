@@ -261,6 +261,11 @@ function filterModels(query: Record<string, string>) {
     filtered = filtered.filter((model) => getPublisher(model.slug).slug === publisher)
   }
 
+  const baseModel = query.base_model?.trim()
+  if (baseModel) {
+    filtered = filtered.filter((model) => extractBaseModelSlug(model.slug) === baseModel)
+  }
+
   const q = query.q?.trim().toLowerCase()
   if (q) {
     filtered = filtered.filter((model) => {
@@ -276,12 +281,26 @@ function filterModels(query: Record<string, string>) {
   return filtered
 }
 
+function extractBaseModelSlug(slug: string): string {
+  return slug.split('/')[0] ?? slug
+}
+
 function buildFacets(catalog: ModelCatalogEntry[]) {
   const categoryBaseIds = new Map<string, Set<number>>()
   const capabilityCounts = new Map<string, number>()
   const publisherBaseIds = new Map<
     string,
     { slug: string; name: string; logo_url: string | null; ids: Set<number> }
+  >()
+  const baseModelFacets = new Map<
+    string,
+    {
+      slug: string
+      category: ModelCategory
+      icon_url: string | null
+      thumbnail_url: string | null
+      count: number
+    }
   >()
 
   for (const item of catalog) {
@@ -301,6 +320,22 @@ function buildFacets(catalog: ModelCatalogEntry[]) {
       })
     }
     publisherBaseIds.get(publisher.slug)!.ids.add(item.model_id)
+
+    const baseSlug = extractBaseModelSlug(item.slug)
+    const existing = baseModelFacets.get(baseSlug)
+    if (existing) {
+      existing.count += 1
+      if (!existing.icon_url && item.icon_url) existing.icon_url = item.icon_url
+      if (!existing.thumbnail_url && item.thumbnail_url) existing.thumbnail_url = item.thumbnail_url
+    } else {
+      baseModelFacets.set(baseSlug, {
+        slug: baseSlug,
+        category: item.category,
+        icon_url: item.icon_url ?? null,
+        thumbnail_url: item.thumbnail_url ?? null,
+        count: 1,
+      })
+    }
   }
 
   return {
@@ -322,6 +357,9 @@ function buildFacets(catalog: ModelCatalogEntry[]) {
             : `/assets/home/showcase-${String((index % 10) + 1).padStart(2, '0')}.${index % 10 === 1 ? 'jpeg' : 'png'}`,
       }))
       .sort((a, b) => b.count - a.count || a.slug.localeCompare(b.slug)),
+    base_models: [...baseModelFacets.values()].sort(
+      (a, b) => b.count - a.count || a.slug.localeCompare(b.slug),
+    ),
   }
 }
 

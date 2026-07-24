@@ -12,7 +12,7 @@ import { useModelPreferencesStore } from '@/stores/modelPreferences'
 import { useUserStore } from '@/stores/user'
 import { assetUrl } from '@/utils/assetUrl'
 import { docsUrl } from '@/utils/docsUrl'
-import type { FacetItem, Model, ModelCategory, PublisherFacetItem } from '@/types'
+import type { BaseModelFacetItem, FacetItem, Model, ModelCategory, PublisherFacetItem } from '@/types'
 
 const PAGE_SIZE = 20
 const SEARCH_DEBOUNCE_MS = 300
@@ -31,16 +31,19 @@ const error = ref<string | null>(null)
 const activeTab = ref<'latest' | 'favourite' | 'recent'>('latest')
 const searchQuery = ref('')
 const selectedPublisher = ref<string | null>(null)
+const selectedBaseModel = ref<string | null>(null)
 const selectedCategory = ref<ModelCategory | null>(null)
 const selectedCapability = ref<string | null>(null)
 const facets = ref<{
   categories: FacetItem[]
   capabilities: FacetItem[]
   publishers: PublisherFacetItem[]
+  base_models: BaseModelFacetItem[]
 }>({
   categories: [],
   capabilities: [],
   publishers: [],
+  base_models: [],
 })
 const heroActiveIndex = ref(0)
 const externalDocsUrl = computed(() => docsUrl())
@@ -83,7 +86,13 @@ const hasMore = computed(() => activeTab.value === 'latest' && models.value.leng
 const showFilterSidebar = computed(() => activeTab.value === 'latest')
 
 const hasActiveFilters = computed(
-  () => Boolean(selectedPublisher.value || selectedCategory.value || selectedCapability.value),
+  () =>
+    Boolean(
+      selectedPublisher.value ||
+        selectedBaseModel.value ||
+        selectedCategory.value ||
+        selectedCapability.value,
+    ),
 )
 
 const unfilteredTotal = computed(() =>
@@ -101,6 +110,7 @@ function buildListQuery() {
   const q = searchQuery.value.trim()
   if (q) query.q = q
   if (selectedPublisher.value) query.publisher = selectedPublisher.value
+  if (selectedBaseModel.value) query.base_model = selectedBaseModel.value
   if (selectedCategory.value) query.category = selectedCategory.value
   if (selectedCapability.value) query.capability = selectedCapability.value
   return query
@@ -118,9 +128,10 @@ async function loadFacets() {
       categories: data.categories ?? [],
       capabilities: data.capabilities ?? [],
       publishers: data.publishers ?? [],
+      base_models: data.base_models ?? [],
     }
   } catch {
-    facets.value = { categories: [], capabilities: [], publishers: [] }
+    facets.value = { categories: [], capabilities: [], publishers: [], base_models: [] }
   }
 }
 
@@ -192,6 +203,7 @@ async function loadModels(append = false) {
       limit: PAGE_SIZE,
       q: searchQuery.value.trim() || undefined,
       publisher: selectedPublisher.value ?? undefined,
+      base_model: selectedBaseModel.value ?? undefined,
       category: selectedCategory.value ?? undefined,
       capability: selectedCapability.value ?? undefined,
     })
@@ -233,6 +245,13 @@ function selectPublisher(publisher: string | null) {
   loadModels()
 }
 
+function selectBaseModel(baseModel: string | null) {
+  if (selectedBaseModel.value === baseModel) return
+  selectedBaseModel.value = baseModel
+  syncRouteQuery()
+  loadModels()
+}
+
 function selectCategory(category: string | null) {
   const next: ModelCategory | null =
     category === 'video' || category === 'image' || category === 'llm' ? category : null
@@ -251,6 +270,7 @@ function selectCapability(capability: string | null) {
 
 function clearFilters() {
   selectedPublisher.value = null
+  selectedBaseModel.value = null
   selectedCategory.value = null
   selectedCapability.value = null
   syncRouteQuery()
@@ -350,6 +370,11 @@ onMounted(() => {
   const publisher = route.query.publisher
   if (typeof publisher === 'string' && publisher) {
     selectedPublisher.value = publisher
+  }
+
+  const baseModel = route.query.base_model
+  if (typeof baseModel === 'string' && baseModel) {
+    selectedBaseModel.value = baseModel
   }
 
   const category = route.query.category
@@ -457,13 +482,16 @@ onMounted(() => {
           <ModelsFilterSidebar
             v-if="showFilterSidebar"
             :publishers="facets.publishers"
+            :base-models="facets.base_models"
             :categories="facets.categories"
             :capabilities="facets.capabilities"
             :selected-publisher="selectedPublisher"
+            :selected-base-model="selectedBaseModel"
             :selected-category="selectedCategory"
             :selected-capability="selectedCapability"
             :total-count="unfilteredTotal"
             @update:selected-publisher="selectPublisher"
+            @update:selected-base-model="selectBaseModel"
             @update:selected-category="selectCategory"
             @update:selected-capability="selectCapability"
           />

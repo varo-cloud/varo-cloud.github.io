@@ -1,13 +1,15 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
 import { assetUrl } from '@/utils/assetUrl'
-import type { FacetItem, PublisherFacetItem } from '@/types'
+import type { BaseModelFacetItem, FacetItem, PublisherFacetItem } from '@/types'
 
 const props = defineProps<{
   publishers: PublisherFacetItem[]
+  baseModels: BaseModelFacetItem[]
   categories: FacetItem[]
   capabilities: FacetItem[]
   selectedPublisher: string | null
+  selectedBaseModel: string | null
   selectedCategory: string | null
   selectedCapability: string | null
   totalCount: number
@@ -15,15 +17,21 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   'update:selectedPublisher': [value: string | null]
+  'update:selectedBaseModel': [value: string | null]
   'update:selectedCategory': [value: string | null]
   'update:selectedCapability': [value: string | null]
 }>()
 
-const { t } = useI18n()
+const { t, te } = useI18n()
 
 function selectPublisher(value: string | null) {
   if (props.selectedPublisher === value) return
   emit('update:selectedPublisher', value)
+}
+
+function selectBaseModel(value: string | null) {
+  if (props.selectedBaseModel === value) return
+  emit('update:selectedBaseModel', value)
 }
 
 function selectCategory(value: string | null) {
@@ -34,6 +42,11 @@ function selectCategory(value: string | null) {
 function selectCapability(value: string | null) {
   if (props.selectedCapability === value) return
   emit('update:selectedCapability', value)
+}
+
+function baseModelLabel(slug: string) {
+  const key = `pages.models.series.${slug}`
+  return te(key) ? t(key) : slug
 }
 </script>
 
@@ -93,6 +106,65 @@ function selectCapability(value: string | null) {
                 class="models-filter-item__logo"
               />
               <span class="models-filter-item__label">{{ item.name }}</span>
+              <span class="models-filter-item__count">{{ item.count }}</span>
+            </button>
+          </li>
+        </ul>
+      </section>
+
+      <section v-if="baseModels.length > 0" class="models-filter-section">
+        <h3 class="models-filter-section__title">{{ t('pages.models.sidebar.baseModel') }}</h3>
+        <ul class="models-filter-list">
+          <li>
+            <button
+              type="button"
+              class="models-filter-item"
+              :class="{ 'is-active': !selectedBaseModel }"
+              @click="selectBaseModel(null)"
+            >
+              <img
+                :src="
+                  assetUrl(
+                    !selectedBaseModel
+                      ? '/assets/models/filter-checked.svg'
+                      : '/assets/models/filter-unchecked.svg',
+                  )
+                "
+                alt=""
+                aria-hidden="true"
+                class="models-filter-item__icon"
+              />
+              <span class="models-filter-item__label">{{ t('pages.models.filters.all') }}</span>
+              <span class="models-filter-item__count">{{ totalCount }}</span>
+            </button>
+          </li>
+          <li v-for="item in baseModels" :key="item.slug">
+            <button
+              type="button"
+              class="models-filter-item"
+              :class="{ 'is-active': selectedBaseModel === item.slug }"
+              @click="selectBaseModel(item.slug)"
+            >
+              <img
+                :src="
+                  assetUrl(
+                    selectedBaseModel === item.slug
+                      ? '/assets/models/filter-checked.svg'
+                      : '/assets/models/filter-unchecked.svg',
+                  )
+                "
+                alt=""
+                aria-hidden="true"
+                class="models-filter-item__icon"
+              />
+              <img
+                v-if="item.icon_url"
+                :src="item.icon_url"
+                alt=""
+                aria-hidden="true"
+                class="models-filter-item__logo"
+              />
+              <span class="models-filter-item__label">{{ baseModelLabel(item.slug) }}</span>
               <span class="models-filter-item__count">{{ item.count }}</span>
             </button>
           </li>

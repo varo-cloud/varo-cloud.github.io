@@ -228,6 +228,7 @@ export function fetchModelFacets() {
     categories: data.categories ?? [],
     capabilities: data.capabilities ?? [],
     publishers: data.publishers ?? [],
+    base_models: data.base_models ?? [],
   }))
 }
 

@@ -163,6 +163,7 @@ export default {
       sidebar: {
         title: '分类',
         publisher: '发布方',
+        baseModel: '基座模型',
         type: '模型类型',
         capability: '能力纬度',
         more: '更多',

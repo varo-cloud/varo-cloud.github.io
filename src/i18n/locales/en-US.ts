@@ -164,6 +164,7 @@ export default {
       sidebar: {
         title: 'Categories',
         publisher: 'Publisher',
+        baseModel: 'Base Model',
         type: 'Model Type',
         capability: 'Capabilities',
         more: 'More',
