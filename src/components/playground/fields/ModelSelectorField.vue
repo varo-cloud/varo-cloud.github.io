@@ -31,6 +31,7 @@ const open = ref(false)
 const searchRef = ref<InstanceType<typeof PlaygroundSelectPanelSearch> | null>(null)
 const triggerRef = ref<HTMLElement | null>(null)
 const panelRef = ref<HTMLElement | null>(null)
+const listScrollRef = ref<HTMLElement | null>(null)
 const PANEL_MAX_HEIGHT = 320
 const SEARCH_INPUT_HEIGHT = 36
 const VIEWPORT_PADDING = 8
@@ -56,7 +57,6 @@ const {
   loadMore,
   resetSearch,
 } = usePaginatedModelSearch({
-  selectedId: () => model.value,
   enabled: () => open.value,
   validSlugOnly: true,
 })
@@ -118,6 +118,13 @@ function onListScroll(event: Event) {
   void loadMore()
 }
 
+function scrollSelectedIntoView() {
+  const selected = listScrollRef.value?.querySelector<HTMLElement>(
+    '.playground-select-panel__option--selected',
+  )
+  selected?.scrollIntoView({ block: 'nearest' })
+}
+
 function toggleOpen() {
   if (props.disabled) return
   open.value = !open.value
@@ -159,6 +166,12 @@ watch(open, (isOpen) => {
   window.addEventListener('resize', updatePanelPosition)
   window.addEventListener('scroll', onViewportScroll, true)
   document.addEventListener('pointerdown', onDocumentPointerDown)
+})
+
+watch(loading, async (isLoading) => {
+  if (isLoading || !open.value) return
+  await nextTick()
+  scrollSelectedIntoView()
 })
 
 onBeforeUnmount(() => {
@@ -211,6 +224,7 @@ onBeforeUnmount(() => {
         >
           <PlaygroundSelectPanelSearch ref="searchRef" v-model="searchQuery" />
           <div
+            ref="listScrollRef"
             class="playground-select-panel__scroll scrollbar-subtle"
             :style="panelScrollStyle"
             @scroll="onListScroll"

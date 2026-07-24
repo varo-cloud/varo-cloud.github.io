@@ -7,7 +7,6 @@ import PlaygroundSelectPanelSearch from '@/components/playground/PlaygroundSelec
 import { usePaginatedModelSearch } from '@/composables/usePaginatedModelSearch'
 import { assetUrl } from '@/utils/assetUrl'
 import { formatCapabilityLabel } from '@/utils/capability'
-import type { Model } from '@/types'
 
 const props = defineProps<{
   title: string
@@ -15,7 +14,6 @@ const props = defineProps<{
   slug: string
   description: string
   thumbnailUrl?: string
-  prefilledModel?: Model
 }>()
 
 const emit = defineEmits<{
@@ -28,6 +26,7 @@ const open = ref(false)
 const searchRef = ref<InstanceType<typeof PlaygroundSelectPanelSearch> | null>(null)
 const triggerRef = ref<HTMLElement | null>(null)
 const panelRef = ref<HTMLElement | null>(null)
+const listScrollRef = ref<HTMLElement | null>(null)
 const panelStyle = ref({ top: '0px', left: '0px', width: '0px' })
 const panelId = useId()
 const SCROLL_LOAD_THRESHOLD = 48
@@ -44,8 +43,6 @@ const {
   loadMore,
   resetSearch,
 } = usePaginatedModelSearch({
-  selectedId: () => props.modelId,
-  prefilledModel: () => props.prefilledModel,
   enabled: () => open.value,
   prefetchTotal: true,
 })
@@ -102,6 +99,13 @@ function onListScroll(event: Event) {
   void loadMore()
 }
 
+function scrollSelectedIntoView() {
+  const selected = listScrollRef.value?.querySelector<HTMLElement>(
+    '.playground-select-panel__option--selected',
+  )
+  selected?.scrollIntoView({ block: 'nearest' })
+}
+
 function onDocumentPointerDown(event: PointerEvent) {
   const target = event.target as Node
   if (triggerRef.value?.contains(target) || panelRef.value?.contains(target)) return
@@ -126,6 +130,12 @@ watch(open, (isOpen) => {
   window.addEventListener('resize', updatePanelPosition)
   window.addEventListener('scroll', updatePanelPosition, true)
   document.addEventListener('pointerdown', onDocumentPointerDown)
+})
+
+watch(loading, async (isLoading) => {
+  if (isLoading || !open.value) return
+  await nextTick()
+  scrollSelectedIntoView()
 })
 
 watch(hasSwitcher, (enabled) => {
@@ -185,6 +195,7 @@ onBeforeUnmount(() => {
       >
         <PlaygroundSelectPanelSearch ref="searchRef" v-model="searchQuery" />
         <div
+          ref="listScrollRef"
           class="playground-select-panel__scroll scrollbar-subtle"
           @scroll="onListScroll"
         >

@@ -1,5 +1,5 @@
 import { computed, onBeforeUnmount, ref, watch, type MaybeRefOrGetter, toValue } from 'vue'
-import { fetchModelDetail, fetchModels } from '@/api/models'
+import { fetchModels } from '@/api/models'
 import { isValidModelSlug } from '@/utils/model-slug'
 import type { Model } from '@/types'
 
@@ -40,9 +40,6 @@ function mergeUniqueModels(existing: Model[], incoming: Model[]): Model[] {
 }
 
 export function usePaginatedModelSearch(options?: {
-  selectedId?: MaybeRefOrGetter<string | undefined>
-  /** Already-loaded model; skips fetchModelDetail when selectedId matches */
-  prefilledModel?: MaybeRefOrGetter<Model | undefined>
   enabled?: MaybeRefOrGetter<boolean>
   validSlugOnly?: boolean
   prefetchTotal?: boolean
@@ -79,29 +76,6 @@ export function usePaginatedModelSearch(options?: {
     return pageItems.filter((item) => isValidModelSlug(item.id))
   }
 
-  function addSelectedToList(model: Model) {
-    if (items.value.some((item) => item.id === model.id)) return
-    items.value = [model, ...items.value]
-  }
-
-  async function ensureSelectedInList() {
-    const selectedId = toValue(options?.selectedId)
-    if (!selectedId || items.value.some((item) => item.id === selectedId)) return
-
-    const prefilled = toValue(options?.prefilledModel)
-    if (prefilled?.id === selectedId) {
-      addSelectedToList(prefilled)
-      return
-    }
-
-    try {
-      const detail = await fetchModelDetail(selectedId)
-      addSelectedToList(detail)
-    } catch {
-      // ignore
-    }
-  }
-
   async function loadPage(append: boolean) {
     if (!isEnabled()) return
 
@@ -129,8 +103,6 @@ export function usePaginatedModelSearch(options?: {
       items.value = append ? mergeUniqueModels(items.value, incoming) : incoming
       total.value = page.total
       fetchedCount.value += page.items.length
-
-      await ensureSelectedInList()
     } catch {
       if (seq !== requestSeq) return
       if (!append) {
@@ -173,14 +145,6 @@ export function usePaginatedModelSearch(options?: {
     void loadPage(false)
   })
 
-  watch(
-    () => [toValue(options?.selectedId), toValue(options?.prefilledModel)] as const,
-    () => {
-      void ensureSelectedInList()
-    },
-    { immediate: true },
-  )
-
   if (options?.prefetchTotal) {
     void fetchModels({ limit: 1, offset: 0 })
       .then((page) => {
@@ -211,6 +175,5 @@ export function usePaginatedModelSearch(options?: {
     refresh,
     loadMore,
     resetSearch,
-    ensureSelectedInList,
   }
 }
