@@ -25,7 +25,6 @@ const loadingMore = ref(false)
 const error = ref<string | null>(null)
 const searchQuery = ref('')
 const selectedPublisher = ref<string | null>(null)
-const selectedBaseModel = ref<string | null>(null)
 const selectedCategory = ref<ModelCategory | null>(null)
 const selectedCapability = ref<string | null>(null)
 const facets = ref<{
@@ -50,7 +49,6 @@ const hasActiveFilters = computed(
   () =>
     Boolean(
       selectedPublisher.value ||
-        selectedBaseModel.value ||
         selectedCategory.value ||
         selectedCapability.value,
     ),
@@ -65,7 +63,6 @@ function buildListQuery() {
   const q = searchQuery.value.trim()
   if (q) query.q = q
   if (selectedPublisher.value) query.publisher = selectedPublisher.value
-  if (selectedBaseModel.value) query.base_model = selectedBaseModel.value
   if (selectedCategory.value) query.category = selectedCategory.value
   if (selectedCapability.value) query.capability = selectedCapability.value
   return query
@@ -105,7 +102,6 @@ async function loadModels(append = false) {
       limit: PAGE_SIZE,
       q: searchQuery.value.trim() || undefined,
       publisher: selectedPublisher.value ?? undefined,
-      base_model: selectedBaseModel.value ?? undefined,
       category: selectedCategory.value ?? undefined,
       capability: selectedCapability.value ?? undefined,
     })
@@ -131,13 +127,6 @@ function selectPublisher(publisher: string | null) {
   loadModels()
 }
 
-function selectBaseModel(baseModel: string | null) {
-  if (selectedBaseModel.value === baseModel) return
-  selectedBaseModel.value = baseModel
-  syncRouteQuery()
-  loadModels()
-}
-
 function selectCategory(category: string | null) {
   const next: ModelCategory | null =
     category === 'video' || category === 'image' || category === 'llm' ? category : null
@@ -156,7 +145,6 @@ function selectCapability(capability: string | null) {
 
 function clearFilters() {
   selectedPublisher.value = null
-  selectedBaseModel.value = null
   selectedCategory.value = null
   selectedCapability.value = null
   syncRouteQuery()
@@ -191,11 +179,6 @@ onMounted(() => {
     selectedPublisher.value = publisher
   }
 
-  const baseModel = route.query.base_model
-  if (typeof baseModel === 'string' && baseModel) {
-    selectedBaseModel.value = baseModel
-  }
-
   const category = route.query.category
   if (category === 'video' || category === 'image' || category === 'llm') {
     selectedCategory.value = category
@@ -222,13 +205,15 @@ onMounted(() => {
       />
       <div class="pricing-hero__overlay" aria-hidden="true" />
 
-      <div class="pricing-hero__content">
-        <h1 id="pricing-hero-title" class="pricing-hero__title">
-          {{ t('pages.pricing.heroTitle') }}
-        </h1>
-        <p class="pricing-hero__subtitle">
-          {{ t('pages.pricing.heroSubtitle') }}
-        </p>
+      <div class="pricing-hero__inner">
+        <div class="pricing-hero__content">
+          <h1 id="pricing-hero-title" class="pricing-hero__title">
+            {{ t('pages.pricing.heroTitle') }}
+          </h1>
+          <p class="pricing-hero__subtitle">
+            {{ t('pages.pricing.heroSubtitle') }}
+          </p>
+        </div>
       </div>
     </section>
 
@@ -262,16 +247,15 @@ onMounted(() => {
         <div class="pricing-layout-body">
           <ModelsFilterSidebar
             :publishers="facets.publishers"
-            :base-models="facets.base_models"
+            :base-models="[]"
             :categories="facets.categories"
             :capabilities="facets.capabilities"
             :selected-publisher="selectedPublisher"
-            :selected-base-model="selectedBaseModel"
+            :selected-base-model="null"
             :selected-category="selectedCategory"
             :selected-capability="selectedCapability"
             :total-count="unfilteredTotal"
             @update:selected-publisher="selectPublisher"
-            @update:selected-base-model="selectBaseModel"
             @update:selected-category="selectCategory"
             @update:selected-capability="selectCapability"
           />
@@ -340,11 +324,12 @@ onMounted(() => {
 .pricing-hero {
   position: relative;
   display: flex;
-  align-items: center;
+  align-items: flex-end;
   justify-content: center;
   min-height: 724px;
   padding: 0 16px 137px;
   overflow: hidden;
+  background: #0a0a0e;
 }
 
 .pricing-hero__bg {
@@ -353,43 +338,52 @@ onMounted(() => {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  object-position: center;
   pointer-events: none;
 }
 
 .pricing-hero__overlay {
   position: absolute;
   inset: 0;
-  background: rgba(0, 0, 0, 0.1);
+  background: rgba(0, 0, 0, 0.5);
+  pointer-events: none;
+}
+
+.pricing-hero__inner {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 1360px;
+  margin: 0 auto;
   pointer-events: none;
 }
 
 .pricing-hero__content {
-  position: relative;
-  z-index: 1;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 28px;
-  max-width: 738px;
-  padding: 120px 24px 64px;
-  text-align: center;
+  align-items: flex-start;
+  gap: 24px;
+  text-align: left;
 }
 
 .pricing-hero__title {
   margin: 0;
-  font-size: clamp(32px, 4.5vw, 50px);
-  font-weight: 800;
-  line-height: 1.16;
+  max-width: 1242px;
+  font-size: clamp(36px, 5vw, 56px);
+  font-weight: 900;
+  line-height: 1.14;
   color: #fff;
+  word-break: break-word;
 }
 
 .pricing-hero__subtitle {
   margin: 0;
-  max-width: 640px;
+  max-width: 1242px;
   font-size: clamp(16px, 2.5vw, 20px);
   font-weight: 600;
   line-height: 1.2;
   color: rgba(255, 255, 255, 0.5);
+  word-break: break-word;
 }
 
 .pricing-content {
@@ -576,6 +570,20 @@ onMounted(() => {
   .pricing-content__inner {
     padding-inline: 24px;
   }
+
+  .pricing-hero {
+    padding-inline: 24px;
+  }
+
+  .pricing-hero__title {
+    font-size: 56px;
+    line-height: 64px;
+  }
+
+  .pricing-hero__subtitle {
+    font-size: 20px;
+    line-height: 24px;
+  }
 }
 
 @media (max-width: 1023px) {
@@ -586,13 +594,27 @@ onMounted(() => {
 
 @media (max-width: 767px) {
   .pricing-hero {
-    min-height: 360px;
+    align-items: flex-end;
+    min-height: min(calc(100svh - var(--app-header-height, 60px)), 640px);
+    padding: 72px 16px 16px;
+  }
+
+  .pricing-hero__inner {
+    padding-bottom: 52px;
   }
 
   .pricing-hero__content {
-    gap: 20px;
-    padding-top: 96px;
-    padding-bottom: 48px;
+    gap: 16px;
+  }
+
+  .pricing-hero__title {
+    font-size: clamp(28px, 8vw, 36px);
+    line-height: 1.15;
+  }
+
+  .pricing-hero__subtitle {
+    font-size: clamp(14px, 4vw, 16px);
+    line-height: 1.3;
   }
 
   .pricing-layout-header {

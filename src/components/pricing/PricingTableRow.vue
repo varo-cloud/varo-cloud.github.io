@@ -3,7 +3,7 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import DiscountTag from '@/components/common/DiscountTag.vue'
 import type { PricingItem } from '@/types'
-import { formatCapabilityLabel } from '@/utils/capability'
+import { formatCapabilityLabel, resolveCapabilityTagTone } from '@/utils/capability'
 import {
   discountToPercent,
   formatDiscountLabel,
@@ -23,6 +23,7 @@ const { t } = useI18n()
 
 const unitLabel = computed(() => t(pricingUnitI18nKey(props.item.priceUnit)))
 const useCaseLabel = computed(() => formatCapabilityLabel(props.item.capability))
+const useCaseTone = computed(() => resolveCapabilityTagTone(props.item.capability))
 const standardPrice = computed(() => formatPricingUsd(props.item.standardPriceUsd, props.item.priceUnit))
 const startingPrice = computed(() => formatPricingUsd(props.item.startingPriceUsd, props.item.priceUnit))
 const discountLabel = computed(() => {
@@ -41,7 +42,21 @@ function handleView() {
       {{ item.name }}
     </div>
     <div class="pricing-row__cell pricing-row__cell--use-case">
-      {{ useCaseLabel }}
+      <span
+        v-if="useCaseLabel"
+        class="pricing-row__capability"
+        :style="{
+          color: useCaseTone.color,
+          backgroundColor: useCaseTone.background,
+        }"
+      >
+        <span
+          class="pricing-row__capability-dot"
+          :style="{ backgroundColor: useCaseTone.color }"
+          aria-hidden="true"
+        />
+        {{ useCaseLabel }}
+      </span>
     </div>
     <div class="pricing-row__cell pricing-row__cell--standard">
       {{ standardPrice }}<span class="pricing-row__unit">{{ unitLabel }}</span>
@@ -94,9 +109,27 @@ function handleView() {
 
 .pricing-row__cell--use-case {
   padding-right: 16px;
-  color: #9b9dab;
+}
+
+.pricing-row__capability {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 4px;
+  max-width: 100%;
+  padding: 4px 8px;
+  border-radius: 8px;
+  font-size: 12px;
   font-weight: 400;
+  line-height: 14px;
   white-space: nowrap;
+}
+
+.pricing-row__capability-dot {
+  width: 4px;
+  height: 4px;
+  flex-shrink: 0;
+  border-radius: 50%;
 }
 
 .pricing-row__cell--standard {

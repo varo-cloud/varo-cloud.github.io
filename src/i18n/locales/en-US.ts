@@ -267,6 +267,7 @@ export default {
       codeNoResult: 'Run the model to view the API response JSON.',
       noGenerations: 'Run the model to see your generation here.',
       examples: 'Examples',
+      relatedModels: 'Related Models',
       viewFullscreen: 'View fullscreen',
       download: 'Download',
       downloadFailed: 'Download failed. Please try again.',
@@ -459,9 +460,9 @@ export default {
     },
     pricing: {
       title: 'Pricing',
-      heroTitle: 'Image & Video Models',
+      heroTitle: 'Simple, Transparent AI Model Pricing',
       heroSubtitle:
-        'State-of-the-art generation with models from Byteplus, OpenAI, Google, and more.',
+        'Simple, pay-as-you-go pricing for every model—only pay for what you use and scale with predictable costs.',
       startFrom: 'Start from',
       inputPrice: 'Input price',
       view: 'View',
@@ -484,7 +485,7 @@ export default {
       seo: {
         title: 'Pricing — Varo.cloud',
         description:
-          'Compare Varo.cloud model pricing for image, video, and audio generation with transparent usage-based rates.',
+          'Simple, transparent pay-as-you-go pricing for every AI model on Varo.cloud—only pay for what you use.',
       },
     },
     billing: {
