@@ -62,14 +62,14 @@ const ROUTES = [
     outFile: join('pricing', 'index.html'),
     ready: '[data-seo-ready="pricing"]',
     waitSelector: '#pricing-hero-title',
-    waitText: 'Image & Video Models',
+    waitText: 'Simple, Transparent AI Model Pricing',
   },
   {
     path: '/zh-CN/pricing',
     outFile: join('zh-CN', 'pricing', 'index.html'),
     ready: '[data-seo-ready="pricing"]',
     waitSelector: '#pricing-hero-title',
-    waitText: '图像与视频模型',
+    waitText: '简单、透明的 AI 模型定价',
   },
   {
     path: '/ai-generator',
