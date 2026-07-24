@@ -291,7 +291,7 @@ function baseModelLabel(slug: string) {
 }
 
 .models-filter-section__title {
-  margin: 0 0 20px;
+  margin: 0 0 8px;
   color: #222;
   font-size: 14px;
   font-weight: 500;
@@ -301,7 +301,7 @@ function baseModelLabel(slug: string) {
 .models-filter-list {
   display: flex;
   flex-direction: column;
-  gap: 20px;
+  gap: 8px;
   margin: 0;
   padding: 0;
   list-style: none;
@@ -312,11 +312,17 @@ function baseModelLabel(slug: string) {
   align-items: center;
   gap: 8px;
   width: 100%;
-  padding: 0;
+  height: 36px;
+  padding: 0 8px;
   border: none;
+  border-radius: 8px;
   background: transparent;
   cursor: pointer;
   text-align: left;
+}
+
+.models-filter-item.is-active {
+  background: rgba(6, 182, 212, 0.04);
 }
 
 .models-filter-item__icon {

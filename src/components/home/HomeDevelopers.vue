@@ -5,7 +5,7 @@ import { useLocaleRouter } from '@/composables/useLocaleRouter'
 import { useUserStore } from '@/stores/user'
 import { assetUrl } from '@/utils/assetUrl'
 import HighlightedCodeBlock from '@/components/common/HighlightedCodeBlock.vue'
-import CodeTabIcon from '@/components/icons/CodeTabIcon.vue'
+import AppIcon, { type AppIconName } from '@/components/common/AppIcon.vue'
 import type { CodeHighlightLanguage } from '@/utils/code-highlight'
 import {
   API_CODE_VIEW_MODES,
@@ -26,6 +26,12 @@ const TAB_LABELS: Record<ApiCodeViewMode, string> = {
   http: 'HTTP',
   python: 'Python',
   javascript: 'Node.js',
+}
+
+const TAB_ICONS: Record<ApiCodeViewMode, AppIconName> = {
+  http: 'code-http',
+  python: 'code-python',
+  javascript: 'code-javascript',
 }
 
 const { t } = useI18n()
@@ -78,7 +84,11 @@ function getApiKey() {
               :aria-selected="codeViewMode === opt.value"
               @click="codeViewMode = opt.value"
             >
-              <CodeTabIcon class="home-developers__tab-icon" :name="opt.value" :size="20" />
+              <AppIcon
+                class="home-developers__tab-icon"
+                :name="TAB_ICONS[opt.value]"
+                :size="20"
+              />
               <span>{{ opt.label }}</span>
             </button>
           </div>

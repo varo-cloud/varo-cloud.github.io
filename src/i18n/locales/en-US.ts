@@ -142,8 +142,9 @@ export default {
     models: {
       title: 'Models',
       placeholder: 'Explore available video generation models.',
+      heroTitle: 'All Your AI Models, in One Place',
       heroSubtitle:
-        'Access leading video, image, audio, and language models through one unified API—with better pricing and reliable performance.',
+        'Explore Varo’s complete library of leading AI models across video, image, text, audio, and multimodal creation. Compare capabilities, test models, and choose the right engine for your workflow—all from one simple, production-ready platform.',
       heroSlides: {
         seedance: {
           title: 'Seedance 2.5 Coming Soon',

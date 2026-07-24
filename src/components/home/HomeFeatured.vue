@@ -6,7 +6,7 @@ import { useLocaleRouter } from '@/composables/useLocaleRouter'
 import { formatCapabilityLabel } from '@/utils/capability'
 import type { FacetItem, Model, PublisherFacetItem } from '@/types'
 import HomeFeaturedCard from '@/components/home/HomeFeaturedCard.vue'
-import ArrowRightIcon from '@/components/icons/ArrowRightIcon.vue'
+import AppIcon from '@/components/common/AppIcon.vue'
 
 const FEATURED_LIMIT = 4
 /** Avoid flooding the chip row when many publishers exist. */
@@ -163,7 +163,7 @@ onMounted(() => {
           @click="openChip(chip)"
         >
           <span>{{ chip.label }}</span>
-          <ArrowRightIcon class="home-featured__chip-arrow" :size="16" />
+          <AppIcon name="arrow-right" class="home-featured__chip-arrow" :size="16" />
         </button>
       </div>
 

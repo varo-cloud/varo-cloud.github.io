@@ -141,8 +141,9 @@ export default {
     models: {
       title: '模型',
       placeholder: '浏览可用的视频生成模型。',
+      heroTitle: '所有 AI 模型，集于一处',
       heroSubtitle:
-        '通过统一 API 接入领先的视频、图像、音频与语言模型——更优价格与稳定性能。',
+        '探索 Varo 完整的领先 AI 模型库，覆盖视频、图像、文本、音频与多模态创作。对比能力、试用模型，并在一个简洁、可投入生产的平台上选择合适的引擎。',
       heroSlides: {
         seedance: {
           title: 'Seedance 2.5 即将上线',

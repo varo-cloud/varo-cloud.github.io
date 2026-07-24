@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { useI18n } from 'vue-i18n'
 import { assetUrl } from '@/utils/assetUrl'
-import CheckIcon from '@/components/icons/CheckIcon.vue'
+import AppIcon from '@/components/common/AppIcon.vue'
 
 const { t } = useI18n()
 
@@ -49,7 +49,7 @@ const cards = [
             </p>
             <ul class="home-value__card-list">
               <li v-for="point in card.points" :key="point">
-                <CheckIcon class="home-value__check" :size="16" />
+                <AppIcon name="check" class="home-value__check" :size="16" />
                 <span>{{ t(`pages.home.valueProps.cards.${card.key}.${point}`) }}</span>
               </li>
             </ul>
@@ -168,6 +168,7 @@ const cards = [
 
 .home-value__check {
   flex-shrink: 0;
+  color: #06b6d4;
 }
 
 @media (max-width: 1000px) {
