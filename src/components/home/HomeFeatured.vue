@@ -230,10 +230,10 @@ onMounted(() => {
 .home-featured__subtitle {
   margin: 20px auto 0;
   max-width: 100%;
-  font-size: 20px;
+  font-size: 16px;
   font-weight: 500;
   line-height: 1.4;
-  color: #9b9dab;
+  color: #222;
   white-space: nowrap;
 }
 

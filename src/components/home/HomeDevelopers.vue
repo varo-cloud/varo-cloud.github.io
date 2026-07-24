@@ -133,10 +133,10 @@ function getApiKey() {
 .home-developers__subtitle {
   margin: 20px auto 0;
   max-width: 908px;
-  font-size: 20px;
+  font-size: 16px;
   font-weight: 500;
   line-height: 1.4;
-  color: #9b9dab;
+  color: #222;
 }
 
 .home-developers__panel {
