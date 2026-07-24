@@ -8,3 +8,8 @@ export function isValidModelSlug(slug: string): boolean {
   const parts = normalizeModelSlug(slug).split('/').filter(Boolean)
   return parts.length >= 2
 }
+
+/** Base model slug from a catalog slug, e.g. `seedance-2.0/text-to-video` → `seedance-2.0`. */
+export function extractBaseModelSlug(slug: string): string {
+  return normalizeModelSlug(slug).split('/').filter(Boolean)[0] ?? ''
+}

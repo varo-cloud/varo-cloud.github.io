@@ -11,11 +11,14 @@ import { fetchGenerationDetail } from '@/api/generations'
 import ModelDetailHeader from '@/components/models/ModelDetailHeader.vue'
 import ModelApiTab from '@/components/models/ModelApiTab.vue'
 import ModelHistoryTab from '@/components/models/ModelHistoryTab.vue'
+import ModelDetailExamplesSection from '@/components/models/ModelDetailExamplesSection.vue'
+import ModelDetailRelatedModels from '@/components/models/ModelDetailRelatedModels.vue'
 import PlaygroundInputPanel from '@/components/playground/PlaygroundInputPanel.vue'
 import PlaygroundOutputPanel from '@/components/playground/PlaygroundOutputPanel.vue'
 import { useUserStore } from '@/stores/user'
 import { useModelPreferencesStore } from '@/stores/modelPreferences'
 import { createDefaultFormValues } from '@/utils/schema-form'
+import { extractBaseModelSlug } from '@/utils/model-slug'
 import { usePlaygroundQuote } from '@/composables/usePlaygroundQuote'
 import { usePlaygroundGeneration } from '@/composables/usePlaygroundGeneration'
 import { usePlaygroundExamples } from '@/composables/usePlaygroundExamples'
@@ -72,6 +75,9 @@ const quoteUnitCostUsd = playgroundQuote.unitCostUsd
 
 const displayTitle = computed(() => model.value?.displayName ?? '')
 const modelExamples = computed(() => model.value?.examples ?? [])
+const baseModelSlug = computed(() =>
+  model.value?.id ? extractBaseModelSlug(model.value.id) : '',
+)
 
 const slugParam = computed(() =>
   typeof route.params.slug === 'string' ? route.params.slug : '',
@@ -108,6 +114,11 @@ const {
 function handleModelSelect(slug: string) {
   if (slug === model.value?.id) return
   void push({ name: 'model-detail', params: { slug } })
+}
+
+function handleSelectExample(exampleId: string) {
+  selectExample(exampleId)
+  activeTab.value = 'playground'
 }
 
 async function loadModel(slug: string) {
@@ -216,7 +227,6 @@ watch(
           :slug="model.id"
           :description="model.description"
           :thumbnail-url="model.thumbnailUrl"
-          :prefilled-model="model"
           @select="handleModelSelect"
         />
       </div>
@@ -283,6 +293,7 @@ watch(
           :examples="modelExamples"
           :selected-example-id="selectedExampleId"
           :api-model-id="model.id"
+          :show-examples-bar="false"
           @select-example="selectExample"
         />
       </div>
@@ -307,6 +318,19 @@ watch(
         v-else-if="activeTab === 'history'"
         :model-slug="model.id"
         @view-detail="handleViewHistoryDetail"
+      />
+
+      <ModelDetailExamplesSection
+        v-if="modelExamples.length > 0"
+        :examples="modelExamples"
+        :selected-example-id="selectedExampleId"
+        @select="handleSelectExample"
+      />
+
+      <ModelDetailRelatedModels
+        v-if="baseModelSlug"
+        :model-id="model.id"
+        :base-model-slug="baseModelSlug"
       />
     </template>
   </div>

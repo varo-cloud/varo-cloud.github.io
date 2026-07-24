@@ -13,16 +13,23 @@ import { assetUrl } from '@/utils/assetUrl'
 
 const emptyStateIconSrc = assetUrl('/assets/playground/no-generations.svg')
 
-const props = defineProps<{
-  outputUrls?: string[]
-  results?: PlaygroundGenerationResult[]
-  status?: GenerationStatus
-  progress?: number
-  errorMessage?: string | null
-  examples?: ModelExample[]
-  selectedExampleId?: string | null
-  apiModelId?: string
-}>()
+const props = withDefaults(
+  defineProps<{
+    outputUrls?: string[]
+    results?: PlaygroundGenerationResult[]
+    status?: GenerationStatus
+    progress?: number
+    errorMessage?: string | null
+    examples?: ModelExample[]
+    selectedExampleId?: string | null
+    apiModelId?: string
+    /** When false, keep example preview support but hide the inline examples list. */
+    showExamplesBar?: boolean
+  }>(),
+  {
+    showExamplesBar: true,
+  },
+)
 
 const emit = defineEmits<{
   'select-example': [exampleId: string]
@@ -70,7 +77,10 @@ const showExample = computed(
 )
 
 const showExamplesBar = computed(
-  () => !isGenerating.value && (props.examples?.length ?? 0) > 0,
+  () =>
+    props.showExamplesBar &&
+    !isGenerating.value &&
+    (props.examples?.length ?? 0) > 0,
 )
 
 const canShowCode = computed(() => showOutput.value || showExample.value)
