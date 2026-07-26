@@ -9,7 +9,7 @@ const { localePath } = useLocaleRouter()
 const contactLinks = [
   {
     key: 'discord',
-    href: 'https://discord.gg/8TnkW8GPZ',
+    href: 'https://discord.gg/GPth9qEUtB',
     labelKey: 'footer.discord',
     icon: 'discord',
   },
@@ -27,7 +27,7 @@ const contactLinks = [
   },
   {
     key: 'youtube',
-    href: 'https://www.youtube.com/@varo_cloud',
+    href: 'https://www.youtube.com/@varocloud',
     labelKey: 'footer.youtube',
     icon: 'youtube',
   },
