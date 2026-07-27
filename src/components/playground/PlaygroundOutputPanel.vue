@@ -4,6 +4,7 @@ import { useI18n } from 'vue-i18n'
 import { NTooltip } from 'naive-ui'
 import { useAppMessage } from '@/composables/useAppMessage'
 import GenerationStatusDisplay from './GenerationStatusDisplay.vue'
+import GenerationTaskIds from './GenerationTaskIds.vue'
 import GenerationPreviewLightbox from './GenerationPreviewLightbox.vue'
 import PlaygroundExamplesBar from './PlaygroundExamplesBar.vue'
 import type { GenerationStatus, ModelExample, PlaygroundGenerationResult } from '@/types'
@@ -19,6 +20,7 @@ const props = defineProps<{
   status?: GenerationStatus
   progress?: number
   errorMessage?: string | null
+  taskIds?: string[]
   examples?: ModelExample[]
   selectedExampleId?: string | null
   apiModelId?: string
@@ -74,6 +76,13 @@ const showExamplesBar = computed(
 )
 
 const canShowCode = computed(() => showOutput.value || showExample.value)
+
+const outputTaskIds = computed(() => {
+  if (!showOutput.value) return []
+  const fromProps = (props.taskIds ?? []).filter((id) => Boolean(id.trim()))
+  if (fromProps.length > 0) return fromProps
+  return (props.results ?? []).map((item) => item.id).filter((id) => Boolean(id.trim()))
+})
 
 function buildExampleGenerationResult(example: ModelExample): PlaygroundGenerationResult {
   const url = example.outputUrl ?? example.thumbnailUrl ?? ''
@@ -215,93 +224,102 @@ watch(
     >
       <div
         v-if="previewUrls.length > 0 && viewMode === 'preview'"
-        class="output-panel__grid"
-        :class="gridClass"
+        class="output-panel__result"
       >
-        <template v-for="(url, index) in previewUrls" :key="`${selectedExampleId ?? 'output'}-${url}-${index}`">
-          <div
-            class="output-panel__item"
-            :class="{ 'output-panel__item--interactive': showOutput }"
-          >
-            <video
-              v-if="resolveMediaPreviewKind(url) === 'video'"
-              :src="url"
-              class="output-panel__preview output-panel__preview--video"
-              controls
-              playsinline
-              loop
-              muted
-            />
-            <audio
-              v-else-if="resolveMediaPreviewKind(url) === 'audio'"
-              :src="url"
-              class="output-panel__preview output-panel__preview--audio"
-              controls
-            />
-            <img
-              v-else
-              :src="url"
-              alt=""
-              class="output-panel__preview"
-            />
+        <div
+          class="output-panel__grid"
+          :class="gridClass"
+        >
+          <template v-for="(url, index) in previewUrls" :key="`${selectedExampleId ?? 'output'}-${url}-${index}`">
+            <div
+              class="output-panel__item"
+              :class="{ 'output-panel__item--interactive': showOutput }"
+            >
+              <video
+                v-if="resolveMediaPreviewKind(url) === 'video'"
+                :src="url"
+                class="output-panel__preview output-panel__preview--video"
+                controls
+                playsinline
+                loop
+                muted
+              />
+              <audio
+                v-else-if="resolveMediaPreviewKind(url) === 'audio'"
+                :src="url"
+                class="output-panel__preview output-panel__preview--audio"
+                controls
+              />
+              <img
+                v-else
+                :src="url"
+                alt=""
+                class="output-panel__preview"
+              />
 
-            <div v-if="showOutput" class="output-panel__item-actions">
-              <NTooltip trigger="hover" placement="top">
-                <template #trigger>
-                  <button
-                    type="button"
-                    class="output-panel__item-action"
-                    :aria-label="t('pages.modelDetail.viewFullscreen')"
-                    @click="openLightbox(index)"
-                  >
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                      <path
-                        d="M2.5 5.5V2.5h3M10.5 2.5h3v3M13.5 10.5v3h-3M5.5 13.5h-3v-3"
-                        stroke="currentColor"
-                        stroke-width="1.2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                      />
-                    </svg>
-                  </button>
-                </template>
-                {{ t('pages.modelDetail.viewFullscreen') }}
-              </NTooltip>
-              <NTooltip trigger="hover" placement="top">
-                <template #trigger>
-                  <button
-                    type="button"
-                    class="output-panel__item-action"
-                    :aria-label="t('pages.modelDetail.download')"
-                    :disabled="downloadingIndex === index"
-                    @click.stop="downloadResult(url, index)"
-                  >
-                    <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
-                      <path
-                        d="M8 2.5v7M5.5 7 8 9.5 10.5 7M3 12.5h10"
-                        stroke="currentColor"
-                        stroke-width="1.2"
-                        stroke-linecap="round"
-                        stroke-linejoin="round"
-                      />
-                    </svg>
-                  </button>
-                </template>
-                {{ t('pages.modelDetail.download') }}
-              </NTooltip>
+              <div v-if="showOutput" class="output-panel__item-actions">
+                <NTooltip trigger="hover" placement="top">
+                  <template #trigger>
+                    <button
+                      type="button"
+                      class="output-panel__item-action"
+                      :aria-label="t('pages.modelDetail.viewFullscreen')"
+                      @click="openLightbox(index)"
+                    >
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                        <path
+                          d="M2.5 5.5V2.5h3M10.5 2.5h3v3M13.5 10.5v3h-3M5.5 13.5h-3v-3"
+                          stroke="currentColor"
+                          stroke-width="1.2"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        />
+                      </svg>
+                    </button>
+                  </template>
+                  {{ t('pages.modelDetail.viewFullscreen') }}
+                </NTooltip>
+                <NTooltip trigger="hover" placement="top">
+                  <template #trigger>
+                    <button
+                      type="button"
+                      class="output-panel__item-action"
+                      :aria-label="t('pages.modelDetail.download')"
+                      :disabled="downloadingIndex === index"
+                      @click.stop="downloadResult(url, index)"
+                    >
+                      <svg width="16" height="16" viewBox="0 0 16 16" fill="none" aria-hidden="true">
+                        <path
+                          d="M8 2.5v7M5.5 7 8 9.5 10.5 7M3 12.5h10"
+                          stroke="currentColor"
+                          stroke-width="1.2"
+                          stroke-linecap="round"
+                          stroke-linejoin="round"
+                        />
+                      </svg>
+                    </button>
+                  </template>
+                  {{ t('pages.modelDetail.download') }}
+                </NTooltip>
+              </div>
             </div>
-          </div>
-        </template>
+          </template>
+        </div>
+        <GenerationTaskIds v-if="outputTaskIds.length > 0" :task-ids="outputTaskIds" />
       </div>
-      <pre
+      <div
         v-else-if="canShowCode && viewMode === 'json'"
-        class="output-panel__json scrollbar-subtle"
-      ><code>{{ formattedJson }}</code></pre>
+        class="output-panel__result"
+      >
+        <pre class="output-panel__json scrollbar-subtle"><code>{{ formattedJson }}</code></pre>
+        <GenerationTaskIds v-if="outputTaskIds.length > 0" :task-ids="outputTaskIds" />
+      </div>
       <GenerationStatusDisplay
         v-else-if="isGenerating && activeStatus"
         :status="activeStatus"
         :progress="progress"
         :error-message="errorMessage"
+        :task-ids="taskIds"
       />
       <div v-else class="output-panel__empty">
         <img
@@ -414,6 +432,13 @@ watch(
 .output-panel__grid {
   display: grid;
   gap: 8px;
+  width: 100%;
+}
+
+.output-panel__result {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
   width: 100%;
 }
 
