@@ -631,6 +631,7 @@ export default {
       signupTab: '注册',
       welcome: '欢迎来到 Varo.Cloud',
       turnstilePreparing: '正在准备安全登录...',
+      turnstileReverifyForLogin: '验证码已发送，请再次完成人机验证后登录',
       turnstileRequired: '请先完成人机验证',
       turnstileExpired: '人机验证已过期，请重新验证',
       turnstileError: '人机验证加载失败，请刷新页面重试',
