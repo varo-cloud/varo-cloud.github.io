@@ -324,10 +324,10 @@ onMounted(() => {
 .pricing-hero {
   position: relative;
   display: flex;
-  align-items: flex-end;
+  align-items: flex-start;
   justify-content: center;
   min-height: 460px;
-  padding: 0 16px 137px;
+  padding: 180px 16px 48px;
   overflow: hidden;
   background: #0a0a0e;
 }
@@ -594,13 +594,13 @@ onMounted(() => {
 
 @media (max-width: 767px) {
   .pricing-hero {
-    align-items: flex-end;
-    min-height: min(calc(100svh - var(--app-header-height, 60px)), 640px);
-    padding: 72px 16px 16px;
+    align-items: flex-start;
+    min-height: min(calc(100svh - var(--app-header-height, 80px)), 640px);
+    padding: 120px 16px 32px;
   }
 
   .pricing-hero__inner {
-    padding-bottom: 52px;
+    padding-bottom: 0;
   }
 
   .pricing-hero__content {
