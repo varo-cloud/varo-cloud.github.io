@@ -118,22 +118,19 @@ vite build
 
 ### 5.3 与「动态内容」的关系（重要）
 
-首页部分区块仍走接口，例如：
+首页 / Models / Pricing 等区块会请求接口。预渲染会：
 
-- Featured Models（facets + models）
-- Pricing 表格行
-- Showcase publishers
+1. 用 Playwright `route.fetch()` 在 Node 侧转发 API（避免 `127.0.0.1` 浏览器 CORS）
+2. 等待页面上的 `data-seo-content-ready`（首段动态列表加载结束：成功、空或失败都会置位）
+3. 超时（约 45s）则打日志并仍写出当前 HTML，不阻断构建
 
-当前预渲染**不等待**这些接口完成；构建环境若也访问不到生产 API，这些区块在静态 HTML 里可能为空。
-
-| 内容类型 | 是否依赖预渲染进源码 | 对 SEO 的作用 |
+| 内容类型 | 是否尽量进静态 HTML | 对 SEO 的作用 |
 |----------|----------------------|---------------|
-| Title / Description / H1 / 固定卖点文案 | ✅ 稳定固化 | **首页收录与分享预览的主信号** |
-| 模型列表 / 价格行 / Publisher 封面 | ⚠️ 不保证进静态 HTML | 偏长尾与内容丰富度；用户侧仍正常 CSR 加载 |
-| 其它营销页（Models / Pricing 等） | ✅ 预渲染静态壳 + Head | 列表等动态块不保证进 HTML |
-| 模型详情 | 运行时 Head（加载后用 displayName） | 首包仍偏 CSR |
+| Title / Description / H1 / 固定卖点文案 | ✅ 稳定固化 | **收录与分享预览的主信号** |
+| 首页 Featured 卡片、Models 列表、Pricing 行 | ✅ 接口可达时写入 | 丰富长尾与正文；接口失败时可能仍为空 |
+| 模型详情 `/models/:slug` | 运行时 Head | 首包仍偏 CSR |
 
-**结论：当前方案对「首页品牌词 + 主描述 + 社交卡片」有效；动态列表不是首页 SEO 生效的前提。**
+**结论：静态文案始终可索引；首段列表在 CI 能访问生产/预发 API 时也会进预渲染 HTML。**
 
 ---
 

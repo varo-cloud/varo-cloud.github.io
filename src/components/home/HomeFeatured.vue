@@ -86,7 +86,11 @@ onMounted(() => {
 </script>
 
 <template>
-  <section class="home-featured" aria-labelledby="home-featured-title">
+  <section
+    class="home-featured"
+    aria-labelledby="home-featured-title"
+    :data-seo-content-ready="modelsLoading ? undefined : 'home'"
+  >
     <div class="home-featured__inner">
       <p class="home-featured__eyebrow">{{ t('pages.home.featured.eyebrow') }}</p>
       <h2 id="home-featured-title" class="home-featured__title">

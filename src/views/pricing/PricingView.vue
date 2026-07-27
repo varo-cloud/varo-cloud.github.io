@@ -195,7 +195,11 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="pricing-page" data-seo-ready="pricing">
+  <div
+    class="pricing-page"
+    data-seo-ready="pricing"
+    :data-seo-content-ready="loading ? undefined : 'pricing'"
+  >
     <section class="pricing-hero" aria-labelledby="pricing-hero-title">
       <img
         class="pricing-hero__bg"
