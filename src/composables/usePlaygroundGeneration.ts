@@ -112,6 +112,7 @@ export function usePlaygroundGeneration() {
   const generationStatus = ref<GenerationStatus>('idle')
   const generationProgress = ref(0)
   const generationError = ref<string | null>(null)
+  const generationTaskIds = ref<string[]>([])
   const outputUrls = ref<string[]>([])
   const generationResults = ref<PlaygroundGenerationResult[]>([])
 
@@ -145,6 +146,7 @@ export function usePlaygroundGeneration() {
     generationStatus.value = 'idle'
     generationProgress.value = 0
     generationError.value = null
+    generationTaskIds.value = []
     outputUrls.value = []
     generationResults.value = []
   }
@@ -236,6 +238,7 @@ export function usePlaygroundGeneration() {
     generationStatus.value = 'queued'
     generationProgress.value = 0
     generationError.value = null
+    generationTaskIds.value = []
     outputUrls.value = []
     generationResults.value = []
 
@@ -247,6 +250,8 @@ export function usePlaygroundGeneration() {
       )
 
       if (pollAbort.aborted) return
+
+      generationTaskIds.value = created.map((item) => item.id)
 
       const hasProcessing = created.some((item) => item.status === 'processing')
       generationStatus.value = hasProcessing ? 'processing' : 'queued'
@@ -311,6 +316,7 @@ export function usePlaygroundGeneration() {
       if (snapshot.status === 'failed') {
         outputUrls.value = []
         generationResults.value = []
+        generationTaskIds.value = [taskId]
         markFailed(snapshot.errorMessage)
         return
       }
@@ -327,6 +333,7 @@ export function usePlaygroundGeneration() {
 
     const unitCostUsd = detail.costUsd ?? 0
     const status = mapDetailStatus(detail.status)
+    generationTaskIds.value = [detail.taskId]
 
     if (status === 'completed') {
       generationStatus.value = 'completed'
@@ -374,6 +381,7 @@ export function usePlaygroundGeneration() {
     generationStatus,
     generationProgress,
     generationError,
+    generationTaskIds,
     outputUrls,
     generationResults,
     isGenerating,

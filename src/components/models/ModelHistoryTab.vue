@@ -3,7 +3,9 @@ import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { NSpin } from 'naive-ui'
 import { fetchModelHistory } from '@/api/models'
+import AppIcon from '@/components/common/AppIcon.vue'
 import AppPagination from '@/components/common/AppPagination.vue'
+import { useAppMessage } from '@/composables/useAppMessage'
 import { useLocaleRouter } from '@/composables/useLocaleRouter'
 import { useUserStore } from '@/stores/user'
 import { formatUsd } from '@/utils/currency'
@@ -23,6 +25,7 @@ const emit = defineEmits<{
 const { t, locale } = useI18n()
 const { push } = useLocaleRouter()
 const userStore = useUserStore()
+const message = useAppMessage()
 
 const items = ref<ModelHistoryEntry[]>([])
 const loading = ref(false)
@@ -106,6 +109,15 @@ function handleViewDetail(taskId: string) {
   emit('viewDetail', taskId)
 }
 
+async function copyTaskId(taskId: string) {
+  try {
+    await navigator.clipboard.writeText(taskId)
+    message.success(t('pages.modelDetail.codeCopied'))
+  } catch {
+    message.error(t('pages.modelDetail.copyFailed'))
+  }
+}
+
 watch(
   () => props.modelSlug,
   () => {
@@ -161,7 +173,17 @@ onMounted(() => {
             class="model-history__row"
             role="row"
           >
-            <span class="model-history__task-id" role="cell">{{ item.taskId }}</span>
+            <span class="model-history__task-id" role="cell">
+              <code class="model-history__task-id-value" :title="item.taskId">{{ item.taskId }}</code>
+              <button
+                type="button"
+                class="model-history__copy-btn"
+                :aria-label="t('pages.modelDetail.copyTaskId')"
+                @click="copyTaskId(item.taskId)"
+              >
+                <AppIcon name="copy" :size="14" />
+              </button>
+            </span>
             <span role="cell">
               <span class="model-history__status" :class="statusClass(item.status)">
                 {{ statusLabel(item.status) }}
@@ -291,9 +313,41 @@ onMounted(() => {
 }
 
 .model-history__task-id {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.model-history__task-id-value {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
   font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
   font-size: 13px;
-  word-break: break-all;
+  color: inherit;
+}
+
+.model-history__copy-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  width: 24px;
+  height: 24px;
+  padding: 0;
+  border: none;
+  border-radius: 6px;
+  background: transparent;
+  color: #9b9dab;
+  cursor: pointer;
+  transition: color 0.15s ease, background 0.15s ease;
+}
+
+.model-history__copy-btn:hover {
+  color: #ebf4fb;
+  background: rgba(255, 255, 255, 0.08);
 }
 
 .model-history__status {
@@ -374,6 +428,11 @@ onMounted(() => {
 
   .model-history__task-id {
     grid-column: 1 / -1;
+  }
+
+  .model-history__task-id-value {
+    white-space: normal;
+    word-break: break-all;
   }
 
   .model-history__view-btn {
