@@ -1,6 +1,18 @@
 import type { LocaleType } from '@/i18n'
 
-export const SITE_ORIGIN = 'https://varo.cloud'
+/**
+ * Public site origin for canonical / OG / JSON-LD absolute URLs.
+ * Staging must use its own host — X/LinkedIn fetch og:image as written;
+ * pointing at production while the file only exists on staging yields a blank card.
+ */
+function resolveSiteOrigin(): string {
+  const fromEnv = import.meta.env.VITE_SITE_ORIGIN?.trim()
+  if (fromEnv) return fromEnv.replace(/\/$/, '')
+  if (import.meta.env.MODE === 'staging') return 'https://varo-staging.github.io'
+  return 'https://varo.cloud'
+}
+
+export const SITE_ORIGIN = resolveSiteOrigin()
 export const SITE_NAME = 'Varo.cloud'
 /** Brand mark for favicon / JSON-LD logo (SVG is fine for schema.org). */
 export const SITE_LOGO = `${SITE_ORIGIN}/assets/brand/logo.svg`
