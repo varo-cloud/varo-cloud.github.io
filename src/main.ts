@@ -7,9 +7,16 @@ import '@/styles/code-highlight.css'
 import '@/styles/playground-select-panel.css'
 import { initAnalytics, setupAnalytics } from '@/analytics'
 import { initDevAuthFromEnv } from '@/utils/devAuthToken'
+import { reloadForStaleChunk } from '@/utils/staleChunkReload'
 import App from './App.vue'
 import router from './router'
 import i18n from './i18n'
+
+// Redeploy replaces hashed chunks on GitHub Pages; reload so the tab picks up the new build.
+window.addEventListener('vite:preloadError', (event) => {
+  event.preventDefault()
+  reloadForStaleChunk()
+})
 
 async function bootstrap() {
   initDevAuthFromEnv()
