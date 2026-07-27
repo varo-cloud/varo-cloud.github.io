@@ -3,22 +3,16 @@ import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { fetchModelFacets, fetchModels } from '@/api/models'
 import { useLocaleRouter } from '@/composables/useLocaleRouter'
-import { formatCapabilityLabel } from '@/utils/capability'
-import type { FacetItem, Model, PublisherFacetItem } from '@/types'
+import type { BaseModelFacetItem, Model } from '@/types'
 import HomeFeaturedCard from '@/components/home/HomeFeaturedCard.vue'
 import AppIcon from '@/components/common/AppIcon.vue'
 
 const FEATURED_LIMIT = 4
-/** Avoid flooding the chip row when many publishers exist. */
-const PUBLISHER_CHIP_LIMIT = 12
 const SKELETON_CARD_COUNT = 4
 const SKELETON_CHIP_COUNT = 8
 
-type ChipKind = 'capability' | 'category' | 'publisher'
-
 interface FeaturedChip {
   id: string
-  kind: ChipKind
   value: string
   label: string
   count: number
@@ -27,76 +21,39 @@ interface FeaturedChip {
 const { t, te } = useI18n()
 const { push } = useLocaleRouter()
 
-const categories = ref<FacetItem[]>([])
-const capabilities = ref<FacetItem[]>([])
-const publishers = ref<PublisherFacetItem[]>([])
+const baseModels = ref<BaseModelFacetItem[]>([])
 const models = ref<Model[]>([])
 const modelsLoading = ref(true)
 const facetsLoading = ref(true)
 
-const chips = computed(() => {
-  const items: FeaturedChip[] = []
+const CHIP_LIMIT = 20
 
-  for (const item of capabilities.value) {
-    items.push({
-      id: `capability:${item.value}`,
-      kind: 'capability',
-      value: item.value,
-      label: capabilityLabel(item.value),
-      count: item.count,
-    })
-  }
-
-  for (const item of categories.value) {
-    items.push({
-      id: `category:${item.value}`,
-      kind: 'category',
-      value: item.value,
-      label: categoryLabel(item.value),
-      count: item.count,
-    })
-  }
-
-  const topPublishers = [...publishers.value]
-    .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name))
-    .slice(0, PUBLISHER_CHIP_LIMIT)
-
-  for (const item of topPublishers) {
-    items.push({
-      id: `publisher:${item.slug}`,
-      kind: 'publisher',
+const chips = computed(() =>
+  [...baseModels.value]
+    .sort((a, b) => b.count - a.count || a.slug.localeCompare(b.slug))
+    .slice(0, CHIP_LIMIT)
+    .map((item) => ({
+      id: `base_model:${item.slug}`,
       value: item.slug,
-      label: item.name,
+      label: baseModelLabel(item.slug),
       count: item.count,
-    })
-  }
-
-  return items
-})
+    })),
+)
 
 const displayModels = computed(() => models.value)
 
-function capabilityLabel(value: string) {
-  const key = `pages.models.capabilities.${value}`
-  return te(key) ? t(key) : formatCapabilityLabel(value)
-}
-
-function categoryLabel(value: string) {
-  const key = `pages.models.categories.${value}`
-  return te(key) ? t(key) : formatCapabilityLabel(value)
+function baseModelLabel(slug: string) {
+  const key = `pages.models.series.${slug}`
+  return te(key) ? t(key) : slug
 }
 
 async function loadFacets() {
   facetsLoading.value = true
   try {
     const data = await fetchModelFacets()
-    categories.value = data.categories ?? []
-    capabilities.value = data.capabilities ?? []
-    publishers.value = data.publishers ?? []
+    baseModels.value = data.base_models ?? []
   } catch {
-    categories.value = []
-    capabilities.value = []
-    publishers.value = []
+    baseModels.value = []
   } finally {
     facetsLoading.value = false
   }
@@ -115,11 +72,7 @@ async function loadModels() {
 }
 
 function openChip(chip: FeaturedChip) {
-  const query: Record<string, string> = {}
-  if (chip.kind === 'capability') query.capability = chip.value
-  if (chip.kind === 'category') query.category = chip.value
-  if (chip.kind === 'publisher') query.publisher = chip.value
-  push({ name: 'models', query })
+  push({ name: 'models', query: { base_model: chip.value } })
 }
 
 function goModels() {
