@@ -66,6 +66,22 @@
     <priority>0.7</priority>
   </url>
   <url>
+    <loc>https://varo.cloud/docs</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://varo.cloud/docs" />
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://varo.cloud/zh-CN/docs" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://varo.cloud/docs" />
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
+    <loc>https://varo.cloud/zh-CN/docs</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://varo.cloud/docs" />
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://varo.cloud/zh-CN/docs" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://varo.cloud/docs" />
+    <changefreq>weekly</changefreq>
+    <priority>0.6</priority>
+  </url>
+  <url>
     <loc>https://varo.cloud/terms</loc>
     <xhtml:link rel="alternate" hreflang="en" href="https://varo.cloud/terms" />
     <xhtml:link rel="alternate" hreflang="zh-CN" href="https://varo.cloud/zh-CN/terms" />

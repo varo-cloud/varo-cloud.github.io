@@ -2,6 +2,8 @@ User-agent: *
 Allow: /
 Disallow: /auth
 Disallow: /zh-CN/auth
+Disallow: /auth/callback
+Disallow: /zh-CN/auth/callback
 Disallow: /api-keys
 Disallow: /zh-CN/api-keys
 Disallow: /billing

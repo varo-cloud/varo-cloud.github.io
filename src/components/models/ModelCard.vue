@@ -8,6 +8,7 @@ import { useUserStore } from '@/stores/user'
 import { assetUrl } from '@/utils/assetUrl'
 import { formatPricingUsd, discountToPercent, formatDiscountLabel, pricingUnitI18nKey } from '@/utils/pricing'
 import { formatCapabilityLabel } from '@/utils/capability'
+import DiscountTag from '@/components/common/DiscountTag.vue'
 import type { Model } from '@/types'
 
 const props = defineProps<{
@@ -167,7 +168,7 @@ async function toggleFavourite(event: Event) {
                 <span class="model-card__detail"> · {{ model.priceDetail }}</span>
               </template>
             </span>
-            <span v-if="discountLabel" class="model-card__discount">{{ discountLabel }}</span>
+            <DiscountTag v-if="discountLabel" size="sm" :content="discountLabel" />
           </span>
         </p>
       </div>
@@ -366,22 +367,6 @@ async function toggleFavourite(event: Event) {
 
 .model-card__detail {
   color: #9b9dab;
-}
-
-.model-card__discount {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  flex-shrink: 0;
-  height: 16px;
-  padding: 0 8px;
-  border-radius: 30px;
-  background: #00bb83;
-  color: #fff;
-  font-size: 12px;
-  font-weight: 400;
-  line-height: 12px;
-  white-space: nowrap;
 }
 
 .model-card__cta {

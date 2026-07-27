@@ -9,7 +9,7 @@ import ModelsFilterSidebar from '@/components/models/ModelsFilterSidebar.vue'
 import PricingTableRow from '@/components/pricing/PricingTableRow.vue'
 import { assetUrl } from '@/utils/assetUrl'
 import { modelToPricingItem } from '@/utils/pricing'
-import type { FacetItem, Model, ModelCategory, PricingItem, PublisherFacetItem } from '@/types'
+import type { BaseModelFacetItem, FacetItem, Model, ModelCategory, PricingItem, PublisherFacetItem } from '@/types'
 
 const PAGE_SIZE = 20
 const SEARCH_DEBOUNCE_MS = 300
@@ -31,10 +31,12 @@ const facets = ref<{
   categories: FacetItem[]
   capabilities: FacetItem[]
   publishers: PublisherFacetItem[]
+  base_models: BaseModelFacetItem[]
 }>({
   categories: [],
   capabilities: [],
   publishers: [],
+  base_models: [],
 })
 
 let searchDebounceTimer: ReturnType<typeof setTimeout> | undefined
@@ -44,7 +46,12 @@ const items = computed<PricingItem[]>(() => models.value.map(modelToPricingItem)
 const hasMore = computed(() => models.value.length < total.value)
 
 const hasActiveFilters = computed(
-  () => Boolean(selectedPublisher.value || selectedCategory.value || selectedCapability.value),
+  () =>
+    Boolean(
+      selectedPublisher.value ||
+        selectedCategory.value ||
+        selectedCapability.value,
+    ),
 )
 
 const unfilteredTotal = computed(() =>
@@ -72,9 +79,10 @@ async function loadFacets() {
       categories: data.categories ?? [],
       capabilities: data.capabilities ?? [],
       publishers: data.publishers ?? [],
+      base_models: data.base_models ?? [],
     }
   } catch {
-    facets.value = { categories: [], capabilities: [], publishers: [] }
+    facets.value = { categories: [], capabilities: [], publishers: [], base_models: [] }
   }
 }
 
@@ -187,7 +195,7 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="pricing-page">
+  <div class="pricing-page" data-seo-ready="pricing">
     <section class="pricing-hero" aria-labelledby="pricing-hero-title">
       <img
         class="pricing-hero__bg"
@@ -197,13 +205,15 @@ onMounted(() => {
       />
       <div class="pricing-hero__overlay" aria-hidden="true" />
 
-      <div class="pricing-hero__content">
-        <h1 id="pricing-hero-title" class="pricing-hero__title">
-          {{ t('pages.pricing.heroTitle') }}
-        </h1>
-        <p class="pricing-hero__subtitle">
-          {{ t('pages.pricing.heroSubtitle') }}
-        </p>
+      <div class="pricing-hero__inner">
+        <div class="pricing-hero__content">
+          <h1 id="pricing-hero-title" class="pricing-hero__title">
+            {{ t('pages.pricing.heroTitle') }}
+          </h1>
+          <p class="pricing-hero__subtitle">
+            {{ t('pages.pricing.heroSubtitle') }}
+          </p>
+        </div>
       </div>
     </section>
 
@@ -237,9 +247,11 @@ onMounted(() => {
         <div class="pricing-layout-body">
           <ModelsFilterSidebar
             :publishers="facets.publishers"
+            :base-models="[]"
             :categories="facets.categories"
             :capabilities="facets.capabilities"
             :selected-publisher="selectedPublisher"
+            :selected-base-model="null"
             :selected-category="selectedCategory"
             :selected-capability="selectedCapability"
             :total-count="unfilteredTotal"
@@ -312,10 +324,12 @@ onMounted(() => {
 .pricing-hero {
   position: relative;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   min-height: 460px;
+  padding: 180px 16px 48px;
   overflow: hidden;
+  background: #0a0a0e;
 }
 
 .pricing-hero__bg {
@@ -324,43 +338,52 @@ onMounted(() => {
   width: 100%;
   height: 100%;
   object-fit: cover;
+  object-position: center;
   pointer-events: none;
 }
 
 .pricing-hero__overlay {
   position: absolute;
   inset: 0;
-  background: rgba(0, 0, 0, 0.1);
+  background: rgba(0, 0, 0, 0.25);
+  pointer-events: none;
+}
+
+.pricing-hero__inner {
+  position: relative;
+  z-index: 1;
+  width: 100%;
+  max-width: 1360px;
+  margin: 0 auto;
   pointer-events: none;
 }
 
 .pricing-hero__content {
-  position: relative;
-  z-index: 1;
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 28px;
-  max-width: 738px;
-  padding: 120px 24px 64px;
-  text-align: center;
+  align-items: flex-start;
+  gap: 24px;
+  text-align: left;
 }
 
 .pricing-hero__title {
   margin: 0;
-  font-size: clamp(32px, 4.5vw, 50px);
-  font-weight: 800;
-  line-height: 1.16;
+  max-width: 1242px;
+  font-size: clamp(36px, 5vw, 56px);
+  font-weight: 900;
+  line-height: 1.14;
   color: #fff;
+  word-break: break-word;
 }
 
 .pricing-hero__subtitle {
   margin: 0;
-  max-width: 640px;
+  max-width: 1242px;
   font-size: clamp(16px, 2.5vw, 20px);
   font-weight: 600;
   line-height: 1.2;
   color: rgba(255, 255, 255, 0.5);
+  word-break: break-word;
 }
 
 .pricing-content {
@@ -547,6 +570,20 @@ onMounted(() => {
   .pricing-content__inner {
     padding-inline: 24px;
   }
+
+  .pricing-hero {
+    padding-inline: 24px;
+  }
+
+  .pricing-hero__title {
+    font-size: 56px;
+    line-height: 64px;
+  }
+
+  .pricing-hero__subtitle {
+    font-size: 20px;
+    line-height: 24px;
+  }
 }
 
 @media (max-width: 1023px) {
@@ -557,13 +594,27 @@ onMounted(() => {
 
 @media (max-width: 767px) {
   .pricing-hero {
-    min-height: 360px;
+    align-items: flex-start;
+    min-height: min(calc(100svh - var(--app-header-height, 80px)), 640px);
+    padding: 120px 16px 32px;
+  }
+
+  .pricing-hero__inner {
+    padding-bottom: 0;
   }
 
   .pricing-hero__content {
-    gap: 20px;
-    padding-top: 96px;
-    padding-bottom: 48px;
+    gap: 16px;
+  }
+
+  .pricing-hero__title {
+    font-size: clamp(28px, 8vw, 36px);
+    line-height: 1.15;
+  }
+
+  .pricing-hero__subtitle {
+    font-size: clamp(14px, 4vw, 16px);
+    line-height: 1.3;
   }
 
   .pricing-layout-header {

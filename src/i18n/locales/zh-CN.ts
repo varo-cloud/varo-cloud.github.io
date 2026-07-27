@@ -141,8 +141,9 @@ export default {
     models: {
       title: '模型',
       placeholder: '浏览可用的视频生成模型。',
+      heroTitle: '所有 AI 模型，集于一处',
       heroSubtitle:
-        '通过统一 API 接入领先的视频、图像、音频与语言模型——更优价格与稳定性能。',
+        '探索 Varo 完整的领先 AI 模型库，覆盖视频、图像、文本、音频与多模态创作。对比能力、试用模型，并在一个简洁、可投入生产的平台上选择合适的引擎。',
       heroSlides: {
         seedance: {
           title: 'Seedance 2.5 即将上线',
@@ -163,6 +164,7 @@ export default {
       sidebar: {
         title: '分类',
         publisher: '发布方',
+        baseModel: '基座模型',
         type: '模型类型',
         capability: '能力纬度',
         more: '更多',
@@ -264,6 +266,7 @@ export default {
       codeNoResult: '运行模型后可查看 API 返回的 JSON。',
       noGenerations: '运行模型后，生成结果将显示在这里。',
       examples: '示例',
+      relatedModels: '相关模型',
       viewFullscreen: '放大查看',
       download: '下载',
       downloadFailed: '下载失败，请重试。',
@@ -455,8 +458,8 @@ export default {
     },
     pricing: {
       title: '价格',
-      heroTitle: '图像与视频模型',
-      heroSubtitle: 'Byteplus、OpenAI、Google 等顶尖模型的最新生成能力。',
+      heroTitle: '简单、透明的 AI 模型定价',
+      heroSubtitle: '所有模型均采用简单的按量付费——只用多少付多少，成本可预期、可扩展。',
       startFrom: '起价',
       inputPrice: '输入价格',
       view: '查看',
@@ -478,7 +481,7 @@ export default {
       },
       seo: {
         title: '价格 — Varo.cloud',
-        description: '对比 Varo.cloud 图像、视频与音频模型价格，按量计费透明可查。',
+        description: 'Varo.cloud 提供简单透明的按量计费，所有 AI 模型只用多少付多少。',
       },
     },
     billing: {

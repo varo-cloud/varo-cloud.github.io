@@ -6,19 +6,19 @@ import { useLocaleRouter } from '@/composables/useLocaleRouter'
 import { NEmpty, NSpin } from 'naive-ui'
 import { fetchModels, fetchFavouriteModels, fetchModelFacets, fetchRecentModels } from '@/api/models'
 import ModelCard from '@/components/models/ModelCard.vue'
+import ModelsBaseModelTags from '@/components/models/ModelsBaseModelTags.vue'
 import ModelsFilterSidebar from '@/components/models/ModelsFilterSidebar.vue'
-import ModelsHeroCarousel from '@/components/models/ModelsHeroCarousel.vue'
+import AppIcon from '@/components/common/AppIcon.vue'
 import { useModelPreferencesStore } from '@/stores/modelPreferences'
 import { useUserStore } from '@/stores/user'
 import { assetUrl } from '@/utils/assetUrl'
-import { docsUrl } from '@/utils/docsUrl'
-import type { FacetItem, Model, ModelCategory, PublisherFacetItem } from '@/types'
+import type { BaseModelFacetItem, FacetItem, Model, ModelCategory, PublisherFacetItem } from '@/types'
 
 const PAGE_SIZE = 20
 const SEARCH_DEBOUNCE_MS = 300
 
 const route = useRoute()
-const { push, replace } = useLocaleRouter()
+const { replace } = useLocaleRouter()
 const { t } = useI18n()
 const userStore = useUserStore()
 const modelPrefs = useModelPreferencesStore()
@@ -31,38 +31,19 @@ const error = ref<string | null>(null)
 const activeTab = ref<'latest' | 'favourite' | 'recent'>('latest')
 const searchQuery = ref('')
 const selectedPublisher = ref<string | null>(null)
+const selectedBaseModel = ref<string | null>(null)
 const selectedCategory = ref<ModelCategory | null>(null)
 const selectedCapability = ref<string | null>(null)
 const facets = ref<{
   categories: FacetItem[]
   capabilities: FacetItem[]
   publishers: PublisherFacetItem[]
+  base_models: BaseModelFacetItem[]
 }>({
   categories: [],
   capabilities: [],
   publishers: [],
-})
-const heroActiveIndex = ref(0)
-const externalDocsUrl = computed(() => docsUrl())
-
-const heroPrimaryLabel = computed(() =>
-  userStore.isLoggedIn
-    ? t('pages.models.heroCtaPrimaryLoggedIn')
-    : t('pages.models.heroCtaPrimary'),
-)
-
-const heroSlideContent = computed(() => {
-  if (heroActiveIndex.value === 1) {
-    return {
-      title: t('pages.models.heroSlides.seedance.title'),
-      subtitle: t('pages.models.heroSlides.seedance.subtitle'),
-    }
-  }
-
-  return {
-    title: t('common.slogan'),
-    subtitle: t('pages.models.heroSubtitle'),
-  }
+  base_models: [],
 })
 
 let searchDebounceTimer: ReturnType<typeof setTimeout> | undefined
@@ -83,7 +64,13 @@ const hasMore = computed(() => activeTab.value === 'latest' && models.value.leng
 const showFilterSidebar = computed(() => activeTab.value === 'latest')
 
 const hasActiveFilters = computed(
-  () => Boolean(selectedPublisher.value || selectedCategory.value || selectedCapability.value),
+  () =>
+    Boolean(
+      selectedPublisher.value ||
+        selectedBaseModel.value ||
+        selectedCategory.value ||
+        selectedCapability.value,
+    ),
 )
 
 const unfilteredTotal = computed(() =>
@@ -101,6 +88,7 @@ function buildListQuery() {
   const q = searchQuery.value.trim()
   if (q) query.q = q
   if (selectedPublisher.value) query.publisher = selectedPublisher.value
+  if (selectedBaseModel.value) query.base_model = selectedBaseModel.value
   if (selectedCategory.value) query.category = selectedCategory.value
   if (selectedCapability.value) query.capability = selectedCapability.value
   return query
@@ -118,9 +106,10 @@ async function loadFacets() {
       categories: data.categories ?? [],
       capabilities: data.capabilities ?? [],
       publishers: data.publishers ?? [],
+      base_models: data.base_models ?? [],
     }
   } catch {
-    facets.value = { categories: [], capabilities: [], publishers: [] }
+    facets.value = { categories: [], capabilities: [], publishers: [], base_models: [] }
   }
 }
 
@@ -192,6 +181,7 @@ async function loadModels(append = false) {
       limit: PAGE_SIZE,
       q: searchQuery.value.trim() || undefined,
       publisher: selectedPublisher.value ?? undefined,
+      base_model: selectedBaseModel.value ?? undefined,
       category: selectedCategory.value ?? undefined,
       capability: selectedCapability.value ?? undefined,
     })
@@ -233,6 +223,14 @@ function selectPublisher(publisher: string | null) {
   loadModels()
 }
 
+function selectBaseModel(baseModel: string | null) {
+  const next = selectedBaseModel.value === baseModel ? null : baseModel
+  if (selectedBaseModel.value === next) return
+  selectedBaseModel.value = next
+  syncRouteQuery()
+  loadModels()
+}
+
 function selectCategory(category: string | null) {
   const next: ModelCategory | null =
     category === 'video' || category === 'image' || category === 'llm' ? category : null
@@ -251,6 +249,7 @@ function selectCapability(capability: string | null) {
 
 function clearFilters() {
   selectedPublisher.value = null
+  selectedBaseModel.value = null
   selectedCategory.value = null
   selectedCapability.value = null
   syncRouteQuery()
@@ -272,25 +271,6 @@ function retryLoad() {
     return
   }
   loadRecentModels()
-}
-
-function goToHeroPrimary() {
-  if (userStore.isLoggedIn) {
-    document.querySelector('.models-list')?.scrollIntoView({ behavior: 'smooth' })
-    return
-  }
-
-  push({ name: 'auth' })
-}
-
-function goToDocs() {
-  const url = docsUrl()
-  if (url) {
-    window.open(url, '_blank', 'noopener,noreferrer')
-    return
-  }
-
-  push({ name: 'docs' })
 }
 
 function handleFavouriteChange({
@@ -352,6 +332,11 @@ onMounted(() => {
     selectedPublisher.value = publisher
   }
 
+  const baseModel = route.query.base_model
+  if (typeof baseModel === 'string' && baseModel) {
+    selectedBaseModel.value = baseModel
+  }
+
   const category = route.query.category
   if (category === 'video' || category === 'image' || category === 'llm') {
     selectedCategory.value = category
@@ -368,50 +353,47 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="models-page">
+  <div class="models-page" data-seo-ready="models">
     <section class="models-hero" aria-labelledby="models-hero-title">
-      <ModelsHeroCarousel v-model:active-index="heroActiveIndex" />
+      <img
+        class="models-hero__bg"
+        :src="assetUrl('/assets/models/hero-bg.jpg')"
+        alt=""
+        aria-hidden="true"
+      />
+      <div class="models-hero__overlay" aria-hidden="true" />
 
       <div class="models-hero__inner">
         <div class="models-hero__content">
           <h1 id="models-hero-title" class="models-hero__title">
-            {{ heroSlideContent.title }}
+            {{ t('pages.models.heroTitle') }}
           </h1>
           <p class="models-hero__subtitle">
-            {{ heroSlideContent.subtitle }}
+            {{ t('pages.models.heroSubtitle') }}
           </p>
-          <div class="models-hero__actions">
-            <button
-              type="button"
-              class="models-hero__btn models-hero__btn--primary"
-              @click="goToHeroPrimary"
-            >
-              {{ heroPrimaryLabel }}
-            </button>
-            <a
-              v-if="externalDocsUrl"
-              :href="externalDocsUrl"
-              target="_blank"
-              rel="noopener noreferrer"
-              class="models-hero__btn models-hero__btn--secondary"
-            >
-              {{ t('pages.models.heroCtaSecondary') }}
-            </a>
-            <button
-              v-else
-              type="button"
-              class="models-hero__btn models-hero__btn--secondary"
-              @click="goToDocs"
-            >
-              {{ t('pages.models.heroCtaSecondary') }}
-            </button>
-          </div>
         </div>
       </div>
     </section>
 
     <section class="models-list">
       <div class="models-list__inner">
+        <label v-if="activeTab === 'latest'" class="models-search">
+          <img :src="assetUrl('/assets/models/search.svg')" alt="" aria-hidden="true" />
+          <input
+            v-model="searchQuery"
+            type="search"
+            :placeholder="t('pages.models.searchPlaceholder')"
+          />
+        </label>
+
+        <ModelsBaseModelTags
+          v-if="activeTab === 'latest'"
+          class="models-base-tags-wrap"
+          :base-models="facets.base_models"
+          :selected-base-model="selectedBaseModel"
+          @update:selected-base-model="selectBaseModel"
+        />
+
         <div class="models-layout-header" :class="{ 'has-sidebar': showFilterSidebar }">
           <div v-if="showFilterSidebar" class="models-sidebar-header">
             <span class="models-sidebar-header__title">{{ t('pages.models.sidebar.title') }}</span>
@@ -419,9 +401,10 @@ onMounted(() => {
               v-if="hasActiveFilters"
               type="button"
               class="models-sidebar-header__clear"
+              :aria-label="t('pages.models.sidebar.clear')"
               @click="clearFilters"
             >
-              {{ t('pages.models.sidebar.clear') }}
+              <AppIcon name="brush" :size="20" />
             </button>
           </div>
 
@@ -441,15 +424,6 @@ onMounted(() => {
                 <span v-if="activeTab === tab.key" class="models-tab__indicator" />
               </button>
             </div>
-
-            <label v-if="activeTab === 'latest'" class="models-search">
-              <img :src="assetUrl('/assets/models/search.svg')" alt="" aria-hidden="true" />
-              <input
-                v-model="searchQuery"
-                type="search"
-                :placeholder="t('pages.models.searchPlaceholder')"
-              />
-            </label>
           </div>
         </div>
 
@@ -457,9 +431,11 @@ onMounted(() => {
           <ModelsFilterSidebar
             v-if="showFilterSidebar"
             :publishers="facets.publishers"
+            :base-models="[]"
             :categories="facets.categories"
             :capabilities="facets.capabilities"
             :selected-publisher="selectedPublisher"
+            :selected-base-model="null"
             :selected-category="selectedCategory"
             :selected-capability="selectedCapability"
             :total-count="unfilteredTotal"
@@ -521,16 +497,34 @@ onMounted(() => {
 .models-hero {
   position: relative;
   display: flex;
-  align-items: flex-end;
+  align-items: flex-start;
   justify-content: center;
-  min-height: 724px;
-  padding: 0 16px 49px;
+  min-height: 460px;
+  padding: 180px 16px 48px;
   overflow: hidden;
+  background: #0a1a3a;
+}
+
+.models-hero__bg {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+  pointer-events: none;
+}
+
+.models-hero__overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.25);
+  pointer-events: none;
 }
 
 .models-hero__inner {
   position: relative;
-  z-index: 3;
+  z-index: 1;
   width: 100%;
   max-width: 1360px;
   margin: 0 auto;
@@ -547,7 +541,7 @@ onMounted(() => {
 
 .models-hero__title {
   margin: 0;
-  max-width: 964px;
+  max-width: 1242px;
   font-size: clamp(36px, 5vw, 56px);
   font-weight: 900;
   line-height: 1.14;
@@ -557,54 +551,12 @@ onMounted(() => {
 
 .models-hero__subtitle {
   margin: 0;
-  max-width: 738px;
+  max-width: 1242px;
   font-size: clamp(16px, 2.5vw, 20px);
   font-weight: 600;
   line-height: 1.2;
   color: rgba(255, 255, 255, 0.5);
   word-break: break-word;
-}
-
-.models-hero__actions {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 16px;
-  pointer-events: auto;
-}
-
-.models-hero__btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  height: 40px;
-  padding: 0 24px;
-  border: none;
-  border-radius: 8px;
-  font-size: 16px;
-  font-weight: 500;
-  line-height: 16px;
-  text-decoration: none;
-  cursor: pointer;
-  white-space: nowrap;
-}
-
-.models-hero__btn--primary {
-  background: #06b6d4;
-  color: #fff;
-}
-
-.models-hero__btn--primary:hover {
-  background: #0891b2;
-}
-
-.models-hero__btn--secondary {
-  background: #fff;
-  color: #222;
-}
-
-.models-hero__btn--secondary:hover {
-  background: #f5f5f5;
 }
 
 .models-list {
@@ -614,13 +566,55 @@ onMounted(() => {
 .models-list__inner {
   max-width: 1360px;
   margin: 0 auto;
-  padding: 10px 16px 64px;
+  padding: 40px 16px 64px;
+}
+
+.models-search {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  height: 48px;
+  padding: 0 12px;
+  border-radius: 8px;
+  background: #f5f5f5;
+}
+
+.models-search img {
+  width: 24px;
+  height: 24px;
+  flex-shrink: 0;
+  opacity: 0.6;
+}
+
+.models-search input {
+  flex: 1;
+  min-width: 0;
+  border: none;
+  background: transparent;
+  color: #222;
+  font-size: 16px;
+  line-height: 16px;
+  outline: none;
+}
+
+.models-search input::placeholder {
+  color: #9b9dab;
+}
+
+.models-base-tags-wrap {
+  margin-top: 40px;
 }
 
 .models-layout-header {
   display: flex;
   align-items: center;
   margin-bottom: 21px;
+}
+
+.models-search + .models-layout-header,
+.models-base-tags-wrap + .models-layout-header {
+  margin-top: 40px;
 }
 
 .models-layout-header.has-sidebar {
@@ -643,13 +637,15 @@ onMounted(() => {
 }
 
 .models-sidebar-header__clear {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
   padding: 0;
   border: none;
   background: transparent;
   color: #9b9dab;
-  font-size: 14px;
-  font-weight: 400;
-  line-height: 16px;
   cursor: pointer;
 }
 
@@ -706,39 +702,6 @@ onMounted(() => {
   height: 3px;
   border-radius: 2px;
   background: #06b6d4;
-}
-
-.models-search {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  width: min(100%, 308px);
-  height: 36px;
-  padding: 0 16px;
-  border-radius: 30px;
-  background: #f5f5f5;
-}
-
-.models-search img {
-  width: 20px;
-  height: 20px;
-  flex-shrink: 0;
-  opacity: 0.6;
-}
-
-.models-search input {
-  flex: 1;
-  min-width: 0;
-  border: none;
-  background: transparent;
-  color: #222;
-  font-size: 14px;
-  line-height: 14px;
-  outline: none;
-}
-
-.models-search input::placeholder {
-  color: #9b9dab;
 }
 
 .models-main {
@@ -845,13 +808,13 @@ onMounted(() => {
 
 @media (max-width: 767px) {
   .models-hero {
-    align-items: flex-end;
-    min-height: min(calc(100svh - var(--app-header-height)), 640px);
-    padding: 72px 16px 16px;
+    align-items: flex-start;
+    min-height: min(calc(100svh - var(--app-header-height, 80px)), 640px);
+    padding: 120px 16px 32px;
   }
 
   .models-hero__inner {
-    padding-bottom: 52px;
+    padding-bottom: 0;
   }
 
   .models-hero__content {
@@ -868,23 +831,20 @@ onMounted(() => {
     line-height: 1.35;
   }
 
-  .models-hero__actions {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 12px;
-    width: 100%;
+  .models-list__inner {
+    padding-top: 24px;
   }
 
-  .models-hero__btn {
-    width: 100%;
-    justify-content: center;
+  .models-base-tags-wrap {
+    margin-top: 24px;
+  }
+
+  .models-search + .models-layout-header,
+  .models-base-tags-wrap + .models-layout-header {
+    margin-top: 24px;
   }
 
   .models-main-header {
-    width: 100%;
-  }
-
-  .models-search {
     width: 100%;
   }
 

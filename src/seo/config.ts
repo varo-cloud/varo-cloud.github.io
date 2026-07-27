@@ -14,6 +14,7 @@ export type SeoRouteKey =
   | 'terms'
   | 'privacy'
   | 'auth'
+  | 'auth-callback'
   | 'api-keys'
   | 'billing'
   | 'generations'
@@ -59,6 +60,11 @@ export const SEO_BY_ROUTE: Record<SeoRouteKey, SeoDefinition> = {
     descriptionKey: 'pages.privacy.seo.description',
   },
   auth: {
+    titleKey: 'pages.auth.seo.title',
+    descriptionKey: 'pages.auth.seo.description',
+    noindex: true,
+  },
+  'auth-callback': {
     titleKey: 'pages.auth.seo.title',
     descriptionKey: 'pages.auth.seo.description',
     noindex: true,

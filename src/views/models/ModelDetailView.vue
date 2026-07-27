@@ -2,6 +2,7 @@
 import { computed, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import { useHead } from '@unhead/vue'
 import { useLocaleRouter } from '@/composables/useLocaleRouter'
 import { NSpin } from 'naive-ui'
 import { fetchModelDetail } from '@/api/models'
@@ -10,11 +11,14 @@ import { fetchGenerationDetail } from '@/api/generations'
 import ModelDetailHeader from '@/components/models/ModelDetailHeader.vue'
 import ModelApiTab from '@/components/models/ModelApiTab.vue'
 import ModelHistoryTab from '@/components/models/ModelHistoryTab.vue'
+import ModelDetailExamplesSection from '@/components/models/ModelDetailExamplesSection.vue'
+import ModelDetailRelatedModels from '@/components/models/ModelDetailRelatedModels.vue'
 import PlaygroundInputPanel from '@/components/playground/PlaygroundInputPanel.vue'
 import PlaygroundOutputPanel from '@/components/playground/PlaygroundOutputPanel.vue'
 import { useUserStore } from '@/stores/user'
 import { useModelPreferencesStore } from '@/stores/modelPreferences'
 import { createDefaultFormValues } from '@/utils/schema-form'
+import { extractBaseModelSlug } from '@/utils/model-slug'
 import { usePlaygroundQuote } from '@/composables/usePlaygroundQuote'
 import { usePlaygroundGeneration } from '@/composables/usePlaygroundGeneration'
 import { usePlaygroundExamples } from '@/composables/usePlaygroundExamples'
@@ -72,6 +76,31 @@ const quoteUnitCostUsd = playgroundQuote.unitCostUsd
 
 const displayTitle = computed(() => model.value?.displayName ?? '')
 const modelExamples = computed(() => model.value?.examples ?? [])
+const baseModelSlug = computed(() =>
+  model.value?.id ? extractBaseModelSlug(model.value.id) : '',
+)
+
+const slugParam = computed(() =>
+  typeof route.params.slug === 'string' ? route.params.slug : '',
+)
+
+useHead(
+  computed(() => {
+    const name = model.value?.displayName || slugParam.value || 'Model'
+    const description =
+      model.value?.description?.trim() || t('pages.models.seo.description')
+    return {
+      title: t('pages.models.seo.detailTitle', { name }),
+      meta: [
+        { name: 'description', content: description },
+        { property: 'og:title', content: t('pages.models.seo.detailTitle', { name }) },
+        { property: 'og:description', content: description },
+        { name: 'twitter:title', content: t('pages.models.seo.detailTitle', { name }) },
+        { name: 'twitter:description', content: description },
+      ],
+    }
+  }),
+)
 
 const {
   selectedExampleId,
@@ -86,6 +115,11 @@ const {
 function handleModelSelect(slug: string) {
   if (slug === model.value?.id) return
   void push({ name: 'model-detail', params: { slug } })
+}
+
+function handleSelectExample(exampleId: string) {
+  selectExample(exampleId)
+  activeTab.value = 'playground'
 }
 
 async function loadModel(slug: string) {
@@ -174,7 +208,7 @@ watch(
 </script>
 
 <template>
-  <div class="model-detail-page">
+  <div class="model-detail-page" data-seo-ready="model-detail">
     <div v-if="loading" class="model-detail-page__state">
       <NSpin size="large" />
     </div>
@@ -261,6 +295,7 @@ watch(
           :examples="modelExamples"
           :selected-example-id="selectedExampleId"
           :api-model-id="model.id"
+          :show-examples-bar="false"
           @select-example="selectExample"
         />
       </div>
@@ -285,6 +320,19 @@ watch(
         v-else-if="activeTab === 'history'"
         :model-slug="model.id"
         @view-detail="handleViewHistoryDetail"
+      />
+
+      <ModelDetailExamplesSection
+        v-if="activeTab === 'playground' && modelExamples.length > 0"
+        :examples="modelExamples"
+        :selected-example-id="selectedExampleId"
+        @select="handleSelectExample"
+      />
+
+      <ModelDetailRelatedModels
+        v-if="activeTab === 'playground' && baseModelSlug"
+        :model-id="model.id"
+        :base-model-slug="baseModelSlug"
       />
     </template>
   </div>
