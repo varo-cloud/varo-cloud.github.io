@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
 import { LOCALE_ROUTE_PARAM } from '@/i18n/locale-path'
+import { isChunkLoadError, reloadForStaleChunk } from '@/utils/staleChunkReload'
 import { setupGuards } from './guards'
 
 const appLayoutChildren: RouteRecordRaw[] = [
@@ -101,5 +102,11 @@ const router = createRouter({
 })
 
 setupGuards(router)
+
+router.onError((error) => {
+  if (isChunkLoadError(error)) {
+    reloadForStaleChunk()
+  }
+})
 
 export default router
