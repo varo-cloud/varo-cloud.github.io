@@ -78,6 +78,9 @@ VITE_DEV_REFRESH_TOKEN=<staging 登录后的 refresh_token>
 | `STAGING_DEPLOY_TOKEN` | Secret | PAT，需对 `varo-staging/varo-staging.github.io` 有 `contents: write` 权限 |
 | `VITE_TURNSTILE_SITE_KEY` | Secret | Turnstile Site Key（**仅 production**；staging 使用 Cloudflare 官方测试 key，见下方） |
 | `VITE_GA_MEASUREMENT_ID` | Variable | GA4 测量 ID，留空则关闭统计 |
+| `LARK_WEBHOOK_URL` | Secret | 飞书/Lark 自定义机器人 Webhook；部署成功或失败都会通知 |
+
+**飞书 / Lark 通知：** 在目标群添加「自定义机器人」，复制 Webhook 地址写入仓库 Secret `LARK_WEBHOOK_URL`。Production / Staging 部署结束（`if: always()`）都会发卡片，含状态、分支、提交与 Actions 链接。未配置该 Secret 时跳过通知、不影响部署。
 
 **Staging**（`deploy-staging.yml`）→ 部署到 [varo-staging.github.io](https://varo-staging.github.io/)：
 

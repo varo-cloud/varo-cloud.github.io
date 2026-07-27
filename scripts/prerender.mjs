@@ -1,6 +1,10 @@
 /**
  * Post-build prerender for public (no-auth) marketing routes.
  * Order: SPA shell already copied to 404.html; this writes route HTML under dist/.
+ *
+ * Dynamic pages wait for `data-seo-content-ready` (first API-backed block settled)
+ * so model cards / pricing rows land in the static HTML when the API is reachable.
+ * API calls are proxied via Playwright `route.fetch()` to avoid browser CORS from 127.0.0.1.
  */
 import { createServer } from 'node:http'
 import { readFileSync, writeFileSync, mkdirSync, existsSync, statSync } from 'node:fs'
@@ -11,6 +15,8 @@ import { chromium } from 'playwright'
 const __dirname = dirname(fileURLToPath(import.meta.url))
 const root = resolve(__dirname, '..')
 const distDir = resolve(root, 'dist')
+
+const CONTENT_TIMEOUT_MS = 45_000
 
 const MIME = {
   '.html': 'text/html; charset=utf-8',
@@ -38,6 +44,8 @@ const ROUTES = [
     ready: '[data-seo-ready="home"]',
     waitSelector: '#home-hero-title',
     waitText: 'The Generative AI Cloud for Creators',
+    contentReady: '[data-seo-content-ready="home"]',
+    contentItem: '.home-featured-card',
   },
   {
     path: '/zh-CN',
@@ -45,6 +53,8 @@ const ROUTES = [
     ready: '[data-seo-ready="home"]',
     waitSelector: '#home-hero-title',
     waitText: '面向创作者的生成式 AI 云',
+    contentReady: '[data-seo-content-ready="home"]',
+    contentItem: '.home-featured-card',
   },
   {
     path: '/models',
@@ -52,6 +62,8 @@ const ROUTES = [
     ready: '[data-seo-ready="models"]',
     waitSelector: '#models-hero-title',
     waitText: 'All Your AI Models, in One Place',
+    contentReady: '[data-seo-content-ready="models"]',
+    contentItem: '.model-card',
   },
   {
     path: '/zh-CN/models',
@@ -59,6 +71,8 @@ const ROUTES = [
     ready: '[data-seo-ready="models"]',
     waitSelector: '#models-hero-title',
     waitText: '所有 AI 模型，集于一处',
+    contentReady: '[data-seo-content-ready="models"]',
+    contentItem: '.model-card',
   },
   {
     path: '/pricing',
@@ -66,6 +80,8 @@ const ROUTES = [
     ready: '[data-seo-ready="pricing"]',
     waitSelector: '#pricing-hero-title',
     waitText: 'Simple, Transparent AI Model Pricing',
+    contentReady: '[data-seo-content-ready="pricing"]',
+    contentItem: '.pricing-row',
   },
   {
     path: '/zh-CN/pricing',
@@ -73,18 +89,22 @@ const ROUTES = [
     ready: '[data-seo-ready="pricing"]',
     waitSelector: '#pricing-hero-title',
     waitText: '简单、透明的 AI 模型定价',
+    contentReady: '[data-seo-content-ready="pricing"]',
+    contentItem: '.pricing-row',
   },
   {
     path: '/ai-generator',
     outFile: 'ai-generator.html',
     ready: '[data-seo-ready="ai-generator"]',
     titleIncludes: 'AI Generator',
+    contentReady: '[data-seo-content-ready="ai-generator"]',
   },
   {
     path: '/zh-CN/ai-generator',
     outFile: join('zh-CN', 'ai-generator.html'),
     ready: '[data-seo-ready="ai-generator"]',
     titleIncludes: 'AI 生成器',
+    contentReady: '[data-seo-content-ready="ai-generator"]',
   },
   {
     path: '/docs',
@@ -183,8 +203,57 @@ function startStaticServer() {
   })
 }
 
+/** Proxy backend API through Node so prerender is not blocked by browser CORS. */
+async function installApiProxy(page) {
+  await page.route(
+    (url) => {
+      const href = url.href
+      return (
+        href.includes('/api/') ||
+        href.includes('api.varo.cloud') ||
+        href.includes('staging.api.varo.cloud')
+      )
+    },
+    async (route) => {
+      try {
+        const response = await route.fetch()
+        await route.fulfill({ response })
+      } catch (error) {
+        console.warn(`[prerender] API proxy failed: ${route.request().url()}`, error)
+        await route.abort()
+      }
+    },
+  )
+}
+
+async function waitForDynamicContent(page, route) {
+  if (!route.contentReady) return
+
+  try {
+    await page.waitForSelector(route.contentReady, { timeout: CONTENT_TIMEOUT_MS })
+    if (route.contentItem) {
+      const count = await page.locator(route.contentItem).count()
+      if (count === 0) {
+        console.warn(
+          `[prerender] ${route.path}: content settled but found 0 items (${route.contentItem}) — API empty or failed`,
+        )
+      } else {
+        console.log(`[prerender] ${route.path}: captured ${count} × ${route.contentItem}`)
+      }
+    } else {
+      console.log(`[prerender] ${route.path}: dynamic content ready`)
+    }
+  } catch {
+    console.warn(
+      `[prerender] ${route.path}: timed out waiting for ${route.contentReady}; writing HTML without dynamic block`,
+    )
+  }
+}
+
 async function prerenderRoute(browser, baseUrl, route) {
   const page = await browser.newPage()
+  await installApiProxy(page)
+
   const url = `${baseUrl}${route.path}`
   console.log(`[prerender] visiting ${url}`)
 
@@ -210,7 +279,9 @@ async function prerenderRoute(browser, baseUrl, route) {
     )
   }
 
-  // Allow unhead to flush meta tags
+  await waitForDynamicContent(page, route)
+
+  // Allow unhead to flush meta tags; images may still be loading (opacity fade).
   await new Promise((r) => setTimeout(r, 500))
 
   const html = await page.content()

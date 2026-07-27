@@ -219,7 +219,11 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="ai-generator-page" data-seo-ready="ai-generator">
+  <div
+    class="ai-generator-page"
+    data-seo-ready="ai-generator"
+    :data-seo-content-ready="listLoading ? undefined : 'ai-generator'"
+  >
     <div v-if="listLoading" class="ai-generator-page__state">
       <NSpin size="large" />
     </div>

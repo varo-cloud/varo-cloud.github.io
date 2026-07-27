@@ -346,7 +346,11 @@ onMounted(() => {
 </script>
 
 <template>
-  <div class="models-page" data-seo-ready="models">
+  <div
+    class="models-page"
+    data-seo-ready="models"
+    :data-seo-content-ready="loading ? undefined : 'models'"
+  >
     <section class="models-hero" aria-labelledby="models-hero-title">
       <img
         class="models-hero__bg"
