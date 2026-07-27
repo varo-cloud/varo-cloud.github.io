@@ -260,6 +260,7 @@ export default {
       fieldRequired: 'This field is required',
       invalidJsonInput: 'Invalid JSON. Please fix the input before running.',
       copyCode: 'Copy',
+      copyTaskId: 'Copy Task ID',
       codeCopied: 'Copied to clipboard.',
       copyFailed: 'Failed to copy. Please try again.',
       myGenerations: 'My Generations',

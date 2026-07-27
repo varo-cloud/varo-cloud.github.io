@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
+import GenerationTaskIds from './GenerationTaskIds.vue'
 import { assetUrl } from '@/utils/assetUrl'
 import type { GenerationStatus } from '@/types'
 
@@ -8,6 +9,7 @@ const props = defineProps<{
   status: Exclude<GenerationStatus, 'idle'>
   progress?: number
   errorMessage?: string | null
+  taskIds?: string[]
 }>()
 
 const { t } = useI18n()
@@ -29,8 +31,8 @@ const statusTitle = computed(() => t(`pages.modelDetail.generation.${props.statu
 
 const failedDetail = computed(() => {
   if (props.status !== 'failed') return null
-  const message = props.errorMessage?.trim()
-  return message || null
+  const detail = props.errorMessage?.trim()
+  return detail || null
 })
 
 const progressPercent = computed(() => Math.min(100, Math.max(0, props.progress ?? 0)))
@@ -89,6 +91,8 @@ function isTimelineActive(step: TimelineStep): boolean {
     <p class="generation-status__title">{{ statusTitle }}</p>
 
     <p v-if="failedDetail" class="generation-status__error">{{ failedDetail }}</p>
+
+    <GenerationTaskIds :task-ids="taskIds" />
 
     <p class="generation-status__timeline">
       <span :class="{ 'generation-status__timeline-step--active': isTimelineActive('queued') }">
