@@ -323,14 +323,14 @@ watch(
       />
 
       <ModelDetailExamplesSection
-        v-if="modelExamples.length > 0"
+        v-if="activeTab === 'playground' && modelExamples.length > 0"
         :examples="modelExamples"
         :selected-example-id="selectedExampleId"
         @select="handleSelectExample"
       />
 
       <ModelDetailRelatedModels
-        v-if="baseModelSlug"
+        v-if="activeTab === 'playground' && baseModelSlug"
         :model-id="model.id"
         :base-model-slug="baseModelSlug"
       />

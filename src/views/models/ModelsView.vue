@@ -497,10 +497,10 @@ onMounted(() => {
 .models-hero {
   position: relative;
   display: flex;
-  align-items: flex-end;
+  align-items: flex-start;
   justify-content: center;
-  min-height: 724px;
-  padding: 0 16px 137px;
+  min-height: 460px;
+  padding: 180px 16px 48px;
   overflow: hidden;
   background: #0a1a3a;
 }
@@ -808,13 +808,13 @@ onMounted(() => {
 
 @media (max-width: 767px) {
   .models-hero {
-    align-items: flex-end;
-    min-height: min(calc(100svh - var(--app-header-height)), 640px);
-    padding: 72px 16px 16px;
+    align-items: flex-start;
+    min-height: min(calc(100svh - var(--app-header-height, 80px)), 640px);
+    padding: 120px 16px 32px;
   }
 
   .models-hero__inner {
-    padding-bottom: 52px;
+    padding-bottom: 0;
   }
 
   .models-hero__content {

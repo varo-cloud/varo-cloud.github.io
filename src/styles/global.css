@@ -4,6 +4,11 @@
   box-sizing: border-box;
 }
 
+/* Suppress default browser focus outlines site-wide (nav, tabs, buttons, etc.). */
+:focus {
+  outline: none;
+}
+
 html,
 body,
 #app {
