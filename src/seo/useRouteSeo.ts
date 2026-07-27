@@ -7,12 +7,18 @@ import { withLocalePrefix, stripLocalePrefix } from '@/i18n/locale-path'
 import type { LocaleType } from '@/i18n'
 import {
   DEFAULT_OG_IMAGE,
+  OG_IMAGE_ALT,
+  OG_IMAGE_HEIGHT,
+  OG_IMAGE_TYPE,
+  OG_IMAGE_WIDTH,
   SEO_BY_ROUTE,
+  SITE_LOGO,
   SITE_NAME,
   absoluteUrl,
   htmlLang,
   type SeoRouteKey,
 } from './config'
+import { SOCIAL_SAME_AS, TWITTER_SITE } from './social'
 
 function asSeoRouteKey(name: unknown): SeoRouteKey | null {
   if (typeof name !== 'string') return null
@@ -77,11 +83,22 @@ export function useRouteSeo() {
         { property: 'og:description', content: seo.value.description },
         { property: 'og:url', content: canonical.value },
         { property: 'og:image', content: DEFAULT_OG_IMAGE },
+        { property: 'og:image:secure_url', content: DEFAULT_OG_IMAGE },
+        { property: 'og:image:type', content: OG_IMAGE_TYPE },
+        { property: 'og:image:width', content: String(OG_IMAGE_WIDTH) },
+        { property: 'og:image:height', content: String(OG_IMAGE_HEIGHT) },
+        { property: 'og:image:alt', content: OG_IMAGE_ALT },
         { property: 'og:locale', content: currentLocale.value === 'zh-CN' ? 'zh_CN' : 'en_US' },
+        {
+          property: 'og:locale:alternate',
+          content: currentLocale.value === 'zh-CN' ? 'en_US' : 'zh_CN',
+        },
         { name: 'twitter:card', content: 'summary_large_image' },
+        { name: 'twitter:site', content: TWITTER_SITE },
         { name: 'twitter:title', content: seo.value.title },
         { name: 'twitter:description', content: seo.value.description },
         { name: 'twitter:image', content: DEFAULT_OG_IMAGE },
+        { name: 'twitter:image:alt', content: OG_IMAGE_ALT },
       ],
       link: [
         { rel: 'canonical', href: canonical.value },
@@ -101,7 +118,13 @@ export function useRouteSeo() {
                       '@type': 'Organization',
                       name: SITE_NAME,
                       url: absoluteUrl('/'),
-                      logo: DEFAULT_OG_IMAGE,
+                      logo: SITE_LOGO,
+                      sameAs: SOCIAL_SAME_AS,
+                      contactPoint: {
+                        '@type': 'ContactPoint',
+                        email: 'support@varo.cloud',
+                        contactType: 'customer support',
+                      },
                     },
                     {
                       '@type': 'WebSite',

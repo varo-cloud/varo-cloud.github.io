@@ -2,7 +2,17 @@ import type { LocaleType } from '@/i18n'
 
 export const SITE_ORIGIN = 'https://varo.cloud'
 export const SITE_NAME = 'Varo.cloud'
-export const DEFAULT_OG_IMAGE = `${SITE_ORIGIN}/assets/brand/logo.svg`
+/** Brand mark for favicon / JSON-LD logo (SVG is fine for schema.org). */
+export const SITE_LOGO = `${SITE_ORIGIN}/assets/brand/logo.svg`
+/**
+ * Open Graph / Twitter Card image. Platforms (X, LinkedIn, Discord, Slack…)
+ * expect a raster ~1200×630 JPEG/PNG — SVG logos are often ignored.
+ */
+export const DEFAULT_OG_IMAGE = `${SITE_ORIGIN}/assets/brand/og-image.jpg`
+export const OG_IMAGE_WIDTH = 1200
+export const OG_IMAGE_HEIGHT = 630
+export const OG_IMAGE_TYPE = 'image/jpeg'
+export const OG_IMAGE_ALT = 'Varo.cloud — The Generative AI Cloud for Creators'
 
 export type SeoRouteKey =
   | 'home'
