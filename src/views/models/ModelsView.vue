@@ -61,8 +61,6 @@ const tabOptions = computed(() => {
 
 const hasMore = computed(() => activeTab.value === 'latest' && models.value.length < total.value)
 
-const showFilterSidebar = computed(() => activeTab.value === 'latest')
-
 const hasActiveFilters = computed(
   () =>
     Boolean(
@@ -94,9 +92,32 @@ function buildListQuery() {
   return query
 }
 
+function buildFetchParams(append = false) {
+  return {
+    offset: append ? models.value.length : 0,
+    limit: PAGE_SIZE,
+    q: searchQuery.value.trim() || undefined,
+    publisher: selectedPublisher.value ?? undefined,
+    base_model: selectedBaseModel.value ?? undefined,
+    category: selectedCategory.value ?? undefined,
+    capability: selectedCapability.value ?? undefined,
+  }
+}
+
 function syncRouteQuery() {
-  if (activeTab.value !== 'latest') return
   replace({ name: 'models', query: buildListQuery() })
+}
+
+function reloadCurrentList(append = false) {
+  if (activeTab.value === 'favourite') {
+    void loadFavouriteModels()
+    return
+  }
+  if (activeTab.value === 'recent') {
+    void loadRecentModels()
+    return
+  }
+  void loadModels(append)
 }
 
 async function loadFacets() {
@@ -128,7 +149,7 @@ async function loadFavouriteModels() {
   total.value = 0
 
   try {
-    const page = await fetchFavouriteModels({ limit: PAGE_SIZE, offset: 0 })
+    const page = await fetchFavouriteModels(buildFetchParams())
     models.value = page.items
     total.value = page.total
   } catch {
@@ -153,7 +174,7 @@ async function loadRecentModels() {
   total.value = 0
 
   try {
-    const page = await fetchRecentModels({ limit: PAGE_SIZE, offset: 0 })
+    const page = await fetchRecentModels(buildFetchParams())
     models.value = page.items
     total.value = page.total
   } catch {
@@ -176,15 +197,7 @@ async function loadModels(append = false) {
   error.value = null
 
   try {
-    const page = await fetchModels({
-      offset: append ? models.value.length : 0,
-      limit: PAGE_SIZE,
-      q: searchQuery.value.trim() || undefined,
-      publisher: selectedPublisher.value ?? undefined,
-      base_model: selectedBaseModel.value ?? undefined,
-      category: selectedCategory.value ?? undefined,
-      capability: selectedCapability.value ?? undefined,
-    })
+    const page = await fetchModels(buildFetchParams(append))
 
     models.value = append ? [...models.value, ...page.items] : page.items
     total.value = page.total
@@ -201,26 +214,16 @@ async function loadModels(append = false) {
 }
 
 function switchTab(key: 'latest' | 'favourite' | 'recent') {
+  if (activeTab.value === key) return
   activeTab.value = key
-
-  if (key === 'favourite') {
-    loadFavouriteModels()
-    return
-  }
-
-  if (key === 'recent') {
-    loadRecentModels()
-    return
-  }
-
-  loadModels()
+  reloadCurrentList()
 }
 
 function selectPublisher(publisher: string | null) {
   if (selectedPublisher.value === publisher) return
   selectedPublisher.value = publisher
   syncRouteQuery()
-  loadModels()
+  reloadCurrentList()
 }
 
 function selectBaseModel(baseModel: string | null) {
@@ -228,7 +231,7 @@ function selectBaseModel(baseModel: string | null) {
   if (selectedBaseModel.value === next) return
   selectedBaseModel.value = next
   syncRouteQuery()
-  loadModels()
+  reloadCurrentList()
 }
 
 function selectCategory(category: string | null) {
@@ -237,14 +240,14 @@ function selectCategory(category: string | null) {
   if (selectedCategory.value === next) return
   selectedCategory.value = next
   syncRouteQuery()
-  loadModels()
+  reloadCurrentList()
 }
 
 function selectCapability(capability: string | null) {
   if (selectedCapability.value === capability) return
   selectedCapability.value = capability
   syncRouteQuery()
-  loadModels()
+  reloadCurrentList()
 }
 
 function clearFilters() {
@@ -253,24 +256,16 @@ function clearFilters() {
   selectedCategory.value = null
   selectedCapability.value = null
   syncRouteQuery()
-  loadModels()
+  reloadCurrentList()
 }
 
 function loadMore() {
   if (!hasMore.value || loadingMore.value || loading.value) return
-  loadModels(true)
+  reloadCurrentList(true)
 }
 
 function retryLoad() {
-  if (activeTab.value === 'latest') {
-    loadModels()
-    return
-  }
-  if (activeTab.value === 'favourite') {
-    loadFavouriteModels()
-    return
-  }
-  loadRecentModels()
+  reloadCurrentList()
 }
 
 function handleFavouriteChange({
@@ -293,12 +288,10 @@ function handleFavouriteChange({
 }
 
 watch(searchQuery, () => {
-  if (activeTab.value !== 'latest') return
-
   if (searchDebounceTimer) clearTimeout(searchDebounceTimer)
   searchDebounceTimer = setTimeout(() => {
     syncRouteQuery()
-    loadModels()
+    reloadCurrentList()
   }, SEARCH_DEBOUNCE_MS)
 })
 
@@ -377,7 +370,7 @@ onMounted(() => {
 
     <section class="models-list">
       <div class="models-list__inner">
-        <label v-if="activeTab === 'latest'" class="models-search">
+        <label class="models-search">
           <img :src="assetUrl('/assets/models/search.svg')" alt="" aria-hidden="true" />
           <input
             v-model="searchQuery"
@@ -387,15 +380,14 @@ onMounted(() => {
         </label>
 
         <ModelsBaseModelTags
-          v-if="activeTab === 'latest'"
           class="models-base-tags-wrap"
           :base-models="facets.base_models"
           :selected-base-model="selectedBaseModel"
           @update:selected-base-model="selectBaseModel"
         />
 
-        <div class="models-layout-header" :class="{ 'has-sidebar': showFilterSidebar }">
-          <div v-if="showFilterSidebar" class="models-sidebar-header">
+        <div class="models-layout-header has-sidebar">
+          <div class="models-sidebar-header">
             <span class="models-sidebar-header__title">{{ t('pages.models.sidebar.title') }}</span>
             <button
               v-if="hasActiveFilters"
@@ -427,9 +419,8 @@ onMounted(() => {
           </div>
         </div>
 
-        <div class="models-layout-body" :class="{ 'has-sidebar': showFilterSidebar }">
+        <div class="models-layout-body has-sidebar">
           <ModelsFilterSidebar
-            v-if="showFilterSidebar"
             :publishers="facets.publishers"
             :base-models="[]"
             :categories="facets.categories"

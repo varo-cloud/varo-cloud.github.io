@@ -637,6 +637,7 @@ export default {
       signupTab: 'Sign up',
       welcome: 'Welcome to Varo.Cloud',
       turnstilePreparing: 'Preparing secure sign-in...',
+      turnstileReverifyForLogin: 'Code sent. Please verify again to sign in.',
       turnstileRequired: 'Please complete the human verification first',
       turnstileExpired: 'Human verification expired. Please verify again.',
       turnstileError: 'Failed to load human verification. Please refresh and try again.',

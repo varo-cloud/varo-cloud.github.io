@@ -174,9 +174,7 @@ function handleUserMenuSelect(key: string) {
   userMenuOpen.value = false
 
   if (key === 'logout') {
-    void userStore.logout().then(() => {
-      push({ name: 'models' })
-    })
+    void userStore.logout()
     return
   }
 

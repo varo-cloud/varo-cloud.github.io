@@ -31,6 +31,7 @@ const loading = ref(false)
 const error = ref<string | null>(null)
 const oauthError = ref<string | null>(null)
 const resendCooldown = ref(0)
+const otpRequested = ref(false)
 const turnstileToken = ref<string | null>(null)
 const turnstileReady = ref(false)
 const turnstileFailed = ref(false)
@@ -49,11 +50,14 @@ const turnstileLanguage = computed(() => (locale.value === 'zh-CN' ? 'zh-CN' : '
 const turnstileStatus = computed(() => {
   if (turnstileFailed.value) return t('pages.auth.turnstileError')
   if (turnstileToken.value) return ''
+  if (otpRequested.value) return t('pages.auth.turnstileReverifyForLogin')
   if (!turnstileReady.value) return t('pages.auth.turnstilePreparing')
   return t('pages.auth.turnstilePreparing')
 })
 
 const isHumanVerified = computed(() => Boolean(turnstileToken.value))
+/** 发码后允许继续填写邮箱/验证码，不必等人机验证完成 */
+const canEditCredentials = computed(() => isHumanVerified.value || otpRequested.value)
 
 function handleTurnstileVerified(token: string) {
   console.log('handleTurnstileVerified', token)
@@ -129,9 +133,11 @@ async function handleRequestOtp() {
 
   try {
     await requestOtp({ email: value, turnstile_token: token })
-    resetTurnstile()
+    otpRequested.value = true
     otpCode.value = ''
     startResendCooldown()
+    // Turnstile token 一次性，发码后需重新验证才能登录
+    resetTurnstile()
     message.success(t('pages.auth.otpSent'))
   } catch (err) {
     resetTurnstile()
@@ -250,7 +256,11 @@ onUnmounted(() => {
           <p v-if="turnstileStatus" class="auth-card__turnstile-status">{{ turnstileStatus }}</p>
         </div>
 
-        <form class="auth-card__form" :class="{ 'auth-card__form--locked': !isHumanVerified }" @submit.prevent="handleLogin">
+        <form
+          class="auth-card__form"
+          :class="{ 'auth-card__form--locked': !canEditCredentials }"
+          @submit.prevent="handleLogin"
+        >
           <label class="auth-field" :class="{ 'auth-field--error': error }">
             <span class="auth-field__label">{{ t('pages.auth.emailLabel') }}</span>
             <input
@@ -259,7 +269,7 @@ onUnmounted(() => {
               class="auth-field__input auth-field__input--email"
               :placeholder="t('pages.auth.emailPlaceholder')"
               autocomplete="email"
-              :disabled="loading || !isHumanVerified"
+              :disabled="loading || !canEditCredentials"
               @input="error = null"
             />
           </label>
@@ -276,7 +286,7 @@ onUnmounted(() => {
                 class="auth-field__input auth-field__input--code"
                 :placeholder="t('pages.auth.codePlaceholder')"
                 autocomplete="one-time-code"
-                :disabled="loading || !isHumanVerified"
+                :disabled="loading || !canEditCredentials"
                 @input="error = null"
               />
               <button
