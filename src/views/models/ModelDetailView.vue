@@ -47,6 +47,7 @@ const {
   generationStatus,
   generationProgress,
   generationError,
+  generationTaskIds,
   outputUrls,
   generationResults,
   isGenerating,
@@ -290,6 +291,7 @@ watch(
           :status="generationStatus"
           :progress="generationProgress"
           :error-message="generationError"
+          :task-ids="generationTaskIds"
           :examples="modelExamples"
           :selected-example-id="selectedExampleId"
           :api-model-id="model.id"

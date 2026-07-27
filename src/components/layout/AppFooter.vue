@@ -37,12 +37,12 @@ const contactLinks = [
     labelKey: 'footer.linkedin',
     icon: 'linkedin',
   },
-  {
-    key: 'reddit',
-    href:'https://www.reddit.com/r/VaroCloud/',
-    labelKey: 'footer.reddit',
-    icon: 'reddit',
-  },
+  // {
+  //   key: 'reddit',
+  //   href:'https://www.reddit.com/r/VaroCloud/',
+  //   labelKey: 'footer.reddit',
+  //   icon: 'reddit',
+  // },
 ] as const
 </script>
 

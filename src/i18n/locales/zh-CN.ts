@@ -258,6 +258,7 @@ export default {
       fieldRequired: '请填写此字段',
       invalidJsonInput: 'JSON 格式无效，请修正后再运行。',
       copyCode: '复制',
+      copyTaskId: '复制任务 ID',
       codeCopied: '已复制到剪贴板。',
       copyFailed: '复制失败，请重试。',
       myGenerations: 'My Generations',
