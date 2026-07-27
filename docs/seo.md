@@ -46,8 +46,8 @@
         ▼
  GitHub Pages 静态文件
         │
-        ├─ index.html / models/ / pricing/ / …  ← 构建期预渲染 HTML
-        ├─ zh-CN/… 对应中文路由
+        ├─ index.html / models.html / pricing.html / …  ← 构建期预渲染（`.html` 避免尾斜杠 301）
+        ├─ zh-CN.html、zh-CN/models.html … 对应中文路由
         ├─ 404.html            ← SPA fallback（深链刷新仍可进 Vue Router）
         ├─ robots.txt
         └─ sitemap.xml
@@ -63,11 +63,11 @@
 vite build
   → spa-fallback：把原始 SPA shell 复制为 dist/404.html
   → prerender：用 Playwright 打开公开路由，把渲染结果写入
-       dist/index.html、dist/models/index.html、dist/pricing/index.html …
-       及对应 zh-CN/* 路径
+       dist/index.html、dist/models.html、dist/pricing.html …
+       及 zh-CN.html、zh-CN/models.html 等
 ```
 
-> 必须先有 `404.html`，再覆盖各路由 HTML。否则预渲染服务没有 SPA shell 可回退，深链在预渲染阶段会失败。
+> 必须先有 `404.html`，再写入各路由 HTML。预渲染产物用 `path.html` 而不是 `path/index.html`，这样 GitHub Pages 访问 `/models` 直接 200，不会 301 到 `/models/`。
 
 ---
 

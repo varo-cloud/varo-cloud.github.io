@@ -27,7 +27,10 @@ const MIME = {
   '.ico': 'image/x-icon',
 }
 
-/** Public marketing routes (no login). Model detail is dynamic — runtime Head only. */
+/** Public marketing routes (no login). Model detail is dynamic — runtime Head only.
+ * Use `path.html` (not `path/index.html`) so GitHub Pages serves `/path` as 200
+ * without a trailing-slash 301.
+ */
 const ROUTES = [
   {
     path: '/',
@@ -38,84 +41,84 @@ const ROUTES = [
   },
   {
     path: '/zh-CN',
-    outFile: join('zh-CN', 'index.html'),
+    outFile: 'zh-CN.html',
     ready: '[data-seo-ready="home"]',
     waitSelector: '#home-hero-title',
     waitText: '面向创作者的生成式 AI 云',
   },
   {
     path: '/models',
-    outFile: join('models', 'index.html'),
+    outFile: 'models.html',
     ready: '[data-seo-ready="models"]',
     waitSelector: '#models-hero-title',
     waitText: 'All Your AI Models, in One Place',
   },
   {
     path: '/zh-CN/models',
-    outFile: join('zh-CN', 'models', 'index.html'),
+    outFile: join('zh-CN', 'models.html'),
     ready: '[data-seo-ready="models"]',
     waitSelector: '#models-hero-title',
     waitText: '所有 AI 模型，集于一处',
   },
   {
     path: '/pricing',
-    outFile: join('pricing', 'index.html'),
+    outFile: 'pricing.html',
     ready: '[data-seo-ready="pricing"]',
     waitSelector: '#pricing-hero-title',
     waitText: 'Simple, Transparent AI Model Pricing',
   },
   {
     path: '/zh-CN/pricing',
-    outFile: join('zh-CN', 'pricing', 'index.html'),
+    outFile: join('zh-CN', 'pricing.html'),
     ready: '[data-seo-ready="pricing"]',
     waitSelector: '#pricing-hero-title',
     waitText: '简单、透明的 AI 模型定价',
   },
   {
     path: '/ai-generator',
-    outFile: join('ai-generator', 'index.html'),
+    outFile: 'ai-generator.html',
     ready: '[data-seo-ready="ai-generator"]',
     titleIncludes: 'AI Generator',
   },
   {
     path: '/zh-CN/ai-generator',
-    outFile: join('zh-CN', 'ai-generator', 'index.html'),
+    outFile: join('zh-CN', 'ai-generator.html'),
     ready: '[data-seo-ready="ai-generator"]',
     titleIncludes: 'AI 生成器',
   },
   {
     path: '/docs',
-    outFile: join('docs', 'index.html'),
+    outFile: 'docs.html',
     ready: '[data-seo-ready="docs"]',
     titleIncludes: 'Documentation',
   },
   {
     path: '/zh-CN/docs',
-    outFile: join('zh-CN', 'docs', 'index.html'),
+    outFile: join('zh-CN', 'docs.html'),
     ready: '[data-seo-ready="docs"]',
     titleIncludes: '文档',
   },
   {
     path: '/terms',
-    outFile: join('terms', 'index.html'),
+    outFile: 'terms.html',
     ready: '[data-seo-ready="terms"]',
     titleIncludes: 'Terms of Service',
   },
   {
     path: '/zh-CN/terms',
-    outFile: join('zh-CN', 'terms', 'index.html'),
+    outFile: join('zh-CN', 'terms.html'),
     ready: '[data-seo-ready="terms"]',
     titleIncludes: '服务条款',
   },
   {
     path: '/privacy',
-    outFile: join('privacy', 'index.html'),
+    outFile: 'privacy.html',
     ready: '[data-seo-ready="privacy"]',
     titleIncludes: 'Privacy Policy',
   },
   {
     path: '/zh-CN/privacy',
-    outFile: join('zh-CN', 'privacy', 'index.html'),
+    outFile: join('zh-CN', 'privacy.html'),
     ready: '[data-seo-ready="privacy"]',
     titleIncludes: '隐私政策',
   },
@@ -125,19 +128,38 @@ function contentType(filePath) {
   return MIME[extname(filePath).toLowerCase()] ?? 'application/octet-stream'
 }
 
+/** Resolve like GitHub Pages: `/models` → `models.html` (no trailing-slash redirect). */
+function resolveDistFile(pathname) {
+  let path = decodeURIComponent(pathname)
+  if (path !== '/' && path.endsWith('/')) path = path.slice(0, -1)
+  if (path === '' || path === '/') {
+    const index = join(distDir, 'index.html')
+    return existsSync(index) ? index : null
+  }
+
+  const relative = path.replace(/^\//, '')
+  const candidates = [
+    join(distDir, relative),
+    join(distDir, `${relative}.html`),
+    join(distDir, relative, 'index.html'),
+  ]
+
+  for (const candidate of candidates) {
+    if (existsSync(candidate) && statSync(candidate).isFile()) return candidate
+  }
+  return null
+}
+
 function startStaticServer() {
   const spaShell = readFileSync(join(distDir, '404.html'))
 
   const server = createServer((req, res) => {
     try {
       const url = new URL(req.url ?? '/', 'http://127.0.0.1')
-      let pathname = decodeURIComponent(url.pathname)
-      if (pathname.endsWith('/')) pathname += 'index.html'
-
-      const candidate = join(distDir, pathname.replace(/^\//, ''))
-      if (existsSync(candidate) && statSync(candidate).isFile()) {
-        res.writeHead(200, { 'Content-Type': contentType(candidate) })
-        res.end(readFileSync(candidate))
+      const file = resolveDistFile(url.pathname)
+      if (file) {
+        res.writeHead(200, { 'Content-Type': contentType(file) })
+        res.end(readFileSync(file))
         return
       }
 
