@@ -499,7 +499,7 @@ onMounted(() => {
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  min-height: 724px;
+  min-height: 460px;
   padding: 0 16px 137px;
   overflow: hidden;
   background: #0a1a3a;

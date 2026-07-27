@@ -577,6 +577,7 @@ onUnmounted(() => {
   font-weight: 600;
   line-height: 14px;
   white-space: nowrap;
+  outline: none;
 }
 
 .app-header__nav-item.is-active {
@@ -586,6 +587,10 @@ onUnmounted(() => {
 .app-header__nav-item:hover {
   color: #ebf4fb;
   background: transparent;
+}
+
+.app-header__nav-item:focus-visible {
+  color: #ebf4fb;
 }
 
 .app-header__right {
@@ -886,6 +891,7 @@ onUnmounted(() => {
   font-weight: 600;
   line-height: 1.2;
   text-align: left;
+  outline: none;
   transition:
     background 0.15s ease,
     color 0.15s ease;

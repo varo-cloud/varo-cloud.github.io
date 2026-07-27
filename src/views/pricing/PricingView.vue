@@ -326,7 +326,7 @@ onMounted(() => {
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  min-height: 724px;
+  min-height: 460px;
   padding: 0 16px 137px;
   overflow: hidden;
   background: #0a0a0e;
@@ -345,7 +345,7 @@ onMounted(() => {
 .pricing-hero__overlay {
   position: absolute;
   inset: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.25);
   pointer-events: none;
 }
 
