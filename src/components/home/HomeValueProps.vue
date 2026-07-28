@@ -8,17 +8,17 @@ const { t } = useI18n()
 const cards = [
   {
     key: 'models',
-    image: '/assets/home/value-models.png',
+    image: '/assets/home/value-models.jpg',
     points: ['point1', 'point2', 'point3'] as const,
   },
   {
     key: 'scale',
-    image: '/assets/home/value-scale.png',
+    image: '/assets/home/value-scale.jpg',
     points: ['point1', 'point2', 'point3'] as const,
   },
   {
     key: 'cost',
-    image: '/assets/home/value-cost.png',
+    image: '/assets/home/value-cost.jpg',
     points: ['point1', 'point2', 'point3'] as const,
   },
 ] as const

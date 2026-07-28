@@ -344,7 +344,7 @@ onBeforeUnmount(() => {
   }
 
   .hero-carousel__nav-wrap {
-    padding: 0 16px 16px;
+    padding: 0 16px 20px;
   }
 
   .hero-carousel__nav {

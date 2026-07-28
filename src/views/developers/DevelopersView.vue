@@ -567,7 +567,7 @@ function isExternalHref(href?: string) {
   max-width: 100%;
   height: 295px;
   overflow: hidden;
-  border-radius: 0;
+  border-radius: 8px;
   background: #f5f5f5;
 }
 

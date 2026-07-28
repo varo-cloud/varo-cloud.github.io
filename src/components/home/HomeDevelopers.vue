@@ -101,7 +101,7 @@ function getApiKey() {
           </div>
           <div class="home-developers__preview">
             <img
-              :src="assetUrl('/assets/home/developers-preview.png')"
+              :src="assetUrl('/assets/home/developers-preview.jpg')"
               :alt="t('pages.home.developers.previewAlt')"
             />
           </div>

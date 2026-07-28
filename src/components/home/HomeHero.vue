@@ -168,8 +168,8 @@ function onPrimaryCta() {
 
 @media (max-width: 767px) {
   .home-hero {
-    min-height: min(55svh, 420px);
-    padding: 72px 16px 24px;
+    min-height: min(70svh, 520px);
+    padding: 88px 16px 88px;
   }
 
   .home-hero__content {

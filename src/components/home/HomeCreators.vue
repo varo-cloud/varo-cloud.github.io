@@ -20,7 +20,7 @@ function getStarted() {
     <div class="home-creators__inner">
       <div class="home-creators__media">
         <img
-          :src="assetUrl('/assets/home/creators.png')"
+          :src="assetUrl('/assets/home/creators.jpg')"
           :alt="t('pages.home.creators.imageAlt')"
         />
       </div>
