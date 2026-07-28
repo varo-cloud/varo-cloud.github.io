@@ -8,17 +8,17 @@ const { t } = useI18n()
 const cards = [
   {
     key: 'models',
-    image: '/assets/home/models.jpg',
+    image: '/assets/home/value-models.jpg',
     points: ['point1', 'point2', 'point3'] as const,
   },
   {
     key: 'scale',
-    image: '/assets/home/scale.jpg',
+    image: '/assets/home/value-scale.jpg',
     points: ['point1', 'point2', 'point3'] as const,
   },
   {
     key: 'cost',
-    image: '/assets/home/cost.jpg',
+    image: '/assets/home/value-cost.jpg',
     points: ['point1', 'point2', 'point3'] as const,
   },
 ] as const
@@ -62,21 +62,28 @@ const cards = [
 
 <style scoped>
 .home-value {
-  padding: 80px 16px;
-  background: rgba(6, 182, 212, 0.04);
+  padding: 60px 16px;
+  background: #fff;
 }
 
 .home-value__inner {
   width: 100%;
-  max-width: 1360px;
+  max-width: 1800px;
   margin: 0 auto;
   text-align: center;
+}
+
+@media (min-width: 1024px) {
+  .home-value {
+    padding-inline: 60px;
+  }
 }
 
 .home-value__title {
   margin: 0;
   font-size: clamp(28px, 4vw, 40px);
   font-weight: 700;
+  line-height: 1.2;
   color: #222;
 }
 
@@ -85,7 +92,7 @@ const cards = [
   max-width: 908px;
   font-size: 16px;
   font-weight: 500;
-  line-height: 1.4;
+  line-height: 1.25;
   color: #222;
 }
 
@@ -102,10 +109,10 @@ const cards = [
   position: relative;
   overflow: hidden;
   height: 463px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  border: 1px solid #f0f0f0;
   border-radius: 24px;
-  background: #111;
-  color: #ebf4fb;
+  background: #fff;
+  color: #222;
 }
 
 .home-value__card-bg {
@@ -114,6 +121,7 @@ const cards = [
   width: 100%;
   height: 100%;
   object-fit: cover;
+  object-position: top center;
 }
 
 .home-value__card-body {
@@ -124,8 +132,14 @@ const cards = [
   justify-content: flex-start;
   box-sizing: border-box;
   height: 100%;
-  padding: 271px 20px 24px;
-  background: linear-gradient(transparent 35%, rgba(0, 0, 0, 0.78));
+  padding: 271px 20px 20px;
+  background: linear-gradient(
+    180deg,
+    transparent 0%,
+    transparent 45%,
+    rgba(255, 255, 255, 0.72) 68%,
+    rgba(255, 255, 255, 0.96) 100%
+  );
 }
 
 .home-value__card-title {
@@ -134,19 +148,20 @@ const cards = [
   font-weight: 700;
   line-height: 40px;
   min-height: 40px;
+  color: #222;
 }
 
 .home-value__card-desc {
-  margin: 8px 0 0;
-  min-height: 52px;
+  margin: 14px 0 0;
+  min-height: 32px;
   font-size: 16px;
   font-weight: 500;
   line-height: 16px;
-  color: #9b9dab;
+  color: rgba(34, 34, 34, 0.5);
 }
 
 .home-value__card-list {
-  margin: 0;
+  margin: 14px 0 0;
   padding: 0;
   list-style: none;
 }
@@ -159,7 +174,7 @@ const cards = [
   font-size: 14px;
   font-weight: 500;
   line-height: 14px;
-  color: #9b9dab;
+  color: rgba(34, 34, 34, 0.5);
 }
 
 .home-value__card-list li:first-child {
@@ -186,13 +201,13 @@ const cards = [
   }
 
   .home-value__card {
-    height: 320px;
+    height: 360px;
     min-height: 0;
     border-radius: 16px;
   }
 
   .home-value__card-body {
-    padding: 140px 16px 16px;
+    padding: 180px 16px 16px;
   }
 
   .home-value__card-title {

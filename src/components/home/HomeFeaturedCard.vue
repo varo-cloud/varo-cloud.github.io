@@ -106,8 +106,8 @@ async function toggleFavourite(event: Event) {
 .home-featured-card {
   position: relative;
   overflow: hidden;
-  border-radius: 16px;
-  aspect-ratio: 322 / 341;
+  border-radius: 24px;
+  aspect-ratio: 432 / 344;
   background: #eceef2;
   cursor: pointer;
   transition: transform 0.2s ease;
@@ -160,8 +160,8 @@ async function toggleFavourite(event: Event) {
 .home-featured-card__body {
   position: absolute;
   inset: auto 0 0;
-  padding: 16px 12px 14px;
-  background: linear-gradient(transparent, rgba(0, 0, 0, 0.72));
+  padding: 16px;
+  background: linear-gradient(180deg, transparent 0%, rgba(0, 0, 0, 0.55) 100%);
   color: #fff;
 }
 
@@ -210,7 +210,6 @@ async function toggleFavourite(event: Event) {
 @media (max-width: 640px) {
   .home-featured-card {
     aspect-ratio: 3 / 4;
-    border-radius: 12px;
   }
 
   .home-featured-card__fav {

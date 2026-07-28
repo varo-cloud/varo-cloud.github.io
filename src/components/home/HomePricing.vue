@@ -182,7 +182,7 @@ function viewMore() {
 
 <style scoped>
 .home-pricing {
-  padding: 80px 16px;
+  padding: 60px 16px;
   background: #fff;
 }
 
@@ -198,6 +198,7 @@ function viewMore() {
   margin: 0;
   font-size: clamp(28px, 4vw, 40px);
   font-weight: 700;
+  line-height: 1.2;
   color: #222;
 }
 
@@ -206,7 +207,7 @@ function viewMore() {
   max-width: 908px;
   font-size: 16px;
   font-weight: 500;
-  line-height: 1.5;
+  line-height: 1;
   color: #222;
 }
 

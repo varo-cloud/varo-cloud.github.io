@@ -149,21 +149,28 @@ onMounted(() => {
 
 <style scoped>
 .home-showcase {
-  padding: 80px 16px;
-  background: rgba(6, 182, 212, 0.04);
+  padding: 60px 16px;
+  background: #fff;
 }
 
 .home-showcase__inner {
   width: 100%;
-  max-width: 1360px;
+  max-width: 1800px;
   margin: 0 auto;
   text-align: center;
+}
+
+@media (min-width: 1024px) {
+  .home-showcase {
+    padding-inline: 60px;
+  }
 }
 
 .home-showcase__title {
   margin: 0;
   font-size: clamp(28px, 4vw, 40px);
   font-weight: 700;
+  line-height: 1.2;
   color: #222;
 }
 
@@ -172,7 +179,7 @@ onMounted(() => {
   max-width: 908px;
   font-size: 16px;
   font-weight: 500;
-  line-height: 1.5;
+  line-height: 1;
   color: #222;
 }
 
@@ -185,11 +192,13 @@ onMounted(() => {
 
 .home-showcase__card {
   position: relative;
-  display: block;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-end;
   overflow: hidden;
   width: 100%;
   padding: 0;
-  aspect-ratio: 1;
+  aspect-ratio: 341 / 252;
   border: 0;
   border-radius: 20px;
   background: #eceef2;
@@ -207,6 +216,8 @@ onMounted(() => {
 }
 
 .home-showcase__img {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
@@ -214,11 +225,18 @@ onMounted(() => {
 }
 
 .home-showcase__body {
-  position: absolute;
-  inset: auto 0 0;
-  padding: 14px 16px 16px;
-  background: rgba(0, 0, 0, 0.5);
-  color: #fff;
+  position: relative;
+  z-index: 1;
+  inset: auto;
+  padding: 12px 24px;
+  height: 62px;
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 6px;
+  background: rgba(255, 255, 255, 0.5);
+  color: #222;
   text-align: left;
   border-radius: 0 0 20px 20px;
 }
@@ -227,18 +245,22 @@ onMounted(() => {
   margin: 0;
   font-size: 16px;
   font-weight: 500;
+  line-height: 16px;
+  color: #222;
 }
 
 .home-showcase__meta {
-  margin: 4px 0 0;
+  margin: 0;
   font-size: 12px;
-  opacity: 0.9;
+  line-height: 16px;
+  opacity: 0.8;
+  color: #222;
 }
 
 .home-showcase__skeleton-card {
   position: relative;
   overflow: hidden;
-  aspect-ratio: 1;
+  aspect-ratio: 341 / 252;
   border-radius: 20px;
   background: linear-gradient(90deg, #e8eaee 25%, #dde0e6 37%, #e8eaee 63%);
   background-size: 400% 100%;
@@ -251,15 +273,17 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: 8px;
-  padding: 14px 16px 16px;
-  background: rgba(255, 255, 255, 0.35);
+  height: 62px;
+  padding: 12px 24px;
+  box-sizing: border-box;
+  background: rgba(255, 255, 255, 0.5);
 }
 
 .home-showcase__skeleton-line {
   display: block;
   height: 12px;
   border-radius: 6px;
-  background: rgba(255, 255, 255, 0.75);
+  background: rgba(34, 34, 34, 0.12);
 }
 
 .home-showcase__skeleton-line--title {
@@ -275,14 +299,14 @@ onMounted(() => {
   display: flex;
   justify-content: center;
   gap: 8px;
-  margin-top: 28px;
+  margin-top: 24px;
 }
 
 .home-showcase__dot {
   width: 40px;
   height: 6px;
   border: 0;
-  border-radius: 2px;
+  border-radius: 0;
   background: #eee;
   cursor: pointer;
   transition: background 0.15s ease;
@@ -318,6 +342,7 @@ onMounted(() => {
 
   .home-showcase__subtitle {
     font-size: 14px;
+    line-height: 1.4;
   }
 
   .home-showcase__grid {
@@ -326,7 +351,9 @@ onMounted(() => {
   }
 
   .home-showcase__body {
-    padding: 10px 12px 12px;
+    height: auto;
+    min-height: 56px;
+    padding: 10px 12px;
   }
 
   .home-showcase__name {
@@ -335,6 +362,10 @@ onMounted(() => {
 
   .home-showcase__meta {
     font-size: 11px;
+  }
+
+  .home-showcase__dots {
+    justify-content: center;
   }
 }
 </style>
