@@ -52,7 +52,7 @@ a {
   --text-tag: #06b6d4;
   --text-accent: #06b6d4;
   --border-color: rgba(255, 255, 255, 0.1);
-  --app-header-height: 80px;
+  --app-header-height: 60px;
   --z-app-header: 100;
   --z-playground-select-panel: 98;
   --z-playground-select-tooltip: 99;

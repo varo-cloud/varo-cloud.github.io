@@ -426,14 +426,11 @@ function isExternalHref(href?: string) {
 }
 
 .developers-showcase__tabs {
-  display: inline-flex;
-  flex-wrap: nowrap;
+  display: flex;
+  flex-wrap: wrap;
   justify-content: center;
-  gap: 12px;
+  gap: 16px;
   max-width: 100%;
-  padding: 4px;
-  border: 1px solid #ebf4fb;
-  border-radius: 30px;
 }
 
 .developers-showcase__tab {
@@ -441,12 +438,12 @@ function isExternalHref(href?: string) {
   align-items: center;
   justify-content: center;
   gap: 4px;
-  min-width: 106px;
-  min-height: 36px;
-  padding: 8px 12px;
+  height: 40px;
+  min-height: 40px;
+  padding: 8px 24px;
   border: 0;
-  border-radius: 30px;
-  background: transparent;
+  border-radius: 8px;
+  background: #f8f8f8;
   color: #929ca5;
   font-size: 14px;
   font-weight: 500;
@@ -464,12 +461,16 @@ function isExternalHref(href?: string) {
 
 .developers-showcase__tab:hover:not(.is-active) {
   color: #222;
-  background: rgba(0, 0, 0, 0.04);
+  background: #ececec;
 }
 
 .developers-showcase__tab.is-active {
-  background: #06b6d4;
+  background: #222;
   color: #ebf4fb;
+}
+
+.developers-showcase__tab.is-active:hover {
+  background: #333;
 }
 
 .developers-showcase__body {
@@ -796,13 +797,11 @@ function isExternalHref(href?: string) {
   }
 
   .developers-showcase__tabs {
-    gap: 4px;
-    flex-wrap: wrap;
+    gap: 8px;
   }
 
   .developers-showcase__tab {
-    min-width: 0;
-    padding: 8px 10px;
+    padding: 8px 14px;
   }
 
   .developers-how {

@@ -526,15 +526,15 @@ onUnmounted(() => {
   justify-content: space-between;
   gap: 16px;
   height: 100%;
-  max-width: 1360px;
+  width: 100%;
   margin: 0 auto;
-  padding: 8px 16px;
+  padding: 0 16px;
 }
 
 .app-header__left {
   display: flex;
   align-items: center;
-  gap: 24px;
+  gap: 51px;
   min-width: 0;
   flex-shrink: 0;
 }
@@ -542,8 +542,8 @@ onUnmounted(() => {
 .app-header__center {
   flex: 1;
   min-width: 0;
-  max-width: 360px;
-  margin: 0 24px;
+  max-width: 308px;
+  margin: 0 9px;
 }
 
 .app-header__logo {
@@ -552,6 +552,20 @@ onUnmounted(() => {
   color: inherit;
   text-decoration: none;
   line-height: 0;
+}
+
+.app-header__logo :deep(.varo-cloud-logo) {
+  gap: 6px;
+}
+
+.app-header__logo :deep(.varo-cloud-logo__mascot) {
+  width: 40px;
+  height: 40px;
+}
+
+.app-header__logo :deep(.varo-cloud-logo__wordmark) {
+  width: 104.5px;
+  height: 14.81px;
 }
 
 .app-header__nav {
@@ -563,7 +577,7 @@ onUnmounted(() => {
   border: none;
   border-radius: 0;
   background: transparent;
-  color: #9b9dab;
+  color: #5c6575;
   cursor: pointer;
   font-size: 14px;
   font-weight: 600;
@@ -599,13 +613,14 @@ onUnmounted(() => {
   height: 36px;
   padding: 0 12px;
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.1);
+  background: #0e1116;
   cursor: text;
 }
 
 .app-header__search-icon {
   flex-shrink: 0;
-  opacity: 0.6;
+  color: #5c6575;
+  opacity: 1;
 }
 
 .app-header__search-input {
@@ -620,8 +635,8 @@ onUnmounted(() => {
 }
 
 .app-header__search-input::placeholder {
-  color: #fff;
-  opacity: 0.2;
+  color: #5c6575;
+  opacity: 1;
 }
 
 .app-header__icon-btn,
@@ -634,7 +649,7 @@ onUnmounted(() => {
   padding: 8px 12px;
   border: none;
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.1);
+  background: #0e1116;
   color: #ebf4fb;
   cursor: pointer;
   transition: opacity 0.15s ease;
@@ -755,7 +770,7 @@ onUnmounted(() => {
 
 .app-header__wallet-group {
   display: flex;
-  gap: 1px;
+  gap: 8px;
 }
 
 .app-header__wallet-balance,
@@ -766,7 +781,8 @@ onUnmounted(() => {
   height: 36px;
   padding: 0 8px;
   border: none;
-  background: rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  background: #0e1116;
   color: #ebf4fb;
   font-size: 14px;
   font-weight: 500;
@@ -774,12 +790,7 @@ onUnmounted(() => {
   white-space: nowrap;
 }
 
-.app-header__wallet-balance {
-  border-radius: 8px 0 0 8px;
-}
-
 .app-header__wallet-deposit {
-  border-radius: 0 8px 8px 0;
   cursor: pointer;
   transition: opacity 0.15s ease;
 }
@@ -826,7 +837,7 @@ onUnmounted(() => {
   padding: 0;
   border: none;
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.1);
+  background: #0e1116;
   color: #ebf4fb;
   cursor: pointer;
   transition: opacity 0.15s ease;
@@ -864,7 +875,7 @@ onUnmounted(() => {
   margin-bottom: 8px;
   padding: 0 12px;
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.1);
+  background: #0e1116;
   cursor: text;
 }
 
@@ -877,7 +888,7 @@ onUnmounted(() => {
   border: none;
   border-radius: 8px;
   background: transparent;
-  color: #9b9dab;
+  color: #5c6575;
   cursor: pointer;
   font-size: 16px;
   font-weight: 600;
@@ -919,10 +930,26 @@ onUnmounted(() => {
   transform: translateY(-8px);
 }
 
+@media (min-width: 1024px) {
+  .app-header__inner {
+    padding-inline: 60px;
+  }
+}
+
+@media (max-width: 1100px) {
+  .app-header__left {
+    gap: 24px;
+  }
+}
+
 @media (max-width: 767px) {
   .app-header__inner {
     padding: 0 12px;
     gap: 8px;
+  }
+
+  .app-header__left {
+    gap: 16px;
   }
 
   .app-header__right {
@@ -931,11 +958,6 @@ onUnmounted(() => {
 
   .app-header__menu-btn {
     display: inline-flex;
-  }
-
-  .app-header__logo {
-    transform: scale(0.88);
-    transform-origin: left center;
   }
 
   .app-header__logo :deep(.varo-cloud-logo__wordmark) {

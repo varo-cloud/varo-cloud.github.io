@@ -255,7 +255,7 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  padding: 0 16px 49px;
+  padding: 0 16px 60px;
   pointer-events: none;
 }
 
@@ -265,7 +265,7 @@ onBeforeUnmount(() => {
   justify-content: flex-end;
   gap: 6px;
   width: 100%;
-  max-width: 1360px;
+  max-width: 1800px;
   margin: 0 auto;
   pointer-events: none;
 }
@@ -333,7 +333,7 @@ onBeforeUnmount(() => {
 
 @media (min-width: 1024px) {
   .hero-carousel__nav-wrap {
-    padding-inline: 24px;
+    padding-inline: 60px;
   }
 }
 
