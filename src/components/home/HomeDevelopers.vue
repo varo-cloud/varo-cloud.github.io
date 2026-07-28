@@ -101,7 +101,7 @@ function getApiKey() {
           </div>
           <div class="home-developers__preview">
             <img
-              :src="assetUrl('/assets/home/developers-preview.jpg')"
+              :src="assetUrl('https://assets.varo.cloud/uploads/8cf71ab01789459bb3f80f33be850f7e.jpg')"
               :alt="t('pages.home.developers.previewAlt')"
             />
           </div>

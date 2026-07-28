@@ -20,7 +20,7 @@ function getStarted() {
     <div class="home-cta__inner">
       <img
         class="home-cta__bg"
-        :src="assetUrl('/assets/home/cta-bg.jpg')"
+        :src="assetUrl('https://assets.varo.cloud/uploads/808e1f97c89a48b9986a86f1a7e5cb0d.jpg')"
         alt=""
         aria-hidden="true"
       />

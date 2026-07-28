@@ -20,7 +20,7 @@ function getStarted() {
     <div class="home-creators__inner">
       <div class="home-creators__media">
         <img
-          :src="assetUrl('/assets/home/creators.jpg')"
+          :src="assetUrl('https://assets.varo.cloud/uploads/5c7fc2df4ad342ebaa84fbab1a5dec5b.jpg')"
           :alt="t('pages.home.creators.imageAlt')"
         />
       </div>
