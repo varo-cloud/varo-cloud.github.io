@@ -93,6 +93,20 @@ const ROUTES = [
     contentItem: '.pricing-row',
   },
   {
+    path: '/developers',
+    outFile: 'developers.html',
+    ready: '[data-seo-ready="developers"]',
+    waitSelector: '#developers-hero-title',
+    waitText: "One API for the world's top models",
+  },
+  {
+    path: '/zh-CN/developers',
+    outFile: join('zh-CN', 'developers.html'),
+    ready: '[data-seo-ready="developers"]',
+    waitSelector: '#developers-hero-title',
+    waitText: '一个 API，接入全球顶尖模型',
+  },
+  {
     path: '/ai-generator',
     outFile: 'ai-generator.html',
     ready: '[data-seo-ready="ai-generator"]',

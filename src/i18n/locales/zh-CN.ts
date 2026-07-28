@@ -31,6 +31,7 @@ export default {
     models: '模型',
     aiGenerator: 'AI 生成器',
     pricing: '价格',
+    developers: '开发者',
     apiKeys: 'API 密钥',
     billing: '账单',
     generations: '生成历史',
@@ -615,6 +616,87 @@ export default {
       seo: {
         title: '账单 — Varo.cloud',
         description: '管理你的 Varo.cloud 余额与账单。',
+      },
+    },
+    developers: {
+      hero: {
+        title: '一个 API，接入全球顶尖模型',
+        subtitle:
+          '通过统一、兼容 OpenAI 的 API 访问全球领先的 AI 模型。构建与管理项目、触发部署、自动化云工作流，无需再在各家密钥、SDK 与数据格式之间来回切换。',
+        cta: 'API 参考',
+      },
+      showcase: {
+        previewAlt: 'Varo.cloud API 生成示例效果',
+      },
+      howItWorks: {
+        title: '如何开始',
+        subtitle: '从零到第一次生成，只需三步：',
+        stepLabel: '步骤 {n}',
+        steps: [
+          {
+            title: '创建账户',
+            bodyBefore: '访问 ',
+            linkText: 'varo.cloud/auth',
+            linkHref: 'auth',
+            bodyMid: '，用邮箱和一次性验证码登录——无需密码。首次登录即创建账户。详见 ',
+            linkText2: '账户设置',
+            linkHref2: 'https://docs.varo.cloud/setup/account',
+            bodyAfter: '。',
+          },
+          {
+            title: '充值并创建密钥',
+            bodyBefore: '在「账单」中充值，然后在「API 密钥」页面创建密钥。密钥以 sk_live_ 开头，且仅显示一次。详见 ',
+            linkText: '身份验证',
+            linkHref: 'https://docs.varo.cloud/setup/authentication',
+            bodyAfter: '。',
+          },
+          {
+            title: '开始生成',
+            body:
+              '在 AI 生成器中运行模型，或调用 POST /v1/generations 并轮询直至完成。每个模型的 API 标签页都提供 HTTP / Python / JS 示例。',
+          },
+        ],
+      },
+      faq: {
+        title: '常见问题',
+        subtitle: '写第一行代码前，你需要知道的一切。',
+        items: [
+          {
+            id: 'what',
+            question: '什么是 Varo Cloud？',
+            answer:
+              'Varo Cloud 是一个统一平台，用于访问、对比并基于领先的图像、视频、音频与语言模型进行构建。它将多家供应商整合到同一套 API、同一余额与同一控制台之后。',
+          },
+          {
+            id: 'test',
+            question: '集成前可以先试用模型吗？',
+            answer:
+              '可以。你可以在浏览器中直接运行模型，在 Playground 调整参数、对比结果，并根据当前设置生成可直接使用的 HTTP、Python 或 JavaScript 代码。',
+          },
+          {
+            id: 'start',
+            question: '如何开始使用 Varo Cloud API？',
+            answer:
+              '创建账户，向预付余额充值，并生成 API 密钥。随后即可通过 API 提交生成任务，或在自有应用与脚本中以编程方式管理云资源。',
+          },
+          {
+            id: 'switch',
+            question: '可以轻松切换不同的 AI 模型吗？',
+            answer:
+              '可以。Varo Cloud 为支持的模型提供统一的 REST API。在生成工作流中，只需更改 model 字段即可切换模型，无需重建整套集成。',
+          },
+          {
+            id: 'pricing',
+            question: '定价与用量追踪如何运作？',
+            answer:
+              'Varo Cloud 采用预付费、按用量计费的模式，每个模型定价透明。你可以按任务与 API 密钥监控消费、查看单次运行价格，并在需要时导出账单记录。',
+          },
+        ],
+      },
+      seo: {
+        title: '开发者 — Varo.cloud 顶尖 AI 模型 API',
+        description:
+          '用一套兼容 OpenAI 的 API 接入全球领先 AI 模型。从身份验证、生成任务到代码示例，快速开始使用 Varo.cloud。',
       },
     },
     docs: {

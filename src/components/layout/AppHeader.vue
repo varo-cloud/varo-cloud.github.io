@@ -7,7 +7,6 @@ import VaroCloudLogo from '@/components/common/VaroCloudLogo.vue'
 import AppIcon from '@/components/common/AppIcon.vue'
 import { useLocaleRouter } from '@/composables/useLocaleRouter'
 import { formatUsd } from '@/utils/currency'
-import { openDocs } from '@/utils/docsUrl'
 import type { LocaleType } from '@/i18n'
 
 const route = useRoute()
@@ -35,7 +34,7 @@ const navItems = computed(() => [
   { label: t('nav.models'), name: 'models' },
   { label: t('nav.aiGenerator'), name: 'ai-generator' },
   { label: t('nav.pricing'), name: 'pricing' },
-  { label: t('nav.docs'), name: 'docs' },
+  { label: t('nav.developers'), name: 'developers' },
 ])
 
 import type { AppIconName } from '@/components/common/AppIcon.vue'
@@ -137,11 +136,6 @@ function isActive(name: string) {
 }
 
 function goTo(name: string) {
-  if (name === 'docs') {
-    openDocs(() => push({ name: 'docs' }))
-    return
-  }
-
   push({ name })
 }
 

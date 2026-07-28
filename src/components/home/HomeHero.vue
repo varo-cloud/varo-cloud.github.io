@@ -157,7 +157,7 @@ function onPrimaryCta() {
 
 @media (max-width: 767px) {
   .home-hero {
-    min-height: min(calc(100svh - var(--app-header-height, 64px)), 640px);
+    min-height: min(55svh, 420px);
     padding: 72px 16px 16px;
   }
 

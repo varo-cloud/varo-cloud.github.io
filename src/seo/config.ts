@@ -32,6 +32,7 @@ export type SeoRouteKey =
   | 'model-detail'
   | 'ai-generator'
   | 'pricing'
+  | 'developers'
   | 'docs'
   | 'terms'
   | 'privacy'
@@ -68,6 +69,10 @@ export const SEO_BY_ROUTE: Record<SeoRouteKey, SeoDefinition> = {
   pricing: {
     titleKey: 'pages.pricing.seo.title',
     descriptionKey: 'pages.pricing.seo.description',
+  },
+  developers: {
+    titleKey: 'pages.developers.seo.title',
+    descriptionKey: 'pages.developers.seo.description',
   },
   docs: {
     titleKey: 'pages.docs.seo.title',

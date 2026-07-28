@@ -1,7 +1,9 @@
-/** External Mintlify docs base URL (e.g. staging: varocloudtest.mintlify.site/docs). */
+const DEFAULT_DOCS_URL = 'https://docs.varo.cloud'
+
+/** External Mintlify docs base URL. Defaults to production docs. */
 export function docsUrl(): string | null {
   const configured = import.meta.env.VITE_DOCS_URL?.trim()
-  return configured || null
+  return configured || DEFAULT_DOCS_URL
 }
 
 export function openDocs(fallback?: () => void): void {
