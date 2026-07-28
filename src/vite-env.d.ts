@@ -19,7 +19,7 @@ interface ImportMetaEnv {
   readonly VITE_SITE_ORIGIN?: string
   readonly VITE_TURNSTILE_SITE_KEY?: string
   readonly VITE_GA_MEASUREMENT_ID?: string
-  /** External API docs site (Mintlify), e.g. https://varocloudtest.mintlify.site/docs */
+  /** External API docs site (Mintlify), e.g. https://docs.varo.cloud */
   readonly VITE_DOCS_URL?: string
   /** External inference API base URL for API doc code examples */
   readonly VITE_INFERENCE_API_BASE_URL?: string

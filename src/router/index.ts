@@ -35,6 +35,12 @@ const appLayoutChildren: RouteRecordRaw[] = [
     component: () => import('@/views/pricing/PricingView.vue'),
   },
   {
+    path: 'developers',
+    name: 'developers',
+    meta: { fullBleed: true, transparentHeader: true, lightPage: true },
+    component: () => import('@/views/developers/DevelopersView.vue'),
+  },
+  {
     path: 'api-keys',
     name: 'api-keys',
     meta: { requiresAuth: true, fullBleed: true },

@@ -41,33 +41,35 @@ function handleView() {
     <div class="pricing-row__cell pricing-row__cell--model">
       {{ item.name }}
     </div>
-    <div class="pricing-row__cell pricing-row__cell--use-case">
-      <span
-        v-if="useCaseLabel"
-        class="pricing-row__capability"
-        :style="{
-          color: useCaseTone.color,
-          backgroundColor: useCaseTone.background,
-        }"
-      >
+    <div class="pricing-row__meta">
+      <div class="pricing-row__cell pricing-row__cell--use-case">
         <span
-          class="pricing-row__capability-dot"
-          :style="{ backgroundColor: useCaseTone.color }"
-          aria-hidden="true"
-        />
-        {{ useCaseLabel }}
-      </span>
-    </div>
-    <div class="pricing-row__cell pricing-row__cell--standard">
-      {{ standardPrice }}<span class="pricing-row__unit">{{ unitLabel }}</span>
-    </div>
-    <div class="pricing-row__cell pricing-row__cell--price">
-      <span class="pricing-row__price-value">
-        <strong>{{ startingPrice }}</strong><span class="pricing-row__unit">{{ unitLabel }}</span>
-      </span>
-    </div>
-    <div class="pricing-row__cell pricing-row__cell--discount">
-      <DiscountTag v-if="discountLabel" :content="discountLabel" />
+          v-if="useCaseLabel"
+          class="pricing-row__capability"
+          :style="{
+            color: useCaseTone.color,
+            backgroundColor: useCaseTone.background,
+          }"
+        >
+          <span
+            class="pricing-row__capability-dot"
+            :style="{ backgroundColor: useCaseTone.color }"
+            aria-hidden="true"
+          />
+          {{ useCaseLabel }}
+        </span>
+      </div>
+      <div class="pricing-row__cell pricing-row__cell--standard">
+        {{ standardPrice }}<span class="pricing-row__unit">{{ unitLabel }}</span>
+      </div>
+      <div class="pricing-row__cell pricing-row__cell--price">
+        <span class="pricing-row__price-value">
+          <strong>{{ startingPrice }}</strong><span class="pricing-row__unit">{{ unitLabel }}</span>
+        </span>
+      </div>
+      <div class="pricing-row__cell pricing-row__cell--discount">
+        <DiscountTag v-if="discountLabel" :content="discountLabel" />
+      </div>
     </div>
     <div class="pricing-row__cell pricing-row__cell--action">
       <button type="button" class="pricing-row__view-btn" @click="handleView">
@@ -93,6 +95,10 @@ function handleView() {
 
 .pricing-row:hover {
   background: rgba(236, 236, 236, 0.2);
+}
+
+.pricing-row__meta {
+  display: contents;
 }
 
 .pricing-row__cell {
@@ -190,17 +196,40 @@ function handleView() {
 
 @media (max-width: 1023px) {
   .pricing-row {
-    grid-template-columns: 1fr;
-    gap: 8px;
-    padding: 16px 24px;
+    grid-template-columns: minmax(0, 1fr) auto;
+    grid-template-areas:
+      'model action'
+      'meta action';
+    column-gap: 12px;
+    row-gap: 8px;
+    align-items: center;
+    min-height: 0;
+    padding: 14px 16px;
   }
 
-  .pricing-row__cell--discount {
-    justify-content: flex-start;
+  .pricing-row__cell--model {
+    grid-area: model;
+    padding-right: 0;
+    line-height: 1.35;
+  }
+
+  .pricing-row__meta {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 10px;
+    grid-area: meta;
+    min-width: 0;
+  }
+
+  .pricing-row__cell--use-case {
+    padding-right: 0;
   }
 
   .pricing-row__cell--action {
-    justify-content: flex-start;
+    grid-area: action;
+    align-self: center;
+    justify-content: flex-end;
   }
 }
 </style>

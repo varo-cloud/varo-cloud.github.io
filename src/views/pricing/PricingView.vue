@@ -594,13 +594,45 @@ onMounted(() => {
   .pricing-table__header {
     display: none;
   }
+
+  .pricing-layout-body {
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .pricing-sidebar-header__title {
+    display: none;
+  }
+
+  .pricing-sidebar-header:not(:has(.pricing-sidebar-header__clear)) {
+    display: none;
+  }
+
+  .pricing-layout-header {
+    flex-wrap: wrap;
+    gap: 12px 24px;
+  }
+
+  .pricing-sidebar-header {
+    width: auto;
+  }
+
+  .pricing-main-header {
+    flex: 1;
+    min-width: min(100%, 240px);
+  }
+
+  .pricing-search {
+    width: 100%;
+    max-width: none;
+  }
 }
 
 @media (max-width: 767px) {
   .pricing-hero {
     align-items: flex-start;
-    min-height: min(calc(100svh - var(--app-header-height, 80px)), 640px);
-    padding: 120px 16px 32px;
+    min-height: 0;
+    padding: 96px 16px 40px;
   }
 
   .pricing-hero__inner {
@@ -637,11 +669,6 @@ onMounted(() => {
 
   .pricing-search {
     width: 100%;
-  }
-
-  .pricing-layout-body {
-    flex-direction: column;
-    gap: 24px;
   }
 }
 </style>

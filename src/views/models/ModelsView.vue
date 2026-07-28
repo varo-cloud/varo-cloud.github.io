@@ -801,11 +801,26 @@ onMounted(() => {
   }
 }
 
+@media (max-width: 1023px) {
+  .models-layout-body.has-sidebar {
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .models-sidebar-header__title {
+    display: none;
+  }
+
+  .models-sidebar-header:not(:has(.models-sidebar-header__clear)) {
+    display: none;
+  }
+}
+
 @media (max-width: 767px) {
   .models-hero {
     align-items: flex-start;
-    min-height: min(calc(100svh - var(--app-header-height, 80px)), 640px);
-    padding: 120px 16px 32px;
+    min-height: 0;
+    padding: 96px 16px 40px;
   }
 
   .models-hero__inner {
@@ -851,11 +866,6 @@ onMounted(() => {
 
   .models-sidebar-header {
     width: 100%;
-  }
-
-  .models-layout-body.has-sidebar {
-    flex-direction: column;
-    gap: 24px;
   }
 }
 </style>

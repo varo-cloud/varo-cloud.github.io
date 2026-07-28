@@ -9,8 +9,10 @@ const ICONS = {
   'chevron-down': '/assets/icons/chevron-down.svg',
   search: '/assets/icons/search.svg',
   close: '/assets/icons/close.svg',
+  'close-line': '/assets/icons/close-line.svg',
   key: '/assets/icons/key.svg',
   add: '/assets/icons/add.svg',
+  'add-line': '/assets/icons/add-line.svg',
   'arrow-right': '/assets/icons/arrow-right.svg',
   brush: '/assets/icons/brush.svg',
   check: '/assets/icons/check.svg',
@@ -47,16 +49,33 @@ const props = withDefaults(
   defineProps<{
     name: AppIconName
     size?: number
+    /** Icon color. Defaults to currentColor from parent CSS. */
+    color?: string
     /** 保留 SVG 原始配色（用于 Toast 等多色图标） */
     colored?: boolean
   }>(),
   {
     size: 16,
+    color: undefined,
     colored: false,
   },
 )
 
 const iconUrl = computed(() => assetUrl(ICONS[props.name]))
+
+const iconStyle = computed(() => {
+  const style: Record<string, string> = {
+    width: `${props.size}px`,
+    height: `${props.size}px`,
+    WebkitMaskImage: `url(${iconUrl.value})`,
+    maskImage: `url(${iconUrl.value})`,
+  }
+  if (props.color) {
+    style.color = props.color
+    style.backgroundColor = props.color
+  }
+  return style
+})
 </script>
 
 <template>
@@ -72,12 +91,7 @@ const iconUrl = computed(() => assetUrl(ICONS[props.name]))
   <span
     v-else
     class="app-icon"
-    :style="{
-      width: `${props.size}px`,
-      height: `${props.size}px`,
-      WebkitMaskImage: `url(${iconUrl})`,
-      maskImage: `url(${iconUrl})`,
-    }"
+    :style="iconStyle"
     aria-hidden="true"
   />
 </template>
