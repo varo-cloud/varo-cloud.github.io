@@ -26,7 +26,7 @@
 
 页面策略优先级：
 
-**固定公开页预渲染 > 海量动态详情运行时 Head > 需登录页 noindex**
+**固定公开页预渲染 > 数量很多的动态详情页（如 `/articles/:id`）运行时 Head > 登录页应用 noindex 禁止被搜索引擎收录**
 
 ---
 
@@ -35,7 +35,7 @@
 | 方案 | 是否采纳 | 原因 |
 |------|----------|------|
 | 迁框架上 SSR | 通常否 | 部署与架构成本高，静态托管不匹配 |
-| 预渲染全部路由（含登录态、海量动态详情） | 暂不做 | 登录页应 noindex；动态 path 过多 |
+| 预渲染全部路由（含登录态、以及数量很多的动态详情页） | 暂不做 | 登录页应用 noindex 禁止被搜索引擎收录；类似 `/articles/:id` 这类 path 数量过多 |
 | **全站 Head 管理 + 公开页预渲染** | 推荐 | 成本可控，覆盖收录与分享预览 |
 
 ---
@@ -55,7 +55,7 @@
 
 运行时（浏览器 / 能执行 JS 的爬虫）：
   全局 Head 管理 → 按路由切换 title / OG / canonical / hreflang
-  动态详情可按接口数据覆盖 Head
+  动态详情页（如 `/articles/:id`）可按接口数据覆盖 Head
 ```
 
 构建顺序：
@@ -95,7 +95,7 @@
 |----------|-----------------|------|
 | Title / Description / H1 / 固定文案 | 稳定固化 | 收录与分享预览的主信号 |
 | 列表等接口数据 | 接口可达时写入 | 丰富正文；失败时可能为空 |
-| 海量动态详情 | 通常不预渲染 | 运行时 Head；热门 path 可后续批量预渲染 |
+| 数量很多的动态详情页（如 `/articles/:id`） | 通常不预渲染 | 运行时 Head；热门 path 可后续批量预渲染 |
 
 ### 5.3 预渲染如何绕过接口跨域
 
@@ -184,7 +184,7 @@ flowchart TD
 |------|-------------------------|-------------------|
 | 外链 / 书签 / 刷新直达公开页 | 是 | 首包来自预渲染；JS 起来后再校正 |
 | 站内导航从 A 到 B | 否 | 全程 CSR：组件 + 路由级 Head |
-| 直达未预渲染深链 | 常落到 SPA shell 回退 | 壳 HTML → JS 渲染；详情靠运行时 Head |
+| 直达未预渲染深链 | 常落到 SPA shell 回退 | 壳 HTML → JS 渲染；动态详情靠运行时 Head |
 
 **要点：** 预渲染 HTML 服务「每个可索引 URL 的首包」；站内点来点去是同一份已加载 SPA 在切换视图。两者互补。
 
@@ -194,43 +194,71 @@ flowchart TD
 
 ### 7.1 能力一览
 
-| 能力 | 做法 |
-|------|------|
-| 动态 Head | 统一 Head 库 + 路由级配置（按路由写 title / description / OG 等） |
-| Canonical | 当前 path 的绝对 URL |
-| 多语言 | `hreflang`（各 locale + `x-default`），与语言前缀路由一致 |
-| 结构化数据 | 首页常见 `Organization` + `WebSite`；子公开页可挂 `WebPage` 等 |
-| 爬虫指引 | `robots.txt`：允许公开页，禁止登录 / 账号相关路径 |
-| 站点地图 | `sitemap.xml`：公开页 + 多语言 alternate |
-| 隐私策略 | 需登录路由 `noindex, nofollow` |
+下面每一项都是「让爬虫 / 社交平台看懂页面」的基础设施。做法一句话，后面跟含义与例子。
 
-### 7.2 Canonical
+#### 动态 Head
 
-告诉搜索引擎：**这一页的「正版」URL 是哪一个**。
+**做什么：** 用统一的 Head 管理（如 `@unhead` / `react-helmet`），按**当前路由**写入 `<title>`、description、OG 等，用户点站内导航换页时也会跟着改。
 
-人觉得是同一页，爬虫按 URL 记账。常见「多地址、同内容」：
+**为什么需要：** SPA 不会整页刷新，如果不按路由更新 Head，分享卡片和浏览器标签会一直停在上一页的标题。
+
+**例子：** 打开 `/pricing` 时写入：
+
+```html
+<title>Pricing — Example</title>
+<meta name="description" content="Simple pay-as-you-go pricing for every plan." />
+<meta property="og:title" content="Pricing — Example" />
+```
+
+从首页点进价格页后，标签栏和再分享时的预览会变成上面这套，而不是还显示首页标题。
+
+#### Canonical
+
+**做什么：** 声明「这一页的正版 URL」，形式是当前 path 的绝对地址（一般不含追踪参数）。
+
+**为什么需要：** 人觉得是同一页，爬虫按 URL 记账。同一内容常有多个地址：
 
 | 变体 | 示例 |
 |------|------|
-| 查询参数 | `/about` vs `/about?utm_source=x` |
-| 尾斜杠 | `/about` vs `/about/` |
+| 查询参数 | `/pricing` vs `/pricing?utm_source=x` |
+| 尾斜杠 | `/pricing` vs `/pricing/` |
 | www / 协议 | `www.example.com` vs `example.com` |
 
-没有 canonical 时可能：
+没有 canonical 时可能：分别收录、外链权重被稀释、或引擎只挑一个展示且不一定是你想要的那个。
 
-1. **分别收录** — 多条几乎一样的结果互相抢曝光  
-2. **稀释权重** — 外链分散到多个变体，正本信号变弱  
-3. **判重复** — 引擎只挑一个展示，且不一定是你想要的那个  
+**例子：**
 
 ```html
-<link rel="canonical" href="https://example.com/about" />
+<link rel="canonical" href="https://example.com/pricing" />
 ```
 
-实现上通常用「站点 origin + 当前 path」（一般不含追踪参数）。**不同语言页应各自有 canonical**，再用 `hreflang` 互指，不要都指到同一 URL。
+即使用户是从 `https://example.com/pricing?utm_source=newsletter` 进来的，正版仍记为 `/pricing`。**不同语言页应各自有 canonical**，再用 `hreflang` 互指，不要都指到同一 URL。
 
-### 7.3 JSON-LD
+#### 多语言（hreflang）
 
-用 JSON 写在页面里的结构化数据（JSON for Linked Data），帮助搜索引擎理解「这是组织 / 网站 / 网页…」，词汇多用 [schema.org](https://schema.org)。
+**做什么：** 用 `hreflang` 告诉搜索引擎「这些是同一页的不同语言版本」，并标一个 `x-default` 作默认回落；链接要和站点的语言前缀路由一致。
+
+**为什么需要：** 避免英文页和中文页被当成重复内容，或在错误的地区搜出错误语言。
+
+**例子：** `/pricing` 与 `/zh-CN/pricing` 互相声明：
+
+```html
+<link rel="alternate" hreflang="en" href="https://example.com/pricing" />
+<link rel="alternate" hreflang="zh-CN" href="https://example.com/zh-CN/pricing" />
+<link rel="alternate" hreflang="x-default" href="https://example.com/pricing" />
+```
+
+在中国搜到的更可能是中文版，在英文环境更可能是英文版。
+
+#### 结构化数据（JSON-LD）
+
+**做什么：** 在 HTML 里塞一段 JSON（JSON for Linked Data），用 [schema.org](https://schema.org) 词汇描述「这是公司 / 网站 / 网页」。首页常见 `Organization` + `WebSite`；子公开页可挂 `WebPage`（`isPartOf` 挂回站点）。
+
+**为什么需要：** 帮搜索引擎理解页面语义（不只是字符串），有时有利于展示更清晰的结果；**不保证**一定出富媒体卡片。
+
+和 Canonical 的分工：Canonical 解决「哪个 URL 是正本」；JSON-LD 解决「内容语义上是什么」。
+
+**例子：**
 
 ```html
 <script type="application/ld+json">
@@ -243,19 +271,61 @@ flowchart TD
 </script>
 ```
 
-首页常用 `Organization` + `WebSite`；子公开页可用 `WebPage`（`isPartOf` 挂回站点）。有利于语义识别，**不保证**一定出富媒体搜索结果。
+#### 爬虫指引（robots.txt）
 
-| | Canonical | JSON-LD |
-|--|-----------|---------|
-| 解决什么 | 哪个 URL 是正本 | 内容语义上是什么 |
-| 形式 | `<link rel="canonical">` | `<script type="application/ld+json">` |
+**做什么：** 站点根路径放一份 `robots.txt`，约定爬虫可以抓哪些路径、不要进哪些路径，并常附上 sitemap 地址。
 
-### 7.4 索引策略模板
+**为什么需要：** 减少爬虫浪费配额去爬登录、账号后台等无收录价值的页面。
+
+**例子：** `https://example.com/robots.txt`
+
+```text
+User-agent: *
+Allow: /
+Disallow: /auth
+Disallow: /billing
+Sitemap: https://example.com/sitemap.xml
+```
+
+含义：公开页可抓；`/auth`、`/billing` 不要抓。
+
+#### 站点地图（sitemap.xml）
+
+**做什么：** 列出希望被收录的公开 URL，多语言站通常为每个语言版本各写一条，并用 alternate 互指。
+
+**为什么需要：** 给搜索引擎一份「请优先关注这些页」的清单，加快发现新页、补齐漏抓。
+
+**例子：** `https://example.com/sitemap.xml` 中的一条：
+
+```xml
+<url>
+  <loc>https://example.com/pricing</loc>
+  <xhtml:link rel="alternate" hreflang="en" href="https://example.com/pricing" />
+  <xhtml:link rel="alternate" hreflang="zh-CN" href="https://example.com/zh-CN/pricing" />
+  <xhtml:link rel="alternate" hreflang="x-default" href="https://example.com/pricing" />
+</url>
+```
+
+#### 隐私策略（页面级 noindex）
+
+**做什么：** 对需登录的路由，在页面 `<head>` 里写 `noindex, nofollow`，明确要求「不要收录、不要顺着页内链接继续抓」。
+
+**为什么需要：** 仅靠 `robots.txt` 不够（它是建议，且用户仍可能分享出带登录态的 URL）。页面级 meta 是更直接的「禁止收录」信号。
+
+**例子：** 打开 `/billing` 时：
+
+```html
+<meta name="robots" content="noindex, nofollow" />
+```
+
+即使有人把账单页链接发到外网，搜索结果里也不应出现该页。
+
+### 7.2 索引策略模板
 
 | 页面类型 | 预渲染 | 索引 |
 |----------|--------|------|
 | 固定公开页（各语言） | ✅ | ✅ |
-| 海量动态详情 | ❌ 或仅热门批量 | ✅（运行时 Head） |
+| 数量很多的动态详情页（如 `/articles/:id`） | ❌ 或仅热门批量 | ✅（运行时 Head） |
 | 登录 / 账号后台 | ❌ | ❌（robots + noindex） |
 
 ---
@@ -298,9 +368,9 @@ flowchart TD
 
 **边界**
 
-- 预渲染覆盖固定公开路由，不含全部动态详情  
-- 动态接口块不保证进入静态 HTML；可告警、默认可不阻断部署  
-- 动态详情主要靠运行时 Head  
+- 预渲染覆盖固定公开路由，不含全部动态详情页（如 `/articles/:id`）
+- 动态接口块不保证进入静态 HTML；可告警、默认可不阻断部署
+- 动态详情页主要靠运行时 Head
 
 **可选增强**
 
@@ -317,4 +387,4 @@ flowchart TD
 > 1）全站统一管理 title / description / OG / canonical / 多语言 hreflang，并配 robots + sitemap；  
 > 2）构建时用 Headless 浏览器把**公开页**预渲染成带正文的 HTML。  
 >
-> 搜索与社交打开源码即可看到主文案；动态列表尽量在构建时写入；海量详情用运行时 Head，后续可对热门 path 再批量预渲染。站内导航仍是 SPA，不重复下载预渲染 HTML。
+> 搜索与社交打开源码即可看到主文案；动态列表尽量在构建时写入；数量很多的动态详情页（如 `/articles/:id`）用运行时 Head，后续可对热门 path 再批量预渲染。站内导航仍是 SPA，不重复下载预渲染 HTML。
