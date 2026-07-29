@@ -315,7 +315,7 @@ function viewMore() {
 .home-pricing__skel--tag {
   width: 48px;
   height: 22px;
-  border-radius: 30px;
+  border-radius: 8px;
 }
 
 .home-pricing__skel--btn {
@@ -346,7 +346,7 @@ function viewMore() {
   padding: 8px 18px;
   border: 0;
   border-radius: 8px;
-  background: rgba(6, 182, 212, 0.1);
+  background: #f4f7f7;
   color: #06b6d4;
   font-size: 14px;
   font-weight: 500;

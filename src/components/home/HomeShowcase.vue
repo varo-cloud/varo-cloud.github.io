@@ -47,6 +47,7 @@ const items = computed(() =>
     name: publisher.name,
     count: publisher.count,
     image: resolveCover(publisher, page.value * PAGE_SIZE + index),
+    logo: resolveLogo(publisher),
   })),
 )
 
@@ -54,6 +55,11 @@ function resolveCover(publisher: PublisherFacetItem, index: number) {
   const cover = publisher.cover_url?.trim()
   if (cover) return assetUrl(cover)
   return assetUrl(DEFAULT_COVERS[index % DEFAULT_COVERS.length]!)
+}
+
+function resolveLogo(publisher: PublisherFacetItem) {
+  const logo = publisher.logo_url?.trim()
+  return logo ? assetUrl(logo) : null
 }
 
 function goPage(next: number) {
@@ -116,6 +122,14 @@ onMounted(() => {
             class="home-showcase__img"
             :src="item.image"
             :alt="item.name"
+            loading="lazy"
+          />
+          <img
+            v-if="item.logo"
+            class="home-showcase__logo"
+            :src="item.logo"
+            alt=""
+            aria-hidden="true"
             loading="lazy"
           />
           <div class="home-showcase__body">
@@ -224,6 +238,18 @@ onMounted(() => {
   transition: transform 0.25s ease;
 }
 
+.home-showcase__logo {
+  position: absolute;
+  z-index: 1;
+  top: 16px;
+  left: 24px;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  object-fit: cover;
+  pointer-events: none;
+}
+
 .home-showcase__body {
   position: relative;
   z-index: 1;
@@ -317,7 +343,7 @@ onMounted(() => {
 }
 
 .home-showcase__dot.is-active {
-  background: #06b6d4;
+  background: #101010;
 }
 
 @keyframes home-showcase-shimmer {
@@ -354,6 +380,11 @@ onMounted(() => {
     height: auto;
     min-height: 56px;
     padding: 10px 12px;
+  }
+
+  .home-showcase__logo {
+    top: 12px;
+    left: 12px;
   }
 
   .home-showcase__name {

@@ -13,7 +13,7 @@ const cards = [
   },
   {
     key: 'scale',
-    image: 'https://assets.varo.cloud/uploads/003615b00a7a4c0eb6aec5a030ec2edd.jpg',
+    image: 'https://assets.varo.cloud/uploads/68f14d23cfec4690987c214afffdf58b.png',
     points: ['point1', 'point2', 'point3'] as const,
   },
   {

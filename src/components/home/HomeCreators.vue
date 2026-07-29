@@ -19,9 +19,14 @@ function getStarted() {
   <section class="home-creators" aria-labelledby="home-creators-title">
     <div class="home-creators__inner">
       <div class="home-creators__media">
-        <img
-          :src="assetUrl('https://assets.varo.cloud/uploads/5c7fc2df4ad342ebaa84fbab1a5dec5b.jpg')"
-          :alt="t('pages.home.creators.imageAlt')"
+        <video
+          :src="assetUrl('https://assets.varo.cloud/uploads/67ae104a1d7d4f50b76052a0f6d3f329.mp4')"
+          :aria-label="t('pages.home.creators.imageAlt')"
+          autoplay
+          muted
+          loop
+          playsinline
+          preload="metadata"
         />
       </div>
       <div class="home-creators__content">
@@ -71,7 +76,7 @@ function getStarted() {
   background: #f4f4f4;
 }
 
-.home-creators__media img {
+.home-creators__media video {
   display: block;
   width: 100%;
   height: 100%;
@@ -154,7 +159,7 @@ function getStarted() {
 }
 
 .home-creators__btn--primary {
-  background: #06b6d4;
+  background: #222;
   color: #fff;
 }
 
@@ -164,7 +169,7 @@ function getStarted() {
 
 .home-creators__btn--ghost {
   background: transparent;
-  border-color: #ebf4fb;
+  border-color: #f4f7f7;
   color: #222;
 }
 

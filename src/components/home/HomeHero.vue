@@ -99,28 +99,32 @@ function onPrimaryCta() {
   max-width: 1242px;
   font-size: clamp(32px, 5vw, 56px);
   font-weight: 900;
-  line-height: 1.14;
-  letter-spacing: -0.02em;
+  line-height: 64px;
+  color: #fff;
   word-break: break-word;
 }
 
 .home-hero__subtitle {
   margin: 0;
-  max-width: 1242px;
+  width: 100%;
+  max-width: none;
   font-size: clamp(16px, 2vw, 20px);
   font-weight: 500;
-  line-height: 1.2;
-  color: rgba(255, 255, 255, 0.5);
+  line-height: 24px;
+  color: #fff;
+  opacity: 0.5;
 }
 
 .home-hero__actions {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 16px;
   margin-top: 0;
 }
 
 .home-hero__btn {
+  box-sizing: border-box;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -132,6 +136,7 @@ function onPrimaryCta() {
   font-weight: 500;
   line-height: 16px;
   text-decoration: none;
+  white-space: nowrap;
   cursor: pointer;
   border: 1px solid transparent;
   transition:
@@ -147,7 +152,6 @@ function onPrimaryCta() {
 
 .home-hero__btn--primary:hover {
   background: #0891b2;
-  opacity: 1;
 }
 
 .home-hero__btn--ghost {
@@ -174,6 +178,14 @@ function onPrimaryCta() {
 
   .home-hero__content {
     gap: 24px;
+  }
+
+  .home-hero__title {
+    line-height: 1.14;
+  }
+
+  .home-hero__subtitle {
+    line-height: 1.4;
   }
 
   .home-hero__actions {
