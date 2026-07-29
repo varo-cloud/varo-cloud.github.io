@@ -193,7 +193,7 @@ export default {
       },
       searchPlaceholder: 'Search',
       from: 'From',
-      tryModel: 'Try it',
+      tryModel: 'Try Now',
       favourite: 'Add to favourites',
       loadError: 'Failed to load models. Please try again.',
       retry: 'Retry',
