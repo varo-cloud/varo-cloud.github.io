@@ -216,7 +216,7 @@ function getApiKey() {
   grid-template-columns: 1fr 1fr;
   gap: 60px;
   margin-top: 40px;
-  padding: 0 60px;
+  padding: 0 20px;
   align-items: stretch;
 }
 
@@ -239,6 +239,7 @@ function getApiKey() {
   border: 0;
   background: transparent;
   color: #222;
+  padding: 0;
 }
 
 .home-developers__code :deep(.hljs) {

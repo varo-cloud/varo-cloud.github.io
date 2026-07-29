@@ -8,17 +8,17 @@ const { t } = useI18n()
 const cards = [
   {
     key: 'models',
-    image: 'https://assets.varo.cloud/uploads/f8a9cff9443345198e6ac6cb92e3abe8.jpg',
+    image: 'https://assets.varo.cloud/uploads/0b9ba8bbf934490c9365a38b44fae18b.png',
     points: ['point1', 'point2', 'point3'] as const,
   },
   {
     key: 'scale',
-    image: 'https://assets.varo.cloud/uploads/68f14d23cfec4690987c214afffdf58b.png',
+    image: 'https://assets.varo.cloud/uploads/fa56b91040314a2489a66f76e736d655.png',
     points: ['point1', 'point2', 'point3'] as const,
   },
   {
     key: 'cost',
-    image: 'https://assets.varo.cloud/uploads/c37bca31df74425bbf0d766d2bb37de0.jpg',
+    image: 'https://assets.varo.cloud/uploads/ca46b87523f44e6eba24d07d3eb25370.png',
     points: ['point1', 'point2', 'point3'] as const,
   },
 ] as const
