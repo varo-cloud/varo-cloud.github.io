@@ -2,6 +2,7 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import { useHead } from '@unhead/vue'
 import { useLocaleRouter } from '@/composables/useLocaleRouter'
 import { NEmpty, NSpin } from 'naive-ui'
 import { fetchModelFacets, fetchModels } from '@/api/models'
@@ -9,14 +10,37 @@ import ModelsFilterSidebar from '@/components/models/ModelsFilterSidebar.vue'
 import PricingTableRow from '@/components/pricing/PricingTableRow.vue'
 import { assetUrl } from '@/utils/assetUrl'
 import { modelToPricingItem } from '@/utils/pricing'
+import { absoluteUrl, SITE_NAME } from '@/seo/config'
 import type { BaseModelFacetItem, FacetItem, Model, ModelCategory, PricingItem, PublisherFacetItem } from '@/types'
 
 const PAGE_SIZE = 20
 const SEARCH_DEBOUNCE_MS = 300
 
 const route = useRoute()
-const { push, replace } = useLocaleRouter()
+const { push, replace, localePath } = useLocaleRouter()
 const { t } = useI18n()
+
+useHead(
+  computed(() => ({
+    script: [
+      {
+        type: 'application/ld+json',
+        innerHTML: JSON.stringify({
+          '@context': 'https://schema.org',
+          '@type': 'WebPage',
+          name: t('pages.pricing.seo.title'),
+          description: t('pages.pricing.seo.description'),
+          url: absoluteUrl(localePath('/pricing')),
+          isPartOf: {
+            '@type': 'WebSite',
+            name: SITE_NAME,
+            url: absoluteUrl('/'),
+          },
+        }),
+      },
+    ],
+  })),
+)
 
 const models = ref<Model[]>([])
 const total = ref(0)

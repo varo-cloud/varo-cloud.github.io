@@ -22,7 +22,7 @@ withDefaults(
   flex-shrink: 0;
   align-items: center;
   justify-content: center;
-  border-radius: 30px;
+  border-radius: 8px;
   background: #ff9800;
   color: #fff;
   font-weight: 400;
@@ -30,7 +30,7 @@ withDefaults(
 }
 
 .discount-tag--md {
-  padding: 4px 8px;
+  padding: 8px;
   font-size: 14px;
   line-height: 14px;
 }
