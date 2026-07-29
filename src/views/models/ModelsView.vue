@@ -2,6 +2,7 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import { useHead } from '@unhead/vue'
 import { useLocaleRouter } from '@/composables/useLocaleRouter'
 import { NEmpty, NSpin } from 'naive-ui'
 import { fetchModels, fetchFavouriteModels, fetchModelFacets, fetchRecentModels } from '@/api/models'
@@ -12,16 +13,39 @@ import AppIcon from '@/components/common/AppIcon.vue'
 import { useModelPreferencesStore } from '@/stores/modelPreferences'
 import { useUserStore } from '@/stores/user'
 import { assetUrl } from '@/utils/assetUrl'
+import { absoluteUrl, SITE_NAME } from '@/seo/config'
 import type { BaseModelFacetItem, FacetItem, Model, ModelCategory, PublisherFacetItem } from '@/types'
 
 const PAGE_SIZE = 20
 const SEARCH_DEBOUNCE_MS = 300
 
 const route = useRoute()
-const { replace } = useLocaleRouter()
+const { replace, localePath } = useLocaleRouter()
 const { t } = useI18n()
 const userStore = useUserStore()
 const modelPrefs = useModelPreferencesStore()
+
+useHead(
+  computed(() => ({
+    script: [
+      {
+        type: 'application/ld+json',
+        innerHTML: JSON.stringify({
+          '@context': 'https://schema.org',
+          '@type': 'WebPage',
+          name: t('pages.models.seo.title'),
+          description: t('pages.models.seo.description'),
+          url: absoluteUrl(localePath('/models')),
+          isPartOf: {
+            '@type': 'WebSite',
+            name: SITE_NAME,
+            url: absoluteUrl('/'),
+          },
+        }),
+      },
+    ],
+  })),
+)
 
 const models = ref<Model[]>([])
 const total = ref(0)

@@ -74,10 +74,62 @@ vite/webpack build
 | 配置表 | 路由 → title/description（可走 i18n）；站点 origin、默认 OG 图 |
 | Canonical | 当前 path 的绝对 URL |
 | 多语言 | `hreflang`（各 locale + `x-default`），与 locale 前缀路由一致 |
-| 结构化数据 | 首页 JSON-LD（如 `Organization` + `WebSite`） |
+| 结构化数据 | 首页 `Organization` + `WebSite`；Models / Pricing / Developers 等页可另挂 `WebPage`（及 FAQ 等） |
 | 爬虫指引 | `robots.txt`：允许公开页，禁止登录/账号相关路径 |
 | 站点地图 | `sitemap.xml`：公开页 + 多语言 alternate |
 | 隐私策略 | 账号相关路由 `noindex, nofollow` |
+
+#### Canonical 是什么
+
+告诉搜索引擎：**这一页的「正版」URL 是哪一个**。
+
+对用户来说「打开的是同一页」，对爬虫来说每个 URL 都可能是一条独立记录。常见「多地址、同内容」例如：
+
+| 变体 | 示例 |
+|------|------|
+| 查询参数 | `/models` vs `/models?utm_source=twitter` vs `/models?sort=new` |
+| 尾斜杠 | `/models` vs `/models/`（部分托管还会 301，但仍可能短暂并存） |
+| www / 协议 | `https://www.example.com/...` vs `https://example.com/...` |
+| 入口不同但正文相同 | 分享短链落地后与正式 path 内容一致 |
+
+没有 canonical 时，搜索引擎可能：
+
+1. **当成多个页面分别收录** — 索引里出现好几条几乎一样的结果，互相抢曝光。
+2. **稀释权重（link equity）** — 外链、内链分散打到 `/models`、`/models/`、带 UTM 的 URL 上；本来应集中在一个正本的「推荐信号」被拆开，单页排名更弱。
+3. **判重复内容** — 算法发现大量雷同正文，可能只挑一个展示，或降低整组 URL 的质量评价；你无法稳定控制「挑中的是哪一个」。
+
+加上 canonical 等于明确声明：「请把这些变体都归并到这个绝对地址」。例如：
+
+```html
+<link rel="canonical" href="https://example.com/models" />
+```
+
+即使用户从 `https://example.com/models?utm_source=twitter` 进来，爬虫仍应把正本记为 `https://example.com/models`，外链与收录尽量归到这一条。
+
+实现上通常按「站点 origin + 当前 path」生成（一般不含追踪参数）。**注意：** 真正不同语言的页面（如 `/models` 与 `/zh-CN/models`）应各自有 canonical，并用 `hreflang` 互指，而不是都指到同一 URL。
+
+#### JSON-LD 是什么
+
+一种用 **JSON** 写在页面里的结构化数据（JSON for Linked Data），让搜索引擎更容易理解「这是什么」——组织、网站、文章、产品等，而不只是纯文本。词汇多用 [schema.org](https://schema.org)。
+
+```html
+<script type="application/ld+json">
+{
+  "@context": "https://schema.org",
+  "@type": "Organization",
+  "name": "示例公司",
+  "url": "https://example.com"
+}
+</script>
+```
+
+营销首页常见 `Organization` + `WebSite`；子营销页（如 Models / Pricing）可用 `WebPage` 描述本页 title / description / url，并用 `isPartOf` 挂回站点。有利于页面语义识别（不保证一定出富媒体搜索结果）。
+
+| | Canonical | JSON-LD |
+|--|-----------|---------|
+| 解决什么 | 「哪个 URL 是正本」 | 「这段内容语义上是什么」 |
+| 形式 | `<link rel="canonical">` | `<script type="application/ld+json">` |
+| 主要给谁看 | 搜索引擎去重 / 归并 | 搜索引擎理解实体与关系 |
 
 ### 5.2 公开页预渲染（核心）
 
@@ -94,7 +146,28 @@ vite/webpack build
 - **壳就绪**：静态 Hero / 文案已挂载
 - **内容就绪**：首段 API 列表加载结束（成功/空/失败都置位，避免死等）
 
-预渲染时若页面会请求 API，可用 Node 侧代理转发，避免 `127.0.0.1` 浏览器 CORS。
+#### 预渲染如何绕过接口跨域
+
+页面跑在本机静态服务（`http://127.0.0.1:端口`），请求线上 API 时，浏览器会按跨域规则拦截。预渲染**不依赖改后端 CORS**，而是用 Headless 浏览器的请求拦截在 Node 侧转发：
+
+```text
+页面 JS 发起 API 请求
+        │
+        ▼
+ Playwright page.route 拦截（匹配 /api/ 或线上 API 域名）
+        │
+        ▼
+ route.fetch()：在 Node 进程发真实 HTTP（不受浏览器 CORS 限制）
+        │
+        ▼
+ route.fulfill({ response })：把响应塞回页面
+```
+
+要点：
+
+- 拦截发生在浏览器发出请求之后、走跨域校验之前；实际出网由 Node 完成
+- 构建包里的 `API_BASE_URL` 应指向**可访问的绝对 API 地址**（或能被拦截规则匹配的路径）；若仍是相对 `/api` 且本机静态服务没有后端，会得到空列表，这是「没数据」而不是 CORS
+- 代理失败时打日志并 `abort` 该请求，页面可继续置位「内容就绪」，避免预渲染死等
 
 ### 5.3 动态内容怎么处理
 
