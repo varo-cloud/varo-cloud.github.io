@@ -341,7 +341,7 @@ onUnmounted(() => {
         <template v-if="userStore.isLoggedIn">
           <div class="app-header__wallet-group">
             <div class="app-header__wallet-balance" :title="t('common.balance')">
-              <AppIcon name="wallet" />
+              <AppIcon name="wallet" color="#5856D6"/>
               <span>{{ balanceLabel }}</span>
             </div>
             <button
@@ -349,7 +349,7 @@ onUnmounted(() => {
               class="app-header__wallet-deposit"
               @click="goTo('billing')"
             >
-              <AppIcon name="deposit" />
+              <AppIcon name="deposit"/>
               <span>{{ t('common.deposit') }}</span>
             </button>
           </div>
@@ -577,7 +577,7 @@ onUnmounted(() => {
   border: none;
   border-radius: 0;
   background: transparent;
-  color: #5c6575;
+  color: #929ca5;
   cursor: pointer;
   font-size: 14px;
   font-weight: 600;
@@ -613,14 +613,14 @@ onUnmounted(() => {
   height: 36px;
   padding: 0 12px;
   border-radius: 8px;
-  background: #0e1116;
+  background: rgba(255, 255, 255, 0.1);
   cursor: text;
 }
 
 .app-header__search-icon {
   flex-shrink: 0;
-  color: #5c6575;
-  opacity: 1;
+  color: #ebf4fb;
+  opacity: 0.2;
 }
 
 .app-header__search-input {
@@ -635,8 +635,8 @@ onUnmounted(() => {
 }
 
 .app-header__search-input::placeholder {
-  color: #5c6575;
-  opacity: 1;
+  color: #fff;
+  opacity: 0.2;
 }
 
 .app-header__icon-btn,
@@ -649,7 +649,7 @@ onUnmounted(() => {
   padding: 8px 12px;
   border: none;
   border-radius: 8px;
-  background: #0e1116;
+  background: rgba(255, 255, 255, 0.1);
   color: #ebf4fb;
   cursor: pointer;
   transition: opacity 0.15s ease;
@@ -770,7 +770,8 @@ onUnmounted(() => {
 
 .app-header__wallet-group {
   display: flex;
-  gap: 8px;
+  align-items: center;
+  gap: 1px;
 }
 
 .app-header__wallet-balance,
@@ -781,8 +782,7 @@ onUnmounted(() => {
   height: 36px;
   padding: 0 8px;
   border: none;
-  border-radius: 8px;
-  background: #0e1116;
+  background: rgba(255, 255, 255, 0.1);
   color: #ebf4fb;
   font-size: 14px;
   font-weight: 500;
@@ -790,7 +790,12 @@ onUnmounted(() => {
   white-space: nowrap;
 }
 
+.app-header__wallet-balance {
+  border-radius: 8px 0 0 8px;
+}
+
 .app-header__wallet-deposit {
+  border-radius: 0 8px 8px 0;
   cursor: pointer;
   transition: opacity 0.15s ease;
 }
@@ -837,7 +842,7 @@ onUnmounted(() => {
   padding: 0;
   border: none;
   border-radius: 8px;
-  background: #0e1116;
+  background: rgba(255, 255, 255, 0.1);
   color: #ebf4fb;
   cursor: pointer;
   transition: opacity 0.15s ease;
@@ -875,7 +880,7 @@ onUnmounted(() => {
   margin-bottom: 8px;
   padding: 0 12px;
   border-radius: 8px;
-  background: #0e1116;
+  background: rgba(255, 255, 255, 0.1);
   cursor: text;
 }
 
@@ -888,7 +893,7 @@ onUnmounted(() => {
   border: none;
   border-radius: 8px;
   background: transparent;
-  color: #5c6575;
+  color: #929ca5;
   cursor: pointer;
   font-size: 16px;
   font-weight: 600;
