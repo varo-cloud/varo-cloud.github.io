@@ -1,28 +1,22 @@
-# Varo.cloud 前端 SEO 方案说明
+# SPA 静态托管场景下的 SEO 实践（通用方法）
 
-> 分支：`feat/seo`  
-> 适用场景：Vue 3 + Vite SPA，部署在 GitHub Pages（静态托管，无 Node SSR）  
-> 目标读者：产品 / 前端 / 需要了解「为什么这样改、能覆盖到什么程度」的同学
-
----
-
-## 1. 背景与约束
+## 1. 问题与约束
 
 | 约束 | 含义 |
 |------|------|
-| 技术栈 | Vue 3 + Vite 单页应用（CSR） |
-| 部署 | GitHub Pages，只有静态文件，没有服务端渲染环境 |
-| 业务诉求 | 新首页要可被搜索引擎与社交平台正确识别；全站营销页也要有基础 SEO |
+| 技术栈 | 前端 SPA（CSR），如 Vue/React + Vite |
+| 部署 | 纯静态托管（无 Node SSR） |
+| 目标 | 搜索引擎与社交预览能读到正确的 title / description / 正文 |
 
-传统 SPA 的问题：爬虫或社交预览抓到的往往是几乎空的 `index.html`（只有 `<div id="app">`），title / description / 正文都要等 JS 跑完才有。GitHub Pages 又跑不了 SSR，所以不能上 Nuxt 一类完整服务端方案。
+传统 SPA 的痛点：爬虫或社交抓取器拿到的往往是几乎空的壳 HTML；静态托管又跑不了完整 SSR。
 
 ---
 
-## 2. 方案结论（一句话）
+## 2. 方案一句话
 
-**全站补齐 SEO 基础设施（meta / canonical / hreflang / robots / sitemap / JSON-LD），所有无需登录的公开页做构建期预渲染（Playwright），在不改部署形态的前提下，让营销页首包 HTML 自带可索引内容。**
+**全站补齐 SEO 基础设施（meta / canonical / hreflang / robots / sitemap / JSON-LD），对无需登录的公开页做构建期预渲染，在不改部署形态的前提下，让营销页首包 HTML 自带可索引内容。**
 
-不是「整站 SSR」，也不是「只改一个页面的 meta」。
+不是整站 SSR，也不是「只改几个 meta」。
 
 ---
 
@@ -30,11 +24,13 @@
 
 | 方案 | 是否采纳 | 原因 |
 |------|----------|------|
-| 迁 Nuxt / 上 Node SSR | ❌ | 部署与架构成本过高，当前 Pages 托管不匹配 |
-| 全站静态预渲染所有路由（含登录态、全部模型详情） | ❌ 暂不做 | 登录态页需 noindex；模型详情 path 过多 |
-| **全站 Head 管理 + 公开页预渲染** | ✅ | 成本可控，覆盖营销入口收录与分享预览 |
+| 迁框架上 SSR | 通常否 | 部署与架构成本高，静态托管不匹配 |
+| 预渲染所有路由（含登录态、海量动态详情） | 暂不做 | 登录页应 noindex；动态 path 过多 |
+| **全站 Head 管理 + 公开页预渲染** | 推荐 | 成本可控，覆盖收录与分享预览 |
 
-优先级：**公开营销页预渲染 > 模型详情运行时 Head > 用户后台页 noindex。**
+优先级建议：
+
+**公开营销页预渲染 > 动态详情运行时 Head > 用户后台 noindex**
 
 ---
 
@@ -44,180 +40,141 @@
 用户 / 爬虫请求公开页
         │
         ▼
- GitHub Pages 静态文件
+ 静态托管产物
         │
-        ├─ index.html / models.html / pricing.html / …  ← 构建期预渲染（`.html` 避免尾斜杠 301）
-        ├─ zh-CN.html、zh-CN/models.html … 对应中文路由
-        ├─ 404.html            ← SPA fallback（深链刷新仍可进 Vue Router）
+        ├─ 各公开路由的预渲染 HTML（path.html）
+        ├─ 404.html（SPA fallback，深链刷新仍进 Router）
         ├─ robots.txt
         └─ sitemap.xml
 
 运行时（浏览器 / 能执行 JS 的爬虫）：
-  App.vue → useRouteSeo() → @unhead/vue 按路由切换 title/OG/canonical/hreflang
-  模型详情页额外按接口返回的 displayName / description 覆盖 Head
+  全局 Head 管理 → 按路由切换 title / OG / canonical / hreflang
+  动态详情页可按接口数据覆盖 Head
 ```
 
-构建流水线顺序：
+构建顺序：
 
 ```text
-vite build
-  → spa-fallback：把原始 SPA shell 复制为 dist/404.html
-  → prerender：用 Playwright 打开公开路由，把渲染结果写入
-       dist/index.html、dist/models.html、dist/pricing.html …
-       及 zh-CN.html、zh-CN/models.html 等
+vite/webpack build
+  → 把 SPA shell 复制为 404.html（深链回退）
+  → Playwright 打开公开路由，把渲染结果写入对应 HTML
 ```
 
-> 必须先有 `404.html`，再写入各路由 HTML。预渲染产物用 `path.html` 而不是 `path/index.html`，这样 GitHub Pages 访问 `/models` 直接 200，不会 301 到 `/models/`。
+> 预渲染产物建议用 `path.html` 而不是 `path/index.html`，避免部分静态托管对尾斜杠做 301。
 
 ---
 
-## 5. 分层能力说明
+## 5. 分层能力
 
 ### 5.1 全站 SEO 基础设施
 
-| 能力 | 实现 | 说明 |
-|------|------|------|
-| 动态 Head | `@unhead/vue` + `useRouteSeo()` | 按路由名读写 title、description、robots、Open Graph、Twitter Card |
-| 配置表 | `src/seo/config.ts` | 路由 → i18n key；站点 origin、默认 OG 图 |
-| Canonical | 当前 path 绝对 URL | `https://varo.cloud/...` |
-| 多语言 | `hreflang`: `en` / `zh-CN` / `x-default` | 与现有 locale 前缀路由一致 |
-| 结构化数据 | 首页 JSON-LD | `Organization` + `WebSite` |
-| 爬虫指引 | `public/robots.txt` | 允许公开页；禁止 auth / api-keys / billing / generations |
-| 站点地图 | `public/sitemap.xml` | 首页、Models、Pricing、AI Generator、Docs、Terms、Privacy（含中英） |
-| 隐私页策略 | 账号相关路由 `noindex, nofollow` | 避免后台页进入索引 |
-
-覆盖路由示例：
-
-- 可索引：`home`、`models`、`model-detail`、`pricing`、`ai-generator`、`docs`、`terms`、`privacy`
-- 不索引：`auth`、`auth-callback`、`api-keys`、`billing`、`generations`
-
-### 5.2 公开页预渲染（核心差异点）
-
-脚本：`scripts/prerender.mjs`
-
-流程概要：
-
-1. 在 `dist` 上起本地静态服务（深链回退到 `404.html`）
-2. Playwright Chromium 访问各公开路由（中英）
-3. 等待页面 `[data-seo-ready="…"]` 挂载，并确认关键标题文案 / document.title
-4. 再短暂等待 Head 写入后，导出完整 HTML 到对应目录
-
-预渲染范围：
-
-| 路由 | 预渲染 |
-|------|--------|
-| `/`、`/models`、`/pricing`、`/ai-generator`、`/docs`、`/terms`、`/privacy`（及 zh-CN） | ✅ |
-| `/models/:slug` | ❌（slug 过多；运行时 Head + 详情加载后覆盖 title/description） |
-| 需登录页 | ❌（noindex） |
-
-固化进 HTML 的内容（SEO 主收益）：
-
-- `<title>`、`<meta description>`、OG / Twitter、canonical、hreflang
-- 各页静态营销正文（Hero、法律文案等）
-- 首页 JSON-LD
-
-### 5.3 与「动态内容」的关系（重要）
-
-首页 / Models / Pricing 等区块会请求接口。预渲染会：
-
-1. 用 Playwright `route.fetch()` 在 Node 侧转发 API（避免 `127.0.0.1` 浏览器 CORS）
-2. 等待页面上的 `data-seo-content-ready`（首段动态列表加载结束：成功、空或失败都会置位）
-3. 超时（约 45s）则打日志并仍写出当前 HTML，不阻断构建
-
-| 内容类型 | 是否尽量进静态 HTML | 对 SEO 的作用 |
-|----------|----------------------|---------------|
-| Title / Description / H1 / 固定卖点文案 | ✅ 稳定固化 | **收录与分享预览的主信号** |
-| 首页 Featured 卡片、Models 列表、Pricing 行 | ✅ 接口可达时写入 | 丰富长尾与正文；接口失败时可能仍为空 |
-| 模型详情 `/models/:slug` | 运行时 Head | 首包仍偏 CSR |
-
-**结论：静态文案始终可索引；首段列表在 CI 能访问生产/预发 API 时也会进预渲染 HTML。**
-
----
-
-## 6. 关键文件与脚本
-
-| 路径 | 职责 |
+| 能力 | 做法 |
 |------|------|
-| `src/seo/config.ts` | SEO 常量与路由定义 |
-| `src/seo/useRouteSeo.ts` | 路由级 Head / JSON-LD |
-| `src/App.vue` | 全局挂载 `useRouteSeo()` |
-| `src/main.ts` | 注册 `@unhead/vue` |
-| `index.html` | 首页 fallback meta（无 JS / 预渲染前也能有基础标签） |
+| 动态 Head | 统一 Head 库（如 `@unhead/vue` / `react-helmet-async`）+ 路由级配置 |
+| 配置表 | 路由 → title/description（可走 i18n）；站点 origin、默认 OG 图 |
+| Canonical | 当前 path 的绝对 URL |
+| 多语言 | `hreflang`（各 locale + `x-default`），与 locale 前缀路由一致 |
+| 结构化数据 | 首页 JSON-LD（如 `Organization` + `WebSite`） |
+| 爬虫指引 | `robots.txt`：允许公开页，禁止登录/账号相关路径 |
+| 站点地图 | `sitemap.xml`：公开页 + 多语言 alternate |
+| 隐私策略 | 账号相关路由 `noindex, nofollow` |
+
+### 5.2 公开页预渲染（核心）
+
+流程：
+
+1. 在 `dist` 上起本地静态服务（未匹配路径回退到 SPA shell）
+2. Headless 浏览器访问各公开路由（含各语言）
+3. 等待页面就绪标记（如 `data-seo-ready`），并确认关键标题 / `document.title`
+4. 若有动态列表，再等 `data-seo-content-ready`（成功/空/失败都置位，避免死等）
+5. 短等 Head 刷入后，导出完整 HTML
+
+就绪信号建议分两层：
+
+- **壳就绪**：静态 Hero / 文案已挂载
+- **内容就绪**：首段 API 列表加载结束（成功/空/失败都置位，避免死等）
+
+预渲染时若页面会请求 API，可用 Node 侧代理转发，避免 `127.0.0.1` 浏览器 CORS。
+
+### 5.3 动态内容怎么处理
+
+| 内容类型 | 是否进静态 HTML | 作用 |
+|----------|-----------------|------|
+| Title / Description / H1 / 固定文案 | 稳定固化 | 收录与分享预览的主信号 |
+| 列表等接口数据 | 接口可达时写入 | 丰富正文；失败时可能为空 |
+| 海量动态详情页 | 运行时 Head 即可 | 首包仍偏 CSR；热门 slug 可后续批量预渲染 |
+
+---
+
+## 6. 推荐目录与职责（可套用）
+
+| 模块 | 职责 |
+|------|------|
+| `seo/config` | 常量、路由 → SEO 定义、绝对 URL |
+| `seo/useRouteSeo`（或等价） | 路由级 Head / JSON-LD |
+| 根组件挂载 | 全局启用路由 SEO |
+| `index.html` | 无 JS / 预渲染前的 fallback meta |
 | `public/robots.txt` | 爬虫规则 |
-| `public/sitemap.xml` | 站点地图 |
-| `scripts/prerender.mjs` | 构建期预渲染 |
-| `package.json` | `finalize-dist` = `spa-fallback` + `prerender` |
-| `.github/workflows/deploy-*.yml` | CI 安装 Playwright Chromium 后执行完整 build |
-
-本地相关命令：
-
-```bash
-npm run build           # 含 finalize-dist（预渲染）
-npm run spa-fallback    # cp dist/index.html → dist/404.html
-npm run prerender       # 仅跑预渲染（需已有 dist）
-```
+| `public/sitemap.xml` | 站点地图（可后续改为构建生成） |
+| `scripts/prerender` | 构建期预渲染 |
+| CI | 安装 Chromium 后跑完整 build |
 
 ---
 
-## 7. 部署注意点（GitHub Pages）
+## 7. 静态托管注意点
 
-1. **构建必须跑 Playwright**：CI 已增加 `npx playwright install --with-deps chromium`。
-2. **产物顺序**：先 SPA shell → `404.html`，再预渲染覆盖首页 HTML。
-3. **深链刷新**：非预渲染路径仍依赖 `404.html` 回退到 SPA，由 Vue Router 接管。
-4. **中英首页**：英文 `/` 与中文 `/zh-CN/` 各自有独立预渲染文件。
-
----
-
-## 8. 验收建议
-
-部署或本地 `npm run build` 后：
-
-1. 打开 `dist/index.html` 源码（不要只看浏览器渲染后的 DOM）
-2. 确认至少包含：
-   - 正确的 `<title>` / `meta description`
-   - `og:title` / `og:description` / `canonical`
-   - Hero 主标题等可见正文（非空壳 `#app`）
-3. 用「查看网页源代码」或 `curl` 生产域名首页，对比是否与预渲染结果一致
-4. 抽查：`/robots.txt`、`/sitemap.xml` 可访问
-5. 回归：Models / Pricing / 模型详情深链、语言切换、登录后后台页不误伤
-
-社交预览（可选）：用 Facebook / Twitter / LinkedIn 调试工具贴首页 URL，看 OG 卡片是否正确。
+1. CI 必须能跑 Headless 浏览器（如 Playwright Chromium）
+2. 产物顺序：先 SPA shell → `404.html`，再预渲染覆盖各路由 HTML
+3. 未预渲染的深链仍依赖 `404.html` 回退到 SPA
+4. 多语言首页各自独立预渲染文件
+5. `SITE_ORIGIN` 按环境区分；OG 图用绝对 URL，且用 JPEG/PNG（约 1200×630），SVG 常被社交平台忽略
 
 ---
 
-## 9. 已知边界与后续可选项
+## 8. 验收清单
 
-**已知边界**
+1. 打开构建产物 HTML **源码**（不要只看渲染后 DOM）
+2. 确认含：title、description、OG、canonical、可见正文（非空壳）
+3. 用 `curl` 或「查看网页源代码」对生产 URL 再验一次
+4. 抽查 `/robots.txt`、`/sitemap.xml`
+5. 回归：深链、语言切换、登录后后台页不被误索引
+6. 可选：用各平台调试工具贴 URL，验 OG 卡片
 
-- 预渲染覆盖公开固定路由，不含全部模型详情 slug
-- 动态接口区块不保证进入静态 HTML
-- 模型详情主要靠运行时 Head；首包正文仍偏 CSR
-- OG 默认图当前为站点 logo，若要更好分享效果可换专用封面图
-
-**可选增强（按需）**
-
-1. 预渲染等待关键接口完成，或构建时注入模型/Publisher 快照，让动态块也进 HTML  
-2. 模型详情做「热门 slug 列表」批量预渲染  
-3. 将 sitemap 改为构建脚本根据公开路由自动生成  
-4. Search Console 提交 sitemap，监控覆盖率与索引状态  
+预渲染时若动态列表为 0 条或等待超时，会汇总后通过 `LARK_WEBHOOK_URL` 发飞书告警；**不影响构建成功**。未配置该变量时仅打日志。
 
 ---
 
-## 10. 对外沟通用摘要
+## 9. 已知边界与可选增强
 
-> 我们在 **不改 GitHub Pages 静态部署** 的前提下，做了两件事：  
-> 1）全站用 `@unhead/vue` 统一管理 title / description / OG / canonical / 中英 hreflang，并配上 robots + sitemap；  
-> 2）构建时用 Playwright 把**无需登录的公开页**（中英）预渲染成真正带正文的 HTML。  
+**边界**
+
+- 预渲染覆盖固定公开路由，不含全部动态详情
+- 动态接口块不保证一定进入静态 HTML；异常靠飞书告警提示，不阻断部署
+- 动态详情主要靠运行时 Head
+
+**可选增强**
+
+1. 热门动态 path 批量预渲染
+2. 构建时注入数据快照，减少对线上 API 的依赖
+3. sitemap 由构建脚本按公开路由自动生成
+4. Search Console 提交 sitemap，监控覆盖率
+
+---
+
+## 10. 对外一句话版
+
+> 在**不改静态托管**的前提下：
+> 1）全站统一管理 title / description / OG / canonical / 多语言 hreflang，并配 robots + sitemap；
+> 2）构建时用 Headless 浏览器把**无需登录的公开页**预渲染成带正文的 HTML。
 >
-> 这样搜索引擎和社交平台打开这些页面的源码就能看到品牌与主卖点。  
-> 列表等动态内容仍走接口；模型详情用运行时 Head（加载后用真实名称）。后续若要长尾详情页进索引，可再做热门 slug 批量预渲染。
+> 搜索引擎和社交平台打开源码即可看到品牌与主卖点；动态列表尽量在构建时抓进 HTML；海量详情页用运行时 Head，后续可对热门 path 再做批量预渲染。
 
 ---
 
-## 附录：路由与索引策略速查
+## 附录：索引策略模板
 
-| 路由 | 预渲染 | 索引 |
-|------|--------|------|
-| `/`、`/models`、`/pricing`、`/ai-generator`、`/docs`、`/terms`、`/privacy`（及 zh-CN） | ✅ | ✅ |
-| `/models/:slug` | ❌（运行时 Head） | ✅ |
-| `/auth`、`/api-keys`、`/billing`、`/generations` | ❌ | ❌（robots + noindex） |
+| 页面类型 | 预渲染 | 索引 |
+|----------|--------|------|
+| 公开营销 / 文档 / 法律页（各语言） | ✅ | ✅ |
+| 海量动态详情 | ❌（运行时 Head）或热门批量 | ✅ |
+| 登录 / 账号后台 | ❌ | ❌（robots + noindex） |
