@@ -2,48 +2,12 @@
 import { useI18n } from 'vue-i18n'
 import AppIcon from '@/components/common/AppIcon.vue'
 import { useLocaleRouter } from '@/composables/useLocaleRouter'
+import { SOCIAL_PROFILES } from '@/seo/social'
 
 const { t } = useI18n()
 const { localePath } = useLocaleRouter()
 
-const contactLinks = [
-  {
-    key: 'discord',
-    href: 'https://discord.gg/GPth9qEUtB',
-    labelKey: 'footer.discord',
-    icon: 'discord',
-  },
-  {
-    key: 'email',
-    href: 'mailto:support@varo.cloud',
-    labelKey: 'footer.supportEmail',
-    icon: 'email',
-  },
-  {
-    key: 'x',
-    href: 'https://x.com/varocloud',
-    labelKey: 'footer.x',
-    icon: 'x',
-  },
-  {
-    key: 'youtube',
-    href: 'https://www.youtube.com/@varocloud',
-    labelKey: 'footer.youtube',
-    icon: 'youtube',
-  },
-  {
-    key: 'linkedin',
-    href: 'https://www.linkedin.com/company/varo-cloud/',
-    labelKey: 'footer.linkedin',
-    icon: 'linkedin',
-  },
-  // {
-  //   key: 'reddit',
-  //   href:'https://www.reddit.com/r/VaroCloud/',
-  //   labelKey: 'footer.reddit',
-  //   icon: 'reddit',
-  // },
-] as const
+const contactLinks = SOCIAL_PROFILES
 </script>
 
 <template>

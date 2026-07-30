@@ -31,12 +31,14 @@ function onPrimaryCta() {
     <ModelsHeroCarousel v-model:active-index="heroActiveIndex" />
     <div class="home-hero__inner">
       <div class="home-hero__content">
-        <h1 id="home-hero-title" class="home-hero__title">
-          {{ t('pages.home.hero.title') }}
-        </h1>
-        <p class="home-hero__subtitle">
-          {{ t('pages.home.hero.subtitle') }}
-        </p>
+        <div class="home-hero__copy">
+          <h1 id="home-hero-title" class="home-hero__title">
+            {{ t('pages.home.hero.title') }}
+          </h1>
+          <p class="home-hero__subtitle">
+            {{ t('pages.home.hero.subtitle') }}
+          </p>
+        </div>
         <div class="home-hero__actions">
           <button type="button" class="home-hero__btn home-hero__btn--primary" @click="onPrimaryCta">
             {{ primaryLabel }}
@@ -61,8 +63,8 @@ function onPrimaryCta() {
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  min-height: 724px;
-  padding: 0 16px 49px;
+  min-height: 580px;
+  padding: 0 16px 60px;
   overflow: hidden;
   color: #fff;
 }
@@ -71,7 +73,7 @@ function onPrimaryCta() {
   position: relative;
   z-index: 3;
   width: 100%;
-  max-width: 1360px;
+  max-width: 1800px;
   margin: 0 auto;
   pointer-events: none;
 }
@@ -80,8 +82,16 @@ function onPrimaryCta() {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
+  gap: 40px;
   max-width: 100%;
   pointer-events: auto;
+}
+
+.home-hero__copy {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-width: 100%;
 }
 
 .home-hero__title {
@@ -89,38 +99,44 @@ function onPrimaryCta() {
   max-width: 1242px;
   font-size: clamp(32px, 5vw, 56px);
   font-weight: 900;
-  line-height: 1.14;
-  letter-spacing: -0.02em;
+  line-height: 64px;
+  color: #fff;
   word-break: break-word;
 }
 
 .home-hero__subtitle {
-  margin: 24px 0 0;
-  max-width: 900px;
+  margin: 0;
+  width: 100%;
+  max-width: none;
   font-size: clamp(16px, 2vw, 20px);
-  font-weight: 600;
-  line-height: 1.4;
-  color: rgba(255, 255, 255, 0.7);
+  font-weight: 500;
+  line-height: 24px;
+  color: #fff;
+  opacity: 0.5;
 }
 
 .home-hero__actions {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   gap: 16px;
-  margin-top: 24px;
+  margin-top: 0;
 }
 
 .home-hero__btn {
+  box-sizing: border-box;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-height: 40px;
+  height: 60px;
+  min-height: 60px;
   padding: 12px 24px;
   border-radius: 8px;
   font-size: 16px;
   font-weight: 500;
   line-height: 16px;
   text-decoration: none;
+  white-space: nowrap;
   cursor: pointer;
   border: 1px solid transparent;
   transition:
@@ -136,7 +152,6 @@ function onPrimaryCta() {
 
 .home-hero__btn--primary:hover {
   background: #0891b2;
-  opacity: 1;
 }
 
 .home-hero__btn--ghost {
@@ -151,34 +166,39 @@ function onPrimaryCta() {
 
 @media (min-width: 1024px) {
   .home-hero {
-    padding-inline: 24px;
+    padding-inline: 60px;
   }
 }
 
 @media (max-width: 767px) {
   .home-hero {
-    min-height: min(calc(100svh - var(--app-header-height, 64px)), 640px);
-    padding: 72px 16px 16px;
+    min-height: min(70svh, 520px);
+    padding: 88px 16px 88px;
   }
 
-  .home-hero__inner {
-    padding-bottom: 52px;
+  .home-hero__content {
+    gap: 24px;
+  }
+
+  .home-hero__title {
+    line-height: 1.14;
   }
 
   .home-hero__subtitle {
-    margin-top: 16px;
+    line-height: 1.4;
   }
 
   .home-hero__actions {
     flex-direction: column;
     align-items: stretch;
     width: 100%;
-    margin-top: 16px;
     gap: 12px;
   }
 
   .home-hero__btn {
     width: 100%;
+    height: 48px;
+    min-height: 48px;
   }
 }
 </style>

@@ -1,8 +1,30 @@
 import type { LocaleType } from '@/i18n'
 
-export const SITE_ORIGIN = 'https://varo.cloud'
+/**
+ * Public site origin for canonical / OG / JSON-LD absolute URLs.
+ * Staging must use its own host — X/LinkedIn fetch og:image as written;
+ * pointing at production while the file only exists on staging yields a blank card.
+ */
+function resolveSiteOrigin(): string {
+  const fromEnv = import.meta.env.VITE_SITE_ORIGIN?.trim()
+  if (fromEnv) return fromEnv.replace(/\/$/, '')
+  if (import.meta.env.MODE === 'staging') return 'https://varo-staging.github.io'
+  return 'https://varo.cloud'
+}
+
+export const SITE_ORIGIN = resolveSiteOrigin()
 export const SITE_NAME = 'Varo.cloud'
-export const DEFAULT_OG_IMAGE = `${SITE_ORIGIN}/assets/brand/logo.svg`
+/** Brand mark for favicon / JSON-LD logo (SVG is fine for schema.org). */
+export const SITE_LOGO = `${SITE_ORIGIN}/assets/brand/logo.svg`
+/**
+ * Open Graph / Twitter Card image. Platforms (X, LinkedIn, Discord, Slack…)
+ * expect a raster ~1200×630 JPEG/PNG — SVG logos are often ignored.
+ */
+export const DEFAULT_OG_IMAGE = `${SITE_ORIGIN}/assets/brand/og-image.jpg`
+export const OG_IMAGE_WIDTH = 1200
+export const OG_IMAGE_HEIGHT = 630
+export const OG_IMAGE_TYPE = 'image/jpeg'
+export const OG_IMAGE_ALT = 'Varo.cloud — The Generative AI Cloud for Creators'
 
 export type SeoRouteKey =
   | 'home'
@@ -10,6 +32,7 @@ export type SeoRouteKey =
   | 'model-detail'
   | 'ai-generator'
   | 'pricing'
+  | 'developers'
   | 'docs'
   | 'terms'
   | 'privacy'
@@ -46,6 +69,10 @@ export const SEO_BY_ROUTE: Record<SeoRouteKey, SeoDefinition> = {
   pricing: {
     titleKey: 'pages.pricing.seo.title',
     descriptionKey: 'pages.pricing.seo.description',
+  },
+  developers: {
+    titleKey: 'pages.developers.seo.title',
+    descriptionKey: 'pages.developers.seo.description',
   },
   docs: {
     titleKey: 'pages.docs.seo.title',

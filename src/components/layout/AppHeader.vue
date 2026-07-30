@@ -7,7 +7,6 @@ import VaroCloudLogo from '@/components/common/VaroCloudLogo.vue'
 import AppIcon from '@/components/common/AppIcon.vue'
 import { useLocaleRouter } from '@/composables/useLocaleRouter'
 import { formatUsd } from '@/utils/currency'
-import { openDocs } from '@/utils/docsUrl'
 import type { LocaleType } from '@/i18n'
 
 const route = useRoute()
@@ -35,7 +34,7 @@ const navItems = computed(() => [
   { label: t('nav.models'), name: 'models' },
   { label: t('nav.aiGenerator'), name: 'ai-generator' },
   { label: t('nav.pricing'), name: 'pricing' },
-  { label: t('nav.docs'), name: 'docs' },
+  { label: t('nav.developers'), name: 'developers' },
 ])
 
 import type { AppIconName } from '@/components/common/AppIcon.vue'
@@ -137,11 +136,6 @@ function isActive(name: string) {
 }
 
 function goTo(name: string) {
-  if (name === 'docs') {
-    openDocs(() => push({ name: 'docs' }))
-    return
-  }
-
   push({ name })
 }
 
@@ -347,7 +341,7 @@ onUnmounted(() => {
         <template v-if="userStore.isLoggedIn">
           <div class="app-header__wallet-group">
             <div class="app-header__wallet-balance" :title="t('common.balance')">
-              <AppIcon name="wallet" />
+              <AppIcon name="wallet" color="#5856D6"/>
               <span>{{ balanceLabel }}</span>
             </div>
             <button
@@ -355,7 +349,7 @@ onUnmounted(() => {
               class="app-header__wallet-deposit"
               @click="goTo('billing')"
             >
-              <AppIcon name="deposit" />
+              <AppIcon name="deposit"/>
               <span>{{ t('common.deposit') }}</span>
             </button>
           </div>
@@ -532,15 +526,15 @@ onUnmounted(() => {
   justify-content: space-between;
   gap: 16px;
   height: 100%;
-  max-width: 1360px;
+  width: 100%;
   margin: 0 auto;
-  padding: 8px 16px;
+  padding: 0 16px;
 }
 
 .app-header__left {
   display: flex;
   align-items: center;
-  gap: 24px;
+  gap: 51px;
   min-width: 0;
   flex-shrink: 0;
 }
@@ -548,8 +542,8 @@ onUnmounted(() => {
 .app-header__center {
   flex: 1;
   min-width: 0;
-  max-width: 360px;
-  margin: 0 24px;
+  max-width: 308px;
+  margin: 0 9px;
 }
 
 .app-header__logo {
@@ -558,6 +552,20 @@ onUnmounted(() => {
   color: inherit;
   text-decoration: none;
   line-height: 0;
+}
+
+.app-header__logo :deep(.varo-cloud-logo) {
+  gap: 6px;
+}
+
+.app-header__logo :deep(.varo-cloud-logo__mascot) {
+  width: 40px;
+  height: 40px;
+}
+
+.app-header__logo :deep(.varo-cloud-logo__wordmark) {
+  width: 104.5px;
+  height: 14.81px;
 }
 
 .app-header__nav {
@@ -569,7 +577,7 @@ onUnmounted(() => {
   border: none;
   border-radius: 0;
   background: transparent;
-  color: #9b9dab;
+  color: #929ca5;
   cursor: pointer;
   font-size: 14px;
   font-weight: 600;
@@ -611,7 +619,8 @@ onUnmounted(() => {
 
 .app-header__search-icon {
   flex-shrink: 0;
-  opacity: 0.6;
+  color: #ebf4fb;
+  opacity: 0.2;
 }
 
 .app-header__search-input {
@@ -761,6 +770,7 @@ onUnmounted(() => {
 
 .app-header__wallet-group {
   display: flex;
+  align-items: center;
   gap: 1px;
 }
 
@@ -883,7 +893,7 @@ onUnmounted(() => {
   border: none;
   border-radius: 8px;
   background: transparent;
-  color: #9b9dab;
+  color: #929ca5;
   cursor: pointer;
   font-size: 16px;
   font-weight: 600;
@@ -925,10 +935,26 @@ onUnmounted(() => {
   transform: translateY(-8px);
 }
 
+@media (min-width: 1024px) {
+  .app-header__inner {
+    padding-inline: 60px;
+  }
+}
+
+@media (max-width: 1100px) {
+  .app-header__left {
+    gap: 24px;
+  }
+}
+
 @media (max-width: 767px) {
   .app-header__inner {
     padding: 0 12px;
     gap: 8px;
+  }
+
+  .app-header__left {
+    gap: 16px;
   }
 
   .app-header__right {
@@ -937,11 +963,6 @@ onUnmounted(() => {
 
   .app-header__menu-btn {
     display: inline-flex;
-  }
-
-  .app-header__logo {
-    transform: scale(0.88);
-    transform-origin: left center;
   }
 
   .app-header__logo :deep(.varo-cloud-logo__wordmark) {

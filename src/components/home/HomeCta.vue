@@ -20,15 +20,17 @@ function getStarted() {
     <div class="home-cta__inner">
       <img
         class="home-cta__bg"
-        :src="assetUrl('/assets/home/cta-bg.png')"
+        :src="assetUrl('https://assets.varo.cloud/uploads/808e1f97c89a48b9986a86f1a7e5cb0d.jpg')"
         alt=""
         aria-hidden="true"
       />
       <div class="home-cta__content">
-        <h2 id="home-cta-title" class="home-cta__title">
-          {{ t('pages.home.cta.title') }}
-        </h2>
-        <p class="home-cta__subtitle">{{ t('pages.home.cta.subtitle') }}</p>
+        <div class="home-cta__copy">
+          <h2 id="home-cta-title" class="home-cta__title">
+            {{ t('pages.home.cta.title') }}
+          </h2>
+          <p class="home-cta__subtitle">{{ t('pages.home.cta.subtitle') }}</p>
+        </div>
         <div class="home-cta__actions">
           <button type="button" class="home-cta__btn home-cta__btn--primary" @click="getStarted">
             {{ t('pages.home.cta.ctaPrimary') }}
@@ -44,7 +46,7 @@ function getStarted() {
 
 <style scoped>
 .home-cta {
-  padding: 40px 16px 80px;
+  padding: 0;
   background: #fff;
 }
 
@@ -52,10 +54,9 @@ function getStarted() {
   position: relative;
   overflow: hidden;
   width: 100%;
-  max-width: 1360px;
   min-height: 376px;
-  margin: 0 auto;
-  border-radius: 16px;
+  margin: 0;
+  border-radius: 0;
 }
 
 .home-cta__bg {
@@ -73,25 +74,35 @@ function getStarted() {
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 40px;
   min-height: 376px;
-  padding: 48px 24px;
+  padding: 98px 24px;
   text-align: center;
   color: #fff;
-  background: rgba(0, 0, 0, 0.35);
+  background: rgba(0, 0, 0, 0.2);
+}
+
+.home-cta__copy {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  width: 100%;
 }
 
 .home-cta__title {
   margin: 0;
   font-size: clamp(28px, 4vw, 40px);
   font-weight: 700;
+  line-height: 1.2;
 }
 
 .home-cta__subtitle {
-  margin: 20px auto 0;
+  margin: 0 auto;
   max-width: 908px;
   font-size: 16px;
   font-weight: 500;
-  line-height: 1.5;
+  line-height: 1.25;
   color: #ebf4fb;
 }
 
@@ -100,7 +111,6 @@ function getStarted() {
   flex-wrap: wrap;
   justify-content: center;
   gap: 16px;
-  margin-top: 28px;
 }
 
 .home-cta__btn {
@@ -108,8 +118,8 @@ function getStarted() {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  height: 40px;
-  min-height: 40px;
+  height: 56px;
+  min-height: 56px;
   padding: 0 24px;
   border-radius: 8px;
   font: inherit;
@@ -147,17 +157,14 @@ function getStarted() {
 }
 
 @media (max-width: 767px) {
-  .home-cta {
-    padding: 24px 16px 56px;
-  }
-
   .home-cta__inner,
   .home-cta__content {
     min-height: 320px;
   }
 
   .home-cta__content {
-    padding: 32px 16px;
+    gap: 28px;
+    padding: 48px 16px;
   }
 
   .home-cta__subtitle {
@@ -173,6 +180,8 @@ function getStarted() {
 
   .home-cta__btn {
     width: 100%;
+    height: 48px;
+    min-height: 48px;
   }
 }
 </style>

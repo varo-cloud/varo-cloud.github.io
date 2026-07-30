@@ -18,6 +18,9 @@ const distDir = resolve(root, 'dist')
 
 const CONTENT_TIMEOUT_MS = 45_000
 
+/** @type {{ path: string, kind: 'empty' | 'timeout', detail: string }[]} */
+const issues = []
+
 const MIME = {
   '.html': 'text/html; charset=utf-8',
   '.js': 'text/javascript; charset=utf-8',
@@ -91,6 +94,20 @@ const ROUTES = [
     waitText: '简单、透明的 AI 模型定价',
     contentReady: '[data-seo-content-ready="pricing"]',
     contentItem: '.pricing-row',
+  },
+  {
+    path: '/developers',
+    outFile: 'developers.html',
+    ready: '[data-seo-ready="developers"]',
+    waitSelector: '#developers-hero-title',
+    waitText: "One API for the world's top models",
+  },
+  {
+    path: '/zh-CN/developers',
+    outFile: join('zh-CN', 'developers.html'),
+    ready: '[data-seo-ready="developers"]',
+    waitSelector: '#developers-hero-title',
+    waitText: '一个 API，接入全球顶尖模型',
   },
   {
     path: '/ai-generator',
@@ -234,9 +251,9 @@ async function waitForDynamicContent(page, route) {
     if (route.contentItem) {
       const count = await page.locator(route.contentItem).count()
       if (count === 0) {
-        console.warn(
-          `[prerender] ${route.path}: content settled but found 0 items (${route.contentItem}) — API empty or failed`,
-        )
+        const detail = `0 items (${route.contentItem}) — API empty or failed`
+        issues.push({ path: route.path, kind: 'empty', detail })
+        console.warn(`[prerender] ${route.path}: content settled but found ${detail}`)
       } else {
         console.log(`[prerender] ${route.path}: captured ${count} × ${route.contentItem}`)
       }
@@ -244,9 +261,95 @@ async function waitForDynamicContent(page, route) {
       console.log(`[prerender] ${route.path}: dynamic content ready`)
     }
   } catch {
-    console.warn(
-      `[prerender] ${route.path}: timed out waiting for ${route.contentReady}; writing HTML without dynamic block`,
-    )
+    const detail = `timed out waiting for ${route.contentReady}`
+    issues.push({ path: route.path, kind: 'timeout', detail })
+    console.warn(`[prerender] ${route.path}: ${detail}; writing HTML without dynamic block`)
+  }
+}
+
+function githubActionsUrl() {
+  const server = process.env.GITHUB_SERVER_URL
+  const repo = process.env.GITHUB_REPOSITORY
+  const runId = process.env.GITHUB_RUN_ID
+  if (!server || !repo || !runId) return ''
+  return `${server}/${repo}/actions/runs/${runId}`
+}
+
+/** Soft alert only — never throws; missing webhook skips quietly. */
+async function notifyLarkIfNeeded() {
+  if (issues.length === 0) return
+
+  const summary = issues
+    .map((issue) => `• \`${issue.path}\` (${issue.kind}): ${issue.detail}`)
+    .join('\n')
+  console.warn(`[prerender] ${issues.length} dynamic-content issue(s):\n${summary}`)
+
+  const webhookUrl = process.env.LARK_WEBHOOK_URL?.trim()
+  if (!webhookUrl) {
+    console.warn('[prerender] LARK_WEBHOOK_URL unset — skip Feishu notification')
+    return
+  }
+
+  const runUrl = githubActionsUrl()
+  const ref = process.env.GITHUB_REF_NAME || ''
+  const sha = (process.env.GITHUB_SHA || '').slice(0, 7)
+  const actor = process.env.GITHUB_ACTOR || ''
+  const workflow = process.env.GITHUB_WORKFLOW || ''
+
+  let md =
+    `**问题数:** ${issues.length}\n` +
+    `**说明:** 预渲染动态列表为空或超时；构建仍成功，请检查 API / 环境变量。\n\n` +
+    summary
+  if (ref) md += `\n\n**分支:** ${ref}`
+  if (sha) md += `\n**提交:** \`${sha}\``
+  if (actor) md += `\n**触发人:** ${actor}`
+  if (workflow) md += `\n**工作流:** ${workflow}`
+
+  const elements = [
+    {
+      tag: 'div',
+      text: { tag: 'lark_md', content: md },
+    },
+  ]
+  if (runUrl) {
+    elements.push({
+      tag: 'action',
+      actions: [
+        {
+          tag: 'button',
+          text: { tag: 'plain_text', content: '查看 Actions 日志' },
+          type: 'primary',
+          url: runUrl,
+        },
+      ],
+    })
+  }
+
+  const payload = {
+    msg_type: 'interactive',
+    card: {
+      config: { wide_screen_mode: true },
+      header: {
+        template: 'orange',
+        title: { tag: 'plain_text', content: '⚠️ 预渲染动态内容告警' },
+      },
+      elements,
+    },
+  }
+
+  try {
+    const response = await fetch(webhookUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload),
+    })
+    const bodyText = await response.text()
+    console.log(`[prerender] Lark webhook HTTP ${response.status}: ${bodyText}`)
+    if (!response.ok) {
+      console.warn(`[prerender] Lark webhook returned HTTP ${response.status}`)
+    }
+  } catch (error) {
+    console.warn('[prerender] Lark webhook failed:', error)
   }
 }
 
@@ -309,6 +412,8 @@ async function main() {
     await browser.close()
     server.close()
   }
+
+  await notifyLarkIfNeeded()
 }
 
 main().catch((error) => {

@@ -6,15 +6,15 @@ const SLIDE_DURATION_MS = 5000
 
 const slides = [
   {
-    poster: assetUrl('/assets/cover/2.jpg'),
+    poster: assetUrl('https://assets.varo.cloud/uploads/db0a9f4e771b4cee9de5fcb2af7c096e.jpg'),
     video: assetUrl('https://assets.varo.cloud/uploads/341660b97a8f440f91a1877b137db50f.mp4'),
   },
   {
-    poster: assetUrl('/assets/cover/3.jpg'),
+    poster: assetUrl('https://assets.varo.cloud/uploads/1842a681a4264d0c8056f3c8d31b642c.jpg'),
     video: assetUrl('https://assets.varo.cloud/uploads/b86288c2f7ef49ac93df5451f55b00d5.mp4'),
   },
   {
-    poster: assetUrl('/assets/cover/4.jpg'),
+    poster: assetUrl('https://assets.varo.cloud/uploads/46af51b0c3bb466d95b9dd7f217c8bbb.jpg'),
     video: assetUrl('https://assets.varo.cloud/uploads/c5879cd9bf7e4a71a4ef1c100f723889.mp4'),
   },
 ] as const
@@ -255,7 +255,7 @@ onBeforeUnmount(() => {
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  padding: 0 16px 49px;
+  padding: 0 16px 60px;
   pointer-events: none;
 }
 
@@ -265,7 +265,7 @@ onBeforeUnmount(() => {
   justify-content: flex-end;
   gap: 6px;
   width: 100%;
-  max-width: 1360px;
+  max-width: 1800px;
   margin: 0 auto;
   pointer-events: none;
 }
@@ -333,7 +333,7 @@ onBeforeUnmount(() => {
 
 @media (min-width: 1024px) {
   .hero-carousel__nav-wrap {
-    padding-inline: 24px;
+    padding-inline: 60px;
   }
 }
 
@@ -344,7 +344,7 @@ onBeforeUnmount(() => {
   }
 
   .hero-carousel__nav-wrap {
-    padding: 0 16px 16px;
+    padding: 0 16px 20px;
   }
 
   .hero-carousel__nav {

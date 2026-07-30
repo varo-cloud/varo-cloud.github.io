@@ -19,17 +19,24 @@ function getStarted() {
   <section class="home-creators" aria-labelledby="home-creators-title">
     <div class="home-creators__inner">
       <div class="home-creators__media">
-        <img
-          :src="assetUrl('/assets/home/creators.png')"
-          :alt="t('pages.home.creators.imageAlt')"
+        <video
+          :src="assetUrl('https://assets.varo.cloud/uploads/67ae104a1d7d4f50b76052a0f6d3f329.mp4')"
+          :aria-label="t('pages.home.creators.imageAlt')"
+          autoplay
+          muted
+          loop
+          playsinline
+          preload="metadata"
         />
       </div>
       <div class="home-creators__content">
-        <p class="home-creators__eyebrow">{{ t('pages.home.creators.eyebrow') }}</p>
-        <h2 id="home-creators-title" class="home-creators__title">
-          {{ t('pages.home.creators.title') }}
-        </h2>
-        <p class="home-creators__subtitle">{{ t('pages.home.creators.subtitle') }}</p>
+        <div class="home-creators__copy">
+          <p class="home-creators__eyebrow">{{ t('pages.home.creators.eyebrow') }}</p>
+          <h2 id="home-creators-title" class="home-creators__title">
+            {{ t('pages.home.creators.title') }}
+          </h2>
+          <p class="home-creators__subtitle">{{ t('pages.home.creators.subtitle') }}</p>
+        </div>
         <div class="home-creators__actions">
           <button type="button" class="home-creators__btn home-creators__btn--primary" @click="getStarted">
             {{ t('pages.home.creators.ctaPrimary') }}
@@ -45,30 +52,31 @@ function getStarted() {
 
 <style scoped>
 .home-creators {
-  padding: 80px 0;
+  padding: 60px 0;
   background: #fff;
 }
 
 .home-creators__inner {
   display: grid;
-  grid-template-columns: minmax(0, 720px) minmax(0, 1fr);
-  gap: 32px;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 60px;
   align-items: center;
   width: 100%;
-  max-width: 1440px;
+  max-width: 1800px;
   margin: 0 auto;
-  padding: 0 40px;
+  padding: 0 60px;
   box-sizing: border-box;
 }
 
 .home-creators__media {
   overflow: hidden;
   width: 100%;
-  aspect-ratio: 720 / 480;
+  aspect-ratio: 810 / 455;
+  border-radius: 24px;
   background: #f4f4f4;
 }
 
-.home-creators__media img {
+.home-creators__media video {
   display: block;
   width: 100%;
   height: 100%;
@@ -80,10 +88,18 @@ function getStarted() {
   flex-direction: column;
   align-items: center;
   justify-content: center;
+  gap: 60px;
   width: 100%;
-  max-width: 609px;
-  margin: 0 auto;
+  min-height: 455px;
   text-align: center;
+}
+
+.home-creators__copy {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 20px;
+  width: 100%;
 }
 
 .home-creators__eyebrow {
@@ -95,7 +111,7 @@ function getStarted() {
 }
 
 .home-creators__title {
-  margin: 20px 0 0;
+  margin: 0;
   font-size: clamp(28px, 3.2vw, 40px);
   font-weight: 700;
   line-height: 1.2;
@@ -103,11 +119,11 @@ function getStarted() {
 }
 
 .home-creators__subtitle {
-  margin: 20px 0 0;
+  margin: 0;
   max-width: 507px;
   font-size: 16px;
   font-weight: 500;
-  line-height: 1.4;
+  line-height: 1.25;
   color: #222;
 }
 
@@ -115,8 +131,7 @@ function getStarted() {
   display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 16px;
-  margin-top: 40px;
+  gap: 24px;
 }
 
 .home-creators__btn {
@@ -124,8 +139,8 @@ function getStarted() {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  height: 40px;
-  min-height: 40px;
+  height: 56px;
+  min-height: 56px;
   padding: 0 24px;
   border-radius: 8px;
   font: inherit;
@@ -144,7 +159,7 @@ function getStarted() {
 }
 
 .home-creators__btn--primary {
-  background: #06b6d4;
+  background: #222;
   color: #fff;
 }
 
@@ -154,12 +169,24 @@ function getStarted() {
 
 .home-creators__btn--ghost {
   background: transparent;
-  border-color: #ebf4fb;
+  border-color: #f4f7f7;
   color: #222;
 }
 
 .home-creators__btn--ghost:hover {
   background: #f8f8f8;
+}
+
+@media (max-width: 1100px) {
+  .home-creators__inner {
+    gap: 32px;
+    padding: 0 24px;
+  }
+
+  .home-creators__content {
+    gap: 32px;
+    min-height: 0;
+  }
 }
 
 @media (max-width: 900px) {
@@ -173,12 +200,9 @@ function getStarted() {
     padding: 0;
   }
 
-  .home-creators__media {
-    border-radius: 16px;
-  }
-
-  .home-creators__content {
-    max-width: none;
+  .home-creators__eyebrow {
+    font-size: 16px;
+    line-height: 22px;
   }
 
   .home-creators__subtitle {
@@ -189,11 +213,13 @@ function getStarted() {
     flex-direction: column;
     align-items: stretch;
     width: 100%;
-    margin-top: 28px;
+    gap: 12px;
   }
 
   .home-creators__btn {
     width: 100%;
+    height: 48px;
+    min-height: 48px;
   }
 }
 </style>

@@ -31,6 +31,7 @@ export default {
     models: 'Models',
     aiGenerator: 'AI Generator',
     pricing: 'Pricing',
+    developers: 'Developers',
     apiKeys: 'API Keys',
     billing: 'Billing',
     generations: 'Generations',
@@ -192,7 +193,7 @@ export default {
       },
       searchPlaceholder: 'Search',
       from: 'From',
-      tryModel: 'Try it',
+      tryModel: 'Try Now',
       favourite: 'Add to favourites',
       loadError: 'Failed to load models. Please try again.',
       retry: 'Retry',
@@ -623,6 +624,88 @@ export default {
       seo: {
         title: 'Billing — Varo.cloud',
         description: 'Manage your Varo.cloud balance and billing.',
+      },
+    },
+    developers: {
+      hero: {
+        title: "One API for the world's top models",
+        subtitle:
+          "Access the world's leading AI models through one unified, OpenAI-compatible API. Build and manage projects, trigger deployments, and automate cloud workflows without juggling provider-specific keys, SDKs, or data formats.",
+        cta: 'API Reference',
+      },
+      showcase: {
+        previewAlt: 'Sample generative output from the Varo.cloud API',
+      },
+      howItWorks: {
+        title: 'How it works',
+        subtitle: 'Getting from zero to your first generation takes just three steps:',
+        stepLabel: 'Step {n}',
+        steps: [
+          {
+            title: 'Create your account',
+            bodyBefore: 'Sign in at ',
+            linkText: 'varo.cloud/auth',
+            linkHref: 'auth',
+            bodyMid: ' with your email and a one-time code — no password. Your account is created on first sign-in. See ',
+            linkText2: 'Account setup',
+            linkHref2: 'https://docs.varo.cloud/setup/account',
+            bodyAfter: '.',
+          },
+          {
+            title: 'Top up & create a key',
+            bodyBefore:
+              'Add funds from Billing, then create a key on API Keys. Keys start with sk_live_ and show once. See ',
+            linkText: 'Authentication',
+            linkHref: 'https://docs.varo.cloud/setup/authentication',
+            bodyAfter: '.',
+          },
+          {
+            title: 'Generate',
+            body:
+              "Run a model from the AI Generator or call POST /v1/generations and poll until done. Every model's API tab has HTTP/Python/JS examples.",
+          },
+        ],
+      },
+      faq: {
+        title: 'Frequently Asked Questions',
+        subtitle: 'Everything you need to know before writing the first line of code.',
+        items: [
+          {
+            id: 'what',
+            question: 'What is Varo Cloud?',
+            answer:
+              'Varo Cloud is a unified platform for accessing, comparing, and building with leading image, video, audio, and language models. It brings multiple providers together behind one API, one balance, and one dashboard.',
+          },
+          {
+            id: 'test',
+            question: 'Can I test models before integrating them?',
+            answer:
+              'Yes. You can run models directly in the browser, adjust their parameters in the Playground, compare results, and generate ready-to-use HTTP, Python, or JavaScript code based on your settings.',
+          },
+          {
+            id: 'start',
+            question: 'How do I start using the Varo Cloud API?',
+            answer:
+              'Create an account, add funds to your prepaid balance, and generate an API key. You can then submit generation tasks through the API or manage cloud resources programmatically from your own applications and scripts.',
+          },
+          {
+            id: 'switch',
+            question: 'Can I switch between different AI models easily?',
+            answer:
+              'Yes. Varo Cloud provides a unified REST API across supported models. For generation workflows, you can switch models by changing the model field instead of rebuilding your entire integration.',
+          },
+          {
+            id: 'pricing',
+            question: 'How does pricing and usage tracking work?',
+            answer:
+              'Varo Cloud uses a prepaid, usage-based billing model with transparent pricing for each model. You can monitor spending by task and API key, review per-run pricing, and export billing records when needed.',
+          },
+        ],
+      },
+      seo: {
+        title: 'Developers — Varo.cloud API for Top AI Models',
+        description:
+          'Build with one OpenAI-compatible API for the world’s leading AI models. Get started with Varo.cloud authentication, generations, and code examples.',
       },
     },
     docs: {

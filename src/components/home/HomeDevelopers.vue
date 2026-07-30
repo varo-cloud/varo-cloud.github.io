@@ -72,26 +72,24 @@ function getApiKey() {
       <p class="home-developers__subtitle">{{ t('pages.home.developers.subtitle') }}</p>
 
       <div class="home-developers__panel">
-        <div class="home-developers__tabs-wrap">
-          <div class="home-developers__tabs" role="tablist">
-            <button
-              v-for="opt in codeModeOptions"
-              :key="opt.value"
-              type="button"
-              role="tab"
-              class="home-developers__tab"
-              :class="{ 'is-active': codeViewMode === opt.value }"
-              :aria-selected="codeViewMode === opt.value"
-              @click="codeViewMode = opt.value"
-            >
-              <AppIcon
-                class="home-developers__tab-icon"
-                :name="TAB_ICONS[opt.value]"
-                :size="20"
-              />
-              <span>{{ opt.label }}</span>
-            </button>
-          </div>
+        <div class="home-developers__tabs" role="tablist">
+          <button
+            v-for="opt in codeModeOptions"
+            :key="opt.value"
+            type="button"
+            role="tab"
+            class="home-developers__tab"
+            :class="{ 'is-active': codeViewMode === opt.value }"
+            :aria-selected="codeViewMode === opt.value"
+            @click="codeViewMode = opt.value"
+          >
+            <AppIcon
+              class="home-developers__tab-icon"
+              :name="TAB_ICONS[opt.value]"
+              :size="20"
+            />
+            <span>{{ opt.label }}</span>
+          </button>
         </div>
 
         <div class="home-developers__body">
@@ -103,7 +101,7 @@ function getApiKey() {
           </div>
           <div class="home-developers__preview">
             <img
-              :src="assetUrl('/assets/home/developers-preview.png')"
+              :src="assetUrl('https://assets.varo.cloud/uploads/8cf71ab01789459bb3f80f33be850f7e.jpg')"
               :alt="t('pages.home.developers.previewAlt')"
             />
           </div>
@@ -115,21 +113,28 @@ function getApiKey() {
 
 <style scoped>
 .home-developers {
-  padding: 80px 16px;
-  background: rgba(6, 182, 212, 0.04);
+  padding: 60px 16px;
+  background: #f4f7f7;
 }
 
 .home-developers__inner {
   width: 100%;
-  max-width: 1360px;
+  max-width: 1800px;
   margin: 0 auto;
   text-align: center;
 }
 
+@media (min-width: 1024px) {
+  .home-developers {
+    padding-inline: 60px;
+  }
+}
+
 .home-developers__eyebrow {
-  margin: 0 0 10px;
+  margin: 0 0 20px;
   font-size: 24px;
   font-weight: 500;
+  line-height: 30px;
   color: #06b6d4;
 }
 
@@ -137,6 +142,7 @@ function getApiKey() {
   margin: 0;
   font-size: clamp(28px, 4vw, 40px);
   font-weight: 700;
+  line-height: 1.2;
   color: #222;
 }
 
@@ -144,35 +150,25 @@ function getApiKey() {
   margin: 20px auto 0;
   max-width: 908px;
   font-size: 16px;
-  font-weight: 500;
-  line-height: 1.4;
+  font-weight: 400;
+  line-height: 1.25;
   color: #222;
 }
 
 .home-developers__panel {
   margin-top: 40px;
-  padding: 24px;
-  border: 1px solid rgba(0, 0, 0, 0.06);
-  border-radius: 16px;
+  padding: 40px;
   background: #fff;
   text-align: left;
   min-width: 0;
 }
 
-.home-developers__tabs-wrap {
-  display: flex;
-  justify-content: center;
-}
-
 .home-developers__tabs {
-  display: inline-flex;
+  display: flex;
   flex-wrap: wrap;
   justify-content: center;
-  gap: 12px;
+  gap: 16px;
   max-width: 100%;
-  padding: 4px;
-  border: 1px solid #ebf4fb;
-  border-radius: 30px;
 }
 
 .home-developers__tab {
@@ -180,12 +176,13 @@ function getApiKey() {
   align-items: center;
   justify-content: center;
   gap: 4px;
-  min-height: 36px;
-  padding: 8px 12px;
+  height: 40px;
+  min-height: 40px;
+  padding: 8px 24px;
   border: 0;
-  border-radius: 30px;
-  background: transparent;
-  color: #9b9dab;
+  border-radius: 8px;
+  background: #f8f8f8;
+  color: #929ca5;
   font-size: 14px;
   font-weight: 500;
   line-height: 16px;
@@ -202,45 +199,53 @@ function getApiKey() {
 
 .home-developers__tab:hover:not(.is-active) {
   color: #222;
-  background: rgba(0, 0, 0, 0.04);
+  background: #ececec;
 }
 
 .home-developers__tab.is-active {
-  background: #06b6d4;
+  background: #222;
   color: #ebf4fb;
 }
 
 .home-developers__tab.is-active:hover {
-  background: #0891b2;
+  background: #333;
 }
 
 .home-developers__body {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 24px;
-  margin-top: 24px;
-  align-items: start;
+  gap: 60px;
+  margin-top: 40px;
+  padding: 0 20px;
+  align-items: stretch;
 }
 
 .home-developers__code {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 20px;
   min-width: 0;
+  min-height: 455px;
+  padding: 40px;
+  box-sizing: border-box;
+  background: #f4f7f7;
 }
 
 .home-developers__code :deep(.highlighted-code-block) {
-  height: 360px;
-  min-height: 360px;
+  flex: 1;
+  height: auto;
+  min-height: 0;
   overflow: auto;
-  border: 1px solid #eee;
-  background: #fff;
+  border: 0;
+  background: transparent;
   color: #222;
+  padding: 0;
 }
 
 .home-developers__code :deep(.hljs) {
   color: #222;
   background: transparent;
+  padding: 0;
 }
 
 .home-developers__code :deep(.hljs-comment),
@@ -251,7 +256,7 @@ function getApiKey() {
 .home-developers__code :deep(.hljs-keyword),
 .home-developers__code :deep(.hljs-selector-tag),
 .home-developers__code :deep(.hljs-meta) {
-  color: #7c3aed;
+  color: #dcdcaa;
 }
 
 .home-developers__code :deep(.hljs-string),
@@ -276,7 +281,7 @@ function getApiKey() {
 .home-developers__code :deep(.hljs-attr),
 .home-developers__code :deep(.hljs-attribute),
 .home-developers__code :deep(.hljs-property) {
-  color: #0284c7;
+  color: #61afef;
 }
 
 .home-developers__code :deep(.hljs-variable),
@@ -315,9 +320,9 @@ function getApiKey() {
 
 .home-developers__preview {
   overflow: hidden;
-  border-radius: 12px;
-  height: 360px;
-  min-height: 360px;
+  height: 455px;
+  min-height: 455px;
+  border-radius: 24px;
   background: #111;
 }
 
@@ -328,9 +333,32 @@ function getApiKey() {
   object-fit: cover;
 }
 
+@media (max-width: 1100px) {
+  .home-developers__body {
+    gap: 24px;
+    padding: 0;
+  }
+
+  .home-developers__code {
+    padding: 24px;
+    min-height: 360px;
+  }
+
+  .home-developers__preview {
+    height: 360px;
+    min-height: 360px;
+  }
+}
+
 @media (max-width: 900px) {
   .home-developers {
     padding: 56px 16px;
+  }
+
+  .home-developers__eyebrow {
+    margin-bottom: 12px;
+    font-size: 16px;
+    line-height: 22px;
   }
 
   .home-developers__subtitle {
@@ -342,16 +370,21 @@ function getApiKey() {
   }
 
   .home-developers__tabs {
-    gap: 4px;
+    gap: 8px;
+  }
+
+  .home-developers__tab {
+    padding: 8px 14px;
   }
 
   .home-developers__body {
     grid-template-columns: 1fr;
+    margin-top: 24px;
   }
 
-  .home-developers__code :deep(.highlighted-code-block) {
-    height: 280px;
+  .home-developers__code {
     min-height: 280px;
+    padding: 16px;
   }
 
   .home-developers__preview {

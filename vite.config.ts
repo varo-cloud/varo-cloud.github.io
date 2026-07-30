@@ -19,6 +19,10 @@ function resolveDevApiProxyTarget(env: Record<string, string>): string | null {
 export default defineConfig(({ command, mode }) => {
   const env = loadEnv(mode, process.cwd(), '')
   const isDevServe = command === 'serve'
+  const siteOrigin = (
+    env.VITE_SITE_ORIGIN?.trim() ||
+    (mode === 'staging' ? 'https://varo-staging.github.io' : 'https://varo.cloud')
+  ).replace(/\/$/, '')
   const devApiProxyTarget = isDevServe ? resolveDevApiProxyTarget(env) : null
   const devBearerToken = env.VITE_DEV_BEARER_TOKEN?.trim()
   const proxy = devApiProxyTarget
@@ -47,6 +51,12 @@ export default defineConfig(({ command, mode }) => {
     plugins: [
       vue(),
       UnoCSS(),
+      {
+        name: 'html-site-origin',
+        transformIndexHtml(html) {
+          return html.replaceAll('%VITE_SITE_ORIGIN%', siteOrigin)
+        },
+      },
       viteMockServe({
         mockPath: 'mock',
         enable: command === 'serve' && env.VITE_USE_MOCK === 'true',

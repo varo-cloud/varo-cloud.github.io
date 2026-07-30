@@ -2,6 +2,7 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import { useHead } from '@unhead/vue'
 import { useLocaleRouter } from '@/composables/useLocaleRouter'
 import { NEmpty, NSpin } from 'naive-ui'
 import { fetchModelFacets, fetchModels } from '@/api/models'
@@ -9,14 +10,37 @@ import ModelsFilterSidebar from '@/components/models/ModelsFilterSidebar.vue'
 import PricingTableRow from '@/components/pricing/PricingTableRow.vue'
 import { assetUrl } from '@/utils/assetUrl'
 import { modelToPricingItem } from '@/utils/pricing'
+import { absoluteUrl, SITE_NAME } from '@/seo/config'
 import type { BaseModelFacetItem, FacetItem, Model, ModelCategory, PricingItem, PublisherFacetItem } from '@/types'
 
 const PAGE_SIZE = 20
 const SEARCH_DEBOUNCE_MS = 300
 
 const route = useRoute()
-const { push, replace } = useLocaleRouter()
+const { push, replace, localePath } = useLocaleRouter()
 const { t } = useI18n()
+
+useHead(
+  computed(() => ({
+    script: [
+      {
+        type: 'application/ld+json',
+        innerHTML: JSON.stringify({
+          '@context': 'https://schema.org',
+          '@type': 'WebPage',
+          name: t('pages.pricing.seo.title'),
+          description: t('pages.pricing.seo.description'),
+          url: absoluteUrl(localePath('/pricing')),
+          isPartOf: {
+            '@type': 'WebSite',
+            name: SITE_NAME,
+            url: absoluteUrl('/'),
+          },
+        }),
+      },
+    ],
+  })),
+)
 
 const models = ref<Model[]>([])
 const total = ref(0)
@@ -594,13 +618,45 @@ onMounted(() => {
   .pricing-table__header {
     display: none;
   }
+
+  .pricing-layout-body {
+    flex-direction: column;
+    gap: 24px;
+  }
+
+  .pricing-sidebar-header__title {
+    display: none;
+  }
+
+  .pricing-sidebar-header:not(:has(.pricing-sidebar-header__clear)) {
+    display: none;
+  }
+
+  .pricing-layout-header {
+    flex-wrap: wrap;
+    gap: 12px 24px;
+  }
+
+  .pricing-sidebar-header {
+    width: auto;
+  }
+
+  .pricing-main-header {
+    flex: 1;
+    min-width: min(100%, 240px);
+  }
+
+  .pricing-search {
+    width: 100%;
+    max-width: none;
+  }
 }
 
 @media (max-width: 767px) {
   .pricing-hero {
     align-items: flex-start;
-    min-height: min(calc(100svh - var(--app-header-height, 80px)), 640px);
-    padding: 120px 16px 32px;
+    min-height: 0;
+    padding: 96px 16px 40px;
   }
 
   .pricing-hero__inner {
@@ -637,11 +693,6 @@ onMounted(() => {
 
   .pricing-search {
     width: 100%;
-  }
-
-  .pricing-layout-body {
-    flex-direction: column;
-    gap: 24px;
   }
 }
 </style>

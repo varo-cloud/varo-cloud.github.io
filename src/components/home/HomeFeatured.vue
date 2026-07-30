@@ -156,20 +156,26 @@ onMounted(() => {
 
 <style scoped>
 .home-featured {
-  padding: 80px 16px 64px;
+  padding: 60px 16px;
   background: #fff;
 }
 
 .home-featured__inner {
   width: 100%;
-  max-width: 1360px;
+  max-width: 1800px;
   margin: 0 auto;
   text-align: center;
   min-width: 0;
 }
 
+@media (min-width: 1024px) {
+  .home-featured {
+    padding-inline: 60px;
+  }
+}
+
 .home-featured__eyebrow {
-  margin: 0 0 10px;
+  margin: 0 0 20px;
   font-size: 24px;
   font-weight: 500;
   line-height: 30px;
@@ -189,7 +195,7 @@ onMounted(() => {
   max-width: 100%;
   font-size: 16px;
   font-weight: 500;
-  line-height: 1.4;
+  line-height: 1.25;
   color: #222;
   white-space: nowrap;
 }
@@ -197,9 +203,9 @@ onMounted(() => {
 .home-featured__chips {
   display: flex;
   flex-wrap: wrap;
-  justify-content: center;
-  gap: 12px;
-  margin-top: 40px;
+  justify-content: flex-start;
+  gap: 16px;
+  margin-top: 34px;
   max-width: 100%;
 }
 
@@ -207,10 +213,11 @@ onMounted(() => {
   display: inline-flex;
   align-items: center;
   gap: 4px;
-  min-height: 44px;
-  padding: 10px 14px 10px 10px;
+  height: 40px;
+  min-height: 40px;
+  padding: 14px 24px;
   border: 0;
-  border-radius: 30px;
+  border-radius: 8px;
   background: #f8f8f8;
   color: #222;
   font-size: 14px;
@@ -234,8 +241,8 @@ onMounted(() => {
 
 .home-featured__chip-skeleton {
   display: inline-block;
-  height: 44px;
-  border-radius: 30px;
+  height: 40px;
+  border-radius: 8px;
   background: linear-gradient(90deg, #f0f1f3 25%, #e6e7eb 37%, #f0f1f3 63%);
   background-size: 400% 100%;
   animation: home-featured-shimmer 1.4s ease infinite;
@@ -245,15 +252,15 @@ onMounted(() => {
   display: grid;
   grid-template-columns: repeat(4, minmax(0, 1fr));
   gap: 24px;
-  margin-top: 40px;
+  margin-top: 16px;
   text-align: left;
 }
 
 .home-featured__skeleton-card {
   position: relative;
   overflow: hidden;
-  border-radius: 16px;
-  aspect-ratio: 322 / 341;
+  border-radius: 24px;
+  aspect-ratio: 432 / 344;
   background: linear-gradient(90deg, #eceef2 25%, #e2e4e9 37%, #eceef2 63%);
   background-size: 400% 100%;
   animation: home-featured-shimmer 1.4s ease infinite;
@@ -345,6 +352,7 @@ onMounted(() => {
   }
 
   .home-featured__eyebrow {
+    margin-bottom: 12px;
     font-size: 16px;
     line-height: 22px;
   }
@@ -357,12 +365,11 @@ onMounted(() => {
   .home-featured__grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
     gap: 12px;
-    margin-top: 28px;
+    margin-top: 16px;
   }
 
   .home-featured__skeleton-card {
     aspect-ratio: 3 / 4;
-    border-radius: 12px;
   }
 
   .home-featured__skeleton-fav {
@@ -373,15 +380,16 @@ onMounted(() => {
   }
 
   .home-featured__chips {
-    justify-content: center;
+    justify-content: flex-start;
     flex-wrap: wrap;
     gap: 8px;
     margin-top: 28px;
   }
 
   .home-featured__chip {
+    height: 36px;
     min-height: 36px;
-    padding: 8px 12px;
+    padding: 8px 14px;
     font-size: 13px;
   }
 
