@@ -199,6 +199,8 @@ export default {
       emptyFavourite: '暂无收藏模型。点击模型卡片上的爱心即可收藏。',
       emptyRecent: '暂无最近使用的模型。点击模型卡片后会显示在这里。',
       viewMore: '查看更多',
+      expandAll: '展开全部{count}个',
+      collapseAll: '收起',
       tabs: {
         latest: '最新模型',
         favourite: '收藏模型',

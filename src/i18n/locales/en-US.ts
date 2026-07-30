@@ -200,6 +200,8 @@ export default {
       emptyFavourite: 'No favourite models yet. Tap the heart on a model card to save it here.',
       emptyRecent: 'No recently used models yet. Click a model card to see it here.',
       viewMore: 'View More',
+      expandAll: 'Expand all {count}',
+      collapseAll: 'Collapse',
       tabs: {
         latest: 'Latest Models',
         favourite: 'Favourite Models',
