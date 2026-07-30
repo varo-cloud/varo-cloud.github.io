@@ -516,11 +516,12 @@ onMounted(() => {
 .models-hero {
   position: relative;
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: center;
   height: 460px;
   min-height: 460px;
-  padding: 48px 16px;
+  /* Figma Models hero: title block at y=230 within 460px frame */
+  padding: 230px 16px 48px;
   overflow: hidden;
   background: #0a1a3a;
 }
