@@ -78,6 +78,20 @@ const ROUTES = [
     contentItem: '.model-card',
   },
   {
+    path: '/seedance',
+    outFile: 'seedance.html',
+    ready: '[data-seo-ready="seedance"]',
+    waitSelector: '#seedance-hero-title',
+    waitText: 'One Cloud for Creative AI Production',
+  },
+  {
+    path: '/zh-CN/seedance',
+    outFile: join('zh-CN', 'seedance.html'),
+    ready: '[data-seo-ready="seedance"]',
+    waitSelector: '#seedance-hero-title',
+    waitText: '创意 AI 生产，一朵云搞定',
+  },
+  {
     path: '/pricing',
     outFile: 'pricing.html',
     ready: '[data-seo-ready="pricing"]',
