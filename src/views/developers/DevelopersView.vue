@@ -314,8 +314,10 @@ function isExternalHref(href?: string) {
   display: flex;
   align-items: flex-start;
   justify-content: center;
+  height: 460px;
   min-height: 460px;
-  padding: 180px 16px 48px;
+  /* Figma Developers hero: content block at y=230 within 460px frame */
+  padding: 230px 16px 48px;
   overflow: hidden;
   background: #0a0a0e;
   color: #fff;
@@ -351,12 +353,13 @@ function isExternalHref(href?: string) {
   flex-direction: column;
   align-items: flex-start;
   gap: 24px;
+  max-width: 1242px;
   text-align: left;
 }
 
 .developers-hero__title {
   margin: 0;
-  max-width: 1242px;
+  width: 100%;
   font-size: clamp(36px, 5vw, 56px);
   font-weight: 900;
   line-height: 1.14;
@@ -366,7 +369,7 @@ function isExternalHref(href?: string) {
 
 .developers-hero__subtitle {
   margin: 0;
-  max-width: 1242px;
+  width: 100%;
   font-size: clamp(16px, 2.5vw, 20px);
   font-weight: 600;
   line-height: 1.2;
@@ -769,9 +772,9 @@ function isExternalHref(href?: string) {
 
 @media (max-width: 767px) {
   .developers-hero {
-    align-items: flex-start;
+    height: auto;
     min-height: 0;
-    padding: 96px 16px 40px;
+    padding: 88px 16px 40px;
   }
 
   .developers-hero__content {

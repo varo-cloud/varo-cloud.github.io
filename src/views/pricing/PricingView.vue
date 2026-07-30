@@ -354,8 +354,10 @@ onMounted(() => {
   display: flex;
   align-items: flex-start;
   justify-content: center;
+  height: 460px;
   min-height: 460px;
-  padding: 180px 16px 48px;
+  /* Figma Pricing hero: title block at y=215 within 460px frame */
+  padding: 215px 16px 48px;
   overflow: hidden;
   background: #0a0a0e;
 }
@@ -373,7 +375,7 @@ onMounted(() => {
 .pricing-hero__overlay {
   position: absolute;
   inset: 0;
-  background: rgba(0, 0, 0, 0.25);
+  background: rgba(0, 0, 0, 0.5);
   pointer-events: none;
 }
 
@@ -389,14 +391,16 @@ onMounted(() => {
 .pricing-hero__content {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: center;
   gap: 24px;
-  text-align: left;
+  margin: 0 auto;
+  max-width: 1242px;
+  text-align: center;
 }
 
 .pricing-hero__title {
   margin: 0;
-  max-width: 1242px;
+  width: 100%;
   font-size: clamp(36px, 5vw, 56px);
   font-weight: 900;
   line-height: 1.14;
@@ -406,7 +410,7 @@ onMounted(() => {
 
 .pricing-hero__subtitle {
   margin: 0;
-  max-width: 1242px;
+  width: 100%;
   font-size: clamp(16px, 2.5vw, 20px);
   font-weight: 600;
   line-height: 1.2;
@@ -654,13 +658,9 @@ onMounted(() => {
 
 @media (max-width: 767px) {
   .pricing-hero {
-    align-items: flex-start;
+    height: auto;
     min-height: 0;
-    padding: 96px 16px 40px;
-  }
-
-  .pricing-hero__inner {
-    padding-bottom: 0;
+    padding: 88px 16px 40px;
   }
 
   .pricing-hero__content {
