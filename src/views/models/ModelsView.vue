@@ -847,8 +847,8 @@ onMounted(() => {
 @media (max-width: 767px) {
   .models-hero {
     height: auto;
-    min-height: min(calc(100svh - var(--app-header-height, 80px)), 420px);
-    padding: 80px 16px 48px;
+    min-height: 0;
+    padding: 88px 16px 40px;
   }
 
   .models-hero__content {
