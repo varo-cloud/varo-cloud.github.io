@@ -416,7 +416,6 @@ function isExternalHref(href?: string) {
   flex-direction: column;
   height: 411px;
   padding: 24px;
-  border: 1px solid rgba(0, 0, 0, 0.06);
   border-radius: 16px;
   background: #fff;
   box-sizing: border-box;
@@ -499,7 +498,7 @@ function isExternalHref(href?: string) {
   max-height: none;
   padding: 12px;
   border: 1px solid #eee;
-  border-radius: 8px;
+  border-radius: 24px;
   background: #fff;
   color: #222;
   font-size: 14px;
@@ -570,7 +569,7 @@ function isExternalHref(href?: string) {
   max-width: 100%;
   height: 295px;
   overflow: hidden;
-  border-radius: 8px;
+  border-radius: 24px;
   background: #f5f5f5;
 }
 
