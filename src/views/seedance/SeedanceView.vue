@@ -62,6 +62,13 @@ const productionPillars = computed(() => {
   return Array.isArray(items) ? items : []
 })
 
+const productionPillarIcons = [
+  '/assets/seedance/lock-icon.svg',
+  '/assets/seedance/money-dollar-circle-line.svg',
+  '/assets/seedance/shuffle-line.svg',
+  '/assets/seedance/server-line.svg',
+] as const
+
 const radarCharts = computed(() => [
   {
     src: '/assets/seedance/radar-t2v.png',
@@ -531,13 +538,13 @@ onUnmounted(() => {
 
         <div class="seedance-production__pillars">
           <div
-            v-for="pillar in productionPillars"
+            v-for="(pillar, index) in productionPillars"
             :key="pillar.title"
             class="seedance-production__pillar"
           >
             <div class="seedance-production__icon" aria-hidden="true">
               <img
-                :src="assetUrl('/assets/seedance/lock-icon.svg')"
+                :src="assetUrl(productionPillarIcons[index] ?? productionPillarIcons[0])"
                 alt=""
                 width="24"
                 height="24"
@@ -557,7 +564,7 @@ onUnmounted(() => {
           </div>
           <div class="seedance-production__visual">
             <video
-              src="https://assets.varo.cloud/uploads/67ae104a1d7d4f50b76052a0f6d3f329.mp4"
+              src="https://assets.varo.cloud/uploads/11575548922f4c4bae85d26e7c1b7160.mp4"
               :poster="assetUrl('/assets/seedance/production-visual.jpg')"
               :aria-label="t('pages.seedance.production.visualAlt')"
               width="767"
@@ -712,7 +719,7 @@ onUnmounted(() => {
   display: flex;
   align-items: flex-end;
   justify-content: center;
-  min-height: 724px;
+  min-height: 460px;
   padding: 120px 16px 80px;
   overflow: hidden;
   background: #0a0a0e;
@@ -801,7 +808,7 @@ onUnmounted(() => {
   height: auto;
   aspect-ratio: 672 / 378;
   object-fit: cover;
-  border-radius: 16px;
+  border-radius: 24px;
 }
 
 .seedance-api {
@@ -1040,6 +1047,7 @@ onUnmounted(() => {
   min-height: 430px;
   padding: 40px;
   box-sizing: border-box;
+  border-radius: 24px;
   background: #f4f7f7;
 }
 
@@ -1132,7 +1140,7 @@ onUnmounted(() => {
 
 .seedance-production__visual {
   overflow: hidden;
-  border-radius: 0;
+  border-radius: 24px;
   background: #0a0f13;
 }
 
@@ -1272,7 +1280,7 @@ onUnmounted(() => {
 
 @media (max-width: 900px) {
   .seedance-hero {
-    min-height: 520px;
+    min-height: 460px;
     padding: 120px 16px 64px;
   }
 
