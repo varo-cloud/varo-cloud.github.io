@@ -17,6 +17,12 @@ const appLayoutChildren: RouteRecordRaw[] = [
     component: () => import('@/views/models/ModelsView.vue'),
   },
   {
+    path: 'seedance',
+    name: 'seedance',
+    meta: { fullBleed: true, transparentHeader: true, lightPage: true },
+    component: () => import('@/views/seedance/SeedanceView.vue'),
+  },
+  {
     path: 'models/:slug(.+)',
     name: 'model-detail',
     meta: { fullBleed: true, transparentHeader: true },

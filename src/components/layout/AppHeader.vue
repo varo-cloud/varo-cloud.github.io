@@ -18,10 +18,13 @@ const userStore = useUserStore()
 const isScrolled = ref(false)
 const userMenuOpen = ref(false)
 const languageMenuOpen = ref(false)
+const modelsMenuOpen = ref(false)
 const mobileMenuOpen = ref(false)
 const languageMenuRef = ref<HTMLElement | null>(null)
+const modelsMenuRef = ref<HTMLElement | null>(null)
 
 let userMenuCloseTimer: ReturnType<typeof setTimeout> | null = null
+let modelsMenuCloseTimer: ReturnType<typeof setTimeout> | null = null
 
 const usesTransparentHeader = computed(() => route.meta.transparentHeader === true)
 const isHeaderSolid = computed(() => !usesTransparentHeader.value || isScrolled.value)
@@ -31,10 +34,14 @@ function updateScrollState() {
 }
 
 const navItems = computed(() => [
-  { label: t('nav.models'), name: 'models' },
   { label: t('nav.aiGenerator'), name: 'ai-generator' },
   { label: t('nav.pricing'), name: 'pricing' },
   { label: t('nav.developers'), name: 'developers' },
+])
+
+const modelsMenuItems = computed(() => [
+  { label: t('nav.allModels'), name: 'models' },
+  { label: t('nav.seedance'), name: 'seedance' },
 ])
 
 import type { AppIconName } from '@/components/common/AppIcon.vue'
@@ -130,13 +137,60 @@ function cancelCloseUserMenu() {
 
 function isActive(name: string) {
   if (name === 'models') {
-    return route.name === 'models' || route.name === 'model-detail'
+    return (
+      route.name === 'models' ||
+      route.name === 'model-detail' ||
+      route.name === 'seedance'
+    )
   }
   return route.name === name
 }
 
+const isModelsNavActive = computed(
+  () =>
+    route.name === 'models' ||
+    route.name === 'model-detail' ||
+    route.name === 'seedance',
+)
+
 function goTo(name: string) {
   push({ name })
+}
+
+function openModelsMenu() {
+  if (modelsMenuCloseTimer) {
+    clearTimeout(modelsMenuCloseTimer)
+    modelsMenuCloseTimer = null
+  }
+  modelsMenuOpen.value = true
+}
+
+function scheduleCloseModelsMenu() {
+  if (modelsMenuCloseTimer) clearTimeout(modelsMenuCloseTimer)
+  modelsMenuCloseTimer = setTimeout(() => {
+    modelsMenuOpen.value = false
+    modelsMenuCloseTimer = null
+  }, 120)
+}
+
+function cancelCloseModelsMenu() {
+  if (modelsMenuCloseTimer) {
+    clearTimeout(modelsMenuCloseTimer)
+    modelsMenuCloseTimer = null
+  }
+}
+
+function toggleModelsMenu() {
+  modelsMenuOpen.value = !modelsMenuOpen.value
+}
+
+function closeModelsMenu() {
+  modelsMenuOpen.value = false
+}
+
+function goToModelsItem(name: string) {
+  closeModelsMenu()
+  goTo(name)
 }
 
 function toggleMobileMenu() {
@@ -196,10 +250,14 @@ function handleLanguageSelect(key: string) {
 }
 
 function handleDocumentClick(event: MouseEvent) {
-  if (!languageMenuOpen.value) return
-  const el = languageMenuRef.value
-  if (el && !el.contains(event.target as Node)) {
-    closeLanguageMenu()
+  const target = event.target as Node
+  if (languageMenuOpen.value) {
+    const el = languageMenuRef.value
+    if (el && !el.contains(target)) closeLanguageMenu()
+  }
+  if (modelsMenuOpen.value) {
+    const el = modelsMenuRef.value
+    if (el && !el.contains(target)) closeModelsMenu()
   }
 }
 
@@ -227,6 +285,7 @@ watch(
     updateScrollState()
     closeMobileMenu()
     closeLanguageMenu()
+    closeModelsMenu()
   },
 )
 
@@ -235,15 +294,30 @@ watch(mobileMenuOpen, (open) => {
 })
 
 watch(languageMenuOpen, (open) => {
-  if (open) {
+  if (open || modelsMenuOpen.value) {
     document.addEventListener('click', handleDocumentClick)
     return
   }
-  document.removeEventListener('click', handleDocumentClick)
+  if (!modelsMenuOpen.value) {
+    document.removeEventListener('click', handleDocumentClick)
+  }
+})
+
+watch(modelsMenuOpen, (open) => {
+  if (open || languageMenuOpen.value) {
+    document.addEventListener('click', handleDocumentClick)
+    return
+  }
+  if (!languageMenuOpen.value) {
+    document.removeEventListener('click', handleDocumentClick)
+  }
 })
 
 function handleMobileMenuKeydown(event: KeyboardEvent) {
-  if (event.key === 'Escape') closeMobileMenu()
+  if (event.key === 'Escape') {
+    closeMobileMenu()
+    closeModelsMenu()
+  }
 }
 
 onMounted(() => {
@@ -258,6 +332,7 @@ onUnmounted(() => {
   window.removeEventListener('keydown', handleMobileMenuKeydown)
   document.removeEventListener('click', handleDocumentClick)
   if (userMenuCloseTimer) clearTimeout(userMenuCloseTimer)
+  if (modelsMenuCloseTimer) clearTimeout(modelsMenuCloseTimer)
   setBodyScrollLocked(false)
 })
 </script>
@@ -273,6 +348,47 @@ onUnmounted(() => {
           <VaroCloudLogo variant="dark" />
         </RouterLink>
         <nav class="app-header__nav hidden md:flex">
+          <div
+            ref="modelsMenuRef"
+            class="app-header__models-menu"
+            @mouseenter="openModelsMenu"
+            @mouseleave="scheduleCloseModelsMenu"
+          >
+            <button
+              type="button"
+              class="app-header__nav-item app-header__models-trigger"
+              :class="{ 'is-active': isModelsNavActive }"
+              :aria-expanded="modelsMenuOpen"
+              aria-haspopup="menu"
+              @click.stop="toggleModelsMenu"
+              @mouseenter="openModelsMenu"
+              @mouseleave="scheduleCloseModelsMenu"
+            >
+              <span>{{ t('nav.models') }}</span>
+              <AppIcon name="chevron-down" :size="14" />
+            </button>
+
+            <div
+              v-show="modelsMenuOpen"
+              class="app-header__models-dropdown"
+              role="menu"
+              @mouseenter="cancelCloseModelsMenu"
+              @mouseleave="scheduleCloseModelsMenu"
+            >
+              <button
+                v-for="item in modelsMenuItems"
+                :key="item.name"
+                type="button"
+                class="app-header__models-dropdown-item"
+                :class="{ 'is-active': route.name === item.name }"
+                role="menuitem"
+                @click="goToModelsItem(item.name)"
+              >
+                {{ item.label }}
+              </button>
+            </div>
+          </div>
+
           <button
             v-for="item in navItems"
             :key="item.name"
@@ -481,6 +597,23 @@ onUnmounted(() => {
             -->
 
             <button
+              type="button"
+              class="app-header__mobile-nav-item"
+              :class="{ 'is-active': route.name === 'models' }"
+              @click="goToFromMobile('models')"
+            >
+              {{ t('nav.allModels') }}
+            </button>
+            <button
+              type="button"
+              class="app-header__mobile-nav-item"
+              :class="{ 'is-active': route.name === 'seedance' }"
+              @click="goToFromMobile('seedance')"
+            >
+              {{ t('nav.seedance') }}
+            </button>
+
+            <button
               v-for="item in navItems"
               :key="item.name"
               type="button"
@@ -570,6 +703,52 @@ onUnmounted(() => {
 
 .app-header__nav {
   gap: 24px;
+  align-items: center;
+}
+
+.app-header__models-menu {
+  position: relative;
+}
+
+.app-header__models-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.app-header__models-dropdown {
+  position: absolute;
+  top: calc(100% + 10px);
+  left: 0;
+  z-index: 20;
+  min-width: 168px;
+  padding: 8px;
+  border: 1px solid rgba(255, 255, 255, 0.08);
+  border-radius: 12px;
+  background: #12171c;
+  box-shadow: 0 12px 32px rgba(0, 0, 0, 0.28);
+}
+
+.app-header__models-dropdown-item {
+  display: flex;
+  align-items: center;
+  width: 100%;
+  padding: 10px 12px;
+  border: 0;
+  border-radius: 8px;
+  background: transparent;
+  color: #ebf4fb;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.2;
+  text-align: left;
+  cursor: pointer;
+}
+
+.app-header__models-dropdown-item:hover,
+.app-header__models-dropdown-item.is-active {
+  background: rgba(6, 182, 212, 0.12);
+  color: #06b6d4;
 }
 
 .app-header__nav-item {
