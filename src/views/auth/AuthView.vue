@@ -499,6 +499,7 @@ onUnmounted(() => {
   line-height: normal;
   letter-spacing: -0.408px;
   color: #222;
+  text-align: center;
 }
 
 .auth-card__form {
