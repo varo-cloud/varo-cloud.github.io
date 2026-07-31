@@ -36,6 +36,7 @@ const activeCapability = ref(0)
 const seedanceBaseModel = ref<string | null>(null)
 /** Catalog models resolved from `/models?base_model=…`, aligned with API cards */
 const apiCardModels = ref<(Model | null)[]>(API_CARD_CAPABILITIES.map(() => null))
+const apiCardsLoading = ref(true)
 const demoModelSlug = ref('')
 
 const faqItems = computed(() => {
@@ -56,9 +57,11 @@ const apiCards = computed(() => {
   if (!Array.isArray(items)) return []
   return items.map((card, index) => {
     const model = apiCardModels.value[index]
+    const thumbnail = model?.thumbnailUrl?.trim() || null
     return {
       ...card,
-      image: model?.thumbnailUrl?.trim() || '/assets/models/card-thumb.jpg',
+      // Never fall back to a default placeholder image — keep skeleton until real media exists
+      image: thumbnail,
     }
   })
 })
@@ -390,6 +393,7 @@ function resolveModelForCapability(capability: string, models: Model[]): Model |
 }
 
 async function resolveSeedanceModelSlugs() {
+  apiCardsLoading.value = true
   try {
     const facets = await fetchModelFacets()
     const baseModel = resolveSeedanceBaseModel(facets.base_models)
@@ -410,6 +414,8 @@ async function resolveSeedanceModelSlugs() {
   } catch {
     seedanceBaseModel.value = null
     apiCardModels.value = API_CARD_CAPABILITIES.map(() => null)
+  } finally {
+    apiCardsLoading.value = false
   }
 }
 
@@ -500,7 +506,11 @@ onUnmounted(() => {
       </div>
     </section>
 
-    <section class="seedance-api" aria-labelledby="seedance-api-title">
+    <section
+      class="seedance-api"
+      aria-labelledby="seedance-api-title"
+      :data-seo-content-ready="apiCardsLoading ? undefined : 'seedance'"
+    >
       <div class="seedance-section-inner">
         <h2 id="seedance-api-title" class="seedance-section-title">
           {{ t('pages.seedance.api.title') }}
@@ -509,7 +519,26 @@ onUnmounted(() => {
           {{ t('pages.seedance.api.subtitle') }}
         </p>
 
-        <div class="seedance-api__grid">
+        <div
+          v-if="apiCardsLoading"
+          class="seedance-api__grid"
+          aria-busy="true"
+          aria-label="Loading"
+        >
+          <article
+            v-for="n in API_CARD_CAPABILITIES.length"
+            :key="`api-sk-${n}`"
+            class="seedance-api__card"
+          >
+            <div class="seedance-api__media media-skeleton" aria-hidden="true" />
+            <span class="seedance-api__skeleton-line seedance-api__skeleton-line--title media-skeleton" />
+            <span class="seedance-api__skeleton-line seedance-api__skeleton-line--body media-skeleton" />
+            <span
+              class="seedance-api__skeleton-line seedance-api__skeleton-line--body-short media-skeleton"
+            />
+          </article>
+        </div>
+        <div v-else class="seedance-api__grid">
           <article
             v-for="(card, index) in apiCards"
             :key="card.title"
@@ -518,9 +547,11 @@ onUnmounted(() => {
             <button
               type="button"
               class="seedance-api__media"
+              :class="{ 'media-skeleton': !card.image }"
               @click="onApiCardClick(index)"
             >
               <img
+                v-if="card.image"
                 :src="assetUrl(card.image)"
                 :alt="card.alt"
                 width="437"
@@ -901,6 +932,7 @@ onUnmounted(() => {
 .seedance-api__media {
   display: block;
   width: 100%;
+  aspect-ratio: 437 / 270;
   padding: 0;
   border: 1px solid rgba(255, 255, 255, 0.1);
   border-radius: 24px;
@@ -912,9 +944,30 @@ onUnmounted(() => {
 .seedance-api__media img {
   display: block;
   width: 100%;
-  height: auto;
-  aspect-ratio: 437 / 270;
+  height: 100%;
   object-fit: cover;
+}
+
+.seedance-api__skeleton-line {
+  display: block;
+  margin: 12px 16px 0;
+  height: 14px;
+  border-radius: 6px;
+}
+
+.seedance-api__skeleton-line--title {
+  width: 62%;
+  height: 24px;
+  margin-top: 20px;
+}
+
+.seedance-api__skeleton-line--body {
+  width: 92%;
+}
+
+.seedance-api__skeleton-line--body-short {
+  width: 70%;
+  margin-bottom: 8px;
 }
 
 .seedance-api__card-title {

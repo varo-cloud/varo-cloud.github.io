@@ -13,6 +13,7 @@ alwaysApply: false
 | 场景 | 唯一来源 | 用法 |
 |------|----------|------|
 | 细滚动条 | `src/styles/global.css` → `.scrollbar-subtle` | 可滚动容器加 `scrollbar-subtle` |
+| 营销页媒体骨架 | `src/styles/global.css` → `.media-skeleton` | 异步图片/视频/卡片占位加 `media-skeleton` |
 | Playground 下拉面板 | `src/styles/playground-select-panel.css` | 外层 `playground-select-panel` |
 | 浮动层 z-index | `src/styles/global.css` + `src/constants/overlayZIndex.ts` | CSS 用 `var(--z-*)`，JS 用同名常量 |
 
