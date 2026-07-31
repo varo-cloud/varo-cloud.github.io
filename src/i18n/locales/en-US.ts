@@ -733,19 +733,16 @@ export default {
           {
             title: 'Text-to-Video API',
             body: 'Generate complete videos from natural-language prompts with motion, camera direction, visual style, and native audio.',
-            image: '/assets/seedance/api-t2v.jpg',
             alt: 'Seedance 2.0 text-to-video API example',
           },
           {
             title: 'Image-to-Video API',
             body: 'Animate a starting image—or guide the opening and ending frames—to create controlled visual sequences.',
-            image: '/assets/seedance/api-i2v.jpg',
             alt: 'Seedance 2.0 image-to-video API example',
           },
           {
             title: 'Reference-to-Video API',
             body: 'Combine images, video clips, audio, and instructions to reproduce characters, movement, composition, camera language, and sound.',
-            image: '/assets/seedance/api-r2v.jpg',
             alt: 'Seedance 2.0 reference-to-video API example',
           },
         ],
