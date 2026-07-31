@@ -1,0 +1,38 @@
+---
+description: 营销落地页异步媒体与模型卡片须用骨架屏，禁止默认占位图
+globs: src/views/**/*.{vue,ts},src/components/home/**/*.{vue,ts},src/components/**/*Marketing*,src/styles/global.css
+alwaysApply: false
+---
+
+# 营销页媒体加载：骨架屏优先
+
+适用于首页、Seedance、以及后续同类营销/落地页中，**依赖接口返回的图片、视频封面、模型卡片**。
+
+## 准则
+
+1. **接口未返回前用骨架**，不要先塞默认图再替换。
+2. **禁止默认占位图兜底**（如 `/assets/models/card-thumb.jpg`）用于营销卡片封面；无真实 URL 时继续显示骨架或留空骨架位。
+3. **骨架尺寸对齐最终媒体**（固定 `aspect-ratio`），避免加载完成后布局跳动。
+4. 复用全局类 `media-skeleton`（`src/styles/global.css`），不要在各页复制一套 shimmer keyframes。
+5. 参考实现：`HomeFeatured.vue` / `HomeShowcase.vue` / `SeedanceView.vue`（API 卡片区）。
+
+## 写法
+
+```vue
+<!-- ✅ GOOD：loading 骨架；有 thumbnail 再渲染 img -->
+<div v-if="loading" class="grid" aria-busy="true">
+  <div v-for="n in 3" :key="n" class="card-media media-skeleton" />
+</div>
+<img v-else-if="thumbnailUrl" :src="assetUrl(thumbnailUrl)" alt="..." />
+<button v-else type="button" class="card-media media-skeleton" aria-hidden="true" />
+
+<!-- ❌ BAD：默认图兜底 -->
+<img :src="assetUrl(thumbnailUrl || '/assets/models/card-thumb.jpg')" />
+```
+
+## 检查清单
+
+- [ ] 异步媒体区有明确 `loading` / `aria-busy`
+- [ ] 未使用营销无关的默认占位图作为封面兜底
+- [ ] 骨架叠加 `media-skeleton`，比例与成片一致
+- [ ] SEO：内容就绪后设置 `data-seo-content-ready`（与首页 Featured 一致）
