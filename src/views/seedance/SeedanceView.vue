@@ -10,7 +10,7 @@ import { absoluteUrl, SITE_NAME } from '@/seo/config'
 import HighlightedCodeBlock from '@/components/common/HighlightedCodeBlock.vue'
 import AppIcon from '@/components/common/AppIcon.vue'
 import { buildApiSubmitSnippet } from '@/utils/playground-request-snippets'
-import type { BaseModelFacetItem } from '@/types'
+import type { BaseModelFacetItem, Model } from '@/types'
 
 /** Card order matches `pages.seedance.api.cards` */
 const API_CARD_CAPABILITIES = [
@@ -34,8 +34,8 @@ const openFaqId = ref('fast')
 const activeCapability = ref(0)
 /** Base model slug from `/models/facets` (e.g. `bytedance-seedance-2-0`) */
 const seedanceBaseModel = ref<string | null>(null)
-/** Catalog slugs (`model.id`) resolved from `/models?base_model=…` */
-const apiCardSlugs = ref<(string | null)[]>(API_CARD_CAPABILITIES.map(() => null))
+/** Catalog models resolved from `/models?base_model=…`, aligned with API cards */
+const apiCardModels = ref<(Model | null)[]>(API_CARD_CAPABILITIES.map(() => null))
 const demoModelSlug = ref('')
 
 const faqItems = computed(() => {
@@ -51,10 +51,16 @@ const apiCards = computed(() => {
   const items = tm('pages.seedance.api.cards') as Array<{
     title: string
     body: string
-    image: string
     alt: string
   }>
-  return Array.isArray(items) ? items : []
+  if (!Array.isArray(items)) return []
+  return items.map((card, index) => {
+    const model = apiCardModels.value[index]
+    return {
+      ...card,
+      image: model?.thumbnailUrl?.trim() || '/assets/models/card-thumb.jpg',
+    }
+  })
 })
 
 const capabilities = computed(() => {
@@ -369,13 +375,10 @@ function resolveSeedanceBaseModel(baseModels: BaseModelFacetItem[]): string | nu
   return (preferred ?? matches[0])?.slug ?? null
 }
 
-function resolveSlugForCapability(
-  capability: string,
-  models: Array<{ id: string; capability: string; displayName: string }>,
-): string | null {
+function resolveModelForCapability(capability: string, models: Model[]): Model | null {
   const target = capability.toLowerCase()
   const byCapability = models.find((m) => m.capability.trim().toLowerCase() === target)
-  if (byCapability) return byCapability.id
+  if (byCapability) return byCapability
 
   // Fallback: match slug / display name containing the capability token
   const byName = models.find((m) => {
@@ -383,7 +386,7 @@ function resolveSlugForCapability(
     const name = m.displayName.toLowerCase()
     return id.includes(target) || name.includes(target.replace(/-/g, ' '))
   })
-  return byName?.id ?? null
+  return byName ?? null
 }
 
 async function resolveSeedanceModelSlugs() {
@@ -399,19 +402,19 @@ async function resolveSeedanceModelSlugs() {
       limit: 50,
     })
     const items = page.items
-    apiCardSlugs.value = API_CARD_CAPABILITIES.map((capability) =>
-      resolveSlugForCapability(capability, items),
+    apiCardModels.value = API_CARD_CAPABILITIES.map((capability) =>
+      resolveModelForCapability(capability, items),
     )
-    const imageToVideo = resolveSlugForCapability('image-to-video', items)
-    if (imageToVideo) demoModelSlug.value = imageToVideo
+    const imageToVideo = resolveModelForCapability('image-to-video', items)
+    if (imageToVideo) demoModelSlug.value = imageToVideo.id
   } catch {
     seedanceBaseModel.value = null
-    apiCardSlugs.value = API_CARD_CAPABILITIES.map(() => null)
+    apiCardModels.value = API_CARD_CAPABILITIES.map(() => null)
   }
 }
 
 function onApiCardClick(index: number) {
-  const slug = apiCardSlugs.value[index]
+  const slug = apiCardModels.value[index]?.id
   if (!slug) {
     goToModels()
     return

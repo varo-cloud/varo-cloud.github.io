@@ -726,19 +726,16 @@ export default {
           {
             title: '文生视频 API',
             body: '用自然语言提示词生成完整视频，覆盖运动、镜头、视觉风格与原生音频。',
-            image: '/assets/seedance/api-t2v.jpg',
             alt: 'Seedance 2.0 文生视频 API 示例',
           },
           {
             title: '图生视频 API',
             body: '让静态图动起来，或指定首尾帧，生成可控的视觉序列。',
-            image: '/assets/seedance/api-i2v.jpg',
             alt: 'Seedance 2.0 图生视频 API 示例',
           },
           {
             title: '参考生视频 API',
             body: '结合图片、视频片段、音频与指令，复现角色、动作、构图、镜头语言与声音。',
-            image: '/assets/seedance/api-r2v.jpg',
             alt: 'Seedance 2.0 参考生视频 API 示例',
           },
         ],
