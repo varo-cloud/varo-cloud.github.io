@@ -721,6 +721,9 @@ onUnmounted(() => {
   top: calc(100% + 10px);
   left: 0;
   z-index: 20;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
   min-width: 168px;
   padding: 8px;
   border: 1px solid rgba(255, 255, 255, 0.08);
