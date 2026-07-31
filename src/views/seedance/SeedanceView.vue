@@ -2,6 +2,7 @@
 import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useHead } from '@unhead/vue'
+import { fetchModels } from '@/api/models'
 import { useLocaleRouter } from '@/composables/useLocaleRouter'
 import { useUserStore } from '@/stores/user'
 import { assetUrl } from '@/utils/assetUrl'
@@ -9,6 +10,14 @@ import { absoluteUrl, SITE_NAME } from '@/seo/config'
 import HighlightedCodeBlock from '@/components/common/HighlightedCodeBlock.vue'
 import AppIcon from '@/components/common/AppIcon.vue'
 import { buildApiSubmitSnippet } from '@/utils/playground-request-snippets'
+
+const SEEDANCE_BASE_MODEL = 'seedance-2.0'
+/** Card order matches `pages.seedance.api.cards` */
+const API_CARD_CAPABILITIES = [
+  'text-to-video',
+  'image-to-video',
+  'reference-to-video',
+] as const
 
 const DEMO_MODEL_SLUG = 'seedance-2.0/image-to-video'
 const DEMO_FORM_VALUES = {
@@ -24,6 +33,9 @@ const userStore = useUserStore()
 
 const openFaqId = ref('fast')
 const activeCapability = ref(0)
+/** Resolved catalog slugs from `/models?base_model=seedance-2.0` */
+const apiCardSlugs = ref<(string | null)[]>(API_CARD_CAPABILITIES.map(() => null))
+const demoModelSlug = ref(DEMO_MODEL_SLUG)
 
 const faqItems = computed(() => {
   const items = tm('pages.seedance.faq.items') as Array<{
@@ -252,7 +264,7 @@ function onShowcaseResize() {
 }
 
 const codeSnippet = computed(() =>
-  buildApiSubmitSnippet('http', DEMO_MODEL_SLUG, DEMO_FORM_VALUES),
+  buildApiSubmitSnippet('http', demoModelSlug.value, DEMO_FORM_VALUES),
 )
 
 useHead(
@@ -343,7 +355,59 @@ function goToModel(slug: string) {
   push({ name: 'model-detail', params: { slug } })
 }
 
+function resolveSlugForCapability(
+  capability: string,
+  models: Array<{ id: string; capability: string; displayName: string }>,
+): string | null {
+  const target = capability.toLowerCase()
+  const byCapability = models.find((m) => m.capability.trim().toLowerCase() === target)
+  if (byCapability) return byCapability.id
+
+  // Fallback: match slug / display name containing the capability token
+  const byName = models.find((m) => {
+    const id = m.id.toLowerCase()
+    const name = m.displayName.toLowerCase()
+    return id.includes(target) || name.includes(target.replace(/-/g, ' '))
+  })
+  return byName?.id ?? null
+}
+
+async function resolveSeedanceModelSlugs() {
+  try {
+    const page = await fetchModels({
+      base_model: SEEDANCE_BASE_MODEL,
+      offset: 0,
+      limit: 50,
+    })
+    const items = page.items
+    apiCardSlugs.value = API_CARD_CAPABILITIES.map((capability) =>
+      resolveSlugForCapability(capability, items),
+    )
+    const imageToVideo =
+      resolveSlugForCapability('image-to-video', items) ?? DEMO_MODEL_SLUG
+    demoModelSlug.value = imageToVideo
+  } catch {
+    apiCardSlugs.value = API_CARD_CAPABILITIES.map(
+      (capability) => `${SEEDANCE_BASE_MODEL}/${capability}`,
+    )
+  }
+}
+
+function onApiCardClick(index: number) {
+  const resolved = apiCardSlugs.value[index]
+  const fallback = API_CARD_CAPABILITIES[index]
+    ? `${SEEDANCE_BASE_MODEL}/${API_CARD_CAPABILITIES[index]}`
+    : null
+  const slug = resolved ?? fallback
+  if (!slug) {
+    goToModels()
+    return
+  }
+  goToModel(slug)
+}
+
 onMounted(() => {
+  void resolveSeedanceModelSlugs()
   void nextTick(() => {
     centerShowcaseOnMount()
   })
@@ -438,15 +502,7 @@ onUnmounted(() => {
             <button
               type="button"
               class="seedance-api__media"
-              @click="
-                goToModel(
-                  index === 0
-                    ? 'seedance-2.0/text-to-video'
-                    : index === 1
-                      ? 'seedance-2.0/image-to-video'
-                      : 'seedance-2.0/image-to-video',
-                )
-              "
+              @click="onApiCardClick(index)"
             >
               <img
                 :src="assetUrl(card.image)"
