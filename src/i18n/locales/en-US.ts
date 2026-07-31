@@ -29,6 +29,8 @@ export default {
   },
   nav: {
     models: 'Models',
+    allModels: 'All Models',
+    seedance: 'Seedance 2.0',
     aiGenerator: 'AI Generator',
     pricing: 'Pricing',
     developers: 'Developers',
@@ -174,6 +176,7 @@ export default {
       },
       series: {
         'seedance-2.0': 'Seedance',
+        'bytedance-seedance-2-0': 'Seedance',
         'kling-2.6': 'Kling',
         'flux-1': 'Flux',
         'gpt-4o': 'OpenAI',
@@ -201,6 +204,8 @@ export default {
       emptyFavourite: 'No favourite models yet. Tap the heart on a model card to save it here.',
       emptyRecent: 'No recently used models yet. Click a model card to see it here.',
       viewMore: 'View More',
+      expandAll: 'Expand all {count}',
+      collapseAll: 'Collapse',
       tabs: {
         latest: 'Latest Models',
         favourite: 'Favourite Models',
@@ -704,6 +709,175 @@ export default {
         title: 'Developers — Varo.cloud API for Top AI Models',
         description:
           'Build with one OpenAI-compatible API for the world’s leading AI models. Get started with Varo.cloud authentication, generations, and code examples.',
+      },
+    },
+    seedance: {
+      hero: {
+        title: 'One Cloud for Creative AI Production',
+        subtitle:
+          'Build and deploy AI-powered creative products without managing the full infrastructure stack. Varo.cloud brings models, workflows, and production deployment into one cloud platform.',
+      },
+      intro: {
+        hiddenTitle: 'Seedance 2.0 on Varo Cloud',
+        lead:
+          'Integrate ByteDance’s Seedance 2.0 into your product to generate cinematic videos from text, images, video, and audio references. Create synchronized sound and motion, maintain stronger subject consistency, and control complex scenes through a simple Varo Cloud API.',
+        leftAlt: 'Seedance 2.0 cinematic video example of a man at sunset',
+        rightAlt: 'Seedance 2.0 cinematic video example with futuristic lighting',
+      },
+      api: {
+        title: 'Unified Multimodal API',
+        subtitle:
+          'Direct Video with Every Type of Input. Seedance 2.0 supports mixed multimodal references, including up to nine images, three video clips, and three audio clips.',
+        cta: 'View More Models',
+        cards: [
+          {
+            title: 'Text-to-Video API',
+            body: 'Generate complete videos from natural-language prompts with motion, camera direction, visual style, and native audio.',
+            alt: 'Seedance 2.0 text-to-video API example',
+          },
+          {
+            title: 'Image-to-Video API',
+            body: 'Animate a starting image—or guide the opening and ending frames—to create controlled visual sequences.',
+            alt: 'Seedance 2.0 image-to-video API example',
+          },
+          {
+            title: 'Reference-to-Video API',
+            body: 'Combine images, video clips, audio, and instructions to reproduce characters, movement, composition, camera language, and sound.',
+            alt: 'Seedance 2.0 reference-to-video API example',
+          },
+        ],
+      },
+      capabilities: {
+        title: 'Create, Edit, and Extend with Varo Seedance 2.0 API',
+        subtitle:
+          'Seedance 2.0 combines native audio-video generation, precise creative control, and advanced editing capabilities, helping developers build more complete and flexible video experiences.',
+        items: [
+          {
+            title: 'Generate Together',
+            body: 'Create synchronized video and audio in one workflow.',
+            image: '/assets/seedance/feature-generate.jpg',
+            alt: 'Generate synchronized video and audio with Seedance 2.0',
+          },
+          {
+            title: 'Direct Every Detail',
+            body: 'Control motion, camera, style, and pacing.',
+            image: '/assets/seedance/feature-direct.jpg',
+            alt: 'Fine-grained creative control with Seedance 2.0',
+          },
+          {
+            title: 'Edit and Extend',
+            body: 'Refine scenes or continue existing videos.',
+            image: '/assets/seedance/feature-edit.jpg',
+            alt: 'Edit and extend videos with Seedance 2.0',
+          },
+        ],
+      },
+      compare: {
+        title: 'Seedance 2.0 vs Other Models',
+        subtitle:
+          'Seedance 2.0 is in the leading position in various dimensions across different types of tasks.',
+        radarT2vAlt: 'Radar chart comparing Seedance 2.0 text-to-video evaluation scores',
+        radarMultimodalAlt:
+          'Radar chart comparing Seedance 2.0 multimodal task evaluation scores',
+        radarI2vAlt: 'Radar chart comparing Seedance 2.0 image-to-video evaluation scores',
+      },
+      production: {
+        title: 'Built for Production with One Simple API',
+        subtitle:
+          'Varo Cloud handles Seedance 2.0 model access, authentication, task execution, scaling, and usage tracking so your team can focus on the product experience. Start with a single generation, then expand into automated or high-volume workloads through the same API integration.',
+        cta: 'Get API Key',
+        visualAlt: 'Cinematic Seedance 2.0 generation example for production workloads',
+        pillars: [
+          {
+            title: 'Unified authentication',
+            body: 'One API key across every model and endpoint.',
+          },
+          {
+            title: 'Usage and cost tracking',
+            body: 'Per-key spend and quota visible in real time.',
+          },
+          {
+            title: 'Asynchronous generation',
+            body: 'Submit long-running tasks without holding connections.',
+          },
+          {
+            title: 'Scalable request handling',
+            body: 'Burst to thousands of concurrent jobs.',
+          },
+        ],
+      },
+      showcase: {
+        title: 'See What You Can Build with Seedance 2.0',
+        subtitle:
+          'Explore real API-generated examples across advertising, social content, cinematic storytelling, virtual characters, and AI video tools to see how Seedance 2.0 can power your next product or workflow.',
+        leftAlt: 'Seedance 2.0 showcase example — cinematic portrait',
+        centerAlt: 'Seedance 2.0 showcase example — lifestyle character scene',
+        rightAlt: 'Seedance 2.0 showcase example — fashion editorial look',
+      },
+      faq: {
+        title: 'Seedance 2.0 API FAQ',
+        items: [
+          {
+            id: 'key',
+            question: '1. How do I get a Seedance 2.0 API key and make my first call?',
+            answer:
+              'Create a Varo Cloud account, add funds to your prepaid balance, and generate an API key from the API Keys page. Then submit a generation request through POST /v1/generations and poll the task until the result is ready. Varo also provides copy-ready HTTP, Python, and JavaScript examples on each model page.',
+          },
+          {
+            id: 'fast',
+            question: '2. Seedance 2.0 API vs. Seedance 2.0 Fast API—which should I use?',
+            answer:
+              'Use the standard Seedance 2.0 API when output quality, creative control, and complex multimodal scenes are the priority. Choose a Fast variant, when available on Varo Cloud, for quicker testing, rapid iteration, and higher-volume workflows. Confirm the currently available variants and specifications on the Seedance 2.0 model page before integrating.',
+          },
+          {
+            id: 'formats',
+            question: '3. What input formats does the Seedance 2.0 API accept?',
+            answer:
+              'Seedance 2.0 supports text, image, video, and audio inputs. Its multimodal reference workflow can combine natural-language instructions with up to nine images, three video clips, and three audio clips to guide characters, composition, motion, camera movement, visual effects, and sound.',
+          },
+          {
+            id: 'cost',
+            question: '4. How much does the Seedance 2.0 API cost?',
+            answer:
+              'Seedance 2.0 uses transparent, usage-based pricing on Varo Cloud. The model page displays the applicable per-run price before generation, while the dashboard lets you track spending by task and API key.',
+          },
+          {
+            id: 'scale',
+            question: '5. Is the Seedance 2.0 API production-ready for scale?',
+            answer:
+              'Varo Cloud provides centralized authentication, billing, task management, usage tracking, and scalable API access. Its default API limit is 1,000 requests per 10-minute window per key, and teams with larger production workloads can request a higher quota from Varo Cloud support.',
+          },
+          {
+            id: 'faces',
+            question:
+              '6. Can the Seedance 2.0 API generate realistic human faces and lifelike avatars?',
+            answer:
+              'Seedance 2.0 is designed to produce highly realistic characters, detailed motion, and complex human interactions. Results still depend on the prompt, reference quality, scene complexity, and applicable safety controls, so outputs should be reviewed before commercial or public use.',
+          },
+          {
+            id: 'upload-face',
+            question: "7. Can I upload a real person's face photo to the Seedance 2.0 API?",
+            answer:
+              "Real-person reference images may be restricted or rejected depending on Varo Cloud's current safety policies, the underlying model provider's rules, and whether the user has appropriate consent and usage rights. Check the model page and content requirements before submitting identifiable face images.",
+          },
+          {
+            id: 'audio-video',
+            question: '8. Can Seedance 2.0 generate audio and video together?',
+            answer:
+              'Yes. Seedance 2.0 can jointly generate visuals and synchronized audio, including voices, music, environmental sound, and effects. It supports high-quality multi-shot video output with dual-channel audio, reducing the need for a separate sound-generation workflow.',
+          },
+          {
+            id: 'edit',
+            question: '9. Can I edit or extend an existing video through the API?',
+            answer:
+              'Yes. Seedance 2.0 supports prompt-driven editing of clips, characters, actions, and story elements, as well as video continuation that extends an existing scene while following the requested visual and narrative direction.',
+          },
+        ],
+      },
+      seo: {
+        title: 'Seedance 2.0 API — Cinematic AI Video Generation | Varo.cloud',
+        description:
+          'Access ByteDance Seedance 2.0 on Varo Cloud: text-to-video, image-to-video, and multimodal reference APIs with native audio, subject consistency, and production-ready scaling.',
       },
     },
     docs: {

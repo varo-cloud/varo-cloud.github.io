@@ -228,6 +228,7 @@ function getApiKey() {
   min-height: 455px;
   padding: 40px;
   box-sizing: border-box;
+  border-radius: 24px;
   background: #f4f7f7;
 }
 

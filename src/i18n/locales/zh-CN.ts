@@ -29,6 +29,8 @@ export default {
   },
   nav: {
     models: '模型',
+    allModels: '全部模型',
+    seedance: 'Seedance 2.0',
     aiGenerator: 'AI 生成器',
     pricing: '价格',
     developers: '开发者',
@@ -173,6 +175,7 @@ export default {
       },
       series: {
         'seedance-2.0': 'Seedance',
+        'bytedance-seedance-2-0': 'Seedance',
         'kling-2.6': 'Kling',
         'flux-1': 'Flux',
         'gpt-4o': 'OpenAI',
@@ -200,6 +203,8 @@ export default {
       emptyFavourite: '暂无收藏模型。点击模型卡片上的爱心即可收藏。',
       emptyRecent: '暂无最近使用的模型。点击模型卡片后会显示在这里。',
       viewMore: '查看更多',
+      expandAll: '展开全部{count}个',
+      collapseAll: '收起',
       tabs: {
         latest: '最新模型',
         favourite: '收藏模型',
@@ -697,6 +702,172 @@ export default {
         title: '开发者 — Varo.cloud 顶尖 AI 模型 API',
         description:
           '用一套兼容 OpenAI 的 API 接入全球领先 AI 模型。从身份验证、生成任务到代码示例，快速开始使用 Varo.cloud。',
+      },
+    },
+    seedance: {
+      hero: {
+        title: '创意 AI 生产，一朵云搞定',
+        subtitle:
+          '无需自建完整基础设施，即可构建并部署 AI 驱动的创意产品。Varo.cloud 将模型、工作流与生产部署整合在同一云平台。',
+      },
+      intro: {
+        hiddenTitle: 'Varo Cloud 上的 Seedance 2.0',
+        lead:
+          '将字节跳动 Seedance 2.0 接入你的产品，通过文本、图片、视频与音频参考生成电影级视频。用简洁的 Varo Cloud API 实现声画同步、更强主体一致性，并掌控复杂场景。',
+        leftAlt: 'Seedance 2.0 电影感视频示例：日落中的人物',
+        rightAlt: 'Seedance 2.0 电影感视频示例：未来感光影',
+      },
+      api: {
+        title: '统一多模态 API',
+        subtitle:
+          '任意输入，直达视频。Seedance 2.0 支持混合多模态参考，最多九张图片、三段视频与三段音频。',
+        cta: '查看更多模型',
+        cards: [
+          {
+            title: '文生视频 API',
+            body: '用自然语言提示词生成完整视频，覆盖运动、镜头、视觉风格与原生音频。',
+            alt: 'Seedance 2.0 文生视频 API 示例',
+          },
+          {
+            title: '图生视频 API',
+            body: '让静态图动起来，或指定首尾帧，生成可控的视觉序列。',
+            alt: 'Seedance 2.0 图生视频 API 示例',
+          },
+          {
+            title: '参考生视频 API',
+            body: '结合图片、视频片段、音频与指令，复现角色、动作、构图、镜头语言与声音。',
+            alt: 'Seedance 2.0 参考生视频 API 示例',
+          },
+        ],
+      },
+      capabilities: {
+        title: '用 Varo Seedance 2.0 API 创建、编辑与延展',
+        subtitle:
+          'Seedance 2.0 将原生音视频生成、精细创意控制与进阶编辑能力结合，帮助开发者构建更完整、更灵活的视频体验。',
+        items: [
+          {
+            title: '声画同生',
+            body: '在同一工作流中创建同步的视频与音频。',
+            image: '/assets/seedance/feature-generate.jpg',
+            alt: '用 Seedance 2.0 同步生成视频与音频',
+          },
+          {
+            title: '细节可控',
+            body: '精确控制运动、镜头、风格与节奏。',
+            image: '/assets/seedance/feature-direct.jpg',
+            alt: '用 Seedance 2.0 精细控制创意细节',
+          },
+          {
+            title: '编辑延展',
+            body: '精修场景，或延续已有视频。',
+            image: '/assets/seedance/feature-edit.jpg',
+            alt: '用 Seedance 2.0 编辑与延展视频',
+          },
+        ],
+      },
+      compare: {
+        title: 'Seedance 2.0 对比其他模型',
+        subtitle: '在多类任务的多个维度上，Seedance 2.0 处于领先位置。',
+        radarT2vAlt: 'Seedance 2.0 文生视频评测雷达图',
+        radarMultimodalAlt: 'Seedance 2.0 多模态任务评测雷达图',
+        radarI2vAlt: 'Seedance 2.0 图生视频评测雷达图',
+      },
+      production: {
+        title: '为生产而生，一个简单 API',
+        subtitle:
+          'Varo Cloud 负责 Seedance 2.0 的模型接入、鉴权、任务执行、扩缩容与用量追踪，让团队专注产品体验。从单次生成起步，通过同一套 API 扩展到自动化或大规模工作负载。',
+        cta: '获取 API Key',
+        visualAlt: '面向生产负载的 Seedance 2.0 电影感生成示例',
+        pillars: [
+          {
+            title: '统一鉴权',
+            body: '一把 API Key 覆盖全部模型与端点。',
+          },
+          {
+            title: '用量与成本追踪',
+            body: '按 Key 实时查看消费与配额。',
+          },
+          {
+            title: '异步生成',
+            body: '提交长时任务，无需保持连接。',
+          },
+          {
+            title: '可扩展请求处理',
+            body: '支持突发至数千并发任务。',
+          },
+        ],
+      },
+      showcase: {
+        title: '看看 Seedance 2.0 能做出什么',
+        subtitle:
+          '浏览广告、社媒内容、电影叙事、虚拟角色与 AI 视频工具等真实 API 生成案例，了解 Seedance 2.0 如何驱动你的下一个产品或工作流。',
+        leftAlt: 'Seedance 2.0 案例 — 电影感人像',
+        centerAlt: 'Seedance 2.0 案例 — 生活化角色场景',
+        rightAlt: 'Seedance 2.0 案例 — 时尚大片风格',
+      },
+      faq: {
+        title: 'Seedance 2.0 API 常见问题',
+        items: [
+          {
+            id: 'key',
+            question: '1. 如何获取 Seedance 2.0 API Key 并发起第一次调用？',
+            answer:
+              '创建 Varo Cloud 账号，向预付余额充值，并在 API Keys 页面生成密钥。然后通过 POST /v1/generations 提交生成请求，轮询任务直至结果就绪。Varo 也在每个模型页提供可直接复制的 HTTP、Python 与 JavaScript 示例。',
+          },
+          {
+            id: 'fast',
+            question: '2. Seedance 2.0 API 与 Seedance 2.0 Fast API，该选哪个？',
+            answer:
+              '当你优先考虑输出质量、创意控制与复杂多模态场景时，使用标准 Seedance 2.0 API。若 Varo Cloud 提供 Fast 版本，可将其用于更快测试、快速迭代与更高吞吐工作流。接入前请在 Seedance 2.0 模型页确认当前可用版本与规格。',
+          },
+          {
+            id: 'formats',
+            question: '3. Seedance 2.0 API 支持哪些输入格式？',
+            answer:
+              'Seedance 2.0 支持文本、图片、视频与音频输入。其多模态参考工作流可将自然语言指令与最多九张图片、三段视频、三段音频结合，用于引导角色、构图、运动、镜头、视觉效果与声音。',
+          },
+          {
+            id: 'cost',
+            question: '4. Seedance 2.0 API 怎么收费？',
+            answer:
+              'Seedance 2.0 在 Varo Cloud 上采用透明的按用量计费。模型页会在生成前展示适用的单次价格，控制台则可按任务与 API Key 追踪消费。',
+          },
+          {
+            id: 'scale',
+            question: '5. Seedance 2.0 API 是否适合生产级扩缩？',
+            answer:
+              'Varo Cloud 提供集中鉴权、计费、任务管理、用量追踪与可扩展 API 接入。默认限额为每个 Key 每 10 分钟 1,000 次请求；更大生产负载可向 Varo Cloud 支持申请更高配额。',
+          },
+          {
+            id: 'faces',
+            question: '6. Seedance 2.0 API 能否生成逼真人脸与虚拟形象？',
+            answer:
+              'Seedance 2.0 旨在生成高度逼真的角色、细腻动作与复杂人物互动。结果仍取决于提示词、参考质量、场景复杂度与适用的安全控制，因此在商业或公开使用前应先审阅输出。',
+          },
+          {
+            id: 'upload-face',
+            question: '7. 能否向 Seedance 2.0 API 上传真人面部照片？',
+            answer:
+              '真人参考图可能因 Varo Cloud 当前安全策略、底层模型提供方规则，以及用户是否具备适当同意与使用权而被限制或拒绝。提交可识别人脸图像前，请查看模型页与内容要求。',
+          },
+          {
+            id: 'audio-video',
+            question: '8. Seedance 2.0 能否同时生成音频与视频？',
+            answer:
+              '可以。Seedance 2.0 可联合生成画面与同步音频，包括人声、音乐、环境音与音效。它支持高质量多镜头视频输出与双声道音频，减少单独音效生成流程的需求。',
+          },
+          {
+            id: 'edit',
+            question: '9. 能否通过 API 编辑或延展已有视频？',
+            answer:
+              '可以。Seedance 2.0 支持基于提示词编辑片段、角色、动作与故事元素，也支持视频续写：在遵循请求的视觉与叙事方向的同时延展已有场景。',
+          },
+        ],
+      },
+      seo: {
+        title: 'Seedance 2.0 API — 电影级 AI 视频生成 | Varo.cloud',
+        description:
+          '在 Varo Cloud 使用字节跳动 Seedance 2.0：文生视频、图生视频与多模态参考 API，支持原生音频、主体一致性与生产级扩缩。',
       },
     },
     docs: {

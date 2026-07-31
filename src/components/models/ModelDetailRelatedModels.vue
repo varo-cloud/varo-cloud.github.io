@@ -28,6 +28,13 @@ function thumbnailSrc(model: Model): string {
   return assetUrl(model.thumbnailUrl ?? '/assets/models/card-thumb.jpg')
 }
 
+/** Split slug into lines that break after each `/`, e.g. `a/b/c` → `['a/', 'b/', 'c']`. */
+function slugLines(id: string): string[] {
+  const parts = id.split('/')
+  if (parts.length <= 1) return [id]
+  return parts.map((part, index) => (index < parts.length - 1 ? `${part}/` : part))
+}
+
 function goToModel(slug: string) {
   if (slug === props.modelId) return
   void push({ name: 'model-detail', params: { slug } })
@@ -90,7 +97,13 @@ watch(
         <div class="related-models__glow" aria-hidden="true" />
         <div class="related-models__text">
           <span class="related-models__name">{{ model.displayName }}</span>
-          <span class="related-models__slug">{{ model.id }}</span>
+          <span class="related-models__slug">
+            <span
+              v-for="(line, index) in slugLines(model.id)"
+              :key="`${model.id}-${index}`"
+              class="related-models__slug-line"
+            >{{ line }}</span>
+          </span>
         </div>
       </button>
     </div>
@@ -125,7 +138,8 @@ watch(
   gap: 12px;
   flex: 0 0 252px;
   width: 252px;
-  height: 96px;
+  min-height: 96px;
+  height: auto;
   padding: 8px;
   border: 0.5px solid rgba(255, 255, 255, 0.1);
   border-radius: 16px;
@@ -196,14 +210,17 @@ watch(
 }
 
 .related-models__slug {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
   font-size: 12px;
   font-weight: 500;
   line-height: 14px;
   color: #ebf4fb;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+}
+
+.related-models__slug-line {
+  display: block;
   word-break: break-word;
 }
 </style>

@@ -302,14 +302,15 @@ onMounted(() => {
   gap: 16px;
   max-width: 1360px;
   margin: 0 auto;
-  align-items: start;
+  align-items: stretch;
 }
 
 .ai-generator-page__panel-placeholder {
   display: flex;
   align-items: center;
   justify-content: center;
-  min-height: 320px;
+  height: 100%;
+  min-height: 600px;
   padding: 24px;
   background: #13131c;
   border: 0.5px solid #2d2d38;

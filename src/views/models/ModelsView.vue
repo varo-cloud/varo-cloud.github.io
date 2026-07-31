@@ -378,7 +378,7 @@ onMounted(() => {
     <section class="models-hero" aria-labelledby="models-hero-title">
       <img
         class="models-hero__bg"
-        :src="assetUrl('/assets/models/hero-bg.jpg')"
+        :src="assetUrl('https://assets.varo.cloud/uploads/bbe6e8732f9b4246ac4b9dc9657c860e.jpg')"
         alt=""
         aria-hidden="true"
       />
@@ -518,8 +518,10 @@ onMounted(() => {
   display: flex;
   align-items: flex-start;
   justify-content: center;
+  height: 460px;
   min-height: 460px;
-  padding: 180px 16px 48px;
+  /* Figma Models hero: title block at y=230 within 460px frame */
+  padding: 230px 16px 48px;
   overflow: hidden;
   background: #0a1a3a;
 }
@@ -537,7 +539,7 @@ onMounted(() => {
 .models-hero__overlay {
   position: absolute;
   inset: 0;
-  background: rgba(0, 0, 0, 0.25);
+  background: rgba(0, 0, 0, 0.5);
   pointer-events: none;
 }
 
@@ -553,28 +555,30 @@ onMounted(() => {
 .models-hero__content {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: center;
   gap: 24px;
-  text-align: left;
+  margin: 0 auto;
+  max-width: 1242px;
+  text-align: center;
 }
 
 .models-hero__title {
   margin: 0;
-  max-width: 1242px;
+  width: 100%;
   font-size: clamp(36px, 5vw, 56px);
   font-weight: 900;
   line-height: 1.14;
-  color: #fff;
+  color: #ebf4fb;
   word-break: break-word;
 }
 
 .models-hero__subtitle {
   margin: 0;
-  max-width: 1242px;
+  width: 100%;
   font-size: clamp(16px, 2.5vw, 20px);
   font-weight: 600;
   line-height: 1.2;
-  color: rgba(255, 255, 255, 0.5);
+  color: rgba(235, 244, 251, 0.5);
   word-break: break-word;
 }
 
@@ -842,13 +846,9 @@ onMounted(() => {
 
 @media (max-width: 767px) {
   .models-hero {
-    align-items: flex-start;
+    height: auto;
     min-height: 0;
-    padding: 96px 16px 40px;
-  }
-
-  .models-hero__inner {
-    padding-bottom: 0;
+    padding: 88px 16px 40px;
   }
 
   .models-hero__content {

@@ -517,6 +517,8 @@ onBeforeUnmount(() => {
 .input-panel {
   display: flex;
   flex-direction: column;
+  height: 100%;
+  min-height: 600px;
   background: #13131c;
   border: 0.5px solid #2d2d38;
   border-radius: 16px;

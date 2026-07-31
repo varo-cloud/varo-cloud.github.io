@@ -29,6 +29,7 @@ export const OG_IMAGE_ALT = 'Varo.cloud — The Generative AI Cloud for Creators
 export type SeoRouteKey =
   | 'home'
   | 'models'
+  | 'seedance'
   | 'model-detail'
   | 'ai-generator'
   | 'pricing'
@@ -57,6 +58,10 @@ export const SEO_BY_ROUTE: Record<SeoRouteKey, SeoDefinition> = {
   models: {
     titleKey: 'pages.models.seo.title',
     descriptionKey: 'pages.models.seo.description',
+  },
+  seedance: {
+    titleKey: 'pages.seedance.seo.title',
+    descriptionKey: 'pages.seedance.seo.description',
   },
   'model-detail': {
     titleKey: 'pages.models.seo.detailTitle',
