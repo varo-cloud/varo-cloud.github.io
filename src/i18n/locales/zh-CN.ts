@@ -883,6 +883,7 @@ export default {
       loginTab: '登录',
       signupTab: '注册',
       welcome: '欢迎来到 Varo.Cloud',
+      close: '关闭',
       turnstilePreparing: '正在准备安全登录...',
       turnstileReverifyForLogin: '验证码已发送，请再次完成人机验证后登录',
       turnstileRequired: '请先完成人机验证',

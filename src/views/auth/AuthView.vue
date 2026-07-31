@@ -7,8 +7,6 @@ import { useAppMessage } from '@/composables/useAppMessage'
 import { requestOtp, verifyOtp } from '@/api/auth'
 import { AnalyticsEvents, setAnalyticsUserId, trackEvent } from '@/analytics'
 import { useUserStore } from '@/stores/user'
-import AppHeader from '@/components/layout/AppHeader.vue'
-import AppFooter from '@/components/layout/AppFooter.vue'
 import TurnstileWidget from '@/components/auth/TurnstileWidget.vue'
 import { assetUrl } from '@/utils/assetUrl'
 import {
@@ -219,6 +217,10 @@ function handleGithubLogin() {
   void handleOAuthLogin('github')
 }
 
+function handleClose() {
+  push({ name: 'home' })
+}
+
 onMounted(() => {
   lastAuthMethod.value = getLastAuthMethod()
 
@@ -235,9 +237,29 @@ onUnmounted(() => {
 
 <template>
   <div class="auth-page">
-    <AppHeader />
+    <aside class="auth-page__visual" aria-hidden="true">
+      <img
+        class="auth-page__visual-img"
+        :src="assetUrl('/assets/auth/hero.jpg')"
+        alt=""
+      />
+    </aside>
 
-    <main class="auth-page__main">
+    <main class="auth-page__panel">
+      <button
+        type="button"
+        class="auth-page__close"
+        :aria-label="t('pages.auth.close')"
+        @click="handleClose"
+      >
+        <img
+          :src="assetUrl('/assets/auth/close.svg')"
+          alt=""
+          aria-hidden="true"
+          class="auth-page__close-icon"
+        />
+      </button>
+
       <div class="auth-card">
         <div class="auth-card__header">
           <h1 class="auth-card__title">{{ t('pages.auth.welcome') }}</h1>
@@ -246,7 +268,7 @@ onUnmounted(() => {
         <div class="auth-card__turnstile">
           <TurnstileWidget
             ref="turnstileWidgetRef"
-            theme="dark"
+            theme="light"
             :language="turnstileLanguage"
             @verified="handleTurnstileVerified"
             @ready="handleTurnstileReady"
@@ -329,7 +351,7 @@ onUnmounted(() => {
               @click="handleGoogleLogin"
             >
               <img
-                :src="assetUrl('/assets/icons/google.svg')"
+                :src="assetUrl('/assets/auth/google.svg')"
                 alt=""
                 aria-hidden="true"
                 class="auth-card__social-icon"
@@ -349,7 +371,7 @@ onUnmounted(() => {
               @click="handleGithubLogin"
             >
               <img
-                :src="assetUrl('/assets/icons/github.svg')"
+                :src="assetUrl('/assets/auth/github.svg')"
                 alt=""
                 aria-hidden="true"
                 class="auth-card__social-icon"
@@ -367,39 +389,87 @@ onUnmounted(() => {
         </form>
       </div>
     </main>
-
-    <AppFooter />
   </div>
 </template>
 
 <style scoped>
 .auth-page {
   display: flex;
-  flex-direction: column;
-  min-height: 100vh;
-  background: #0a0a0e;
-  color: #ebf4fb;
+  height: 100vh;
+  height: 100dvh;
+  max-height: 100vh;
+  max-height: 100dvh;
+  overflow: hidden;
+  background: #fff;
+  color: #222;
 }
 
-.auth-page__main {
+.auth-page__visual {
+  position: relative;
+  flex: 1 1 50%;
+  min-width: 0;
+  min-height: 0;
+  overflow: hidden;
+  background: #0a0a0e;
+}
+
+.auth-page__visual-img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center left;
+}
+
+.auth-page__panel {
+  position: relative;
   display: flex;
-  flex: 1;
+  flex: 1 1 50%;
   align-items: center;
   justify-content: center;
-  padding: 40px 16px 64px;
+  min-width: 0;
+  min-height: 0;
+  height: 100%;
+  padding: 80px 40px;
+  overflow-x: hidden;
+  overflow-y: auto;
+  background: #fff;
+}
+
+.auth-page__close {
+  position: absolute;
+  top: 60px;
+  right: 53px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  padding: 0;
+  border: none;
+  border-radius: 8px;
+  background: #f5f5f5;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.auth-page__close:hover {
+  background: #ececec;
+}
+
+.auth-page__close-icon {
+  width: 20px;
+  height: 20px;
+  display: block;
 }
 
 .auth-card {
   width: 100%;
-  max-width: 510px;
-  padding: 36px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
-  border-radius: 16px;
-  background: #13131c;
+  max-width: 480px;
 }
 
 .auth-card__header {
-  margin-bottom: 16px;
+  margin-bottom: 48px;
 }
 
 .auth-card__turnstile {
@@ -424,11 +494,12 @@ onUnmounted(() => {
 
 .auth-card__title {
   margin: 0;
-  font-size: 24px;
+  font-size: 36px;
   font-weight: 500;
-  line-height: 1.2;
+  line-height: normal;
   letter-spacing: -0.408px;
-  color: #ebf4fb;
+  color: #222;
+  text-align: center;
 }
 
 .auth-card__form {
@@ -448,7 +519,7 @@ onUnmounted(() => {
   font-weight: 400;
   line-height: 14px;
   letter-spacing: -0.408px;
-  color: #ebf4fb;
+  color: #222;
 }
 
 .auth-field__input-wrap {
@@ -458,11 +529,11 @@ onUnmounted(() => {
 .auth-field__input {
   width: 100%;
   height: 48px;
-  padding: 0 12px;
-  border: 1px solid rgba(255, 255, 255, 0.1);
+  padding: 0 16px;
+  border: 1px solid transparent;
   border-radius: 8px;
-  background: rgba(255, 255, 255, 0.06);
-  color: #ebf4fb;
+  background: #f6f6f6;
+  color: #222;
   font-size: 14px;
   line-height: 1;
   letter-spacing: -0.408px;
@@ -498,7 +569,7 @@ onUnmounted(() => {
 .auth-field__get-code {
   position: absolute;
   top: 50%;
-  right: 12px;
+  right: 16px;
   transform: translateY(-50%);
   padding: 0;
   border: none;
@@ -563,7 +634,7 @@ onUnmounted(() => {
 .auth-card__divider-line {
   flex: 1;
   height: 1px;
-  background: rgba(255, 255, 255, 0.1);
+  background: #eee;
 }
 
 .auth-card__divider-text {
@@ -588,7 +659,7 @@ onUnmounted(() => {
   padding: 0 4px;
   border-radius: 8px 0 8px 0;
   background: #06b6d4;
-  color: #ebf4fb;
+  color: #222;
   font-size: 10px;
   line-height: 1;
   white-space: nowrap;
@@ -612,7 +683,7 @@ onUnmounted(() => {
 .auth-card__social--google {
   border: 1px solid #06b6d4;
   background: rgba(22, 218, 235, 0.1);
-  color: #e0e0e0;
+  color: #222;
 }
 
 .auth-card__social--google:hover:not(:disabled) {
@@ -620,13 +691,13 @@ onUnmounted(() => {
 }
 
 .auth-card__social--github {
-  border: 1px solid #9b9dab;
+  border: 1px solid #929ca5;
   background: transparent;
-  color: #e0e0e0;
+  color: #222;
 }
 
 .auth-card__social--github:hover:not(:disabled) {
-  background: rgba(255, 255, 255, 0.04);
+  background: rgba(0, 0, 0, 0.03);
 }
 
 .auth-card__social:disabled {
@@ -642,14 +713,14 @@ onUnmounted(() => {
 
 .auth-card__terms {
   margin: 0;
-  font-size: 12px;
+  font-size: 14px;
   line-height: 1.5;
   text-align: center;
   color: #808080;
 }
 
 .auth-card__terms a {
-  color: #ebf4fb;
+  color: #06b6d4;
   text-decoration: underline;
   text-decoration-style: dotted;
   text-underline-offset: 2px;
@@ -659,17 +730,32 @@ onUnmounted(() => {
   opacity: 0.85;
 }
 
-@media (max-width: 767px) {
-  .auth-page__main {
-    padding: 24px 12px 48px;
+@media (max-width: 959px) {
+  .auth-page {
+    flex-direction: column;
   }
 
-  .auth-card {
-    padding: 24px 20px;
+  .auth-page__visual {
+    display: none;
+  }
+
+  .auth-page__panel {
+    flex: 1 1 auto;
+    width: 100%;
+    padding: 72px 20px 48px;
+  }
+
+  .auth-page__close {
+    top: 20px;
+    right: 20px;
+  }
+
+  .auth-card__header {
+    margin-bottom: 32px;
   }
 
   .auth-card__title {
-    font-size: 20px;
+    font-size: 28px;
   }
 
   .auth-field__input--code {
@@ -678,6 +764,25 @@ onUnmounted(() => {
 
   .auth-field__get-code {
     font-size: 13px;
+  }
+}
+
+@media (max-height: 860px) {
+  .auth-page__panel {
+    padding-top: 56px;
+    padding-bottom: 40px;
+  }
+
+  .auth-card__header {
+    margin-bottom: 28px;
+  }
+
+  .auth-card__turnstile {
+    margin-bottom: 16px;
+  }
+
+  .auth-card__form {
+    gap: 16px;
   }
 }
 </style>
