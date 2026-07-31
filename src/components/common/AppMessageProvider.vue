@@ -25,6 +25,7 @@ provide(appMessageApiKey, api)
           :type="item.type"
           :content="item.content"
           :closable="item.closable"
+          :theme="item.theme"
           @close="api.destroy(item.id)"
         />
       </TransitionGroup>
