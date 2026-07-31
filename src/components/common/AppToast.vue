@@ -1,19 +1,29 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import AppIcon, { type AppIconName } from '@/components/common/AppIcon.vue'
-import type { AppMessageType } from '@/composables/useAppMessage'
+import type { AppMessageTheme, AppMessageType } from '@/composables/useAppMessage'
 
-const props = defineProps<{
-  type: AppMessageType
-  content: string
-  closable?: boolean
-}>()
+const props = withDefaults(
+  defineProps<{
+    type: AppMessageType
+    content: string
+    closable?: boolean
+    theme?: AppMessageTheme
+  }>(),
+  {
+    closable: true,
+    theme: 'dark',
+  },
+)
 
 const emit = defineEmits<{
   close: []
 }>()
 
-const variantClass = computed(() => `app-toast--${props.type}`)
+const variantClass = computed(() => [
+  `app-toast--${props.type}`,
+  `app-toast--theme-${props.theme}`,
+])
 
 const iconByType: Record<Exclude<AppMessageType, 'loading'>, AppIconName> = {
   success: 'toast-success',
@@ -53,7 +63,6 @@ const iconByType: Record<Exclude<AppMessageType, 'loading'>, AppIconName> = {
   min-height: 32px;
   padding: 8px 12px;
   border-radius: 8px;
-  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
   font-size: 12px;
   line-height: 16px;
 }
@@ -81,7 +90,6 @@ const iconByType: Record<Exclude<AppMessageType, 'loading'>, AppIconName> = {
   padding: 0;
   border: 0;
   background: transparent;
-  color: var(--text-secondary);
   opacity: 0.72;
   cursor: pointer;
 }
@@ -99,29 +107,74 @@ const iconByType: Record<Exclude<AppMessageType, 'loading'>, AppIconName> = {
   animation: app-toast-spin 0.8s linear infinite;
 }
 
-.app-toast--success {
+/* Dark theme (default) — for dark app pages */
+.app-toast--theme-dark {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.28);
+  color: var(--text-primary);
+}
+
+.app-toast--theme-dark .app-toast__close {
+  color: var(--text-secondary);
+}
+
+.app-toast--theme-dark.app-toast--success {
   background: rgba(0, 187, 131, 0.1);
-  color: var(--text-primary);
 }
 
-.app-toast--error {
+.app-toast--theme-dark.app-toast--error {
   background: rgba(223, 28, 65, 0.1);
-  color: var(--text-primary);
 }
 
-.app-toast--warning {
+.app-toast--theme-dark.app-toast--warning {
   background: rgba(242, 123, 44, 0.1);
-  color: var(--text-primary);
 }
 
-.app-toast--info {
+.app-toast--theme-dark.app-toast--info {
   background: rgba(55, 93, 251, 0.1);
-  color: var(--text-primary);
 }
 
-.app-toast--loading {
+.app-toast--theme-dark.app-toast--loading {
   background: rgba(255, 255, 255, 0.06);
-  color: var(--text-primary);
+}
+
+/* Light theme — for light backgrounds (e.g. auth) */
+.app-toast--theme-light {
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
+  border: 1px solid transparent;
+}
+
+.app-toast--theme-light .app-toast__close {
+  color: #808080;
+}
+
+.app-toast--theme-light.app-toast--success {
+  background: #e8faf3;
+  border-color: rgba(0, 187, 131, 0.28);
+  color: #0a7a55;
+}
+
+.app-toast--theme-light.app-toast--error {
+  background: #fdecef;
+  border-color: rgba(223, 28, 65, 0.28);
+  color: #b3122f;
+}
+
+.app-toast--theme-light.app-toast--warning {
+  background: #fff4eb;
+  border-color: rgba(242, 123, 44, 0.28);
+  color: #b35a14;
+}
+
+.app-toast--theme-light.app-toast--info {
+  background: #eef2ff;
+  border-color: rgba(55, 93, 251, 0.28);
+  color: #2a47c7;
+}
+
+.app-toast--theme-light.app-toast--loading {
+  background: #f6f6f6;
+  border-color: rgba(0, 0, 0, 0.08);
+  color: #222;
 }
 
 @keyframes app-toast-spin {

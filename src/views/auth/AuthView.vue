@@ -136,7 +136,7 @@ async function handleRequestOtp() {
     startResendCooldown()
     // Turnstile token 一次性，发码后需重新验证才能登录
     resetTurnstile()
-    message.success(t('pages.auth.otpSent'))
+    message.success(t('pages.auth.otpSent'), { theme: 'light' })
   } catch (err) {
     resetTurnstile()
     error.value = resolveErrorMessage(err, t('pages.auth.otpRequestError'))

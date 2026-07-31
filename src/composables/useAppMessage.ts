@@ -1,6 +1,7 @@
 import { inject, ref, type InjectionKey, type Ref } from 'vue'
 
 export type AppMessageType = 'success' | 'error' | 'warning' | 'info' | 'loading'
+export type AppMessageTheme = 'dark' | 'light'
 
 export interface AppMessageItem {
   id: number
@@ -8,11 +9,14 @@ export interface AppMessageItem {
   content: string
   duration: number
   closable: boolean
+  /** Visual theme. Default `dark` for dark app pages; use `light` on light backgrounds. */
+  theme: AppMessageTheme
 }
 
 export interface AppMessageOptions {
   duration?: number
   closable?: boolean
+  theme?: AppMessageTheme
 }
 
 export interface AppMessageApi {
@@ -64,6 +68,7 @@ export function createAppMessageController(messages: Ref<AppMessageItem[]>): App
     const id = nextMessageId++
     const duration = options.duration ?? DEFAULT_DURATION[type]
     const closable = options.closable ?? true
+    const theme = options.theme ?? 'dark'
 
     messages.value = [
       ...messages.value,
@@ -73,6 +78,7 @@ export function createAppMessageController(messages: Ref<AppMessageItem[]>): App
         content: normalizeContent(content),
         duration,
         closable,
+        theme,
       },
     ]
 
