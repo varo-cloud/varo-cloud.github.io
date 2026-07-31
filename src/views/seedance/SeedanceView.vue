@@ -2,7 +2,7 @@
 import { computed, nextTick, onMounted, onUnmounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useHead } from '@unhead/vue'
-import { fetchModels } from '@/api/models'
+import { fetchModelFacets, fetchModels } from '@/api/models'
 import { useLocaleRouter } from '@/composables/useLocaleRouter'
 import { useUserStore } from '@/stores/user'
 import { assetUrl } from '@/utils/assetUrl'
@@ -10,8 +10,8 @@ import { absoluteUrl, SITE_NAME } from '@/seo/config'
 import HighlightedCodeBlock from '@/components/common/HighlightedCodeBlock.vue'
 import AppIcon from '@/components/common/AppIcon.vue'
 import { buildApiSubmitSnippet } from '@/utils/playground-request-snippets'
+import type { BaseModelFacetItem } from '@/types'
 
-const SEEDANCE_BASE_MODEL = 'seedance-2.0'
 /** Card order matches `pages.seedance.api.cards` */
 const API_CARD_CAPABILITIES = [
   'text-to-video',
@@ -19,7 +19,6 @@ const API_CARD_CAPABILITIES = [
   'reference-to-video',
 ] as const
 
-const DEMO_MODEL_SLUG = 'seedance-2.0/image-to-video'
 const DEMO_FORM_VALUES = {
   prompt: 'A cinematic shot of a futuristic city at sunset',
   image_url: 'https://example.com/input.jpg',
@@ -33,9 +32,11 @@ const userStore = useUserStore()
 
 const openFaqId = ref('fast')
 const activeCapability = ref(0)
-/** Resolved catalog slugs from `/models?base_model=seedance-2.0` */
+/** Base model slug from `/models/facets` (e.g. `bytedance-seedance-2-0`) */
+const seedanceBaseModel = ref<string | null>(null)
+/** Catalog slugs (`model.id`) resolved from `/models?base_model=…` */
 const apiCardSlugs = ref<(string | null)[]>(API_CARD_CAPABILITIES.map(() => null))
-const demoModelSlug = ref(DEMO_MODEL_SLUG)
+const demoModelSlug = ref('')
 
 const faqItems = computed(() => {
   const items = tm('pages.seedance.faq.items') as Array<{
@@ -340,6 +341,11 @@ function toggleFaq(id: string) {
 }
 
 function goToModels() {
+  // Same query shape as ModelsView `buildListQuery` / base-model tag filter
+  if (seedanceBaseModel.value) {
+    push({ name: 'models', query: { base_model: seedanceBaseModel.value } })
+    return
+  }
   push({ name: 'models' })
 }
 
@@ -351,8 +357,16 @@ function goToApiKey() {
   push({ name: 'auth', query: { redirect: localePath('/seedance') } })
 }
 
+/** Same as ModelCard: navigate with API catalog slug (`model.id`). */
 function goToModel(slug: string) {
   push({ name: 'model-detail', params: { slug } })
+}
+
+function resolveSeedanceBaseModel(baseModels: BaseModelFacetItem[]): string | null {
+  const matches = baseModels.filter((m) => /seedance/i.test(m.slug))
+  if (matches.length === 0) return null
+  const preferred = matches.find((m) => /2[.-]?0/.test(m.slug))
+  return (preferred ?? matches[0])?.slug ?? null
 }
 
 function resolveSlugForCapability(
@@ -374,8 +388,13 @@ function resolveSlugForCapability(
 
 async function resolveSeedanceModelSlugs() {
   try {
+    const facets = await fetchModelFacets()
+    const baseModel = resolveSeedanceBaseModel(facets.base_models)
+    seedanceBaseModel.value = baseModel
+    if (!baseModel) return
+
     const page = await fetchModels({
-      base_model: SEEDANCE_BASE_MODEL,
+      base_model: baseModel,
       offset: 0,
       limit: 50,
     })
@@ -383,22 +402,16 @@ async function resolveSeedanceModelSlugs() {
     apiCardSlugs.value = API_CARD_CAPABILITIES.map((capability) =>
       resolveSlugForCapability(capability, items),
     )
-    const imageToVideo =
-      resolveSlugForCapability('image-to-video', items) ?? DEMO_MODEL_SLUG
-    demoModelSlug.value = imageToVideo
+    const imageToVideo = resolveSlugForCapability('image-to-video', items)
+    if (imageToVideo) demoModelSlug.value = imageToVideo
   } catch {
-    apiCardSlugs.value = API_CARD_CAPABILITIES.map(
-      (capability) => `${SEEDANCE_BASE_MODEL}/${capability}`,
-    )
+    seedanceBaseModel.value = null
+    apiCardSlugs.value = API_CARD_CAPABILITIES.map(() => null)
   }
 }
 
 function onApiCardClick(index: number) {
-  const resolved = apiCardSlugs.value[index]
-  const fallback = API_CARD_CAPABILITIES[index]
-    ? `${SEEDANCE_BASE_MODEL}/${API_CARD_CAPABILITIES[index]}`
-    : null
-  const slug = resolved ?? fallback
+  const slug = apiCardSlugs.value[index]
   if (!slug) {
     goToModels()
     return

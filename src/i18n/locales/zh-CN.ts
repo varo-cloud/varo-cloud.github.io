@@ -175,6 +175,7 @@ export default {
       },
       series: {
         'seedance-2.0': 'Seedance',
+        'bytedance-seedance-2-0': 'Seedance',
         'kling-2.6': 'Kling',
         'flux-1': 'Flux',
         'gpt-4o': 'OpenAI',
