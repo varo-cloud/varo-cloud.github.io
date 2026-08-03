@@ -1,9 +1,3 @@
-export type ContentLocale = 'en-US' | 'zh-CN'
-
-export type LocalizedString = Partial<Record<ContentLocale, string>>
-
-export const CONTENT_LOCALES: ContentLocale[] = ['en-US', 'zh-CN']
-
 const ID_PATTERN = /^[a-z0-9][a-z0-9-]*$/
 
 export interface OfferingExample {
@@ -16,39 +10,6 @@ export interface OfferingExample {
   outputUrl?: string | null
   thumbnailUrl?: string | null
   sortOrder?: number | null
-}
-
-export interface OfferingExampleForm {
-  id: string
-  title: LocalizedString
-  description: LocalizedString
-  inputJson: string
-  outputUrl: string
-  thumbnailUrl: string
-  sortOrder: number | null
-}
-
-function emptyLocalizedString(): LocalizedString {
-  return { 'en-US': '', 'zh-CN': '' }
-}
-
-function normalizeLocalizedString(
-  value: LocalizedString | string | undefined | null,
-): LocalizedString {
-  if (!value) return emptyLocalizedString()
-  if (typeof value === 'string') return { 'en-US': value, 'zh-CN': '' }
-  return {
-    'en-US': value['en-US'] ?? '',
-    'zh-CN': value['zh-CN'] ?? '',
-  }
-}
-
-function localizedStringToPayload(value: LocalizedString | undefined): Record<string, string> {
-  const result: Record<string, string> = {}
-  const normalized = normalizeLocalizedString(value)
-  if (normalized['en-US']?.trim()) result['en-US'] = normalized['en-US'].trim()
-  if (normalized['zh-CN']?.trim()) result['zh-CN'] = normalized['zh-CN'].trim()
-  return result
 }
 
 export function mapApiExample(raw: Record<string, unknown>): OfferingExample {
@@ -65,6 +26,7 @@ export function mapApiExample(raw: Record<string, unknown>): OfferingExample {
   }
 }
 
+/** Matches admin-web `exampleToApiPayload` for PUT `/admin/model-offerings/:id`. */
 export function exampleToApiPayload(example: OfferingExample): Record<string, unknown> {
   const payload: Record<string, unknown> = {
     id: example.id,
@@ -82,65 +44,6 @@ export function exampleToApiPayload(example: OfferingExample): Record<string, un
   if (example.thumbnailUrl?.trim()) payload.thumbnail_url = example.thumbnailUrl.trim()
   if (example.sortOrder != null) payload.sort_order = example.sortOrder
   return payload
-}
-
-export function formToExample(form: OfferingExampleForm): OfferingExample {
-  const titleEn = form.title['en-US']?.trim() ?? ''
-  const titleI18nPayload = localizedStringToPayload(form.title)
-  delete titleI18nPayload['en-US']
-  const titleI18n = Object.keys(titleI18nPayload).length > 0 ? titleI18nPayload : null
-
-  const descEn = form.description['en-US']?.trim() ?? ''
-  const descI18nPayload = localizedStringToPayload(form.description)
-  delete descI18nPayload['en-US']
-  const descriptionI18n = Object.keys(descI18nPayload).length > 0 ? descI18nPayload : null
-
-  const descZh = form.description['zh-CN']?.trim()
-  const description = descEn || descZh ? descEn || null : null
-
-  return {
-    id: form.id.trim(),
-    title: titleEn,
-    titleI18n,
-    description,
-    descriptionI18n,
-    input: JSON.parse(form.inputJson || '{}'),
-    outputUrl: form.outputUrl.trim() || null,
-    thumbnailUrl: form.thumbnailUrl.trim() || null,
-    sortOrder: form.sortOrder,
-  }
-}
-
-export function validateExampleForm(
-  form: OfferingExampleForm,
-  existingIds: string[],
-  editingId?: string,
-): string | null {
-  const id = form.id.trim()
-  if (!id) return 'missingId'
-  if (!ID_PATTERN.test(id)) return 'invalidId'
-  if (existingIds.includes(id) && id !== editingId) return 'duplicateId'
-
-  if (!form.title['en-US']?.trim()) return 'missingTitleEn'
-
-  try {
-    const input = JSON.parse(form.inputJson || '{}')
-    if (input === null || typeof input !== 'object' || Array.isArray(input)) {
-      return 'invalidInputObject'
-    }
-  } catch {
-    return 'invalidInputJson'
-  }
-
-  for (const urlField of [
-    { key: 'outputUrl' as const, value: form.outputUrl },
-    { key: 'thumbnailUrl' as const, value: form.thumbnailUrl },
-  ]) {
-    const v = urlField.value.trim()
-    if (v && !/^https?:\/\/.+/i.test(v)) return urlField.key === 'outputUrl' ? 'invalidOutputUrl' : 'invalidThumbnailUrl'
-  }
-
-  return null
 }
 
 export function parseOfferingModelId(model: string): { slug: string; capability: string } | null {
@@ -175,20 +78,22 @@ export function suggestExampleTitle(input: Record<string, unknown>): string {
   return prompt.length > 80 ? `${prompt.slice(0, 77)}...` : prompt
 }
 
-export function exampleFormFromGeneration(
+/** Build an offering example from a generation, matching admin-web defaults. */
+export function exampleFromGeneration(
   input: Record<string, unknown>,
   outputUrl: string,
   taskId: string,
   sortOrder = 0,
-): OfferingExampleForm {
-  const title = suggestExampleTitle(input)
+): OfferingExample {
   return {
     id: suggestExampleId(input, taskId),
-    title: { 'en-US': title, 'zh-CN': '' },
-    description: { 'en-US': '', 'zh-CN': '' },
-    inputJson: JSON.stringify(input ?? {}, null, 2),
+    title: suggestExampleTitle(input),
+    titleI18n: null,
+    description: null,
+    descriptionI18n: null,
+    input,
     outputUrl,
-    thumbnailUrl: '',
+    thumbnailUrl: null,
     sortOrder,
   }
 }

@@ -2,16 +2,14 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { NSpin } from 'naive-ui'
-import { fetchGenerationDetail } from '@/api/generations'
+import { AdminOfferingError, setGenerationAsExample } from '@/api/adminOfferings'
 import { fetchModelHistory } from '@/api/models'
 import AppIcon from '@/components/common/AppIcon.vue'
 import AppPagination from '@/components/common/AppPagination.vue'
-import SetGenerationExampleDrawer from '@/components/models/SetGenerationExampleDrawer.vue'
 import { useAppMessage } from '@/composables/useAppMessage'
 import { useLocaleRouter } from '@/composables/useLocaleRouter'
 import { useUserStore } from '@/stores/user'
 import { formatUsd } from '@/utils/currency'
-import { parseOfferingModelId } from '@/utils/offeringExamples'
 import { formatTimestamp } from '@/utils/time'
 import type { ModelHistoryEntry } from '@/types'
 
@@ -23,6 +21,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   viewDetail: [taskId: string]
+  exampleSet: [exampleId: string]
 }>()
 
 const { t, locale } = useI18n()
@@ -38,13 +37,6 @@ const total = ref(0)
 
 const isAdmin = computed(() => userStore.profile?.role === 'admin')
 const settingExampleTaskId = ref<string | null>(null)
-const showSetExample = ref(false)
-const exampleDraft = ref<{
-  model: string
-  taskId: string
-  input: Record<string, unknown>
-  outputUrl: string
-} | null>(null)
 
 const pageOffset = computed(() => (currentPage.value - 1) * HISTORY_PAGE_SIZE)
 
@@ -133,34 +125,31 @@ async function handleSetAsExample(item: ModelHistoryEntry) {
 
   settingExampleTaskId.value = item.taskId
   try {
-    const detail = await fetchGenerationDetail(item.taskId)
-    const status = normalizeStatus(detail.status)
-    if (status !== 'completed') {
-      message.warning(t('pages.modelDetail.history.setExample.notCompleted'))
+    const result = await setGenerationAsExample(item.taskId)
+    message.success(
+      result.replaced
+        ? t('pages.modelDetail.history.setExample.updated', { id: result.exampleId })
+        : t('pages.modelDetail.history.setExample.added', { model: result.model }),
+    )
+    emit('exampleSet', result.exampleId)
+  } catch (e) {
+    if (e instanceof AdminOfferingError) {
+      if (e.code === 'invalid_model') {
+        message.error(t('pages.modelDetail.history.setExample.invalidModel'))
+      } else if (e.code === 'offering_not_found') {
+        message.error(
+          t('pages.modelDetail.history.setExample.offeringNotFound', { model: props.modelSlug }),
+        )
+      } else if (e.code === 'not_completed') {
+        message.warning(t('pages.modelDetail.history.setExample.notCompleted'))
+      } else if (e.code === 'no_output') {
+        message.warning(t('pages.modelDetail.history.setExample.noOutput'))
+      } else {
+        message.error(e.message || t('pages.modelDetail.history.setExample.saveError'))
+      }
       return
     }
-
-    const outputUrl = detail.result.output_url?.trim() ?? ''
-    if (!outputUrl) {
-      message.warning(t('pages.modelDetail.history.setExample.noOutput'))
-      return
-    }
-
-    const modelId = detail.model || props.modelSlug
-    if (!parseOfferingModelId(modelId)) {
-      message.error(t('pages.modelDetail.history.setExample.invalidModel'))
-      return
-    }
-
-    exampleDraft.value = {
-      model: modelId,
-      taskId: detail.taskId,
-      input: { ...detail.request },
-      outputUrl,
-    }
-    showSetExample.value = true
-  } catch {
-    message.error(t('pages.modelDetail.history.detailLoadError'))
+    message.error(t('pages.modelDetail.history.setExample.saveError'))
   } finally {
     settingExampleTaskId.value = null
   }
@@ -285,15 +274,6 @@ onMounted(() => {
         />
       </div>
     </template>
-
-    <SetGenerationExampleDrawer
-      v-if="exampleDraft"
-      v-model:show="showSetExample"
-      :model="exampleDraft.model"
-      :task-id="exampleDraft.taskId"
-      :input="exampleDraft.input"
-      :output-url="exampleDraft.outputUrl"
-    />
   </div>
 </template>
 
