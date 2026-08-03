@@ -238,11 +238,17 @@ onUnmounted(() => {
 <template>
   <div class="auth-page">
     <aside class="auth-page__visual" aria-hidden="true">
-      <img
-        class="auth-page__visual-img"
-        :src="assetUrl('/assets/auth/hero.jpg')"
-        alt=""
+      <video
+        class="auth-page__visual-video"
+        src="https://assets.varo.cloud/uploads/83ba59eeaad74d9190beee5b3fba7dc1.mp4"
+        :poster="assetUrl('/assets/auth/hero.jpg')"
+        autoplay
+        muted
+        loop
+        playsinline
+        preload="metadata"
       />
+      <div class="auth-page__visual-overlay" />
     </aside>
 
     <main class="auth-page__panel">
@@ -413,12 +419,21 @@ onUnmounted(() => {
   background: #0a0a0e;
 }
 
-.auth-page__visual-img {
+.auth-page__visual-video {
+  position: absolute;
+  inset: 0;
   display: block;
   width: 100%;
   height: 100%;
   object-fit: cover;
-  object-position: center left;
+  object-position: center;
+}
+
+.auth-page__visual-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgb(0 0 0 / 40%);
+  pointer-events: none;
 }
 
 .auth-page__panel {
