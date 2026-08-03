@@ -2,6 +2,7 @@
 import { computed, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { NSpin } from 'naive-ui'
+import { AdminOfferingError, setGenerationAsExample } from '@/api/adminOfferings'
 import { fetchModelHistory } from '@/api/models'
 import AppIcon from '@/components/common/AppIcon.vue'
 import AppPagination from '@/components/common/AppPagination.vue'
@@ -20,6 +21,7 @@ const props = defineProps<{
 
 const emit = defineEmits<{
   viewDetail: [taskId: string]
+  exampleSet: [exampleId: string]
 }>()
 
 const { t, locale } = useI18n()
@@ -32,6 +34,9 @@ const loading = ref(false)
 const error = ref<string | null>(null)
 const currentPage = ref(1)
 const total = ref(0)
+
+const isAdmin = computed(() => userStore.profile?.role === 'admin')
+const settingExampleTaskId = ref<string | null>(null)
 
 const pageOffset = computed(() => (currentPage.value - 1) * HISTORY_PAGE_SIZE)
 
@@ -107,6 +112,47 @@ function goToAuth() {
 
 function handleViewDetail(taskId: string) {
   emit('viewDetail', taskId)
+}
+
+function canSetAsExample(item: ModelHistoryEntry) {
+  if (!isAdmin.value) return false
+  const status = normalizeStatus(item.status)
+  return status === 'completed'
+}
+
+async function handleSetAsExample(item: ModelHistoryEntry) {
+  if (!canSetAsExample(item) || settingExampleTaskId.value) return
+
+  settingExampleTaskId.value = item.taskId
+  try {
+    const result = await setGenerationAsExample(item.taskId)
+    message.success(
+      result.replaced
+        ? t('pages.modelDetail.history.setExample.updated', { id: result.exampleId })
+        : t('pages.modelDetail.history.setExample.added', { model: result.model }),
+    )
+    emit('exampleSet', result.exampleId)
+  } catch (e) {
+    if (e instanceof AdminOfferingError) {
+      if (e.code === 'invalid_model') {
+        message.error(t('pages.modelDetail.history.setExample.invalidModel'))
+      } else if (e.code === 'offering_not_found') {
+        message.error(
+          t('pages.modelDetail.history.setExample.offeringNotFound', { model: props.modelSlug }),
+        )
+      } else if (e.code === 'not_completed') {
+        message.warning(t('pages.modelDetail.history.setExample.notCompleted'))
+      } else if (e.code === 'no_output') {
+        message.warning(t('pages.modelDetail.history.setExample.noOutput'))
+      } else {
+        message.error(e.message || t('pages.modelDetail.history.setExample.saveError'))
+      }
+      return
+    }
+    message.error(t('pages.modelDetail.history.setExample.saveError'))
+  } finally {
+    settingExampleTaskId.value = null
+  }
 }
 
 async function copyTaskId(taskId: string) {
@@ -196,13 +242,22 @@ onMounted(() => {
             <span class="model-history__time" role="cell">
               {{ formatTimestamp(item.createdAt, locale, 'compactDatetime') }}
             </span>
-            <span role="cell">
+            <span class="model-history__actions" role="cell">
               <button
                 type="button"
                 class="model-history__view-btn"
                 @click="handleViewDetail(item.taskId)"
               >
                 {{ t('pages.modelDetail.history.viewDetail') }}
+              </button>
+              <button
+                v-if="canSetAsExample(item)"
+                type="button"
+                class="model-history__example-btn"
+                :disabled="settingExampleTaskId === item.taskId"
+                @click="handleSetAsExample(item)"
+              >
+                {{ t('pages.modelDetail.history.setAsExample') }}
               </button>
             </span>
           </div>
@@ -278,7 +333,7 @@ onMounted(() => {
     minmax(88px, 0.7fr)
     minmax(72px, 0.55fr)
     minmax(120px, 0.9fr)
-    minmax(72px, 0.55fr);
+    minmax(120px, 1fr);
   gap: 12px;
   align-items: center;
   padding: 0 32px;
@@ -399,21 +454,46 @@ onMounted(() => {
   margin-top: 16px;
 }
 
-.model-history__view-btn {
+.model-history__actions {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  align-items: center;
+}
+
+.model-history__view-btn,
+.model-history__example-btn {
   min-height: 28px;
   padding: 0 10px;
   border: 0;
   border-radius: 6px;
-  background: rgba(6, 182, 212, 0.12);
-  color: #06b6d4;
   font-family: inherit;
   font-size: 13px;
   font-weight: 500;
   cursor: pointer;
 }
 
+.model-history__view-btn {
+  background: rgba(6, 182, 212, 0.12);
+  color: #06b6d4;
+}
+
 .model-history__view-btn:hover {
   background: rgba(6, 182, 212, 0.2);
+}
+
+.model-history__example-btn {
+  background: rgba(255, 255, 255, 0.06);
+  color: #ebf4fb;
+}
+
+.model-history__example-btn:hover:not(:disabled) {
+  background: rgba(255, 255, 255, 0.1);
+}
+
+.model-history__example-btn:disabled {
+  opacity: 0.55;
+  cursor: wait;
 }
 
 @media (max-width: 1023px) {
@@ -435,8 +515,13 @@ onMounted(() => {
     word-break: break-all;
   }
 
-  .model-history__view-btn {
-    width: 100%;
+  .model-history__actions {
+    grid-column: 1 / -1;
+  }
+
+  .model-history__view-btn,
+  .model-history__example-btn {
+    flex: 1;
   }
 }
 </style>

@@ -5,7 +5,7 @@ import { useI18n } from 'vue-i18n'
 import { useHead } from '@unhead/vue'
 import { useLocaleRouter } from '@/composables/useLocaleRouter'
 import { NSpin } from 'naive-ui'
-import { fetchModelDetail } from '@/api/models'
+import { fetchModelDetail, fetchModelExamples } from '@/api/models'
 import { loadModelInputSchema } from '@/api/modelSchema'
 import { fetchGenerationDetail } from '@/api/generations'
 import ModelDetailHeader from '@/components/models/ModelDetailHeader.vue'
@@ -120,6 +120,23 @@ function handleModelSelect(slug: string) {
 function handleSelectExample(exampleId: string) {
   selectExample(exampleId)
   activeTab.value = 'playground'
+}
+
+async function handleExampleSet(exampleId: string) {
+  if (!model.value) return
+
+  try {
+    const examples = await fetchModelExamples(model.value.id)
+    model.value = {
+      ...model.value,
+      examples: examples.length ? examples : undefined,
+    }
+    if (examples.some((item) => item.id === exampleId)) {
+      selectExample(exampleId)
+    }
+  } catch {
+    // Keep current examples; a full page reload would still pick them up.
+  }
 }
 
 async function loadModel(slug: string) {
@@ -320,6 +337,7 @@ watch(
         v-else-if="activeTab === 'history'"
         :model-slug="model.id"
         @view-detail="handleViewHistoryDetail"
+        @example-set="handleExampleSet"
       />
 
       <ModelDetailExamplesSection

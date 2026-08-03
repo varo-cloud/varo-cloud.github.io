@@ -31,6 +31,10 @@ interface ImportMetaEnv {
   readonly VITE_DEV_BEARER_TOKEN?: string
   /** 本地开发 refresh token，access 过期时自动续期 */
   readonly VITE_DEV_REFRESH_TOKEN?: string
+  /** Admin API base，如 https://staging.admin.varo.cloud/api */
+  readonly VITE_ADMIN_API_BASE_URL?: string
+  /** 本地 dev server 将 /api/admin 代理到此 origin，如 https://staging.admin.varo.cloud */
+  readonly VITE_DEV_ADMIN_API_PROXY_TARGET?: string
 }
 
 interface ImportMeta {

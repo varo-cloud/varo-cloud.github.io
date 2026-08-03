@@ -37,6 +37,7 @@ jobs:
         env:
           VITE_USE_MOCK: 'false'
           VITE_API_BASE_URL: https://api.varo.cloud/api
+          VITE_ADMIN_API_BASE_URL: https://admin.varo.cloud/api
           VITE_BASE: /
           VITE_SITE_ORIGIN: https://varo.cloud
           VITE_TURNSTILE_SITE_KEY: ${{ secrets.VITE_TURNSTILE_SITE_KEY }}
