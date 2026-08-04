@@ -60,6 +60,9 @@ export default {
         title: 'The Generative AI Cloud for Creators',
         subtitle:
           "Access the world's leading generative AI models in one cloud platform — built for faster creation, smoother workflows, and unlimited creative output.",
+        slide2Title: 'Seedance 2.5 is Coming Soon',
+        slide2Subtitle:
+          'Bring a new standard for generative video — up to 30 seconds of native 4K, 50 multimodal references, and built-in audio-video sync in one pass.',
         ctaPrimary: 'Get Started',
         ctaPrimaryLoggedIn: 'Explore Models',
         ctaSecondary: 'View Docs',
@@ -125,7 +128,7 @@ export default {
       showcase: {
         title: 'What people are Creating',
         subtitle:
-          'Varo.cloud helps small businesses access production-ready image, video, and audio models through one simple platform — reducing tool sprawl, lowering generation costs, and making professional AI creation easier to scale.',
+          'See what the Varo community is creating and explore the most popular image, video, and audio models users are choosing for their latest projects.',
         itemMeta: '{count} models',
         pagination: 'Showcase pages',
         page: 'Page {n}',
@@ -646,6 +649,11 @@ export default {
         subtitle:
           "Access the world's leading AI models through one unified, OpenAI-compatible API. Build and manage projects, trigger deployments, and automate cloud workflows without juggling provider-specific keys, SDKs, or data formats.",
         cta: 'API Reference',
+        slide2Title: 'Build Ideas Into Reality',
+        slide2Subtitle:
+          'A multimodal AI model API aggregation platform built for developers and creators, accelerating image and video generation so you can build, launch, and scale AI products faster.',
+        slide2CtaModels: 'Explore all models',
+        slide2CtaDocs: 'Docs',
       },
       showcase: {
         previewAlt: 'Sample generative output from the Varo.cloud API',
@@ -724,9 +732,8 @@ export default {
     },
     seedance: {
       hero: {
-        title: 'One Cloud for Creative AI Production',
-        subtitle:
-          'Build and deploy AI-powered creative products without managing the full infrastructure stack. Varo.cloud brings models, workflows, and production deployment into one cloud platform.',
+        title: 'Seedance 2.0 API on Varo Cloud',
+        subtitle: 'Build next-generation AI video experiences with one production-ready API.',
       },
       intro: {
         hiddenTitle: 'Seedance 2.0 on Varo Cloud',

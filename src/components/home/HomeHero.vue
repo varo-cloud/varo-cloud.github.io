@@ -17,6 +17,14 @@ const primaryLabel = computed(() =>
   userStore.isLoggedIn ? t('pages.home.hero.ctaPrimaryLoggedIn') : t('pages.home.hero.ctaPrimary'),
 )
 
+const heroTitle = computed(() =>
+  heroActiveIndex.value === 1 ? t('pages.home.hero.slide2Title') : t('pages.home.hero.title'),
+)
+
+const heroSubtitle = computed(() =>
+  heroActiveIndex.value === 1 ? t('pages.home.hero.slide2Subtitle') : t('pages.home.hero.subtitle'),
+)
+
 function onPrimaryCta() {
   if (userStore.isLoggedIn) {
     push({ name: 'models' })
@@ -33,10 +41,10 @@ function onPrimaryCta() {
       <div class="home-hero__content">
         <div class="home-hero__copy">
           <h1 id="home-hero-title" class="home-hero__title">
-            {{ t('pages.home.hero.title') }}
+            {{ heroTitle }}
           </h1>
           <p class="home-hero__subtitle">
-            {{ t('pages.home.hero.subtitle') }}
+            {{ heroSubtitle }}
           </p>
         </div>
         <div class="home-hero__actions">

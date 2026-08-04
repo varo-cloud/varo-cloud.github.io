@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, ref } from 'vue'
+import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useHead } from '@unhead/vue'
 import { useLocaleRouter } from '@/composables/useLocaleRouter'
@@ -24,6 +24,9 @@ const DEMO_FORM_VALUES = {
   resolution: '720p',
 }
 
+const HERO_SLIDE_COUNT = 2
+const HERO_SLIDE_DURATION_MS = 6000
+
 const TAB_LABELS: Record<ApiCodeViewMode, string> = {
   http: 'HTTP',
   python: 'Python',
@@ -41,6 +44,9 @@ const { push, localePath } = useLocaleRouter()
 
 const codeViewMode = ref<ApiCodeViewMode>('http')
 const openFaqId = ref('test')
+const heroActiveIndex = ref(0)
+
+let heroTimer: ReturnType<typeof setTimeout> | undefined
 
 const codeModeOptions = computed(() =>
   API_CODE_VIEW_MODES.map((mode) => ({
@@ -60,6 +66,18 @@ const activeLanguage = computed<CodeHighlightLanguage>(() => {
 })
 
 const externalDocsUrl = computed(() => docsUrl() ?? localePath('/docs'))
+
+const isHeroSlide2 = computed(() => heroActiveIndex.value === 1)
+
+const heroTitle = computed(() =>
+  isHeroSlide2.value ? t('pages.developers.hero.slide2Title') : t('pages.developers.hero.title'),
+)
+
+const heroSubtitle = computed(() =>
+  isHeroSlide2.value
+    ? t('pages.developers.hero.slide2Subtitle')
+    : t('pages.developers.hero.subtitle'),
+)
 
 const faqItems = computed(() => {
   const items = tm('pages.developers.faq.items') as Array<{
@@ -123,12 +141,35 @@ useHead(
   })),
 )
 
+function clearHeroTimer() {
+  if (heroTimer !== undefined) {
+    clearTimeout(heroTimer)
+    heroTimer = undefined
+  }
+}
+
+function startHeroTimer() {
+  clearHeroTimer()
+  heroTimer = setTimeout(() => {
+    heroActiveIndex.value = (heroActiveIndex.value + 1) % HERO_SLIDE_COUNT
+  }, HERO_SLIDE_DURATION_MS)
+}
+
+function goToHeroSlide(index: number) {
+  if (index === heroActiveIndex.value) return
+  heroActiveIndex.value = index
+}
+
 function toggleFaq(id: string) {
   openFaqId.value = openFaqId.value === id ? '' : id
 }
 
 function onApiReference() {
   openDocs(() => push({ name: 'docs' }))
+}
+
+function onExploreModels() {
+  push({ name: 'models' })
 }
 
 function resolveStepHref(href?: string) {
@@ -146,6 +187,18 @@ function resolveStepHref(href?: string) {
 function isExternalHref(href?: string) {
   return href === 'docs' || Boolean(href?.startsWith('http'))
 }
+
+watch(heroActiveIndex, () => {
+  startHeroTimer()
+})
+
+onMounted(() => {
+  startHeroTimer()
+})
+
+onBeforeUnmount(() => {
+  clearHeroTimer()
+})
 </script>
 
 <template>
@@ -161,14 +214,44 @@ function isExternalHref(href?: string) {
       <div class="developers-hero__inner">
         <div class="developers-hero__content">
           <h1 id="developers-hero-title" class="developers-hero__title">
-            {{ t('pages.developers.hero.title') }}
+            {{ heroTitle }}
           </h1>
           <p class="developers-hero__subtitle">
-            {{ t('pages.developers.hero.subtitle') }}
+            {{ heroSubtitle }}
           </p>
-          <button type="button" class="developers-hero__cta" @click="onApiReference">
-            {{ t('pages.developers.hero.cta') }}
-          </button>
+          <div class="developers-hero__actions">
+            <template v-if="!isHeroSlide2">
+              <button type="button" class="developers-hero__cta" @click="onApiReference">
+                {{ t('pages.developers.hero.cta') }}
+              </button>
+            </template>
+            <template v-else>
+              <button type="button" class="developers-hero__cta" @click="onExploreModels">
+                {{ t('pages.developers.hero.slide2CtaModels') }}
+              </button>
+              <a
+                class="developers-hero__cta developers-hero__cta--outline"
+                :href="externalDocsUrl"
+                target="_blank"
+                rel="noopener noreferrer"
+              >
+                {{ t('pages.developers.hero.slide2CtaDocs') }}
+              </a>
+            </template>
+          </div>
+          <div class="developers-hero__dots" role="tablist" aria-label="Hero slides">
+            <button
+              v-for="index in HERO_SLIDE_COUNT"
+              :key="index"
+              type="button"
+              role="tab"
+              class="developers-hero__dot"
+              :class="{ 'is-active': heroActiveIndex === index - 1 }"
+              :aria-selected="heroActiveIndex === index - 1"
+              :aria-label="`Slide ${index}`"
+              @click="goToHeroSlide(index - 1)"
+            />
+          </div>
         </div>
       </div>
     </section>
@@ -314,7 +397,6 @@ function isExternalHref(href?: string) {
   display: flex;
   align-items: flex-start;
   justify-content: center;
-  height: 460px;
   min-height: 460px;
   /* Figma Developers hero: content block at y=230 within 460px frame */
   padding: 230px 16px 48px;
@@ -390,13 +472,65 @@ function isExternalHref(href?: string) {
   font-size: 16px;
   font-weight: 500;
   line-height: 16px;
+  text-decoration: none;
   cursor: pointer;
   pointer-events: auto;
-  transition: background 0.15s ease;
+  transition:
+    background 0.15s ease,
+    border-color 0.15s ease,
+    color 0.15s ease;
 }
 
 .developers-hero__cta:hover {
   background: #0891b2;
+}
+
+.developers-hero__actions {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+}
+
+.developers-hero__cta--outline {
+  background: #fff;
+  border: 1px solid #d0d5dd;
+  color: #222;
+}
+
+.developers-hero__cta--outline:hover {
+  background: #f8fafc;
+  border-color: #98a2b3;
+  color: #111;
+}
+
+.developers-hero__dots {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 8px;
+}
+
+.developers-hero__dot {
+  width: 8px;
+  height: 8px;
+  padding: 0;
+  border: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.35);
+  cursor: pointer;
+  transition:
+    background 0.15s ease,
+    transform 0.15s ease;
+}
+
+.developers-hero__dot:hover {
+  background: rgba(255, 255, 255, 0.6);
+}
+
+.developers-hero__dot.is-active {
+  background: #fff;
+  transform: scale(1.15);
 }
 
 .developers-showcase {
@@ -788,6 +922,16 @@ function isExternalHref(href?: string) {
   .developers-hero__subtitle {
     font-size: clamp(14px, 4vw, 16px);
     line-height: 1.3;
+  }
+
+  .developers-hero__actions {
+    flex-direction: column;
+    align-items: stretch;
+    width: 100%;
+  }
+
+  .developers-hero__cta {
+    width: 100%;
   }
 
   .developers-showcase {

@@ -57,9 +57,12 @@ export default {
   pages: {
     home: {
       hero: {
-        title: '面向创作者的生成式 AI 云',
+        title: '面向创作者的生成式 AI 云平台',
         subtitle:
-          '在一个云平台中接入全球领先的生成式 AI 模型——为更快创作、更顺畅工作流与无限创意输出而生。',
+          '一站式Varo云平台，轻松调用全球领先的生成式 AI 模型，加速内容创作、简化工作流程，释放更多创意可能。',
+        slide2Title: 'Seedance 2.5 即将推出',
+        slide2Subtitle:
+          '为生成式视频树立新标准——单次生成最长 30 秒原生 4K，支持 50 个多模态参考，并内置音画同步。',
         ctaPrimary: '立即开始',
         ctaPrimaryLoggedIn: '浏览模型',
         ctaSecondary: '查看文档',
@@ -74,16 +77,16 @@ export default {
       },
       developers: {
         eyebrow: '面向开发者',
-        title: '一站式创意 AI 生产云',
+        title: '一站式创意 AI 生产云平台',
         subtitle:
-          '无需自建完整基础设施，即可构建并部署 AI 创意产品。Varo.cloud 将模型、工作流与生产部署整合到同一云平台。',
+          'Varo.cloud 将 AI 模型、工作流和生产环境部署整合到统一云平台中，帮助开发团队更快完成产品集成与上线：无需自行管理复杂的基础设施，即可构建和部署由 AI 驱动的创意产品。',
         getApiKey: '获取 API Key',
         previewAlt: 'Varo.cloud API 生成结果预览',
       },
       creators: {
         eyebrow: '面向创作者',
         title: '创作，不必复杂',
-        subtitle: '把 AI 媒体生成能力带到桌面——无需写代码、无需复杂配置，即刻开创。',
+        subtitle: '把 AI 媒体生成能力带到桌面——无需编程，无需复杂配置，打开即可开始创作。',
         ctaPrimary: '立即开始',
         ctaSecondary: '联系销售',
         imageAlt: '创作者使用 Varo.cloud 进行 AI 创作',
@@ -101,7 +104,7 @@ export default {
           },
           scale: {
             title: '为规模而生',
-            desc: '把生成式 AI 能力从想法带到上线，以分钟计而非月计。',
+            desc: '几分钟上线生成式 AI 功能，无需耗费数月搭建基础设施。',
             point1: '跨媒体即刻扩容',
             point2: '无需自建基础设施',
             point3: '无需容量规划',
@@ -118,14 +121,13 @@ export default {
       pricing: {
         title: '高性价比的 AI 模型云',
         subtitle:
-          'Varo.cloud 帮助中小企业通过一个简单平台访问可用于生产的图像、视频与音频模型——减少工具分散、降低生成成本，让专业 AI 创作更易扩展。',
+          'Varo.cloud 帮助中小企业通过一个简单、统一的平台，接入可直接投入生产的图片、视频和音频生成式AI模型——减少工具分散、降低生成成本，让专业 AI 创作更易扩展。',
         empty: '模型加载后将显示价格信息。',
         viewMore: '查看更多模型',
       },
       showcase: {
-        title: '大家在用什么创作',
-        subtitle:
-          'Varo.cloud 帮助中小企业通过一个简单平台访问可用于生产的图像、视频与音频模型——减少工具分散、降低生成成本，让专业 AI 创作更易扩展。',
+        title: '用户正在使用 Varo.cloud 创作什么？',
+        subtitle: '探索用户在最新项目中最常使用的热门图像、视频和音频模型。',
         itemMeta: '{count} 个模型',
         pagination: '作品展示分页',
         page: '第 {n} 页',
@@ -145,9 +147,9 @@ export default {
     models: {
       title: '模型',
       placeholder: '浏览可用的视频生成模型。',
-      heroTitle: '所有 AI 模型，集于一处',
+      heroTitle: '一站式汇聚所有 AI 模型',
       heroSubtitle:
-        '探索 Varo 完整的领先 AI 模型库，覆盖视频、图像、文本、音频与多模态创作。对比能力、试用模型，并在一个简洁、可投入生产的平台上选择合适的引擎。',
+        '探索Varo Cloud云平台：覆盖全球领先的视频、图像、文本、音频和多模态AI 模型。轻松对比、测试并选择最适合您工作流程的模型。',
       heroSlides: {
         seedance: {
           title: 'Seedance 2.5 即将上线',
@@ -476,7 +478,7 @@ export default {
     pricing: {
       title: '价格',
       heroTitle: '简单、透明的 AI 模型定价',
-      heroSubtitle: '所有模型均采用简单的按量付费——只用多少付多少，成本可预期、可扩展。',
+      heroSubtitle: '所有模型均采用简单的按量付费——仅为实际使用付费，成本清晰可预测，轻松扩展业务。',
       startFrom: '起价',
       inputPrice: '输入价格',
       view: '查看',
@@ -638,8 +640,13 @@ export default {
       hero: {
         title: '一个 API，接入全球顶尖模型',
         subtitle:
-          '通过统一、兼容 OpenAI 的 API 访问全球领先的 AI 模型。构建与管理项目、触发部署、自动化云工作流，无需再在各家密钥、SDK 与数据格式之间来回切换。',
+          '通过统一且兼容 OpenAI的 API，调用全球领先的 AI 模型。无需维护不同供应商的 API Key、SDK 或数据格式，在Varo Cloud集中创建和管理项目、模型部署并自动化云端工作流程。',
         cta: 'API 参考',
+        slide2Title: '让创意快速落地',
+        slide2Subtitle:
+          '面向开发者与创作者的多模态 AI 模型 API 聚合平台，加速图像和视频生成，助您更快构建、发布并规模化 AI 产品。',
+        slide2CtaModels: '浏览全部模型',
+        slide2CtaDocs: '文档',
       },
       showcase: {
         previewAlt: 'Varo.cloud API 生成示例效果',
@@ -717,14 +724,13 @@ export default {
     },
     seedance: {
       hero: {
-        title: '创意 AI 生产，一朵云搞定',
-        subtitle:
-          '无需自建完整基础设施，即可构建并部署 AI 驱动的创意产品。Varo.cloud 将模型、工作流与生产部署整合在同一云平台。',
+        title: 'Varo Cloud Seedance 2.0 API',
+        subtitle: 'Seedance 2.0 构建新一代 AI 视频生产体验。',
       },
       intro: {
         hiddenTitle: 'Varo Cloud 上的 Seedance 2.0',
         lead:
-          '将字节跳动 Seedance 2.0 接入你的产品，通过文本、图片、视频与音频参考生成电影级视频。用简洁的 Varo Cloud API 实现声画同步、更强主体一致性，并掌控复杂场景。',
+          '将字节跳动 Seedance 2.0 集成至您的产品，通过文本、图像、视频和音频参考生成电影级视频。借助简单易用的 Varo Cloud API，实现音画同步、稳定的主体一致性以及复杂场景控制。',
         leftAlt: 'Seedance 2.0 电影感视频示例：日落中的人物',
         rightAlt: 'Seedance 2.0 电影感视频示例：未来感光影',
       },
@@ -745,20 +751,20 @@ export default {
             alt: 'Seedance 2.0 图生视频 API 示例',
           },
           {
-            title: '参考生视频 API',
-            body: '结合图片、视频片段、音频与指令，复现角色、动作、构图、镜头语言与声音。',
-            alt: 'Seedance 2.0 参考生视频 API 示例',
+            title: '参考生成视频 API',
+            body: '结合图片、视频、音频和文字指令，复现角色、动作、画面构图、镜头语言和声音效果。',
+            alt: 'Seedance 2.0 参考生成视频 API 示例',
           },
         ],
       },
       capabilities: {
         title: '用 Varo Seedance 2.0 API 创建、编辑与延展',
         subtitle:
-          'Seedance 2.0 将原生音视频生成、精细创意控制与进阶编辑能力结合，帮助开发者构建更完整、更灵活的视频体验。',
+          'Seedance 2.0 集成原生音视频生成、精细化创意控制和高级视频编辑能力，帮助开发者构建更完整、更灵活的 AI 视频产品体验。',
         items: [
           {
-            title: '声画同生',
-            body: '在同一工作流中创建同步的视频与音频。',
+            title: '音画同步',
+            body: '一次工作流，生成同步的视频与音频。',
             image: '/assets/seedance/feature-generate.jpg',
             alt: '用 Seedance 2.0 同步生成视频与音频',
           },
@@ -778,15 +784,15 @@ export default {
       },
       compare: {
         title: 'Seedance 2.0 对比其他模型',
-        subtitle: '在多类任务的多个维度上，Seedance 2.0 处于领先位置。',
+        subtitle: 'Seedance 2.0 在不同任务类型和多个核心评测维度中均处于行业领先水平。',
         radarT2vAlt: 'Seedance 2.0 文生视频评测雷达图',
         radarMultimodalAlt: 'Seedance 2.0 多模态任务评测雷达图',
         radarI2vAlt: 'Seedance 2.0 图生视频评测雷达图',
       },
       production: {
-        title: '为生产而生，一个简单 API',
+        title: '一个简单的 API 构建生产级应用',
         subtitle:
-          'Varo Cloud 负责 Seedance 2.0 的模型接入、鉴权、任务执行、扩缩容与用量追踪，让团队专注产品体验。从单次生成起步，通过同一套 API 扩展到自动化或大规模工作负载。',
+          'Varo Cloud 统一处理 Seedance 2.0 的模型接入、身份验证、任务执行、弹性扩展和用量追踪，让团队专注于产品体验。从单次视频生成开始，并通过Varo Cloud API 集成，逐步扩展至自动化或大规模生成工作流。',
         cta: '获取 API Key',
         visualAlt: '面向生产负载的 Seedance 2.0 电影感生成示例',
         pillars: [
@@ -809,9 +815,9 @@ export default {
         ],
       },
       showcase: {
-        title: '看看 Seedance 2.0 能做出什么',
+        title: '探索 Seedance 2.0 的应用场景',
         subtitle:
-          '浏览广告、社媒内容、电影叙事、虚拟角色与 AI 视频工具等真实 API 生成案例，了解 Seedance 2.0 如何驱动你的下一个产品或工作流。',
+          '查看通过 API 生成的真实案例，覆盖广告内容、社交媒体、电影叙事、虚拟角色和 AI 视频工具，探索 Seedance 2.0 如何为您的下一款产品或工作流程提供支持。',
         leftAlt: 'Seedance 2.0 案例 — 电影感人像',
         centerAlt: 'Seedance 2.0 案例 — 生活化角色场景',
         rightAlt: 'Seedance 2.0 案例 — 时尚大片风格',
