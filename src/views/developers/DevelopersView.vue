@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useHead } from '@unhead/vue'
 import { useLocaleRouter } from '@/composables/useLocaleRouter'
@@ -8,6 +8,9 @@ import { docsUrl, openDocs } from '@/utils/docsUrl'
 import { absoluteUrl, SITE_NAME } from '@/seo/config'
 import HighlightedCodeBlock from '@/components/common/HighlightedCodeBlock.vue'
 import AppIcon, { type AppIconName } from '@/components/common/AppIcon.vue'
+import ModelsHeroCarousel, {
+  type HeroCarouselSlide,
+} from '@/components/models/ModelsHeroCarousel.vue'
 import type { CodeHighlightLanguage } from '@/utils/code-highlight'
 import {
   API_CODE_VIEW_MODES,
@@ -24,8 +27,16 @@ const DEMO_FORM_VALUES = {
   resolution: '720p',
 }
 
-const HERO_SLIDE_COUNT = 2
-const HERO_SLIDE_DURATION_MS = 6000
+const HERO_SLIDES: HeroCarouselSlide[] = [
+  {
+    poster: assetUrl('https://assets.varo.cloud/uploads/406c1cf7c14641028a11ad1ffeb82e33.jpg'),
+    video: assetUrl('https://assets.varo.cloud/uploads/897c202933174afca759de90f5f6b589.mov'),
+  },
+  {
+    poster: assetUrl('https://assets.varo.cloud/uploads/d788ff5fe8d046998e092c91649d3283.jpg'),
+    video: assetUrl('https://assets.varo.cloud/uploads/2b773bd7f7494f4daba95384c14db5ce.mp4'),
+  },
+]
 
 const TAB_LABELS: Record<ApiCodeViewMode, string> = {
   http: 'HTTP',
@@ -45,8 +56,6 @@ const { push, localePath } = useLocaleRouter()
 const codeViewMode = ref<ApiCodeViewMode>('http')
 const openFaqId = ref('test')
 const heroActiveIndex = ref(0)
-
-let heroTimer: ReturnType<typeof setTimeout> | undefined
 
 const codeModeOptions = computed(() =>
   API_CODE_VIEW_MODES.map((mode) => ({
@@ -141,25 +150,6 @@ useHead(
   })),
 )
 
-function clearHeroTimer() {
-  if (heroTimer !== undefined) {
-    clearTimeout(heroTimer)
-    heroTimer = undefined
-  }
-}
-
-function startHeroTimer() {
-  clearHeroTimer()
-  heroTimer = setTimeout(() => {
-    heroActiveIndex.value = (heroActiveIndex.value + 1) % HERO_SLIDE_COUNT
-  }, HERO_SLIDE_DURATION_MS)
-}
-
-function goToHeroSlide(index: number) {
-  if (index === heroActiveIndex.value) return
-  heroActiveIndex.value = index
-}
-
 function toggleFaq(id: string) {
   openFaqId.value = openFaqId.value === id ? '' : id
 }
@@ -187,30 +177,12 @@ function resolveStepHref(href?: string) {
 function isExternalHref(href?: string) {
   return href === 'docs' || Boolean(href?.startsWith('http'))
 }
-
-watch(heroActiveIndex, () => {
-  startHeroTimer()
-})
-
-onMounted(() => {
-  startHeroTimer()
-})
-
-onBeforeUnmount(() => {
-  clearHeroTimer()
-})
 </script>
 
 <template>
   <div class="developers-page" data-seo-ready="developers">
     <section class="developers-hero" aria-labelledby="developers-hero-title">
-      <img
-        class="developers-hero__bg"
-        :src="assetUrl('/assets/developer/hero-bg.jpg')"
-        alt=""
-        aria-hidden="true"
-      />
-      <div class="developers-hero__overlay" aria-hidden="true" />
+      <ModelsHeroCarousel v-model:active-index="heroActiveIndex" :slides="HERO_SLIDES" />
       <div class="developers-hero__inner">
         <div class="developers-hero__content">
           <h1 id="developers-hero-title" class="developers-hero__title">
@@ -238,19 +210,6 @@ onBeforeUnmount(() => {
                 {{ t('pages.developers.hero.slide2CtaDocs') }}
               </a>
             </template>
-          </div>
-          <div class="developers-hero__dots" role="tablist" aria-label="Hero slides">
-            <button
-              v-for="index in HERO_SLIDE_COUNT"
-              :key="index"
-              type="button"
-              role="tab"
-              class="developers-hero__dot"
-              :class="{ 'is-active': heroActiveIndex === index - 1 }"
-              :aria-selected="heroActiveIndex === index - 1"
-              :aria-label="`Slide ${index}`"
-              @click="goToHeroSlide(index - 1)"
-            />
           </div>
         </div>
       </div>
@@ -399,35 +358,19 @@ onBeforeUnmount(() => {
   justify-content: center;
   min-height: 460px;
   /* Figma Developers hero: content block at y=230 within 460px frame */
-  padding: 230px 16px 48px;
+  padding: 230px 16px 80px;
   overflow: hidden;
   background: #0a0a0e;
   color: #fff;
 }
 
-.developers-hero__bg {
-  position: absolute;
-  inset: 0;
-  width: 100%;
-  height: 100%;
-  object-fit: cover;
-  object-position: center;
-  pointer-events: none;
-}
-
-.developers-hero__overlay {
-  position: absolute;
-  inset: 0;
-  background: rgba(0, 0, 0, 0.5);
-  pointer-events: none;
-}
-
 .developers-hero__inner {
   position: relative;
-  z-index: 1;
+  z-index: 3;
   width: 100%;
   max-width: 1360px;
   margin: 0 auto;
+  pointer-events: none;
 }
 
 .developers-hero__content {
@@ -437,6 +380,7 @@ onBeforeUnmount(() => {
   gap: 24px;
   max-width: 1242px;
   text-align: left;
+  pointer-events: auto;
 }
 
 .developers-hero__title {
@@ -502,35 +446,6 @@ onBeforeUnmount(() => {
   background: #f8fafc;
   border-color: #98a2b3;
   color: #111;
-}
-
-.developers-hero__dots {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-top: 8px;
-}
-
-.developers-hero__dot {
-  width: 8px;
-  height: 8px;
-  padding: 0;
-  border: 0;
-  border-radius: 50%;
-  background: rgba(255, 255, 255, 0.35);
-  cursor: pointer;
-  transition:
-    background 0.15s ease,
-    transform 0.15s ease;
-}
-
-.developers-hero__dot:hover {
-  background: rgba(255, 255, 255, 0.6);
-}
-
-.developers-hero__dot.is-active {
-  background: #fff;
-  transform: scale(1.15);
 }
 
 .developers-showcase {
