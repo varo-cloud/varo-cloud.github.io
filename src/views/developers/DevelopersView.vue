@@ -246,7 +246,7 @@ function isExternalHref(href?: string) {
             </div>
             <div class="developers-showcase__preview">
               <img
-                :src="assetUrl('/assets/developer/preview.jpg')"
+                :src="assetUrl('https://assets.varo.cloud/uploads/49aa4462bb824ac98284c2ad2f2efb19.jpg')"
                 :alt="t('pages.developers.showcase.previewAlt')"
                 width="644"
                 height="295"
@@ -674,7 +674,7 @@ function isExternalHref(href?: string) {
 
 .developers-how__step-label {
   margin: 0;
-  font-size: 12px;
+  font-size: 14px;
   font-weight: 500;
   line-height: 14px;
   color: #06b6d4;

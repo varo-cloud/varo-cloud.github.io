@@ -653,7 +653,7 @@ export default {
       },
       howItWorks: {
         title: '如何开始',
-        subtitle: '从零到第一次生成，只需三步：',
+        subtitle: '从零到第一次生成，只需三步',
         stepLabel: '步骤 {n}',
         steps: [
           {

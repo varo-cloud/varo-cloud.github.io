@@ -659,8 +659,8 @@ export default {
         previewAlt: 'Sample generative output from the Varo.cloud API',
       },
       howItWorks: {
-        title: 'How it works',
-        subtitle: 'Getting from zero to your first generation takes just three steps:',
+        title: 'How it Works',
+        subtitle: 'Getting from zero to your first generation takes just three steps',
         stepLabel: 'Step {n}',
         steps: [
           {
