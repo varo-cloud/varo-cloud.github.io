@@ -1,10 +1,15 @@
 <script setup lang="ts">
-import { nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
+import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { assetUrl } from '@/utils/assetUrl'
+
+export type HeroCarouselSlide = {
+  poster?: string
+  video: string
+}
 
 const SLIDE_DURATION_MS = 5000
 
-const slides = [
+const DEFAULT_SLIDES: HeroCarouselSlide[] = [
   {
     poster: assetUrl('https://assets.varo.cloud/uploads/db0a9f4e771b4cee9de5fcb2af7c096e.jpg'),
     video: assetUrl('https://assets.varo.cloud/uploads/341660b97a8f440f91a1877b137db50f.mp4'),
@@ -17,12 +22,19 @@ const slides = [
     poster: assetUrl('https://assets.varo.cloud/uploads/46af51b0c3bb466d95b9dd7f217c8bbb.jpg'),
     video: assetUrl('https://assets.varo.cloud/uploads/c5879cd9bf7e4a71a4ef1c100f723889.mp4'),
   },
-] as const
+]
 
 type NetworkInformationLike = {
   saveData?: boolean
   effectiveType?: string
 }
+
+const props = defineProps<{
+  slides?: HeroCarouselSlide[]
+}>()
+
+const slides = computed(() => (props.slides?.length ? props.slides : DEFAULT_SLIDES))
+const hasPosters = computed(() => slides.value.every((slide) => Boolean(slide.poster)))
 
 const activeIndex = defineModel<number>('activeIndex', { default: 0 })
 const progressKey = ref(0)
@@ -60,7 +72,7 @@ function clearTimer() {
 function startTimer() {
   clearTimer()
   timer = setTimeout(() => {
-    activeIndex.value = (activeIndex.value + 1) % slides.length
+    activeIndex.value = (activeIndex.value + 1) % slides.value.length
   }, SLIDE_DURATION_MS)
 }
 
@@ -135,9 +147,12 @@ async function activateSlide(index: number) {
   releaseVideo(video)
   if (token !== loadToken) return
 
-  video.poster = slides[index].poster
+  const slide = slides.value[index]
+  if (!slide) return
+
+  video.poster = slide.poster ?? ''
   video.preload = 'metadata'
-  video.src = slides[index].video
+  video.src = slide.video
   video.load()
 
   await waitUntilPlayable(video, token)
@@ -160,8 +175,16 @@ watch(activeIndex, (index) => {
   void activateSlide(index)
 })
 
+watch(slides, () => {
+  if (activeIndex.value >= slides.value.length) {
+    activeIndex.value = 0
+    return
+  }
+  void activateSlide(activeIndex.value)
+})
+
 onMounted(() => {
-  posterOnly.value = shouldPreferPosterOnly()
+  posterOnly.value = hasPosters.value && shouldPreferPosterOnly()
   void activateSlide(activeIndex.value)
 })
 
@@ -176,7 +199,7 @@ onBeforeUnmount(() => {
 <template>
   <div class="hero-carousel" aria-hidden="true">
     <img
-      v-if="posterOnly"
+      v-if="posterOnly && slides[activeIndex]?.poster"
       class="hero-carousel__poster"
       :src="slides[activeIndex].poster"
       alt=""
@@ -185,7 +208,7 @@ onBeforeUnmount(() => {
       v-else
       ref="videoRef"
       class="hero-carousel__video"
-      :poster="slides[activeIndex].poster"
+      :poster="slides[activeIndex]?.poster"
       muted
       loop
       playsinline
@@ -197,7 +220,7 @@ onBeforeUnmount(() => {
     <div class="hero-carousel__nav" role="tablist" aria-label="Hero carousel">
       <button
         v-for="(slide, index) in slides"
-        :key="slide.poster"
+        :key="slide.video"
         type="button"
         role="tab"
         class="hero-carousel__thumb"
@@ -207,7 +230,8 @@ onBeforeUnmount(() => {
         @click="goToSlide(index)"
       >
         <span class="hero-carousel__thumb-image">
-          <img :src="slide.poster" alt="" />
+          <img v-if="slide.poster" :src="slide.poster" alt="" />
+          <video v-else :src="slide.video" muted playsinline preload="metadata" />
         </span>
         <span v-if="index === activeIndex && progressVisible" class="hero-carousel__progress">
           <span
@@ -293,9 +317,11 @@ onBeforeUnmount(() => {
   width: 64px;
   height: 40px;
   overflow: hidden;
+  background: #111;
 }
 
-.hero-carousel__thumb-image img {
+.hero-carousel__thumb-image img,
+.hero-carousel__thumb-image video {
   display: block;
   width: 100%;
   height: 100%;
