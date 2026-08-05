@@ -354,11 +354,10 @@ function isExternalHref(href?: string) {
 .developers-hero {
   position: relative;
   display: flex;
-  align-items: flex-start;
+  align-items: flex-end;
   justify-content: center;
   min-height: 460px;
-  /* Figma Developers hero: content block at y=230 within 460px frame */
-  padding: 230px 16px 80px;
+  padding: 0 16px 80px;
   overflow: hidden;
   background: #0a0a0e;
   color: #fff;
@@ -386,7 +385,7 @@ function isExternalHref(href?: string) {
 .developers-hero__title {
   margin: 0;
   width: 100%;
-  font-size: clamp(36px, 5vw, 56px);
+  font-size: clamp(32px, 5vw, 56px);
   font-weight: 900;
   line-height: 1.14;
   color: #fff;
@@ -396,7 +395,7 @@ function isExternalHref(href?: string) {
 .developers-hero__subtitle {
   margin: 0;
   width: 100%;
-  font-size: clamp(16px, 2.5vw, 20px);
+  font-size: clamp(16px, 2vw, 20px);
   font-weight: 600;
   line-height: 1.2;
   color: rgba(255, 255, 255, 0.5);
@@ -404,6 +403,7 @@ function isExternalHref(href?: string) {
 }
 
 .developers-hero__cta {
+  box-sizing: border-box;
   display: inline-flex;
   align-items: center;
   justify-content: center;
@@ -768,7 +768,11 @@ function isExternalHref(href?: string) {
 }
 
 @media (min-width: 1024px) {
-  .developers-hero,
+  .developers-hero {
+    min-height: 580px;
+    padding-inline: 60px;
+  }
+
   .developers-showcase,
   .developers-how,
   .developers-faq {
@@ -820,33 +824,35 @@ function isExternalHref(href?: string) {
 
 @media (max-width: 767px) {
   .developers-hero {
-    height: auto;
-    min-height: 0;
-    padding: 88px 16px 40px;
+    min-height: min(70svh, 520px);
+    padding: 88px 16px 88px;
   }
 
   .developers-hero__content {
-    gap: 16px;
+    gap: 24px;
   }
 
   .developers-hero__title {
     font-size: clamp(28px, 8vw, 36px);
-    line-height: 1.15;
+    line-height: 1.14;
   }
 
   .developers-hero__subtitle {
     font-size: clamp(14px, 4vw, 16px);
-    line-height: 1.3;
+    line-height: 1.4;
   }
 
   .developers-hero__actions {
     flex-direction: column;
     align-items: stretch;
     width: 100%;
+    gap: 12px;
   }
 
   .developers-hero__cta {
     width: 100%;
+    height: 48px;
+    min-height: 48px;
   }
 
   .developers-showcase {
