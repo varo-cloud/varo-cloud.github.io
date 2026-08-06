@@ -95,7 +95,7 @@ const billingRecordsLoading = ref(false)
 const billingRecordsLoaded = ref(false)
 
 const selectedPackageId = ref<TopUpSelectionId | null>(null)
-const selectedPaymentMethod = ref<PaymentMethodId>('card')
+const selectedPaymentMethod = ref<PaymentMethodId>('crypto')
 const customAmountInput = ref(String(DEFAULT_CUSTOM_AMOUNT_USD))
 const purchasing = ref(false)
 const checkoutProcessing = ref(false)
