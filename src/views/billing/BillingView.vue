@@ -59,9 +59,9 @@ const PAYMENT_METHODS: Array<{
   hidden?: boolean
   requiresCrypto?: boolean
 }> = [
-  { id: 'card', logo: STRIPE_LOGO, alt: 'Stripe' },
-  { id: '', logo: ALIPAY_WECHAT_LOGO, alt: 'AliWechatPay', textClass: 'billing-payment-method__text--alipay' },
   { id: 'crypto', logo: CRYPTO_LOGO, alt: 'Crypto', requiresCrypto: true },
+  { id: '', logo: ALIPAY_WECHAT_LOGO, alt: 'AliWechatPay', textClass: 'billing-payment-method__text--alipay' },
+  { id: 'card', logo: STRIPE_LOGO, alt: 'Stripe' },
 ]
 
 const cryptoEnabled = ref(false)
