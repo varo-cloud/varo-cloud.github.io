@@ -20,7 +20,7 @@ export const SITE_LOGO = `${SITE_ORIGIN}/assets/brand/logo.svg`
  * Open Graph / Twitter Card image. Platforms (X, LinkedIn, Discord, Slack…)
  * expect a raster ~1200×630 JPEG/PNG — SVG logos are often ignored.
  */
-export const DEFAULT_OG_IMAGE = `${SITE_ORIGIN}/assets/brand/og-image.jpg`
+export const DEFAULT_OG_IMAGE = `https://assets.varo.cloud/uploads/4ee206177c6a4d589cb781d72ccebe91.jpg`
 export const OG_IMAGE_WIDTH = 1200
 export const OG_IMAGE_HEIGHT = 630
 export const OG_IMAGE_TYPE = 'image/jpeg'
