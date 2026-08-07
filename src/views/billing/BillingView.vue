@@ -508,7 +508,7 @@ function handleExportCsv() {
       record.key,
       billingStatusLabel(record.status),
       record.apiKey ?? '',
-      `${prefix}$${Math.abs(record.amountUsd).toFixed(2)}`,
+      `${prefix}${formatUsd(Math.abs(record.amountUsd))}`,
     ]
   })
 

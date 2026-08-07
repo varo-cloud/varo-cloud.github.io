@@ -1,14 +1,9 @@
 import type { Model, PricingItem, PricingPriceUnit } from '@/types'
+import { formatUsd } from '@/utils/currency'
 
-/** Format USD for pricing table — precision varies by billing unit. */
-export function formatPricingUsd(value: number, unit: PricingPriceUnit): string {
-  if (unit === 'per_million_tokens') {
-    const fixed = value+'';
-    return `$${fixed.replace(/(\.\d*?)0+$/, '$1').replace(/\.$/, '')}`
-  }
-
-  const fixed = value+'';
-  return `$${fixed.replace(/(\.\d*?)0+$/, '$1').replace(/\.$/, '')}`
+/** Format USD for model pricing — keep API precision, strip trailing zeros only. */
+export function formatPricingUsd(value: number, _unit?: PricingPriceUnit): string {
+  return formatUsd(value)
 }
 
 export function pricingUnitI18nKey(unit: PricingPriceUnit): string {

@@ -14,10 +14,6 @@ export interface UsePlaygroundQuoteOptions {
   enabled?: MaybeRefOrGetter<boolean>
 }
 
-function roundUsd(value: number): number {
-  return Math.round(value * 100) / 100
-}
-
 export function usePlaygroundQuote(options: UsePlaygroundQuoteOptions) {
   const quote = ref<PlaygroundQuote | null>(null)
   const loading = ref(false)
@@ -40,9 +36,7 @@ export function usePlaygroundQuote(options: UsePlaygroundQuoteOptions) {
 
   const unitCostUsd = computed(() => quote.value?.cost_usd ?? fallbackUnitCostUsd.value)
 
-  const costUsd = computed(() =>
-    roundUsd(unitCostUsd.value * options.batchSize.value),
-  )
+  const costUsd = computed(() => unitCostUsd.value * options.batchSize.value)
 
   async function runQuoteRequest() {
     const modelId = toValue(options.modelId)

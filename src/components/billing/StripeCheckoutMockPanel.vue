@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { formatUsd } from '@/utils/currency'
 import type { CreditPackage } from '@/types'
 
 const props = defineProps<{
@@ -20,7 +21,7 @@ const { t } = useI18n()
 const amountLabel = computed(() => {
   const amount = props.amountUsd ?? props.pkg?.priceUsd
   if (amount == null || !Number.isFinite(amount)) return '—'
-  return `$${amount.toFixed(2)}`
+  return formatUsd(amount)
 })
 
 const packageLabel = computed(() => {

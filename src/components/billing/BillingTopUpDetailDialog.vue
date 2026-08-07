@@ -36,7 +36,7 @@ const completedLabel = computed(() => {
 
 const amountLabel = computed(() => {
   if (!props.transaction) return '—'
-  return `$${props.transaction.amountUsd.toFixed(2)}`
+  return formatUsd(props.transaction.amountUsd)
 })
 
 const feeLabel = computed(() => {

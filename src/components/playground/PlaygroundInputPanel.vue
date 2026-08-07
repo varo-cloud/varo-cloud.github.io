@@ -18,6 +18,7 @@ import {
 } from '@/utils/playground-request-snippets'
 import { useUserStore } from '@/stores/user'
 import { AnalyticsEvents, trackEvent } from '@/analytics'
+import { formatUsd } from '@/utils/currency'
 import PlaygroundInputViewSelect from './PlaygroundInputViewSelect.vue'
 import PlaygroundSchemaForm from './PlaygroundSchemaForm.vue'
 import ModelSelectorField, {
@@ -76,7 +77,7 @@ const isCodeViewMode = computed(() =>
 const showResetButton = computed(() => inputViewMode.value === 'form')
 const showRunActions = computed(() => !isCodeViewMode.value)
 
-const formattedPrice = computed(() => `$${+props.costUsd}`)
+const formattedPrice = computed(() => formatUsd(props.costUsd))
 
 const runLabel = computed(() =>
   userStore.isLoggedIn ? t('pages.modelDetail.run') : t('pages.modelDetail.startForFree'),
@@ -142,7 +143,6 @@ watch(
     if (inputViewMode.value === 'form' && !jsonDraftDirty.value) {
       jsonDraft.value = buildPlaygroundJsonSnippet(props.modelId, values, batchSize.value)
     }
-
     if (invalidFields.value.length > 0) {
       const stillMissing = new Set(validateSchemaForm(props.schema, values))
       invalidFields.value = invalidFields.value.filter((key) => stillMissing.has(key))
@@ -505,7 +505,7 @@ onBeforeUnmount(() => {
 
     <div v-if="userStore.isLoggedIn && showRunActions" class="input-panel__balance">
       <span>{{ t('pages.modelDetail.balance') }}</span>
-      <span class="input-panel__balance-value">${{ balanceUsd.toFixed(2) }}</span>
+      <span class="input-panel__balance-value">{{ formatUsd(balanceUsd) }}</span>
       <button type="button" class="input-panel__topup" @click="goTopUp">
         {{ t('pages.modelDetail.topUp') }}
       </button>

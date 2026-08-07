@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { formatUsd } from '@/utils/currency'
 import { formatTimestamp } from '@/utils/time'
 import type { BillingRecord } from '@/types'
 
@@ -24,7 +25,7 @@ const isPositive = computed(() => props.item.amountUsd > 0)
 
 const valueLabel = computed(() => {
   const prefix = isPositive.value ? '+' : '-'
-  return `${prefix}$${Math.abs(props.item.amountUsd).toFixed(2)}`
+  return `${prefix}${formatUsd(Math.abs(props.item.amountUsd))}`
 })
 
 const apiKeyLabel = computed(() => props.item.apiKey || '—')

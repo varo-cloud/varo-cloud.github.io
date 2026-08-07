@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { formatUsd } from '@/utils/currency'
 import { formatTimestamp } from '@/utils/time'
 import type { TopUpTransactionStatus, Transaction } from '@/types'
 
@@ -29,7 +30,7 @@ const completedLabel = computed(() => {
 
 const amountLabel = computed(() => {
   const prefix = props.item.amountUsd >= 0 ? '' : '-'
-  return `${prefix}$${Math.abs(props.item.amountUsd).toFixed(2)}`
+  return `${prefix}${formatUsd(Math.abs(props.item.amountUsd))}`
 })
 
 const providerLabel = computed(() => {
