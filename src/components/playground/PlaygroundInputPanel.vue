@@ -76,7 +76,7 @@ const isCodeViewMode = computed(() =>
 const showResetButton = computed(() => inputViewMode.value === 'form')
 const showRunActions = computed(() => !isCodeViewMode.value)
 
-const formattedPrice = computed(() => `$${props.costUsd.toFixed(2)}`)
+const formattedPrice = computed(() => `$${+props.costUsd}`)
 
 const runLabel = computed(() =>
   userStore.isLoggedIn ? t('pages.modelDetail.run') : t('pages.modelDetail.startForFree'),
