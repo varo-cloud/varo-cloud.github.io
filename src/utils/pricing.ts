@@ -3,11 +3,11 @@ import type { Model, PricingItem, PricingPriceUnit } from '@/types'
 /** Format USD for pricing table — precision varies by billing unit. */
 export function formatPricingUsd(value: number, unit: PricingPriceUnit): string {
   if (unit === 'per_million_tokens') {
-    const fixed = value.toFixed(2)
+    const fixed = value+'';
     return `$${fixed.replace(/(\.\d*?)0+$/, '$1').replace(/\.$/, '')}`
   }
 
-  const fixed = value.toFixed(3)
+  const fixed = value+'';
   return `$${fixed.replace(/(\.\d*?)0+$/, '$1').replace(/\.$/, '')}`
 }
 
