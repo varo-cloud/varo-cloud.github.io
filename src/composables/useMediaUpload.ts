@@ -67,7 +67,9 @@ export function useMediaUpload({ model, kind, mimePrefix }: UseMediaUploadOption
       previewUrl.value = result.url
     } catch (error) {
       uploadError.value =
-        error instanceof Error ? error.message : t('pages.modelDetail.upload.failed')
+        error instanceof Error && error.message
+          ? error.message
+          : t('pages.modelDetail.upload.failed')
       message.error(uploadError.value)
       revokeLocalPreview()
       previewUrl.value = null

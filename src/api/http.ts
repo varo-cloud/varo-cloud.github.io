@@ -85,6 +85,25 @@ http.interceptors.request.use((config) => {
   return config
 })
 
+function getPayloadMessage(data: unknown): string | undefined {
+  if (!data || typeof data !== 'object') return undefined
+  const message = (data as { message?: unknown }).message
+  return typeof message === 'string' && message.trim() ? message : undefined
+}
+
+function resolveHttpErrorMessage(error: AxiosError<ApiResponse<unknown>>): string {
+  const payloadMessage = getPayloadMessage(error.response?.data)
+  if (payloadMessage) return payloadMessage
+
+  const status = error.response?.status
+  const statusText = error.response?.statusText?.trim()
+  if (status != null) {
+    return statusText ? `${status} ${statusText}` : `Request failed (${status})`
+  }
+
+  return error.message || 'Request failed'
+}
+
 http.interceptors.response.use(
   async (response) => {
     const payload = response.data as ApiResponse<unknown>
@@ -120,8 +139,7 @@ http.interceptors.response.use(
       }
     }
 
-    const message = payload?.message || error.message || 'Request failed'
-    return Promise.reject(new Error(message))
+    return Promise.reject(new Error(resolveHttpErrorMessage(error)))
   },
 )
 
