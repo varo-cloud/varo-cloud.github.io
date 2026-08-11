@@ -1,10 +1,11 @@
 <script setup lang="ts">
 import { computed, nextTick, onBeforeUnmount, ref, useId, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { NSpin } from 'naive-ui'
+import { NSpin, NTooltip } from 'naive-ui'
 import AppIcon from '@/components/common/AppIcon.vue'
 import PlaygroundSelectPanelSearch from '@/components/playground/PlaygroundSelectPanelSearch.vue'
 import { usePaginatedModelSearch } from '@/composables/usePaginatedModelSearch'
+import { PLAYGROUND_SELECT_TOOLTIP_Z_INDEX } from '@/constants/overlayZIndex'
 import { assetUrl } from '@/utils/assetUrl'
 import { formatCapabilityLabel } from '@/utils/capability'
 
@@ -29,6 +30,8 @@ const panelRef = ref<HTMLElement | null>(null)
 const listScrollRef = ref<HTMLElement | null>(null)
 const panelStyle = ref({ top: '0px', left: '0px', width: '0px' })
 const panelId = useId()
+const PANEL_MIN_WIDTH = 320
+const VIEWPORT_PADDING = 8
 const SCROLL_LOAD_THRESHOLD = 48
 
 let closeTimer: ReturnType<typeof setTimeout> | null = null
@@ -54,15 +57,29 @@ const thumbnailSrc = computed(() =>
 /** Use catalog-wide total so search narrowing does not disable the switcher. */
 const hasSwitcher = computed(() => catalogTotal.value === 0 || catalogTotal.value > 1)
 
+function optionFullLabel(opt: { label: string; capability?: string }): string {
+  const cap = formatCapabilityLabel(opt.capability)
+  return cap ? `${opt.label} · ${cap}` : opt.label
+}
+
 function updatePanelPosition() {
   const el = triggerRef.value
   if (!el) return
 
   const rect = el.getBoundingClientRect()
+  const panelWidth = Math.min(
+    Math.max(rect.width, PANEL_MIN_WIDTH),
+    window.innerWidth - VIEWPORT_PADDING * 2,
+  )
+  const panelLeft = Math.min(
+    rect.left,
+    window.innerWidth - VIEWPORT_PADDING - panelWidth,
+  )
+
   panelStyle.value = {
     top: `${rect.bottom + 4}px`,
-    left: `${rect.left}px`,
-    width: `${Math.max(rect.width, 280)}px`,
+    left: `${Math.max(VIEWPORT_PADDING, panelLeft)}px`,
+    width: `${panelWidth}px`,
   }
 }
 
@@ -203,42 +220,70 @@ onBeforeUnmount(() => {
             <NSpin size="small" />
           </div>
           <template v-else>
-            <button
+            <NTooltip
               v-for="opt in selectorOptions"
               :key="opt.id"
-              type="button"
-              class="playground-select-panel__option"
-              :class="{ 'playground-select-panel__option--selected': opt.id === modelId }"
-              role="option"
-              :aria-selected="opt.id === modelId"
-              @click.stop="selectOption(opt.id)"
+              to="body"
+              trigger="hover"
+              placement="right"
+              :show-arrow="false"
+              :z-index="PLAYGROUND_SELECT_TOOLTIP_Z_INDEX"
             >
-              <span class="model-header__option-label">
-                <span class="model-header__option-name">{{ opt.label }}</span>
-                <span v-if="formatCapabilityLabel(opt.capability)" class="model-header__capability">
-                  {{ formatCapabilityLabel(opt.capability) }}
-                </span>
-                <span v-if="opt.isHot" class="model-header__hot">{{ t('pages.aiGenerator.hot') }}</span>
-                <span v-else-if="opt.isNew" class="model-header__new">{{ t('pages.aiGenerator.new') }}</span>
-              </span>
-              <svg
-                v-if="opt.id === modelId"
-                class="playground-select-panel__check"
-                width="14"
-                height="14"
-                viewBox="0 0 14 14"
-                fill="none"
-                aria-hidden="true"
-              >
-                <path
-                  d="M2.5 7l3 3 6-6"
-                  stroke="currentColor"
-                  stroke-width="1.5"
-                  stroke-linecap="round"
-                  stroke-linejoin="round"
-                />
-              </svg>
-            </button>
+              <template #trigger>
+                <button
+                  type="button"
+                  class="playground-select-panel__option"
+                  :class="{ 'playground-select-panel__option--selected': opt.id === modelId }"
+                  role="option"
+                  :aria-selected="opt.id === modelId"
+                  :aria-label="optionFullLabel(opt)"
+                  @click.stop="selectOption(opt.id)"
+                >
+                  <span class="model-header__option-label">
+                    <span class="model-header__option-name">{{ opt.label }}</span>
+                    <span v-if="formatCapabilityLabel(opt.capability)" class="model-header__capability">
+                      {{ formatCapabilityLabel(opt.capability) }}
+                    </span>
+                    <span v-if="opt.isHot" class="model-header__hot">{{ t('pages.aiGenerator.hot') }}</span>
+                    <span v-else-if="opt.isNew" class="model-header__new">{{ t('pages.aiGenerator.new') }}</span>
+                  </span>
+                  <svg
+                    v-if="opt.id === modelId"
+                    class="playground-select-panel__check"
+                    width="14"
+                    height="14"
+                    viewBox="0 0 14 14"
+                    fill="none"
+                    aria-hidden="true"
+                  >
+                    <path
+                      d="M2.5 7l3 3 6-6"
+                      stroke="currentColor"
+                      stroke-width="1.5"
+                      stroke-linecap="round"
+                      stroke-linejoin="round"
+                    />
+                  </svg>
+                </button>
+              </template>
+              <div class="model-header__tooltip">
+                <p class="model-header__tooltip-name">{{ opt.label }}</p>
+                <div
+                  v-if="formatCapabilityLabel(opt.capability) || opt.isHot || opt.isNew"
+                  class="model-header__tooltip-meta"
+                >
+                  <span
+                    v-if="formatCapabilityLabel(opt.capability)"
+                    class="model-header__capability"
+                  >
+                    {{ formatCapabilityLabel(opt.capability) }}
+                  </span>
+                  <span v-if="opt.isHot" class="model-header__hot">{{ t('pages.aiGenerator.hot') }}</span>
+                  <span v-else-if="opt.isNew" class="model-header__new">{{ t('pages.aiGenerator.new') }}</span>
+                </div>
+                <p v-if="opt.description" class="model-header__tooltip-desc">{{ opt.description }}</p>
+              </div>
+            </NTooltip>
             <p v-if="selectorOptions.length === 0" class="playground-select-panel__empty">
               {{ t('common.noSearchResults') }}
             </p>
@@ -397,5 +442,39 @@ onBeforeUnmount(() => {
   font-weight: 400;
   line-height: 12px;
   color: #fff;
+}
+
+.model-header__tooltip {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-width: 280px;
+  padding: 2px 0;
+  text-align: left;
+}
+
+.model-header__tooltip-name {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 18px;
+  color: #ebf4fb;
+  word-break: break-word;
+}
+
+.model-header__tooltip-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.model-header__tooltip-desc {
+  margin: 0;
+  font-size: 12px;
+  font-weight: 400;
+  line-height: 16px;
+  color: #9b9dab;
+  word-break: break-word;
 }
 </style>
