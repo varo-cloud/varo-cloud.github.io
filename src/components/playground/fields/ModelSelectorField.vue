@@ -33,6 +33,7 @@ const triggerRef = ref<HTMLElement | null>(null)
 const panelRef = ref<HTMLElement | null>(null)
 const listScrollRef = ref<HTMLElement | null>(null)
 const PANEL_MAX_HEIGHT = 320
+const PANEL_MIN_WIDTH = 320
 const SEARCH_INPUT_HEIGHT = 36
 const VIEWPORT_PADDING = 8
 const PANEL_GAP = 4
@@ -87,19 +88,27 @@ function updatePanelPosition() {
   const openBelow = spaceBelow >= spaceAbove
   const availableSpace = (openBelow ? spaceBelow : spaceAbove) - PANEL_GAP - SEARCH_INPUT_HEIGHT
   const maxHeight = Math.min(PANEL_MAX_HEIGHT, Math.max(availableSpace, 120))
+  const panelWidth = Math.min(
+    Math.max(rect.width, PANEL_MIN_WIDTH),
+    window.innerWidth - VIEWPORT_PADDING * 2,
+  )
+  const panelLeft = Math.min(
+    rect.left,
+    window.innerWidth - VIEWPORT_PADDING - panelWidth,
+  )
 
   panelShellStyle.value = openBelow
     ? {
         top: `${rect.bottom + PANEL_GAP}px`,
         bottom: 'auto',
-        left: `${rect.left}px`,
-        width: `${rect.width}px`,
+        left: `${Math.max(VIEWPORT_PADDING, panelLeft)}px`,
+        width: `${panelWidth}px`,
       }
     : {
         top: 'auto',
         bottom: `${window.innerHeight - rect.top + PANEL_GAP}px`,
-        left: `${rect.left}px`,
-        width: `${rect.width}px`,
+        left: `${Math.max(VIEWPORT_PADDING, panelLeft)}px`,
+        width: `${panelWidth}px`,
       }
 
   panelScrollStyle.value = {
@@ -239,8 +248,8 @@ onBeforeUnmount(() => {
                 to="body"
                 trigger="hover"
                 placement="right"
+                :show-arrow="false"
                 :z-index="PLAYGROUND_SELECT_TOOLTIP_Z_INDEX"
-                :disabled="!opt.description"
               >
                 <template #trigger>
                   <button
@@ -249,7 +258,7 @@ onBeforeUnmount(() => {
                     :class="{ 'playground-select-panel__option--selected': opt.id === model }"
                     role="option"
                     :aria-selected="opt.id === model"
-                    :aria-label="opt.description ? optionFullLabel(opt) : undefined"
+                    :aria-label="optionFullLabel(opt)"
                     @click.stop="selectOption(opt.id)"
                   >
                     <span class="model-selector__option-label">
@@ -279,7 +288,23 @@ onBeforeUnmount(() => {
                     </svg>
                   </button>
                 </template>
-                <span class="model-selector__tooltip">{{ opt.description }}</span>
+                <div class="model-selector__tooltip">
+                  <p class="model-selector__tooltip-name">{{ opt.label }}</p>
+                  <div
+                    v-if="formatCapabilityLabel(opt.capability) || opt.isHot || opt.isNew"
+                    class="model-selector__tooltip-meta"
+                  >
+                    <span
+                      v-if="formatCapabilityLabel(opt.capability)"
+                      class="model-selector__capability"
+                    >
+                      {{ formatCapabilityLabel(opt.capability) }}
+                    </span>
+                    <span v-if="opt.isHot" class="model-selector__hot">{{ t('pages.aiGenerator.hot') }}</span>
+                    <span v-else-if="opt.isNew" class="model-selector__new">{{ t('pages.aiGenerator.new') }}</span>
+                  </div>
+                  <p v-if="opt.description" class="model-selector__tooltip-desc">{{ opt.description }}</p>
+                </div>
               </NTooltip>
               <p v-if="selectorOptions.length === 0" class="playground-select-panel__empty">
                 {{ t('common.noSearchResults') }}
@@ -406,9 +431,36 @@ onBeforeUnmount(() => {
 }
 
 .model-selector__tooltip {
-  display: block;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
   max-width: 280px;
+  padding: 2px 0;
+  text-align: left;
+}
+
+.model-selector__tooltip-name {
+  margin: 0;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 18px;
+  color: #ebf4fb;
+  word-break: break-word;
+}
+
+.model-selector__tooltip-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.model-selector__tooltip-desc {
+  margin: 0;
   font-size: 12px;
+  font-weight: 400;
   line-height: 16px;
+  color: #9b9dab;
+  word-break: break-word;
 }
 </style>
