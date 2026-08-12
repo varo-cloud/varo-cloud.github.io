@@ -42,6 +42,7 @@ const navItems = computed(() => [
 const modelsMenuItems = computed(() => [
   { label: t('nav.allModels'), name: 'models' },
   { label: t('nav.seedance'), name: 'seedance' },
+  { label: t('nav.minimaxH3'), name: 'minimax-h3' },
 ])
 
 import type { AppIconName } from '@/components/common/AppIcon.vue'
@@ -140,7 +141,8 @@ function isActive(name: string) {
     return (
       route.name === 'models' ||
       route.name === 'model-detail' ||
-      route.name === 'seedance'
+      route.name === 'seedance' ||
+      route.name === 'minimax-h3'
     )
   }
   return route.name === name
@@ -150,7 +152,8 @@ const isModelsNavActive = computed(
   () =>
     route.name === 'models' ||
     route.name === 'model-detail' ||
-    route.name === 'seedance',
+    route.name === 'seedance' ||
+    route.name === 'minimax-h3',
 )
 
 function goTo(name: string) {
@@ -611,6 +614,14 @@ onUnmounted(() => {
               @click="goToFromMobile('seedance')"
             >
               {{ t('nav.seedance') }}
+            </button>
+            <button
+              type="button"
+              class="app-header__mobile-nav-item"
+              :class="{ 'is-active': route.name === 'minimax-h3' }"
+              @click="goToFromMobile('minimax-h3')"
+            >
+              {{ t('nav.minimaxH3') }}
             </button>
 
             <button

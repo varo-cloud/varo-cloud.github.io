@@ -32,6 +32,7 @@ export default {
     models: 'Models',
     allModels: 'All Models',
     seedance: 'Seedance 2.0',
+    minimaxH3: 'MiniMax H3',
     aiGenerator: 'AI Generator',
     pricing: 'Pricing',
     developers: 'Developers',
@@ -896,6 +897,221 @@ export default {
         title: 'Seedance 2.0 API — Cinematic AI Video Generation | Varo.cloud',
         description:
           'Access ByteDance Seedance 2.0 on Varo Cloud: text-to-video, image-to-video, and multimodal reference APIs with native audio, subject consistency, and production-ready scaling.',
+      },
+    },
+    minimaxH3: {
+      hero: {
+        title: 'MiniMax H3: The Open-Weight Omni-Modal Video Model',
+        subtitle:
+          'Integrate MiniMax H3 through Varo Cloud API to generate and edit videos from text, images, video, and audio references—with native stereo sound, up to 2K resolution, and outputs up to 15 seconds.',
+        ctaPrimary: 'Get API Key',
+        ctaSecondary: 'View Documentation',
+      },
+      api: {
+        title: 'Unified Multimodal Generation',
+        subtitle:
+          'Use MiniMax H3 for text-to-video, first- and last-frame animation, or reference-driven generation using images, video clips, audio, and natural-language instructions.',
+        codeTabsLabel: 'SDK examples',
+        codeTabs: [
+          {
+            id: 'image',
+            label: 'image.ts',
+            icon: '/assets/minimax-h3/icon-image-line.svg',
+          },
+          {
+            id: 'video',
+            label: 'video.ts',
+            icon: '/assets/minimax-h3/icon-vidicon-line.svg',
+          },
+          {
+            id: 'speech',
+            label: 'speech.ts',
+            icon: '/assets/minimax-h3/icon-mic-2-line.svg',
+          },
+          {
+            id: 'chat',
+            label: 'chat.ts',
+            icon: '/assets/minimax-h3/icon-wechat-2-line.svg',
+          },
+        ],
+        cards: [
+          {
+            tag: 'Text to Video',
+            title: 'Text-to-Video API',
+            body: 'Generate complete videos from natural-language prompts with motion, camera direction, visual style, and native audio.',
+            alt: 'MiniMax H3 text-to-video API example',
+            image: '/assets/minimax-h3/api-t2v.jpg',
+          },
+          {
+            tag: 'Image to Video',
+            title: 'Image-to-Video API',
+            body: 'Animate a starting image—or guide the opening and ending frames—to create controlled visual sequences.',
+            alt: 'MiniMax H3 image-to-video API example',
+            image: '/assets/minimax-h3/api-i2v.jpg',
+          },
+          {
+            tag: 'Reference to Video',
+            title: 'Reference-to-Video API',
+            body: 'Combine images, video clips, audio, and instructions to reproduce characters, movement, composition, camera language, and sound.',
+            alt: 'MiniMax H3 reference-to-video API example',
+            image: '/assets/minimax-h3/api-r2v.jpg',
+          },
+        ],
+      },
+      modes: {
+        title: 'Generation Modes',
+        subtitle:
+          'MiniMax H3 understands relationships across multiple media types, allowing developers to combine characters, motion references, sound, camera direction, and written instructions in a single request.',
+        visualAlt: 'MiniMax H3 multimodal reference generation example',
+        refVideo: 'Video',
+        refImage: 'image',
+        refAudio: 'Audio',
+        items: [
+          {
+            title: 'Native Audio and 2K Video',
+            body: 'Create complete audiovisual output without separate pipelines.',
+            icon: '/assets/minimax-h3/icon-stack-fill.svg',
+          },
+          {
+            title: 'Use Rich References',
+            body: 'Combine images, clips, and audio in one request.',
+            icon: '/assets/minimax-h3/icon-paint-brush-fill.svg',
+          },
+          {
+            title: 'Creative Control and Editing',
+            body: 'Control subjects, motion, camera, style, and sound.',
+            icon: '/assets/minimax-h3/icon-equalizer-fill.svg',
+          },
+        ],
+      },
+      why: {
+        title: 'Why Use MiniMax H3 on Varo Cloud',
+        subtitle:
+          "Varo Cloud combines MiniMax H3's strong price-performance with production-ready infrastructure, unified model access, and transparent usage-based pricing—so you can launch faster, scale efficiently, and avoid managing separate providers or infrastructure.",
+        cta: 'API Reference',
+        items: [
+          {
+            title: 'Cost-Efficient Generation',
+            body: 'Access high-quality video output with competitive per-second pricing.',
+            icon: '/assets/minimax-h3/icon-refund-2-fill.svg',
+          },
+          {
+            title: 'One Unified API',
+            body: 'Use the same authentication, billing, and workflow across H3 and other leading models.',
+            icon: '/assets/minimax-h3/icon-stack-fill.svg',
+          },
+          {
+            title: 'Production-Ready Scale',
+            body: 'Move from testing to high-volume generation without managing GPUs or model hosting.',
+            icon: '/assets/minimax-h3/icon-archive-drawer-fill.svg',
+          },
+          {
+            title: 'Simple, Predictable Pricing',
+            body: 'Pay only for what you generate and track usage from one Varo Cloud account.',
+            icon: '/assets/minimax-h3/icon-bar-chart-fill.svg',
+          },
+        ],
+      },
+      production: {
+        title: 'Built for Real Creative Production',
+        subtitle:
+          'Access MiniMax H3 through the Varo Cloud API for commercial creative work across advertising, branding, e-commerce, product design, UI/UX, gaming, film titles, animated posters, and product experiences.',
+        useCases: [
+          'Advertising and campaign content',
+          'E-commerce and product videos',
+          'Social and short-form media',
+          'Film titles and animated posters',
+          'AI video editors and creation tools',
+          'Gaming and interactive experiences',
+        ],
+        gallery: [
+          {
+            image: 'https://assets.varo.cloud/uploads/bf7f6114f20443f4af685c744b92d8d9.jpg',
+            alt: 'MiniMax H3 creative production example 1',
+          },
+          {
+            image: 'https://assets.varo.cloud/uploads/e33cc04a577c42eebf11c88a03402553.jpg',
+            alt: 'MiniMax H3 creative production example 2',
+          },
+          {
+            image: 'https://assets.varo.cloud/uploads/71130258eab54f75851389d714514cf7.jpg',
+            alt: 'MiniMax H3 creative production example 3',
+          },
+          {
+            image: 'https://assets.varo.cloud/uploads/428db59d0c8541da9fadad3b0b575eb9.jpg',
+            alt: 'MiniMax H3 creative production example 4',
+          },
+        ],
+      },
+      faq: {
+        title: 'MiniMax H3 API FAQ',
+        items: [
+          {
+            id: 'what',
+            question: '1. What is the MiniMax H3 API?',
+            answer:
+              'The MiniMax H3 API provides programmatic access to a multimodal video model that understands text, images, video, and audio, and generates video with native stereo sound.',
+          },
+          {
+            id: 'content',
+            question: '2. What kinds of content can H3 generate?',
+            answer:
+              'H3 supports text-to-video, first- and last-frame image-to-video, reference-based generation, and video editing for ads, social content, product videos, storytelling, and creative applications.',
+          },
+          {
+            id: 'start',
+            question: '3. How do I start building with the MiniMax H3 API?',
+            answer:
+              'Create a Varo Cloud API key, submit a generation request, receive a task ID, and query the task until your completed video is ready.',
+          },
+          {
+            id: 'pricing',
+            question: '4. How is H3 usage priced on Varo Cloud?',
+            answer:
+              'H3 uses transparent, usage-based pricing. You pay only for the video you generate, with current rates shown on the Varo Cloud model page.',
+          },
+          {
+            id: 'audio',
+            question: '5. Does every H3 video include audio?',
+            answer:
+              'H3 can generate native stereo audio with dialogue, music, ambient sound, and effects. Whether audio is included depends on your request and selected generation settings.',
+          },
+          {
+            id: 'specs',
+            question: '6. Which resolutions, durations, and aspect ratios are available?',
+            answer:
+              'H3 supports 768P and 2K output, video durations from 4 to 15 seconds, and common or adaptive aspect ratios.',
+          },
+          {
+            id: 'multimodal',
+            question: '7. What can I include in one multimodal request?',
+            answer:
+              'You can combine up to nine images, three video clips, and three audio clips, with a maximum of 12 reference files in one request.',
+          },
+          {
+            id: 'formats',
+            question: '8. Which media formats and file-size limits apply?',
+            answer:
+              'Supported formats include JPG, PNG, WEBP, HEIC, MP4-compatible H.264 or H.265 video, WAV, and MP3. Limits are 30 MB per image, 50 MB per video, and 15 MB per audio file.',
+          },
+          {
+            id: 'edit',
+            question: '9. Can I edit an existing video with the MiniMax H3 API?',
+            answer:
+              'Yes. H3 can refine characters, objects, scenes, sound, and pacing through natural-language instructions and multimodal references.',
+          },
+          {
+            id: 'compare',
+            question: '10. How does H3 compare with a standard image-to-video model?',
+            answer:
+              'Standard image-to-video models mainly animate a single frame. H3 can combine text, multiple images, video, and audio references while controlling characters, motion, camera work, style, sound, and editing rhythm in one workflow.',
+          },
+        ],
+      },
+      seo: {
+        title: 'MiniMax H3 API — Omni-Modal AI Video Generation | Varo.cloud',
+        description:
+          'Access MiniMax H3 on Varo Cloud: open-weight omni-modal video API with text, image, video, and audio references, native stereo sound, up to 2K, and production-ready scaling.',
       },
     },
     docs: {

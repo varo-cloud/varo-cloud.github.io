@@ -92,6 +92,20 @@ const ROUTES = [
     waitText: 'Varo Cloud Seedance 2.0 API',
   },
   {
+    path: '/minimax-h3',
+    outFile: 'minimax-h3.html',
+    ready: '[data-seo-ready="minimax-h3"]',
+    waitSelector: '#minimax-h3-hero-title',
+    waitText: 'MiniMax H3: The Open-Weight Omni-Modal Video Model',
+  },
+  {
+    path: '/zh-CN/minimax-h3',
+    outFile: join('zh-CN', 'minimax-h3.html'),
+    ready: '[data-seo-ready="minimax-h3"]',
+    waitSelector: '#minimax-h3-hero-title',
+    waitText: 'MiniMax H3：开源权重全模态视频模型',
+  },
+  {
     path: '/pricing',
     outFile: 'pricing.html',
     ready: '[data-seo-ready="pricing"]',

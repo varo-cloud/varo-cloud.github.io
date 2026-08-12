@@ -50,6 +50,22 @@
     <priority>0.95</priority>
   </url>
   <url>
+    <loc>https://varo.cloud/minimax-h3</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://varo.cloud/minimax-h3" />
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://varo.cloud/zh-CN/minimax-h3" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://varo.cloud/minimax-h3" />
+    <changefreq>weekly</changefreq>
+    <priority>0.95</priority>
+  </url>
+  <url>
+    <loc>https://varo.cloud/zh-CN/minimax-h3</loc>
+    <xhtml:link rel="alternate" hreflang="en" href="https://varo.cloud/minimax-h3" />
+    <xhtml:link rel="alternate" hreflang="zh-CN" href="https://varo.cloud/zh-CN/minimax-h3" />
+    <xhtml:link rel="alternate" hreflang="x-default" href="https://varo.cloud/minimax-h3" />
+    <changefreq>weekly</changefreq>
+    <priority>0.95</priority>
+  </url>
+  <url>
     <loc>https://varo.cloud/pricing</loc>
     <xhtml:link rel="alternate" hreflang="en" href="https://varo.cloud/pricing" />
     <xhtml:link rel="alternate" hreflang="zh-CN" href="https://varo.cloud/zh-CN/pricing" />

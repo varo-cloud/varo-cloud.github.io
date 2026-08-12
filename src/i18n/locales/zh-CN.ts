@@ -32,6 +32,7 @@ export default {
     models: '模型',
     allModels: '全部模型',
     seedance: 'Seedance 2.0',
+    minimaxH3: 'MiniMax H3',
     aiGenerator: 'AI 生成器',
     pricing: '价格',
     developers: '开发者',
@@ -885,6 +886,221 @@ export default {
         title: 'Seedance 2.0 API — 电影级 AI 视频生成 | Varo.cloud',
         description:
           '在 Varo Cloud 使用字节跳动 Seedance 2.0：文生视频、图生视频与多模态参考 API，支持原生音频、主体一致性与生产级扩缩。',
+      },
+    },
+    minimaxH3: {
+      hero: {
+        title: 'MiniMax H3：开源权重全模态视频模型',
+        subtitle:
+          '通过 Varo Cloud API 接入 MiniMax H3，用文本、图像、视频和音频参考生成与编辑视频——原生立体声音频、最高 2K 分辨率，输出最长 15 秒。',
+        ctaPrimary: '获取 API Key',
+        ctaSecondary: '查看文档',
+      },
+      api: {
+        title: '统一多模态生成',
+        subtitle:
+          '用 MiniMax H3 完成文生视频、首尾帧动画，或基于图片、视频片段、音频与自然语言指令的参考生成。',
+        codeTabsLabel: 'SDK 示例',
+        codeTabs: [
+          {
+            id: 'image',
+            label: 'image.ts',
+            icon: '/assets/minimax-h3/icon-image-line.svg',
+          },
+          {
+            id: 'video',
+            label: 'video.ts',
+            icon: '/assets/minimax-h3/icon-vidicon-line.svg',
+          },
+          {
+            id: 'speech',
+            label: 'speech.ts',
+            icon: '/assets/minimax-h3/icon-mic-2-line.svg',
+          },
+          {
+            id: 'chat',
+            label: 'chat.ts',
+            icon: '/assets/minimax-h3/icon-wechat-2-line.svg',
+          },
+        ],
+        cards: [
+          {
+            tag: '文生视频',
+            title: '文生视频 API',
+            body: '用自然语言提示词生成完整视频，覆盖运动、镜头、视觉风格与原生音频。',
+            alt: 'MiniMax H3 文生视频 API 示例',
+            image: '/assets/minimax-h3/api-t2v.jpg',
+          },
+          {
+            tag: '图生视频',
+            title: '图生视频 API',
+            body: '让静态图动起来，或指定首尾帧，生成可控的视觉序列。',
+            alt: 'MiniMax H3 图生视频 API 示例',
+            image: '/assets/minimax-h3/api-i2v.jpg',
+          },
+          {
+            tag: '参考生成视频',
+            title: '参考生成视频 API',
+            body: '结合图片、视频、音频和文字指令，复现角色、动作、画面构图、镜头语言和声音效果。',
+            alt: 'MiniMax H3 参考生成视频 API 示例',
+            image: '/assets/minimax-h3/api-r2v.jpg',
+          },
+        ],
+      },
+      modes: {
+        title: '生成模式',
+        subtitle:
+          'MiniMax H3 理解多种媒体类型之间的关系，让开发者在一次请求中组合角色、运动参考、声音、镜头方向与文字指令。',
+        visualAlt: 'MiniMax H3 多模态参考生成示例',
+        refVideo: 'Video',
+        refImage: 'image',
+        refAudio: 'Audio',
+        items: [
+          {
+            title: '原生音频与 2K 视频',
+            body: '无需独立管线，一次生成完整音画输出。',
+            icon: '/assets/minimax-h3/icon-stack-fill.svg',
+          },
+          {
+            title: '丰富参考输入',
+            body: '在一次请求中组合图片、片段与音频。',
+            icon: '/assets/minimax-h3/icon-paint-brush-fill.svg',
+          },
+          {
+            title: '创意控制与编辑',
+            body: '精确控制主体、运动、镜头、风格与声音。',
+            icon: '/assets/minimax-h3/icon-equalizer-fill.svg',
+          },
+        ],
+      },
+      why: {
+        title: '为什么在 Varo Cloud 使用 MiniMax H3',
+        subtitle:
+          'Varo Cloud 将 MiniMax H3 的高性价比，与生产级基础设施、统一模型接入和透明按量计费结合——让你更快上线、高效扩缩，无需管理多个供应商或基础设施。',
+        cta: 'API 参考',
+        items: [
+          {
+            title: '高性价比生成',
+            body: '以有竞争力的按秒计价，获取高质量视频输出。',
+            icon: '/assets/minimax-h3/icon-refund-2-fill.svg',
+          },
+          {
+            title: '统一 API',
+            body: '同一套鉴权、计费与工作流，覆盖 H3 及其他领先模型。',
+            icon: '/assets/minimax-h3/icon-stack-fill.svg',
+          },
+          {
+            title: '生产级扩缩',
+            body: '从测试迈向大规模生成，无需自管 GPU 或模型托管。',
+            icon: '/assets/minimax-h3/icon-archive-drawer-fill.svg',
+          },
+          {
+            title: '简单可预期定价',
+            body: '按实际生成量付费，并在同一个 Varo Cloud 账号追踪用量。',
+            icon: '/assets/minimax-h3/icon-bar-chart-fill.svg',
+          },
+        ],
+      },
+      production: {
+        title: '面向真实创意生产',
+        subtitle:
+          '通过 Varo Cloud API 接入 MiniMax H3，覆盖广告、品牌、电商、产品设计、UI/UX、游戏、片头、动画海报与产品体验等商业创意场景。',
+        useCases: [
+          '广告与营销活动内容',
+          '电商与产品视频',
+          '社交与短视频媒体',
+          '片头与动画海报',
+          'AI 视频编辑与创作工具',
+          '游戏与互动体验',
+        ],
+        gallery: [
+          {
+            image: 'https://assets.varo.cloud/uploads/bf7f6114f20443f4af685c744b92d8d9.jpg',
+            alt: 'MiniMax H3 创意生产示例 1',
+          },
+          {
+            image: 'https://assets.varo.cloud/uploads/e33cc04a577c42eebf11c88a03402553.jpg',
+            alt: 'MiniMax H3 创意生产示例 2',
+          },
+          {
+            image: 'https://assets.varo.cloud/uploads/71130258eab54f75851389d714514cf7.jpg',
+            alt: 'MiniMax H3 创意生产示例 3',
+          },
+          {
+            image: 'https://assets.varo.cloud/uploads/428db59d0c8541da9fadad3b0b575eb9.jpg',
+            alt: 'MiniMax H3 创意生产示例 4',
+          },
+        ],
+      },
+      faq: {
+        title: 'MiniMax H3 API 常见问题',
+        items: [
+          {
+            id: 'what',
+            question: '1. 什么是 MiniMax H3 API？',
+            answer:
+              'MiniMax H3 API 提供对多模态视频模型的程序化访问，该模型可理解文本、图片、视频与音频，并生成带原生立体声音频的视频。',
+          },
+          {
+            id: 'content',
+            question: '2. H3 可以生成哪些内容？',
+            answer:
+              'H3 支持文生视频、首尾帧图生视频、参考生成与视频编辑，适用于广告、社交内容、产品视频、叙事与创意应用。',
+          },
+          {
+            id: 'start',
+            question: '3. 如何开始使用 MiniMax H3 API？',
+            answer:
+              '创建 Varo Cloud API Key，提交生成请求，获取任务 ID，然后查询任务状态，直到视频生成完成。',
+          },
+          {
+            id: 'pricing',
+            question: '4. H3 在 Varo Cloud 如何计费？',
+            answer:
+              'H3 采用透明的按用量计费。你只需为生成的视频付费，当前费率见 Varo Cloud 模型页。',
+          },
+          {
+            id: 'audio',
+            question: '5. 每段 H3 视频都包含音频吗？',
+            answer:
+              'H3 可生成包含对白、音乐、环境音与音效的原生立体声音频。是否包含音频取决于你的请求与所选生成设置。',
+          },
+          {
+            id: 'specs',
+            question: '6. 支持哪些分辨率、时长与画幅？',
+            answer:
+              'H3 支持 768P 与 2K 输出，视频时长 4 至 15 秒，以及常见或自适应画幅。',
+          },
+          {
+            id: 'multimodal',
+            question: '7. 一次多模态请求可以包含什么？',
+            answer:
+              '单次请求最多可组合 9 张图片、3 段视频与 3 段音频，参考文件总数不超过 12 个。',
+          },
+          {
+            id: 'formats',
+            question: '8. 支持哪些媒体格式与文件大小限制？',
+            answer:
+              '支持的格式包括 JPG、PNG、WEBP、HEIC、兼容 MP4 的 H.264 或 H.265 视频、WAV 与 MP3。限制为每张图片 30 MB、每段视频 50 MB、每段音频 15 MB。',
+          },
+          {
+            id: 'edit',
+            question: '9. 能否用 MiniMax H3 API 编辑已有视频？',
+            answer:
+              '可以。H3 可通过自然语言指令与多模态参考，精修角色、物体、场景、声音与节奏。',
+          },
+          {
+            id: 'compare',
+            question: '10. H3 与普通图生视频模型有何不同？',
+            answer:
+              '普通图生视频模型主要是让单帧动起来。H3 可在同一工作流中组合文本、多张图片、视频与音频参考，并控制角色、运动、运镜、风格、声音与剪辑节奏。',
+          },
+        ],
+      },
+      seo: {
+        title: 'MiniMax H3 API — 全模态 AI 视频生成 | Varo.cloud',
+        description:
+          '在 Varo Cloud 使用 MiniMax H3：开源权重全模态视频 API，支持文本、图像、视频与音频参考、原生立体声音频、最高 2K，以及生产级扩缩。',
       },
     },
     docs: {

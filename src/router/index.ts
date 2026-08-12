@@ -23,6 +23,12 @@ const appLayoutChildren: RouteRecordRaw[] = [
     component: () => import('@/views/seedance/SeedanceView.vue'),
   },
   {
+    path: 'minimax-h3',
+    name: 'minimax-h3',
+    meta: { fullBleed: true, transparentHeader: true, lightPage: true },
+    component: () => import('@/views/minimax-h3/MiniMaxH3View.vue'),
+  },
+  {
     path: 'models/:slug(.+)',
     name: 'model-detail',
     meta: { fullBleed: true, transparentHeader: true },
