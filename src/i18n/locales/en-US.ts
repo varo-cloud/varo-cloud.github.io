@@ -154,9 +154,9 @@ export default {
         'Explore Varo’s complete library of leading AI models across video, image, text, audio, and multimodal creation. Compare capabilities, test models, and choose the right engine for your workflow—all from one simple, production-ready platform.',
       heroSlides: {
         seedance: {
-          title: 'Seedance 2.5 Coming Soon',
+          title: 'Seedance 2.5 is Now Available',
           subtitle:
-            'Seedance 2.5 arrives in Early July with 30-second single-shot videos, expanded reference capacity, tighter generation and editing control, and support for up to 50 reference files.',
+            'Seedance 2.5 is now available with 30-second single-shot videos, expanded reference capacity, tighter generation and editing control, and support for up to 50 reference files.',
         },
       },
       heroCtaPrimary: 'Get Started',

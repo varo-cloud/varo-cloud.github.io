@@ -152,9 +152,9 @@ export default {
         '探索Varo Cloud云平台：覆盖全球领先的视频、图像、文本、音频和多模态AI 模型。轻松对比、测试并选择最适合您工作流程的模型。',
       heroSlides: {
         seedance: {
-          title: 'Seedance 2.5 即将上线',
+          title: 'Seedance 2.5 已上线',
           subtitle:
-            'Seedance 2.5 将于 7 月初上线，支持 30 秒单镜头视频、扩展参考素材容量、更精细的生成与编辑控制，以及最多 50 个参考文件。',
+            'Seedance 2.5 已于 8 月初上线，支持 30 秒单镜头视频、扩展参考素材容量、更精细的生成与编辑控制，以及最多 50 个参考文件。',
         },
       },
       heroCtaPrimary: '立即开始',
