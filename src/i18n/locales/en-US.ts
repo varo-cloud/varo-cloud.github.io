@@ -60,7 +60,7 @@ export default {
         title: 'The Generative AI Cloud for Creators',
         subtitle:
           "Access the world's leading generative AI models in one cloud platform — built for faster creation, smoother workflows, and unlimited creative output.",
-        slide2Title: 'Seedance 2.5 is Coming Soon',
+        slide2Title: 'Seedance 2.5 is Now Available',
         slide2Subtitle:
           'Bring a new standard for generative video — up to 30 seconds of native 4K, 50 multimodal references, and built-in audio-video sync in one pass.',
         ctaPrimary: 'Get Started',

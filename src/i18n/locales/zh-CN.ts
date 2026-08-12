@@ -60,7 +60,7 @@ export default {
         title: '面向创作者的生成式 AI 云平台',
         subtitle:
           '一站式Varo云平台，轻松调用全球领先的生成式 AI 模型，加速内容创作、简化工作流程，释放更多创意可能。',
-        slide2Title: 'Seedance 2.5 即将推出',
+        slide2Title: 'Seedance 2.5 已上线',
         slide2Subtitle:
           '为生成式视频树立新标准——单次生成最长 30 秒原生 4K，支持 50 个多模态参考，并内置音画同步。',
         ctaPrimary: '立即开始',
