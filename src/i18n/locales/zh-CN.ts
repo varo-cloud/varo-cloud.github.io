@@ -925,25 +925,25 @@ export default {
         ],
         cards: [
           {
+            capability: 'text-to-video',
             tag: '文生视频',
             title: '文生视频 API',
             body: '用自然语言提示词生成完整视频，覆盖运动、镜头、视觉风格与原生音频。',
             alt: 'MiniMax H3 文生视频 API 示例',
-            image: '/assets/minimax-h3/api-t2v.jpg',
           },
           {
+            capability: 'image-to-video',
             tag: '图生视频',
             title: '图生视频 API',
             body: '让静态图动起来，或指定首尾帧，生成可控的视觉序列。',
             alt: 'MiniMax H3 图生视频 API 示例',
-            image: '/assets/minimax-h3/api-i2v.jpg',
           },
           {
+            capability: 'reference-to-video',
             tag: '参考生成视频',
             title: '参考生成视频 API',
             body: '结合图片、视频、音频和文字指令，复现角色、动作、画面构图、镜头语言和声音效果。',
             alt: 'MiniMax H3 参考生成视频 API 示例',
-            image: '/assets/minimax-h3/api-r2v.jpg',
           },
         ],
       },
@@ -1028,6 +1028,7 @@ export default {
           },
           {
             image: 'https://assets.varo.cloud/uploads/428db59d0c8541da9fadad3b0b575eb9.jpg',
+            video: 'https://assets.varo.cloud/uploads/15fb0762cd6f4ebdbca99e54a9b86c18.mp4',
             alt: 'MiniMax H3 创意生产示例 4',
           },
         ],

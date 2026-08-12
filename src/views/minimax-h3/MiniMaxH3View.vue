@@ -9,14 +9,11 @@ import { assetUrl } from '@/utils/assetUrl'
 import { docsUrl, openDocs } from '@/utils/docsUrl'
 import { absoluteUrl, SITE_NAME } from '@/seo/config'
 import AppIcon from '@/components/common/AppIcon.vue'
+import { formatCapabilityLabel } from '@/utils/capability'
 import type { BaseModelFacetItem, Model } from '@/types'
 
-/** Card order matches `pages.minimaxH3.api.cards` */
-const API_CARD_CAPABILITIES = [
-  'text-to-video',
-  'image-to-video',
-  'reference-to-video',
-] as const
+/** Placeholder count while catalog models are loading */
+const API_CARD_SKELETON_COUNT = 3
 
 const { t, tm } = useI18n()
 const { push, localePath } = useLocaleRouter()
@@ -25,7 +22,7 @@ const userStore = useUserStore()
 const openFaqId = ref('what')
 const activeModeRef = ref(0)
 const h3BaseModel = ref<string | null>(null)
-const apiCardModels = ref<(Model | null)[]>(API_CARD_CAPABILITIES.map(() => null))
+const apiCardModels = ref<Model[]>([])
 const apiCardsLoading = ref(true)
 
 const faqItems = computed(() => {
@@ -37,24 +34,45 @@ const faqItems = computed(() => {
   return Array.isArray(items) ? items : []
 })
 
-const apiCards = computed(() => {
+const apiCardCopyByCapability = computed(() => {
   const items = tm('pages.minimaxH3.api.cards') as Array<{
+    capability?: string
     tag: string
     title: string
     body: string
     alt: string
   }>
-  if (!Array.isArray(items)) return []
-  return items.map((card, index) => {
-    const model = apiCardModels.value[index]
-    const thumbnail = model?.thumbnailUrl?.trim() || null
-    return {
-      ...card,
-      // Never fall back to a default placeholder image — keep skeleton until real media exists
-      image: thumbnail,
-    }
-  })
+  const map = new Map<string, { tag: string; title: string; body: string; alt: string }>()
+  if (!Array.isArray(items)) return map
+  for (const item of items) {
+    const key = item.capability?.trim().toLowerCase()
+    if (!key) continue
+    map.set(key, {
+      tag: item.tag,
+      title: item.title,
+      body: item.body,
+      alt: item.alt,
+    })
+  }
+  return map
 })
+
+const apiCards = computed(() =>
+  apiCardModels.value.map((model) => {
+    const capability = model.capability.trim().toLowerCase()
+    const copy = apiCardCopyByCapability.value.get(capability)
+    const label = formatCapabilityLabel(model.capability)
+    return {
+      tag: copy?.tag || label,
+      title: copy?.title || `${label} API`,
+      body: copy?.body || model.description,
+      alt: copy?.alt || model.displayName,
+      // Never fall back to a default placeholder image — keep skeleton until real media exists
+      image: model.thumbnailUrl?.trim() || null,
+      modelId: model.id,
+    }
+  }),
+)
 
 const modes = computed(() => {
   const items = tm('pages.minimaxH3.modes.items') as Array<{
@@ -82,6 +100,7 @@ const useCases = computed(() => {
 const galleryItems = computed(() => {
   const items = tm('pages.minimaxH3.production.gallery') as Array<{
     image: string
+    video?: string
     alt: string
   }>
   return Array.isArray(items) ? items : []
@@ -213,17 +232,17 @@ function resolveH3BaseModel(baseModels: BaseModelFacetItem[]): string | null {
   return (preferred ?? matches[0])?.slug ?? null
 }
 
-function resolveModelForCapability(capability: string, models: Model[]): Model | null {
-  const target = capability.toLowerCase()
-  const byCapability = models.find((m) => m.capability.trim().toLowerCase() === target)
-  if (byCapability) return byCapability
-
-  const byName = models.find((m) => {
-    const id = m.id.toLowerCase()
-    const name = m.displayName.toLowerCase()
-    return id.includes(target) || name.includes(target.replace(/-/g, ' '))
-  })
-  return byName ?? null
+/** Keep API order; one card per capability returned by the catalog. */
+function uniqueModelsByCapability(models: Model[]): Model[] {
+  const seen = new Set<string>()
+  const result: Model[] = []
+  for (const model of models) {
+    const key = model.capability.trim().toLowerCase()
+    if (!key || seen.has(key)) continue
+    seen.add(key)
+    result.push(model)
+  }
+  return result
 }
 
 async function resolveH3ModelSlugs() {
@@ -232,26 +251,27 @@ async function resolveH3ModelSlugs() {
     const facets = await fetchModelFacets()
     const baseModel = resolveH3BaseModel(facets.base_models)
     h3BaseModel.value = baseModel
-    if (!baseModel) return
+    if (!baseModel) {
+      apiCardModels.value = []
+      return
+    }
 
     const page = await fetchModels({
       base_model: baseModel,
       offset: 0,
       limit: 50,
     })
-    apiCardModels.value = API_CARD_CAPABILITIES.map((capability) =>
-      resolveModelForCapability(capability, page.items),
-    )
+    apiCardModels.value = uniqueModelsByCapability(page.items)
   } catch {
     h3BaseModel.value = null
-    apiCardModels.value = API_CARD_CAPABILITIES.map(() => null)
+    apiCardModels.value = []
   } finally {
     apiCardsLoading.value = false
   }
 }
 
 function onApiCardClick(index: number) {
-  const slug = apiCardModels.value[index]?.id
+  const slug = apiCards.value[index]?.modelId
   if (!slug) {
     goToModels()
     return
@@ -322,7 +342,7 @@ onMounted(() => {
           aria-label="Loading"
         >
           <article
-            v-for="n in API_CARD_CAPABILITIES.length"
+            v-for="n in API_CARD_SKELETON_COUNT"
             :key="`api-sk-${n}`"
             class="h3-api__card"
           >
@@ -338,7 +358,7 @@ onMounted(() => {
         <div v-else class="h3-api__grid">
           <article
             v-for="(card, index) in apiCards"
-            :key="card.title"
+            :key="card.modelId"
             class="h3-api__card"
           >
             <button
@@ -510,11 +530,23 @@ onMounted(() => {
         <div class="h3-production__gallery">
           <article
             v-for="item in galleryItems"
-            :key="item.image"
+            :key="item.video || item.image"
             class="h3-production__card"
           >
             <div class="h3-production__card-media media-skeleton">
+              <video
+                v-if="item.video"
+                :src="item.video"
+                :poster="assetUrl(item.image)"
+                autoplay
+                muted
+                loop
+                playsinline
+                preload="metadata"
+                :aria-label="item.alt"
+              />
               <img
+                v-else
                 :src="assetUrl(item.image)"
                 :alt="item.alt"
                 width="322"
@@ -1098,7 +1130,8 @@ onMounted(() => {
   background: #f4f7f7;
 }
 
-.h3-production__card-media img {
+.h3-production__card-media img,
+.h3-production__card-media video {
   display: block;
   width: 100%;
   height: 100%;

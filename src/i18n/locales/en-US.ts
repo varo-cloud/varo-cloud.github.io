@@ -936,25 +936,25 @@ export default {
         ],
         cards: [
           {
+            capability: 'text-to-video',
             tag: 'Text to Video',
             title: 'Text-to-Video API',
             body: 'Generate complete videos from natural-language prompts with motion, camera direction, visual style, and native audio.',
             alt: 'MiniMax H3 text-to-video API example',
-            image: '/assets/minimax-h3/api-t2v.jpg',
           },
           {
+            capability: 'image-to-video',
             tag: 'Image to Video',
             title: 'Image-to-Video API',
             body: 'Animate a starting image—or guide the opening and ending frames—to create controlled visual sequences.',
             alt: 'MiniMax H3 image-to-video API example',
-            image: '/assets/minimax-h3/api-i2v.jpg',
           },
           {
+            capability: 'reference-to-video',
             tag: 'Reference to Video',
             title: 'Reference-to-Video API',
             body: 'Combine images, video clips, audio, and instructions to reproduce characters, movement, composition, camera language, and sound.',
             alt: 'MiniMax H3 reference-to-video API example',
-            image: '/assets/minimax-h3/api-r2v.jpg',
           },
         ],
       },
@@ -1039,6 +1039,7 @@ export default {
           },
           {
             image: 'https://assets.varo.cloud/uploads/428db59d0c8541da9fadad3b0b575eb9.jpg',
+            video: 'https://assets.varo.cloud/uploads/15fb0762cd6f4ebdbca99e54a9b86c18.mp4',
             alt: 'MiniMax H3 creative production example 4',
           },
         ],
