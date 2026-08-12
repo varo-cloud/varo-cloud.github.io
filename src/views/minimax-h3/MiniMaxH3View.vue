@@ -18,15 +18,11 @@ const API_CARD_CAPABILITIES = [
   'reference-to-video',
 ] as const
 
-const CODE_TAB_IDS = ['image', 'video', 'speech', 'chat'] as const
-type CodeTabId = (typeof CODE_TAB_IDS)[number]
-
 const { t, tm } = useI18n()
 const { push, localePath } = useLocaleRouter()
 const userStore = useUserStore()
 
 const openFaqId = ref('what')
-const activeCodeTab = ref<CodeTabId>('image')
 const activeModeRef = ref(0)
 const h3BaseModel = ref<string | null>(null)
 const apiCardModels = ref<(Model | null)[]>(API_CARD_CAPABILITIES.map(() => null))
@@ -58,15 +54,6 @@ const apiCards = computed(() => {
       image: thumbnail,
     }
   })
-})
-
-const codeTabs = computed(() => {
-  const items = tm('pages.minimaxH3.api.codeTabs') as Array<{
-    id: string
-    label: string
-    icon: string
-  }>
-  return Array.isArray(items) ? items : []
 })
 
 const modes = computed(() => {
@@ -270,12 +257,6 @@ function onApiCardClick(index: number) {
     return
   }
   goToModel(slug)
-}
-
-function setCodeTab(id: string) {
-  if ((CODE_TAB_IDS as readonly string[]).includes(id)) {
-    activeCodeTab.value = id as CodeTabId
-  }
 }
 
 function hideBrokenImage(event: Event) {
@@ -746,58 +727,6 @@ onMounted(() => {
 
 .h3-api {
   padding: 160px 0 0;
-}
-
-.h3-api__tabs {
-  display: flex;
-  flex-wrap: wrap;
-  justify-content: center;
-  gap: 8px;
-  width: fit-content;
-  max-width: 100%;
-  margin: 50px auto 0;
-  padding: 2px;
-  border: 1px solid #ebf4fb;
-  border-radius: 30px;
-}
-
-.h3-api__tab {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  gap: 4px;
-  min-height: 40px;
-  padding: 8px 24px;
-  border: none;
-  border-radius: 8px;
-  background: #f8f8f8;
-  color: #929ca5;
-  font-size: 14px;
-  font-weight: 500;
-  line-height: 16px;
-  cursor: pointer;
-}
-
-.h3-api__tab.is-active {
-  background: #222;
-  color: #ebf4fb;
-}
-
-.h3-api__tab-icon {
-  display: inline-flex;
-  width: 20px;
-  height: 20px;
-  overflow: clip;
-}
-
-.h3-api__tab-icon img {
-  display: block;
-  width: 100%;
-  height: 100%;
-}
-
-.h3-api__tab.is-active .h3-api__tab-icon {
-  filter: brightness(0) invert(1);
 }
 
 .h3-api__grid {
@@ -1287,10 +1216,6 @@ onMounted(() => {
     grid-template-columns: repeat(3, minmax(0, 80px));
     gap: 6px;
     justify-content: center;
-  }
-
-  .h3-api__tabs {
-    border-radius: 16px;
   }
 
   .h3-faq__question {
