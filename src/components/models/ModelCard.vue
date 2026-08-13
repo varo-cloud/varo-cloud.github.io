@@ -297,9 +297,9 @@ async function toggleFavourite(event: Event) {
 .model-card__footer {
   position: relative;
   display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 6px;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 12px;
   margin-top: auto;
   padding: 12px 16px 16px;
 }
@@ -373,9 +373,9 @@ async function toggleFavourite(event: Event) {
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  flex-shrink: 0;
-  height: 32px;
-  padding: 0 10px;
+  width: 100%;
+  height: 36px;
+  padding: 0 12px;
   border: none;
   border-radius: 8px;
   background: #222;
