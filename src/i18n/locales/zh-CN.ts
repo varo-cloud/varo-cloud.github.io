@@ -743,17 +743,17 @@ export default {
         cards: [
           {
             title: '文生视频 API',
-            body: '用自然语言提示词生成完整视频，覆盖运动、镜头、视觉风格与原生音频。',
+            body: '通过自然语言提示词直接生成完整视频，并控制动作、镜头运动、视觉风格，同时生成原生音频。',
             alt: 'Seedance 2.0 文生视频 API 示例',
           },
           {
             title: '图生视频 API',
-            body: '让静态图动起来，或指定首尾帧，生成可控的视觉序列。',
+            body: '静态图生成视频，或通过指定首帧和尾帧来引导生成过程，创建更可控的视频序列。',
             alt: 'Seedance 2.0 图生视频 API 示例',
           },
           {
             title: '参考生成视频 API',
-            body: '结合图片、视频、音频和文字指令，复现角色、动作、画面构图、镜头语言和声音效果。',
+            body: '将图片、视频片段、音频和文字指令组合使用，复现或控制角色、动作、画面构图、镜头语言和声音效果。',
             alt: 'Seedance 2.0 参考生成视频 API 示例',
           },
         ],
@@ -892,14 +892,14 @@ export default {
       hero: {
         title: 'MiniMax H3：开源权重全模态视频模型',
         subtitle:
-          '通过 Varo Cloud API 接入 MiniMax H3，用文本、图像、视频和音频参考生成与编辑视频——原生立体声音频、最高 2K 分辨率，输出最长 15 秒。',
+          '通过 Varo Cloud API 接入 MiniMax H3，使用文本、图片、视频和音频作为参考来生成或编辑视频。模型支持原生立体声音频、最高 2K 分辨率，以及最长 15 秒的视频输出。',
         ctaPrimary: '获取 API Key',
         ctaSecondary: '查看文档',
       },
       api: {
         title: '统一多模态生成',
         subtitle:
-          '用 MiniMax H3 完成文生视频、首尾帧动画，或基于图片、视频片段、音频与自然语言指令的参考生成。',
+          'MiniMax H3 支持文生视频、首尾帧动画，以及基于参考素材的视频生成。可以同时使用图片、视频片段、音频和自然语言指令进行创作。',
         codeTabsLabel: 'SDK 示例',
         codeTabs: [
           {
@@ -928,21 +928,21 @@ export default {
             capability: 'text-to-video',
             tag: '文生视频',
             title: '文生视频 API',
-            body: '用自然语言提示词生成完整视频，覆盖运动、镜头、视觉风格与原生音频。',
+            body: '通过自然语言提示词直接生成完整视频，并控制动作、镜头运动、视觉风格，同时生成原生音频。',
             alt: 'MiniMax H3 文生视频 API 示例',
           },
           {
             capability: 'image-to-video',
             tag: '图生视频',
             title: '图生视频 API',
-            body: '让静态图动起来，或指定首尾帧，生成可控的视觉序列。',
+            body: '静态图生成视频，或通过指定首帧和尾帧来引导生成过程，创建更可控的视频序列。',
             alt: 'MiniMax H3 图生视频 API 示例',
           },
           {
             capability: 'reference-to-video',
             tag: '参考生成视频',
             title: '参考生成视频 API',
-            body: '结合图片、视频、音频和文字指令，复现角色、动作、画面构图、镜头语言和声音效果。',
+            body: '将图片、视频片段、音频和文字指令组合使用，复现或控制角色、动作、画面构图、镜头语言和声音效果。',
             alt: 'MiniMax H3 参考生成视频 API 示例',
           },
         ],
@@ -957,18 +957,18 @@ export default {
         refAudio: 'Audio',
         items: [
           {
-            title: '原生音频与 2K 视频',
-            body: '无需独立管线，一次生成完整音画输出。',
+            title: '原生音频 + 2K 视频',
+            body: '无需搭建独立的音频与视频处理流程，即可直接生成完整的视听内容。',
             icon: '/assets/minimax-h3/icon-stack-fill.svg',
           },
           {
-            title: '丰富参考输入',
-            body: '在一次请求中组合图片、片段与音频。',
+            title: '支持丰富的参考素材',
+            body: '一次请求即可组合图片、视频片段和音频素材。',
             icon: '/assets/minimax-h3/icon-paint-brush-fill.svg',
           },
           {
-            title: '创意控制与编辑',
-            body: '精确控制主体、运动、镜头、风格与声音。',
+            title: '创作控制与视频编辑',
+            body: '灵活控制主体、动作、镜头、风格和声音。',
             icon: '/assets/minimax-h3/icon-equalizer-fill.svg',
           },
         ],
@@ -976,7 +976,7 @@ export default {
       why: {
         title: '为什么在 Varo Cloud 使用 MiniMax H3',
         subtitle:
-          'Varo Cloud 将 MiniMax H3 的高性价比，与生产级基础设施、统一模型接入和透明按量计费结合——让你更快上线、高效扩缩，无需管理多个供应商或基础设施。',
+          '无需管理多个模型服务商或底层基础设施，Varo Cloud 结合 MiniMax H3 出色的性价比、面向生产环境的基础设施、统一的模型接入方式和透明的按量计费，帮助你更快上线应用、高效扩展生成规模。',
         cta: 'API 参考',
         items: [
           {
