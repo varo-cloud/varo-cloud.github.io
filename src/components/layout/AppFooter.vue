@@ -16,6 +16,7 @@ const contactLinks = SOCIAL_PROFILES
       <nav class="app-footer__links" :aria-label="t('footer.navLabel')">
         <RouterLink :to="localePath('/terms')">{{ t('footer.terms') }}</RouterLink>
         <RouterLink :to="localePath('/privacy')">{{ t('footer.privacy') }}</RouterLink>
+        <RouterLink :to="localePath('/activity/seed-creator')">{{ t('nav.seedCreator') }}</RouterLink>
       </nav>
 
       <div class="app-footer__social" :aria-label="t('footer.contactLabel')">

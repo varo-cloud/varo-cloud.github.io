@@ -12,3 +12,8 @@ export function formatDecimal(value: number): string {
 export function formatUsd(value: number): string {
   return `$${formatDecimal(value)}`
 }
+
+/** Convert activity/wallet cents (1 = $0.01) to USD. */
+export function centsToUsd(cents: number): number {
+  return cents / 100
+}

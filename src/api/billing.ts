@@ -3,16 +3,57 @@ import type {
   BillingConfig,
   BillingRecord,
   BillingSummary,
+  BonusGrant,
+  BonusGrantSource,
+  BonusLotStatus,
   CheckoutSessionResult,
   CreateCheckoutPayload,
   CreditPackage,
   Transaction,
   TransactionProvider,
+  WalletBalance,
+  WalletBonus,
   // UpdateAutoTopUpPayload,
 } from '@/types'
 
 interface ApiBillingBalance {
+  cash?: number
+  bonus?: number
+  bonus_expires_at?: string | null
+  total?: number
   balance_usd?: number
+}
+
+interface ApiBonusGrant {
+  source: string
+  amount_cents: number
+  remaining_cents: number
+  expires_at?: string | null
+  status: string
+}
+
+interface ApiWalletBonus {
+  total_bonus_cents: number
+  grants: ApiBonusGrant[]
+}
+
+function mapBonusSource(value: string): BonusGrantSource {
+  if (
+    value === 'seed_bonus' ||
+    value === 'inviter_reward' ||
+    value === 'invitee_reward' ||
+    value === 'manual'
+  ) {
+    return value
+  }
+  return 'manual'
+}
+
+function mapBonusLotStatus(value: string): BonusLotStatus {
+  if (value === 'active' || value === 'depleted' || value === 'expired' || value === 'frozen') {
+    return value
+  }
+  return 'active'
 }
 
 interface ApiUsageRecord {
@@ -199,14 +240,47 @@ export async function fetchBillingSummary(): Promise<BillingSummary> {
     const raw = await unwrap<ApiBillingSummary>(http.get('/billing/summary'))
     return mapBillingSummary(raw)
   } catch {
-    const balance = await unwrap<ApiBillingBalance>(http.get('/billing/balance'))
+    const balance = await fetchWalletBalance()
     return {
-      balanceUsd: balance.balance_usd ?? 0,
+      balanceUsd: balance.totalUsd,
       monthSpendUsd: 0,
       totalTopupUsd: 0,
       totalSpentUsd: 0,
     }
   }
+}
+
+export function fetchWalletBalance() {
+  return unwrap<ApiBillingBalance>(http.get('/billing/balance')).then(
+    (raw): WalletBalance => {
+      const cashUsd = raw.cash ?? 0
+      const bonusUsd = raw.bonus ?? 0
+      const totalUsd = raw.total ?? raw.balance_usd ?? cashUsd + bonusUsd
+      return {
+        cashUsd,
+        bonusUsd,
+        bonusExpiresAt: raw.bonus_expires_at ?? null,
+        totalUsd,
+      }
+    },
+  )
+}
+
+export function fetchWalletBonus() {
+  return unwrap<ApiWalletBonus>(http.get('/wallet/bonus')).then(
+    (raw): WalletBonus => ({
+      totalBonusCents: raw.total_bonus_cents,
+      grants: (raw.grants ?? []).map(
+        (item): BonusGrant => ({
+          source: mapBonusSource(item.source),
+          amountCents: item.amount_cents,
+          remainingCents: item.remaining_cents,
+          expiresAt: item.expires_at ?? null,
+          status: mapBonusLotStatus(item.status),
+        }),
+      ),
+    }),
+  )
 }
 
 export function fetchCreditPackages() {

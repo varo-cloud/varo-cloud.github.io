@@ -297,6 +297,90 @@ export interface BillingSummary {
   totalSpentUsd: number
 }
 
+export interface WalletBalance {
+  cashUsd: number
+  bonusUsd: number
+  bonusExpiresAt: string | null
+  totalUsd: number
+}
+
+export type BonusGrantSource = 'seed_bonus' | 'inviter_reward' | 'invitee_reward' | 'manual'
+
+export type BonusLotStatus = 'active' | 'depleted' | 'expired' | 'frozen'
+
+export interface BonusGrant {
+  source: BonusGrantSource
+  amountCents: number
+  remainingCents: number
+  expiresAt: string | null
+  status: BonusLotStatus
+}
+
+export interface WalletBonus {
+  totalBonusCents: number
+  grants: BonusGrant[]
+}
+
+export type CampaignState = 'draft' | 'active' | 'ended'
+
+export type SeedStatus =
+  | 'submitted'
+  | 'under_review'
+  | 'approved'
+  | 'rejected'
+  | 'cancelled'
+
+export type ReferralRewardStatus = 'waiting_for_winner' | 'rewarded' | 'expired'
+
+export type InvitationStatus =
+  | 'waiting_for_topup'
+  | 'qualified'
+  | 'winner'
+  | 'no_reward'
+  | 'expired'
+
+export interface SeedCreatorCampaign {
+  id: string
+  state: CampaignState
+  seedCap: number
+  seedApproved: number
+  endsAt: string | null
+}
+
+export interface SeedCreatorMe {
+  status: SeedStatus
+  seedRank: number | null
+  inviteCode: string | null
+  referralRewardStatus: ReferralRewardStatus | null
+}
+
+export interface SeedCreatorOverview {
+  campaign: SeedCreatorCampaign
+  me: SeedCreatorMe | null
+}
+
+export interface SeedCreatorSubmitPayload {
+  twitterUsername?: string
+  twitterUrl?: string
+  discordUsername?: string
+  discordUserId?: string
+}
+
+export interface ReferralOverview {
+  inviteCode: string
+  inviteUrl: string
+  invitedCount: number
+  referralRewardStatus: ReferralRewardStatus
+}
+
+export interface ReferralInvitation {
+  inviteeMasked: string
+  registered: boolean
+  toppedUp: boolean
+  status: InvitationStatus
+  deadline: string | null
+}
+
 export interface TopUpPreset {
   amountUsd: number
   bonusPercent?: number

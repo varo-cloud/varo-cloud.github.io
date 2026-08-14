@@ -19,6 +19,8 @@ import {
   fetchCreditPackages,
   fetchTransactions,
   fetchUsageRecords,
+  fetchWalletBalance,
+  fetchWalletBonus,
   // updateAutoTopUp,
 } from '@/api/billing'
 import { useLocaleRouter } from '@/composables/useLocaleRouter'
@@ -26,16 +28,18 @@ import { AnalyticsEvents, trackEvent } from '@/analytics'
 import { useUserStore } from '@/stores/user'
 import { downloadCsv } from '@/utils/csv'
 import { assetUrl } from '@/utils/assetUrl'
-import { formatUsd } from '@/utils/currency'
-import { formatTimestamp } from '@/utils/time'
+import { formatUsd, centsToUsd } from '@/utils/currency'
+import { formatCountdown, formatTimestamp } from '@/utils/time'
 import type {
   BillingRecord,
   BillingSummary,
+  BonusGrant,
   CreditPackage,
   CreditPackageId,
   PaymentMethodId,
   TopUpSelectionId,
   Transaction,
+  WalletBalance,
 } from '@/types'
 
 type HistoryTab = 'topup' | 'billing'
@@ -88,6 +92,8 @@ const userStore = useUserStore()
 const loading = ref(true)
 const error = ref<string | null>(null)
 const summary = ref<BillingSummary | null>(null)
+const walletBalance = ref<WalletBalance | null>(null)
+const bonusGrants = ref<BonusGrant[]>([])
 const packages = ref<CreditPackage[]>([])
 const transactions = ref<Transaction[]>([])
 const billingRecords = ref<BillingRecord[]>([])
@@ -256,6 +262,21 @@ function billingStatusLabel(status: string | null | undefined) {
   return translated === key ? status : translated
 }
 
+function bonusSourceLabel(source: BonusGrant['source']) {
+  return t(`pages.billing.bonusSources.${source}`)
+}
+
+function bonusLotStatusLabel(status: BonusGrant['status']) {
+  return t(`pages.billing.bonusLotStatus.${status}`)
+}
+
+function bonusExpiryLabel(expiresAt: string | null) {
+  const countdown = formatCountdown(expiresAt)
+  if (!countdown) return '—'
+  if (countdown.expired) return t('pages.billing.bonusExpired')
+  return t('pages.billing.bonusExpires', { days: countdown.days, hours: countdown.hours })
+}
+
 async function loadBilling(options: { silent?: boolean } = {}) {
   if (!options.silent) {
     loading.value = true
@@ -263,17 +284,22 @@ async function loadBilling(options: { silent?: boolean } = {}) {
   }
 
   try {
-    const [summaryData, packageData, transactionData, configData] = await Promise.all([
-      fetchBillingSummary(),
-      fetchCreditPackages(),
-      fetchTransactions(),
-      fetchBillingConfig().catch(() => ({ publishableKey: '', cryptoEnabled: false })),
-    ])
+    const [summaryData, packageData, transactionData, configData, balanceData, bonusData] =
+      await Promise.all([
+        fetchBillingSummary(),
+        fetchCreditPackages(),
+        fetchTransactions(),
+        fetchBillingConfig().catch(() => ({ publishableKey: '', cryptoEnabled: false })),
+        fetchWalletBalance().catch(() => null),
+        fetchWalletBonus().catch(() => null),
+      ])
 
     summary.value = summaryData
     packages.value = packageData
     transactions.value = transactionData
     cryptoEnabled.value = configData.cryptoEnabled
+    walletBalance.value = balanceData
+    bonusGrants.value = bonusData?.grants ?? []
 
     if (packageData.length > 0 && !selectedPackageId.value) {
       selectedPackageId.value = packageData[0].id
@@ -286,6 +312,8 @@ async function loadBilling(options: { silent?: boolean } = {}) {
     if (!options.silent) {
       error.value = t('pages.billing.loadError')
       summary.value = null
+      walletBalance.value = null
+      bonusGrants.value = []
       packages.value = []
       transactions.value = []
     }
@@ -562,28 +590,40 @@ onMounted(async () => {
 
         <section class="billing-summary" aria-label="Billing summary">
           <article class="billing-summary__card billing-summary__card--balance">
-            <p class="billing-summary__label">{{ t('pages.billing.cashBalance') }}</p>
+            <p class="billing-summary__label">{{ t('pages.billing.totalBalance') }}</p>
             <div class="billing-summary__balance-row">
-              <p class="billing-summary__value">{{ formatUsd(summary.balanceUsd) }}</p>
+              <p class="billing-summary__value">
+                {{ formatUsd(walletBalance?.totalUsd ?? summary.balanceUsd) }}
+              </p>
               <button type="button" class="billing-summary__topup-btn" @click="scrollToRecharge">
                 {{ t('pages.billing.topUp') }}
               </button>
             </div>
+            <p v-if="walletBalance" class="billing-summary__split">
+              {{
+                t('pages.billing.bonusSplitHint', {
+                  cash: formatUsd(walletBalance.cashUsd),
+                  bonus: formatUsd(walletBalance.bonusUsd),
+                })
+              }}
+            </p>
+          </article>
+
+          <article class="billing-summary__card">
+            <p class="billing-summary__label">{{ t('pages.billing.cashBalance') }}</p>
+            <p class="billing-summary__value">
+              {{ formatUsd(walletBalance?.cashUsd ?? summary.balanceUsd) }}
+            </p>
+          </article>
+
+          <article class="billing-summary__card">
+            <p class="billing-summary__label">{{ t('pages.billing.bonusBalance') }}</p>
+            <p class="billing-summary__value">{{ formatUsd(walletBalance?.bonusUsd ?? 0) }}</p>
           </article>
 
           <article class="billing-summary__card">
             <p class="billing-summary__label">{{ t('pages.billing.spentThisMonth') }}</p>
             <p class="billing-summary__value">{{ formatUsd(summary.monthSpendUsd) }}</p>
-          </article>
-
-          <article class="billing-summary__card">
-            <p class="billing-summary__label">{{ t('pages.billing.totalTopup') }}</p>
-            <p class="billing-summary__value">{{ formatUsd(summary.totalTopupUsd) }}</p>
-          </article>
-
-          <article class="billing-summary__card">
-            <p class="billing-summary__label">{{ t('pages.billing.totalSpent') }}</p>
-            <p class="billing-summary__value">{{ formatUsd(summary.totalSpentUsd) }}</p>
           </article>
 
           <!-- Auto top-up summary card — re-enable when feature ships
@@ -603,6 +643,29 @@ onMounted(async () => {
             </p>
           </article>
           -->
+        </section>
+
+        <section class="billing-bonus" aria-label="Bonus lots">
+          <h2 class="billing-section-title">{{ t('pages.billing.bonusSectionTitle') }}</h2>
+          <p class="billing-bonus__hint">{{ t('pages.billing.bonusSectionHint') }}</p>
+          <p v-if="bonusGrants.length === 0" class="billing-bonus__empty">
+            {{ t('pages.billing.bonusEmpty') }}
+          </p>
+          <ul v-else class="billing-bonus__list">
+            <li v-for="(grant, index) in bonusGrants" :key="`${grant.source}-${index}`">
+              <div>
+                <p class="billing-bonus__amount">{{ formatUsd(centsToUsd(grant.remainingCents)) }}</p>
+                <p class="billing-bonus__source">{{ bonusSourceLabel(grant.source) }}</p>
+              </div>
+              <div class="billing-bonus__meta">
+                <span>{{ bonusLotStatusLabel(grant.status) }}</span>
+                <span>{{
+                  t('pages.billing.bonusGranted', { amount: formatUsd(centsToUsd(grant.amountCents)) })
+                }}</span>
+                <span>{{ bonusExpiryLabel(grant.expiresAt) }}</span>
+              </div>
+            </li>
+          </ul>
         </section>
 
         <section ref="rechargeSectionRef" class="billing-recharge" aria-label="Account recharge">
@@ -1028,6 +1091,65 @@ onMounted(async () => {
   font-weight: 500;
   line-height: 24px;
   color: var(--text-primary);
+}
+
+.billing-summary__split {
+  margin: 12px 0 0;
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 18px;
+}
+
+.billing-bonus {
+  margin-bottom: 40px;
+}
+
+.billing-bonus__hint,
+.billing-bonus__empty {
+  margin: 0 0 16px;
+  color: var(--text-secondary);
+  font-size: 14px;
+}
+
+.billing-bonus__list {
+  margin: 0;
+  padding: 0 24px;
+  list-style: none;
+  border: 0.5px solid #2d2d38;
+  border-radius: 16px;
+  background: var(--bg-card);
+}
+
+.billing-bonus__list li {
+  display: flex;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 16px 0;
+  border-bottom: 0.5px solid #2d2d38;
+}
+
+.billing-bonus__list li:last-child {
+  border-bottom: 0;
+}
+
+.billing-bonus__amount {
+  margin: 0 0 6px;
+  font-size: 20px;
+  font-weight: 500;
+}
+
+.billing-bonus__source,
+.billing-bonus__meta {
+  color: var(--text-secondary);
+  font-size: 13px;
+}
+
+.billing-bonus__meta {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 4px;
+  text-align: right;
 }
 
 .billing-summary__balance-row,

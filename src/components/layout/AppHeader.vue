@@ -37,6 +37,7 @@ const navItems = computed(() => [
   { label: t('nav.aiGenerator'), name: 'ai-generator' },
   { label: t('nav.pricing'), name: 'pricing' },
   { label: t('nav.developers'), name: 'developers' },
+  { label: t('nav.seedCreator'), name: 'seed-creator' },
 ])
 
 const modelsMenuItems = computed(() => [
