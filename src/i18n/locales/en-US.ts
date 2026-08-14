@@ -32,6 +32,7 @@ export default {
     models: 'Models',
     allModels: 'All Models',
     seedance: 'Seedance 2.0',
+    seedance25: 'Seedance 2.5',
     minimaxH3: 'MiniMax H3',
     aiGenerator: 'AI Generator',
     pricing: 'Pricing',
@@ -897,6 +898,197 @@ export default {
         title: 'Seedance 2.0 API — Cinematic AI Video Generation | Varo.cloud',
         description:
           'Access ByteDance Seedance 2.0 on Varo Cloud: text-to-video, image-to-video, and multimodal reference APIs with native audio, subject consistency, and production-ready scaling.',
+      },
+    },
+    seedance25: {
+      hero: {
+        title: 'Unified Multimodal API',
+        subtitle:
+          'Build text-to-video, image-driven, and reference-based experiences through one Seedance 2.5 integration, giving users more ways to control characters, scenes, motion, audio, and creative direction.',
+      },
+      api: {
+        cards: [
+          {
+            capability: 'text-to-video',
+            tag: 'Text to Video',
+            title: 'Text-to-Video API',
+            body: 'Generate videos from text prompts with native audio and optional web search.',
+            alt: 'Seedance 2.5 text-to-video API example',
+          },
+          {
+            capability: 'image-to-video',
+            tag: 'Image to Video',
+            title: 'Image-to-Video API',
+            body: 'Generate videos from a first-frame image (and optional last frame) with native audio.',
+            alt: 'Seedance 2.5 image-to-video API example',
+          },
+          {
+            capability: 'reference-to-video',
+            tag: 'Reference to Video',
+            title: 'Reference-to-Video API',
+            body: 'Multimodal video generation from reference images, videos, and audio. Supports video editing and extension.',
+            alt: 'Seedance 2.5 reference-to-video API example',
+          },
+        ],
+      },
+      explore: {
+        title: 'Explore the Seedance 2.5 API',
+        subtitle:
+          'Built for production video, Seedance 2.5 delivers up to 30-second generation, 50 multimodal references, 720p–4K output, precise editing, multilingual text, and stronger consistency.',
+        visualAlt: 'Seedance 2.5 generation examples collage',
+        features: [
+          {
+            title: 'Longer Video Generation',
+            body: 'Generate videos up to 30 seconds in one pass and support up to two extensions.',
+            icon: '/assets/minimax-h3/icon-stack-fill.svg',
+          },
+          {
+            title: 'Smarter Reference Control',
+            body: 'Interpret frame, intention, movement, and cinematic language from reference videos more precisely.',
+            icon: '/assets/minimax-h3/icon-paint-brush-fill.svg',
+          },
+          {
+            title: 'Professional Production Control',
+            body: 'Provide advanced capabilities including white-model control, green-screen editing, professional camera movement and performance blocking.',
+            icon: '/assets/minimax-h3/icon-equalizer-fill.svg',
+          },
+        ],
+      },
+      compare: {
+        titleBefore: 'Seedance ',
+        titleAccent: '2.5',
+        titleAfter: ' vs Seedance 2.0',
+        subtitle: 'Choose the right video model for your workflow.',
+        recommended: 'Recommended',
+        headers: {
+          model: 'Model',
+          quality: 'Visual Quality',
+          duration: 'Max Duration',
+          audio: 'Native Audio',
+          inputs: 'Multimodal Inputs',
+        },
+        rows: [
+          {
+            name: 'Seedance 2.5',
+            recommended: true,
+            active: true,
+            qualityBadge: '4K',
+            qualityLabel: 'Sharper, 4K-ready visual quality',
+            durationBadge: '30s',
+            durationLabel: 'Up to 30s',
+            audioLabel: 'Dialogue, music, sound effects, lip-sync, audio-motion',
+            inputsLabel: 'Up to 50 text, image, video, and audio reference files',
+            modalities: ['text', 'image', 'video', 'audio'],
+          },
+          {
+            name: 'Seedance 2.0',
+            qualityBadge: 'HD',
+            qualityLabel: 'Strong HD video generation',
+            durationBadge: '15s',
+            durationLabel: 'Up to 15s',
+            audioLabel: 'Dialogue, SFX, lip-sync',
+            inputsLabel: 'Up to 12 mixed asset files',
+            modalities: ['text', 'video', 'audio'],
+          },
+        ],
+      },
+      production: {
+        title: 'Built for Production with One Simple API',
+        subtitle:
+          'Access Seedance 2.5 through a unified API and move from testing to production without managing separate providers, model infrastructure, authentication, or fragmented billing.',
+        cta: 'API Reference',
+        pillars: [
+          {
+            title: 'One Unified API',
+            body: 'Integrate Seedance 2.5 and other leading models.',
+            icon: '/assets/minimax-h3/icon-stack-fill.svg',
+          },
+          {
+            title: 'Production-Ready',
+            body: 'Scale without managing model infrastructure.',
+            icon: '/assets/minimax-h3/icon-archive-drawer-fill.svg',
+          },
+          {
+            title: 'Simple Pricing',
+            body: 'Pay for what you use with clear costs.',
+            icon: '/assets/minimax-h3/icon-refund-2-fill.svg',
+          },
+          {
+            title: 'More Model Choice',
+            body: 'Test or switch models through one platform.',
+            icon: '/assets/minimax-h3/icon-bar-chart-fill.svg',
+          },
+        ],
+      },
+      useCases: {
+        title: 'Built for Real Use Cases with Seedance 2.5',
+        subtitle:
+          'Use Seedance 2.5 to power advertising, social content, cinematic storytelling, product videos, virtual characters, AI video editors, and next-generation creative applications.',
+        alts: [
+          'Seedance 2.5 use case example 1',
+          'Seedance 2.5 use case example 2',
+          'Seedance 2.5 use case example 3',
+          'Seedance 2.5 use case example 4',
+        ],
+      },
+      faq: {
+        title: 'Seedance 2.5 API FAQ',
+        subtitle: 'Everything you need to know about the Seedance 2.5 video model API.',
+        items: [
+          {
+            id: 'what',
+            question: '1. What is the Seedance 2.5 API?',
+            answer:
+              'Seedance 2.5 API gives developers access to ByteDance’s next-generation audio-video model for creating longer, more controllable videos with advanced reference and editing capabilities.',
+          },
+          {
+            id: 'create',
+            question: '2. What can I create with Seedance 2.5?',
+            answer:
+              'You can build ads, product videos, cinematic scenes, social content, avatars, and creative video tools using text, image, video, and audio references.',
+          },
+          {
+            id: 'start',
+            question: '3. How do I get started with the Seedance 2.5 API?',
+            answer:
+              'Create a Varo Cloud API key, choose Seedance 2.5, submit your prompt and references, then track the generation task until your video is ready.',
+          },
+          {
+            id: 'refs',
+            question: '4. How many reference inputs does Seedance 2.5 accept?',
+            answer:
+              'Seedance 2.5 supports up to 50 multimodal references, including text, images, video, and audio, enabling more precise control over characters, scenes, motion, and style.',
+          },
+          {
+            id: 'resolution',
+            question: '5. Which resolutions does Seedance 2.5 support?',
+            answer:
+              'Seedance 2.5 supports video output from 720p up to 4K, making it suitable for both fast creative workflows and high-quality production.',
+          },
+          {
+            id: 'edit',
+            question: '6. Can Seedance 2.5 edit existing footage?',
+            answer:
+              'Yes. Seedance 2.5 offers stronger video editing capabilities, including more reliable visual and audio edits, reference-based control, and professional workflows such as green-screen editing.',
+          },
+          {
+            id: 'diff',
+            question: '7. How is Seedance 2.5 different from Seedance 2.0?',
+            answer:
+              'Seedance 2.5 extends generation from up to 15 seconds to 30 seconds, increases multimodal reference capacity, improves scene continuity and reference control, and adds more advanced production and editing capabilities.',
+          },
+          {
+            id: 'cost',
+            question: '8. How much does the Seedance 2.5 API cost?',
+            answer:
+              'Varo Cloud uses usage-based pricing for model APIs. The exact Seedance 2.5 rate should be shown on the live Varo Cloud pricing or model page, so developers can review the current cost before generating.',
+          },
+        ],
+      },
+      seo: {
+        title: 'Seedance 2.5 API — Multimodal AI Video Generation | Varo.cloud',
+        description:
+          'Access ByteDance Seedance 2.5 on Varo Cloud: up to 30s video, 50 multimodal references, 720p–4K output, native audio, editing, and production-ready APIs.',
       },
     },
     minimaxH3: {
