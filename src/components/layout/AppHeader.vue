@@ -42,6 +42,7 @@ const navItems = computed(() => [
 
 const modelsMenuItems = computed(() => [
   { label: t('nav.allModels'), name: 'models' },
+  { label: t('nav.seedance25'), name: 'seedance-2.5' },
   { label: t('nav.seedance'), name: 'seedance' },
   { label: t('nav.minimaxH3'), name: 'minimax-h3' },
 ])
@@ -143,6 +144,7 @@ function isActive(name: string) {
       route.name === 'models' ||
       route.name === 'model-detail' ||
       route.name === 'seedance' ||
+      route.name === 'seedance-2.5' ||
       route.name === 'minimax-h3'
     )
   }
@@ -154,6 +156,7 @@ const isModelsNavActive = computed(
     route.name === 'models' ||
     route.name === 'model-detail' ||
     route.name === 'seedance' ||
+    route.name === 'seedance-2.5' ||
     route.name === 'minimax-h3',
 )
 
@@ -607,6 +610,14 @@ onUnmounted(() => {
               @click="goToFromMobile('models')"
             >
               {{ t('nav.allModels') }}
+            </button>
+            <button
+              type="button"
+              class="app-header__mobile-nav-item"
+              :class="{ 'is-active': route.name === 'seedance-2.5' }"
+              @click="goToFromMobile('seedance-2.5')"
+            >
+              {{ t('nav.seedance25') }}
             </button>
             <button
               type="button"

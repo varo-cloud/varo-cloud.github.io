@@ -32,6 +32,7 @@ export default {
     models: '模型',
     allModels: '全部模型',
     seedance: 'Seedance 2.0',
+    seedance25: 'Seedance 2.5',
     minimaxH3: 'MiniMax H3',
     aiGenerator: 'AI 生成器',
     pricing: '价格',
@@ -909,6 +910,197 @@ export default {
         title: 'Seedance 2.0 API — 电影级 AI 视频生成 | Varo.cloud',
         description:
           '在 Varo Cloud 使用字节跳动 Seedance 2.0：文生视频、图生视频与多模态参考 API，支持原生音频、主体一致性与生产级扩缩。',
+      },
+    },
+    seedance25: {
+      hero: {
+        title: '统一多模态 API',
+        subtitle:
+          '通过一次 Seedance 2.5 接入，即可构建文生视频、图像驱动与参考生成体验，让用户更灵活地控制角色、场景、运动、音频与创意方向。',
+      },
+      api: {
+        cards: [
+          {
+            capability: 'text-to-video',
+            tag: '文生视频',
+            title: '文生视频 API',
+            body: '通过文本提示词生成带原生音频的视频，并支持可选的网页搜索。',
+            alt: 'Seedance 2.5 文生视频 API 示例',
+          },
+          {
+            capability: 'image-to-video',
+            tag: '图生视频',
+            title: '图生视频 API',
+            body: '基于首帧图像（以及可选尾帧）生成带原生音频的视频。',
+            alt: 'Seedance 2.5 图生视频 API 示例',
+          },
+          {
+            capability: 'reference-to-video',
+            tag: '参考生视频',
+            title: '参考生视频 API',
+            body: '基于参考图片、视频与音频进行多模态视频生成，支持视频编辑与延展。',
+            alt: 'Seedance 2.5 参考生视频 API 示例',
+          },
+        ],
+      },
+      explore: {
+        title: '探索 Seedance 2.5 API',
+        subtitle:
+          '面向生产级视频场景，Seedance 2.5 支持最长 30 秒生成、最多 50 个多模态参考、720p–4K 输出、精细编辑、多语言文本，以及更强的一致性。',
+        visualAlt: 'Seedance 2.5 生成示例拼贴',
+        features: [
+          {
+            title: '更长视频生成',
+            body: '一次生成最长 30 秒视频，并支持最多两次延展。',
+            icon: '/assets/minimax-h3/icon-stack-fill.svg',
+          },
+          {
+            title: '更智能的参考控制',
+            body: '更精准地理解参考视频中的画面、意图、运动与电影语言。',
+            icon: '/assets/minimax-h3/icon-paint-brush-fill.svg',
+          },
+          {
+            title: '专业级制作控制',
+            body: '提供白模控制、绿幕编辑、专业运镜与表演调度等进阶能力。',
+            icon: '/assets/minimax-h3/icon-equalizer-fill.svg',
+          },
+        ],
+      },
+      compare: {
+        titleBefore: 'Seedance ',
+        titleAccent: '2.5',
+        titleAfter: ' vs Seedance 2.0',
+        subtitle: '按你的工作流选择合适的视频模型。',
+        recommended: '推荐',
+        headers: {
+          model: '模型',
+          quality: '画质',
+          duration: '最长时长',
+          audio: '原生音频',
+          inputs: '多模态输入',
+        },
+        rows: [
+          {
+            name: 'Seedance 2.5',
+            recommended: true,
+            active: true,
+            qualityBadge: '4K',
+            qualityLabel: '更锐利、可交付 4K 的画质表现',
+            durationBadge: '30s',
+            durationLabel: '最长 30 秒',
+            audioLabel: '对白、音乐、音效、口型同步、声画联动',
+            inputsLabel: '最多 50 个文本、图片、视频与音频参考文件',
+            modalities: ['text', 'image', 'video', 'audio'],
+          },
+          {
+            name: 'Seedance 2.0',
+            qualityBadge: 'HD',
+            qualityLabel: '稳定的高清视频生成能力',
+            durationBadge: '15s',
+            durationLabel: '最长 15 秒',
+            audioLabel: '对白、音效、口型同步',
+            inputsLabel: '最多 12 个混合素材文件',
+            modalities: ['text', 'video', 'audio'],
+          },
+        ],
+      },
+      production: {
+        title: '一个简单 API，即可进入生产',
+        subtitle:
+          '通过统一 API 接入 Seedance 2.5，从测试平滑进入生产，无需分别管理供应商、模型基础设施、鉴权或分散账单。',
+        cta: 'API 文档',
+        pillars: [
+          {
+            title: '统一 API',
+            body: '同时接入 Seedance 2.5 与其他主流模型。',
+            icon: '/assets/minimax-h3/icon-stack-fill.svg',
+          },
+          {
+            title: '生产就绪',
+            body: '无需自行维护模型基础设施即可扩缩。',
+            icon: '/assets/minimax-h3/icon-archive-drawer-fill.svg',
+          },
+          {
+            title: '定价清晰',
+            body: '按用量付费，成本透明可预期。',
+            icon: '/assets/minimax-h3/icon-refund-2-fill.svg',
+          },
+          {
+            title: '更多模型选择',
+            body: '在同一平台测试或切换模型。',
+            icon: '/assets/minimax-h3/icon-bar-chart-fill.svg',
+          },
+        ],
+      },
+      useCases: {
+        title: 'Seedance 2.5 面向真实业务场景',
+        subtitle:
+          '用 Seedance 2.5 支撑广告、社媒内容、电影叙事、产品视频、虚拟角色、AI 视频编辑器，以及下一代创意应用。',
+        alts: [
+          'Seedance 2.5 场景示例 1',
+          'Seedance 2.5 场景示例 2',
+          'Seedance 2.5 场景示例 3',
+          'Seedance 2.5 场景示例 4',
+        ],
+      },
+      faq: {
+        title: 'Seedance 2.5 API 常见问题',
+        subtitle: '关于 Seedance 2.5 视频模型 API，你需要了解的一切。',
+        items: [
+          {
+            id: 'what',
+            question: '1. 什么是 Seedance 2.5 API？',
+            answer:
+              'Seedance 2.5 API 让开发者调用字节跳动新一代音视频模型，用于生成更长、更可控的视频，并提供进阶参考与编辑能力。',
+          },
+          {
+            id: 'create',
+            question: '2. 用 Seedance 2.5 可以创作什么？',
+            answer:
+              '你可以基于文本、图片、视频与音频参考，制作广告、产品视频、电影感场景、社媒内容、虚拟形象，以及各类创意视频工具。',
+          },
+          {
+            id: 'start',
+            question: '3. 如何开始使用 Seedance 2.5 API？',
+            answer:
+              '创建 Varo Cloud API Key，选择 Seedance 2.5，提交提示词与参考素材，然后跟踪生成任务直至视频完成。',
+          },
+          {
+            id: 'refs',
+            question: '4. Seedance 2.5 支持多少参考输入？',
+            answer:
+              'Seedance 2.5 最多支持 50 个多模态参考，包括文本、图片、视频与音频，从而更精准地控制角色、场景、运动与风格。',
+          },
+          {
+            id: 'resolution',
+            question: '5. Seedance 2.5 支持哪些分辨率？',
+            answer:
+              'Seedance 2.5 支持从 720p 到 4K 的视频输出，既适合快速创意流程，也适合高质量成片制作。',
+          },
+          {
+            id: 'edit',
+            question: '6. Seedance 2.5 能否编辑已有素材？',
+            answer:
+              '可以。Seedance 2.5 提供更强的视频编辑能力，包括更可靠的画面与音频编辑、基于参考的控制，以及绿幕编辑等专业工作流。',
+          },
+          {
+            id: 'diff',
+            question: '7. Seedance 2.5 与 Seedance 2.0 有何不同？',
+            answer:
+              'Seedance 2.5 将生成时长从最长 15 秒提升到 30 秒，扩大了多模态参考容量，改进了场景连贯性与参考控制，并增强了制作与编辑能力。',
+          },
+          {
+            id: 'cost',
+            question: '8. Seedance 2.5 API 怎么收费？',
+            answer:
+              'Varo Cloud 对模型 API 采用按用量计费。Seedance 2.5 的具体费率以 Varo Cloud 实时定价页或模型页为准，开发者可在生成前查看当前费用。',
+          },
+        ],
+      },
+      seo: {
+        title: 'Seedance 2.5 API — 多模态 AI 视频生成 | Varo.cloud',
+        description:
+          '在 Varo Cloud 使用字节跳动 Seedance 2.5：最长 30 秒视频、50 个多模态参考、720p–4K 输出、原生音频、编辑能力与生产级 API。',
       },
     },
     minimaxH3: {
