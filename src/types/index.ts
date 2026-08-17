@@ -259,9 +259,15 @@ export interface CreateApiKeyResult {
   createdAt: number
 }
 
-export type TransactionType = 'topup' | 'usage'
+export type TransactionType = 'topup' | 'usage' | 'bonus'
 
 export type TopUpTransactionStatus = 'pending' | 'completed' | 'failed' | 'expired' | 'partial'
+
+export type BonusGrantSource = 'seed_bonus' | 'inviter_reward' | 'invitee_reward' | 'manual'
+
+export type BonusLotStatus = 'active' | 'depleted' | 'expired' | 'frozen'
+
+export type TransactionStatus = TopUpTransactionStatus | BonusLotStatus
 
 export type TransactionProvider = 'stripe' | 'nowpayments'
 
@@ -271,13 +277,17 @@ export interface Transaction {
   amountUsd: number
   description: string
   createdAt: number
-  status?: TopUpTransactionStatus
+  status?: TransactionStatus
   provider?: TransactionProvider
   paymentMethod?: string | null
   paymentDetail?: string | null
   completedAt?: number | null
   receiptUrl?: string | null
   feeUsd?: number | null
+  /** Bonus grant source; only present when type === 'bonus' */
+  source?: BonusGrantSource | null
+  amountRemainingUsd?: number | null
+  expiresAt?: number | null
 }
 
 export interface BalanceInfo {
@@ -303,10 +313,6 @@ export interface WalletBalance {
   bonusExpiresAt: string | null
   totalUsd: number
 }
-
-export type BonusGrantSource = 'seed_bonus' | 'inviter_reward' | 'invitee_reward' | 'manual'
-
-export type BonusLotStatus = 'active' | 'depleted' | 'expired' | 'frozen'
 
 export interface BonusGrant {
   source: BonusGrantSource
