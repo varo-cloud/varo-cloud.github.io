@@ -196,7 +196,7 @@ const mockCheckoutDisplayAmountUsd = computed(() => {
 // )
 
 const topUpTransactions = computed(() =>
-  transactions.value.filter((item) => item.type === 'topup'),
+  transactions.value.filter((item) => item.type === 'topup' || item.type === 'bonus'),
 )
 
 const historyEmpty = computed(() =>

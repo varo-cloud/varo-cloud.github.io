@@ -100,7 +100,7 @@ interface ApiBillingConfig {
 
 interface ApiTransaction {
   id: string
-  provider?: string
+  provider?: string | null
   amount_usd?: number
   status?: string
   created_at?: string | number
@@ -110,6 +110,9 @@ interface ApiTransaction {
   receipt_url?: string | null
   fee_usd?: number | null
   type?: string
+  source?: string | null
+  amount_remaining_usd?: number | null
+  expires_at?: string | number | null
   amountUsd?: number
   description?: string
   createdAt?: number
@@ -119,6 +122,8 @@ interface ApiTransaction {
   receiptUrl?: string | null
   feeUsd?: number | null
   providerCamel?: TransactionProvider
+  amountRemainingUsd?: number | null
+  expiresAt?: string | number | null
 }
 
 function parseTimestamp(value: string | number | undefined): number {
@@ -179,18 +184,34 @@ function mapBillingRecord(raw: ApiBillingRecord): BillingRecord {
   }
 }
 
-function mapTransactionProvider(value: string | undefined): TransactionProvider | undefined {
+function mapTransactionProvider(
+  value: string | null | undefined,
+): TransactionProvider | undefined {
   if (value === 'stripe' || value === 'nowpayments') return value
   return undefined
 }
 
+function mapTransactionType(value: string | undefined): Transaction['type'] {
+  if (value === 'bonus' || value === 'usage' || value === 'topup') return value
+  return 'topup'
+}
+
+function mapOptionalTimestamp(value: string | number | null | undefined): number | null {
+  if (value == null || value === '') return null
+  return parseTimestamp(value)
+}
+
 function mapTransaction(raw: ApiTransaction): Transaction {
+  const type = mapTransactionType(raw.type)
+  const source = raw.source != null ? mapBonusSource(raw.source) : null
+  const defaultDescription = type === 'bonus' ? 'Bonus' : 'Top Up'
+
   if (raw.amountUsd != null) {
     return {
       id: raw.id,
-      type: (raw.type as Transaction['type']) ?? 'topup',
+      type,
       amountUsd: raw.amountUsd,
-      description: raw.description ?? 'Top Up',
+      description: raw.description ?? defaultDescription,
       createdAt: raw.createdAt ?? Date.now(),
       status: raw.status as Transaction['status'],
       provider: raw.providerCamel ?? mapTransactionProvider(raw.provider),
@@ -199,22 +220,28 @@ function mapTransaction(raw: ApiTransaction): Transaction {
       completedAt: raw.completedAt ?? null,
       receiptUrl: raw.receiptUrl ?? null,
       feeUsd: raw.feeUsd ?? null,
+      source,
+      amountRemainingUsd: raw.amountRemainingUsd ?? null,
+      expiresAt: mapOptionalTimestamp(raw.expiresAt),
     }
   }
 
   return {
     id: raw.id,
-    type: 'topup',
+    type,
     amountUsd: raw.amount_usd ?? 0,
-    description: 'Top Up',
+    description: defaultDescription,
     createdAt: parseTimestamp(raw.created_at),
     status: raw.status as Transaction['status'],
     provider: mapTransactionProvider(raw.provider),
     paymentMethod: raw.payment_method ?? null,
     paymentDetail: raw.payment_detail ?? null,
-    completedAt: raw.completed_at != null ? parseTimestamp(raw.completed_at) : null,
+    completedAt: mapOptionalTimestamp(raw.completed_at),
     receiptUrl: raw.receipt_url ?? null,
     feeUsd: raw.fee_usd ?? null,
+    source,
+    amountRemainingUsd: raw.amount_remaining_usd ?? null,
+    expiresAt: mapOptionalTimestamp(raw.expires_at),
   }
 }
 
