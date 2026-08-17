@@ -45,6 +45,7 @@ export type SeoRouteKey =
   | 'billing'
   | 'generations'
   | 'seed-creator'
+  | 'seed-creator-invitations'
   | 'invite'
 
 export interface SeoDefinition {
@@ -131,6 +132,11 @@ export const SEO_BY_ROUTE: Record<SeoRouteKey, SeoDefinition> = {
   'seed-creator': {
     titleKey: 'pages.seedCreator.seo.title',
     descriptionKey: 'pages.seedCreator.seo.description',
+  },
+  'seed-creator-invitations': {
+    titleKey: 'pages.seedCreator.invitations.seo.title',
+    descriptionKey: 'pages.seedCreator.invitations.seo.description',
+    noindex: true,
   },
   invite: {
     titleKey: 'pages.invite.seo.title',

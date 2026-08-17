@@ -1,6 +1,7 @@
 import { http, unwrap } from './http'
 import type {
   InvitationStatus,
+  ReferralBindResult,
   ReferralInvitation,
   ReferralOverview,
   ReferralRewardStatus,
@@ -23,6 +24,13 @@ interface ApiSeedCreatorMe {
   seed_rank?: number | null
   invite_code?: string | null
   referral_reward_status?: string | null
+  twitter_username?: string | null
+  twitter_url?: string | null
+  twitter_profile_url?: string | null
+  discord_username?: string | null
+  discord_user_id?: string | null
+  submitted_at?: string | null
+  reject_reason?: string | null
 }
 
 interface ApiSeedCreatorOverview {
@@ -41,6 +49,7 @@ interface ApiReferralInvitation {
   invitee_masked: string
   registered: boolean
   topped_up: boolean
+  top_up_amount_cents?: number | null
   status: string
   deadline?: string | null
 }
@@ -85,6 +94,12 @@ function mapMe(raw: ApiSeedCreatorMe | null): SeedCreatorMe | null {
     seedRank: raw.seed_rank ?? null,
     inviteCode: raw.invite_code ?? null,
     referralRewardStatus: mapReferralRewardStatus(raw.referral_reward_status),
+    twitterUsername: raw.twitter_username?.trim() || null,
+    twitterUrl: (raw.twitter_url ?? raw.twitter_profile_url)?.trim() || null,
+    discordUsername: raw.discord_username?.trim() || null,
+    discordUserId: raw.discord_user_id?.trim() || null,
+    submittedAt: raw.submitted_at ?? null,
+    rejectReason: raw.reject_reason?.trim() || null,
   }
 }
 
@@ -132,14 +147,31 @@ export function fetchReferralInvitations() {
         inviteeMasked: raw.invitee_masked,
         registered: raw.registered,
         toppedUp: raw.topped_up,
+        topUpAmountCents:
+          typeof raw.top_up_amount_cents === 'number' && Number.isFinite(raw.top_up_amount_cents)
+            ? raw.top_up_amount_cents
+            : null,
         status: mapInvitationStatus(raw.status),
         deadline: raw.deadline ?? null,
       })),
   )
 }
 
-export function bindReferralCode(code: string) {
-  return unwrap<{ bound: boolean }>(http.post('/activity/referral/bind', { code })).then(
-    (raw) => ({ bound: Boolean(raw.bound) }),
-  )
+export function bindReferralCode(code: string): Promise<ReferralBindResult> {
+  return unwrap<{
+    bound?: boolean
+    inviter_masked?: string | null
+    deadline?: string | null
+    bound_at?: string | null
+    status?: string | null
+  }>(http.post('/activity/referral/bind', { code })).then((raw): ReferralBindResult => ({
+    bound: Boolean(raw.bound ?? true),
+    inviterMasked:
+      typeof raw.inviter_masked === 'string' && raw.inviter_masked.trim()
+        ? raw.inviter_masked.trim()
+        : null,
+    deadline: raw.deadline ?? null,
+    boundAt: raw.bound_at ?? null,
+    status: raw.status ? mapInvitationStatus(raw.status) : null,
+  }))
 }

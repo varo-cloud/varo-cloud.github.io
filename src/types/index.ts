@@ -352,6 +352,12 @@ export interface SeedCreatorMe {
   seedRank: number | null
   inviteCode: string | null
   referralRewardStatus: ReferralRewardStatus | null
+  twitterUsername: string | null
+  twitterUrl: string | null
+  discordUsername: string | null
+  discordUserId: string | null
+  submittedAt: string | null
+  rejectReason: string | null
 }
 
 export interface SeedCreatorOverview {
@@ -377,8 +383,19 @@ export interface ReferralInvitation {
   inviteeMasked: string
   registered: boolean
   toppedUp: boolean
+  /** First qualifying top-up amount in cents, when the API provides it. */
+  topUpAmountCents: number | null
   status: InvitationStatus
   deadline: string | null
+}
+
+export interface ReferralBindResult {
+  bound: boolean
+  inviterMasked: string | null
+  deadline: string | null
+  boundAt: string | null
+  /** Invitee invitation status when the bind API provides it. */
+  status: InvitationStatus | null
 }
 
 export interface TopUpPreset {
