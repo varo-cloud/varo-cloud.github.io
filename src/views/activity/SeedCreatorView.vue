@@ -24,7 +24,7 @@ import type {
   SeedCreatorOverview,
 } from '@/types'
 
-const { t, locale } = useI18n()
+const { t, locale, tm } = useI18n()
 const { push, localePath } = useLocaleRouter()
 const message = useAppMessage()
 const userStore = useUserStore()
@@ -33,6 +33,7 @@ const loading = ref(true)
 const submitting = ref(false)
 const error = ref<string | null>(null)
 const noCampaign = ref(false)
+const showRules = ref(false)
 
 const overview = ref<SeedCreatorOverview | null>(null)
 const referral = ref<ReferralOverview | null>(null)
@@ -88,6 +89,18 @@ const steps = computed(() => [
   t('pages.seedCreator.steps.winner'),
 ])
 
+const landingSteps = computed(() => [
+  t('pages.seedCreator.landing.steps.social'),
+  t('pages.seedCreator.landing.steps.review'),
+  t('pages.seedCreator.landing.steps.invite'),
+  t('pages.seedCreator.landing.steps.reward'),
+])
+
+const landingRules = computed(() => {
+  const items = tm('pages.seedCreator.landing.rules')
+  return Array.isArray(items) ? (items as string[]) : []
+})
+
 function invitationStatusLabel(status: InvitationStatus) {
   return t(`pages.seedCreator.inviteStatus.${status}`)
 }
@@ -126,6 +139,10 @@ function goLogin() {
 
 function goBilling() {
   push({ name: 'billing' })
+}
+
+function toggleRules() {
+  showRules.value = !showRules.value
 }
 
 async function loadApprovedExtras() {
@@ -216,12 +233,52 @@ onMounted(loadPage)
         <p class="seed-page__eyebrow">{{ t('pages.seedCreator.eyebrow') }}</p>
         <h1 class="seed-page__title">{{ t('pages.seedCreator.title') }}</h1>
         <p class="seed-page__lead">{{ t('pages.seedCreator.lead') }}</p>
-        <p class="seed-page__benefit">{{ t('pages.seedCreator.benefit') }}</p>
       </header>
 
       <div v-if="loading" class="seed-page__state">
         <NSpin size="large" />
       </div>
+
+      <template v-else-if="!userStore.isLoggedIn">
+        <section class="seed-landing" aria-label="Seed Creator program">
+          <div class="seed-landing__panel">
+            <div class="seed-landing__bonus">
+              <p class="seed-landing__amount">{{ t('pages.seedCreator.landing.bonusAmount') }}</p>
+              <p class="seed-landing__label">{{ t('pages.seedCreator.landing.bonusLabel') }}</p>
+              <p class="seed-landing__rule">{{ t('pages.seedCreator.landing.bonusRule') }}</p>
+            </div>
+            <ol class="seed-landing__steps">
+              <li v-for="(step, index) in landingSteps" :key="step">
+                <span class="seed-landing__step-index">{{ String(index + 1).padStart(2, '0') }}</span>
+                <span class="seed-landing__step-text">{{ step }}</span>
+              </li>
+            </ol>
+          </div>
+
+          <div class="seed-landing__actions">
+            <button type="button" class="seed-btn" @click="goLogin">
+              {{ t('pages.seedCreator.join') }}
+            </button>
+            <button
+              type="button"
+              class="seed-btn seed-btn--ghost"
+              :aria-expanded="showRules"
+              @click="toggleRules"
+            >
+              {{ t('pages.seedCreator.viewRules') }}
+            </button>
+          </div>
+
+          <p class="seed-landing__fineprint">{{ t('pages.seedCreator.landing.finePrint') }}</p>
+
+          <section v-if="showRules" class="seed-landing__rules" :aria-label="t('pages.seedCreator.landing.rulesTitle')">
+            <h2 class="seed-landing__rules-title">{{ t('pages.seedCreator.landing.rulesTitle') }}</h2>
+            <ul>
+              <li v-for="rule in landingRules" :key="rule">{{ rule }}</li>
+            </ul>
+          </section>
+        </section>
+      </template>
 
       <div v-else-if="error" class="seed-page__state">
         <p class="seed-page__error">{{ error }}</p>
@@ -359,14 +416,7 @@ onMounted(loadPage)
           {{ t('pages.seedCreator.status.rejected') }}
         </div>
 
-        <section v-if="!userStore.isLoggedIn" class="seed-card seed-card--center">
-          <p>{{ t('pages.seedCreator.loginToJoin') }}</p>
-          <button type="button" class="seed-btn" @click="goLogin">
-            {{ t('pages.seedCreator.join') }}
-          </button>
-        </section>
-
-        <section v-else-if="canSubmit && !isEnded" class="seed-card">
+        <section v-if="canSubmit && !isEnded" class="seed-card">
           <h2 class="seed-card__title">
             {{
               isPending
@@ -412,41 +462,37 @@ onMounted(loadPage)
 }
 
 .seed-page__inner {
-  max-width: 880px;
+  max-width: 1200px;
   margin: 0 auto;
-  padding: 105px 24px 64px;
+  padding: calc(var(--app-header-height) + 32px) 24px 64px;
 }
 
 .seed-page__hero {
-  margin-bottom: 32px;
+  margin-bottom: 20px;
 }
 
 .seed-page__eyebrow {
-  margin: 0 0 12px;
+  margin: 0 0 8px;
   color: var(--text-accent);
-  font-size: 13px;
-  font-weight: 500;
-  letter-spacing: 0.04em;
+  font-size: 14px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
   text-transform: uppercase;
 }
 
 .seed-page__title {
-  margin: 0 0 12px;
-  font-size: 32px;
-  font-weight: 600;
+  margin: 0 0 8px;
+  color: #ebf2fa;
+  font-size: 38px;
+  font-weight: 700;
   line-height: 1.2;
 }
 
-.seed-page__lead,
-.seed-page__benefit {
-  margin: 0 0 8px;
-  color: var(--text-secondary);
-  font-size: 15px;
-  line-height: 1.6;
-}
-
-.seed-page__benefit {
-  color: var(--text-primary);
+.seed-page__lead {
+  margin: 0;
+  color: #858f9e;
+  font-size: 16px;
+  line-height: 1.5;
 }
 
 .seed-page__state {
@@ -461,6 +507,124 @@ onMounted(loadPage)
 .seed-page__error {
   margin: 0;
   color: var(--text-secondary);
+}
+
+.seed-landing {
+  display: flex;
+  flex-direction: column;
+  gap: 34px;
+  padding-top: 20px;
+}
+
+.seed-landing__panel {
+  display: grid;
+  grid-template-columns: minmax(240px, 348px) minmax(0, 1fr);
+  gap: 48px;
+  align-items: center;
+  min-height: 280px;
+  padding: 48px 52px;
+  border-radius: 16px;
+  background: #0e0e13;
+}
+
+.seed-landing__bonus {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.seed-landing__amount {
+  margin: 0;
+  color: #ebf2fa;
+  font-size: 64px;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.seed-landing__label {
+  margin: 0;
+  color: var(--text-accent);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.seed-landing__rule {
+  margin: 16px 0 0;
+  color: #ebf2fa;
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.seed-landing__steps {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 22px 40px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.seed-landing__steps li {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  min-height: 70px;
+  padding: 0 20px;
+  border-radius: 10px;
+  background: #13141a;
+}
+
+.seed-landing__step-index {
+  flex-shrink: 0;
+  color: var(--text-accent);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.seed-landing__step-text {
+  color: #ebf2fa;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1.4;
+}
+
+.seed-landing__actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+}
+
+.seed-landing__fineprint {
+  margin: -18px 0 0;
+  color: #858f9e;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.seed-landing__rules {
+  padding: 24px;
+  border: 1px solid #262933;
+  border-radius: 12px;
+  background: #13141a;
+}
+
+.seed-landing__rules-title {
+  margin: 0 0 12px;
+  color: #ebf2fa;
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.seed-landing__rules ul {
+  display: grid;
+  gap: 10px;
+  margin: 0;
+  padding: 0 0 0 18px;
+  color: #858f9e;
+  font-size: 14px;
+  line-height: 1.6;
 }
 
 .seed-meta {
@@ -678,15 +842,15 @@ onMounted(loadPage)
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  min-width: 140px;
-  height: 40px;
+  min-width: 200px;
+  height: 44px;
   padding: 0 16px;
   border: 0;
   border-radius: 8px;
   background: var(--text-accent);
-  color: #fff;
+  color: #050d0f;
   font-size: 14px;
-  font-weight: 500;
+  font-weight: 600;
   cursor: pointer;
 }
 
@@ -696,13 +860,45 @@ onMounted(loadPage)
 }
 
 .seed-btn--ghost {
-  margin-top: 8px;
-  border: 1px solid var(--border-color);
-  background: transparent;
-  color: var(--text-primary);
+  border: 1px solid #262933;
+  background: #13141a;
+  color: #ebf2fa;
+}
+
+@media (max-width: 1023px) {
+  .seed-landing__panel {
+    grid-template-columns: 1fr;
+    gap: 32px;
+    padding: 32px 24px;
+  }
+
+  .seed-landing__steps {
+    gap: 12px;
+  }
 }
 
 @media (max-width: 767px) {
+  .seed-page__title {
+    font-size: 28px;
+  }
+
+  .seed-landing__amount {
+    font-size: 48px;
+  }
+
+  .seed-landing__steps {
+    grid-template-columns: 1fr;
+  }
+
+  .seed-landing__actions {
+    flex-direction: column;
+  }
+
+  .seed-btn {
+    width: 100%;
+    min-width: 0;
+  }
+
   .seed-meta,
   .seed-table__header,
   .seed-table__row,

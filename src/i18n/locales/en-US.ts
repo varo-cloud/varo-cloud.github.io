@@ -1339,17 +1339,39 @@ export default {
       },
     },
     seedCreator: {
-      eyebrow: 'Seed Creator Referral',
-      title: 'Become a Varo Seed Creator',
-      lead: 'Verify Twitter/X and Discord, pass manual review, earn Bonus, and invite friends.',
+      eyebrow: 'SEED CREATOR PROGRAM',
+      title: 'Create more. Earn together.',
+      lead: 'The first 30 creators who pass X and Discord review get $20 Bonus and unlock exclusive invite rewards.',
       benefit:
         'The first 30 verified users receive $20 Bonus. The first friend who tops up ≥ $10 in a single payment within 3 days unlocks $10 Bonus for both of you.',
       join: 'Join now',
+      viewRules: 'View rules',
       loginToJoin: 'Sign in to submit your social accounts and apply as a Seed Creator.',
       retry: 'Retry',
       loadError: 'Failed to load the campaign.',
       submitSuccess: 'Submitted. Waiting for review.',
       submitError: 'Submit failed. Please try again.',
+      landing: {
+        bonusAmount: '$20',
+        bonusLabel: 'EARLY CREATOR BONUS',
+        bonusRule: 'First 30 to pass review',
+        finePrint:
+          'Bonus cannot be withdrawn or refunded. Valid for 14 days after claim, and no later than campaign end.',
+        steps: {
+          social: 'Submit X / Discord',
+          review: 'Await manual review',
+          invite: 'Share your invite link',
+          reward: 'First friend qualifies: +$10 each',
+        },
+        rulesTitle: 'Program rules',
+        rules: [
+          'The first 30 creators who pass X and Discord review become Seed Creators and receive $20 Bonus.',
+          'Each Seed Creator can invite many friends, but only has one invite reward (one Winner).',
+          'Winner requirement: invitee completes a first single top-up ≥ $10 within 3 days of signup.',
+          'Winner and inviter each receive $10 Bonus.',
+          'Bonus cannot be withdrawn or refunded. Valid for 14 days after claim, and no later than campaign end.',
+        ],
+      },
       steps: {
         register: 'Sign up / log in to Varo',
         social: 'Submit Twitter/X and Discord',
