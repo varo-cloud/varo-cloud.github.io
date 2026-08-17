@@ -352,6 +352,12 @@ export interface SeedCreatorMe {
   seedRank: number | null
   inviteCode: string | null
   referralRewardStatus: ReferralRewardStatus | null
+  twitterUsername: string | null
+  twitterUrl: string | null
+  discordUsername: string | null
+  discordUserId: string | null
+  submittedAt: string | null
+  rejectReason: string | null
 }
 
 export interface SeedCreatorOverview {

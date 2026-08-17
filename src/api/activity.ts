@@ -23,6 +23,13 @@ interface ApiSeedCreatorMe {
   seed_rank?: number | null
   invite_code?: string | null
   referral_reward_status?: string | null
+  twitter_username?: string | null
+  twitter_url?: string | null
+  twitter_profile_url?: string | null
+  discord_username?: string | null
+  discord_user_id?: string | null
+  submitted_at?: string | null
+  reject_reason?: string | null
 }
 
 interface ApiSeedCreatorOverview {
@@ -86,6 +93,12 @@ function mapMe(raw: ApiSeedCreatorMe | null): SeedCreatorMe | null {
     seedRank: raw.seed_rank ?? null,
     inviteCode: raw.invite_code ?? null,
     referralRewardStatus: mapReferralRewardStatus(raw.referral_reward_status),
+    twitterUsername: raw.twitter_username?.trim() || null,
+    twitterUrl: (raw.twitter_url ?? raw.twitter_profile_url)?.trim() || null,
+    discordUsername: raw.discord_username?.trim() || null,
+    discordUserId: raw.discord_user_id?.trim() || null,
+    submittedAt: raw.submitted_at ?? null,
+    rejectReason: raw.reject_reason?.trim() || null,
   }
 }
 
