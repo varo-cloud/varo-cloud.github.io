@@ -5,6 +5,7 @@ import { NSpin } from 'naive-ui'
 import { useAppMessage } from '@/composables/useAppMessage'
 import { useLocaleRouter } from '@/composables/useLocaleRouter'
 import { useUserStore } from '@/stores/user'
+import { useSeedCreatorStore } from '@/stores/seedCreator'
 import { isApiError } from '@/api/http'
 import {
   fetchReferralInvitations,
@@ -25,6 +26,7 @@ const { t, tm } = useI18n()
 const { push, localePath } = useLocaleRouter()
 const message = useAppMessage()
 const userStore = useUserStore()
+const seedCreatorStore = useSeedCreatorStore()
 
 const loading = ref(true)
 const submitting = ref(false)
@@ -262,6 +264,9 @@ async function loadPage() {
   try {
     const data = await fetchSeedCreatorOverview()
     overview.value = data
+    if (data.me) {
+      seedCreatorStore.markParticipated()
+    }
     if (data.me?.status === 'rejected' || data.me?.status === 'submitted' || data.me?.status === 'under_review') {
       fillFormFromMe()
     }
@@ -306,6 +311,7 @@ async function handleSubmit() {
       discordUsername: discordUsername.value.trim() || undefined,
       discordUserId: discordUserId.value.trim() || undefined,
     })
+    seedCreatorStore.markParticipated()
     message.success(t('pages.seedCreator.submitSuccess'))
     editingApplication.value = false
     await loadPage()
