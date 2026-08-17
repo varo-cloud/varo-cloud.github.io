@@ -1398,7 +1398,6 @@ export default {
         inviteRewardExpired: '邀请奖励已失效',
         inviteRewardWaiting: '邀请奖励未触发',
         note: '历史数据将继续保留在账户中。',
-        viewInvitations: '查看邀请记录',
       },
       pending: {
         eyebrow: 'APPLICATION STATUS',
@@ -1464,12 +1463,8 @@ export default {
         progressTitle: '邀请奖励进度',
         progressSummary: '{registered} 人已注册 · {toppedUp} 人已充值 · {status}',
         progressReviewing: 'Winner 审核中',
-        viewInvitations: '查看邀请列表',
       },
       invitations: {
-        eyebrow: 'REFERRALS',
-        pageTitle: 'Invited users',
-        lead: '系统仅展示打码后的用户信息。Winner 名额仅发放给首位满足完整条件的用户。',
         title: '邀请列表',
         empty: '还没有好友通过你的链接注册。',
         user: '用户',
@@ -1484,12 +1479,6 @@ export default {
         deadlineCompleted: '已完成',
         deadlineEnded: '已结束',
         deadlineNone: '—',
-        loadError: '邀请列表加载失败。',
-        retry: '重试',
-        seo: {
-          title: '邀请列表 — Varo.cloud',
-          description: '查看 Seed Creator 邀请好友的打码信息、首充进度与 Winner 状态。',
-        },
       },
       inviteStatus: {
         waiting_for_topup: '观察中',

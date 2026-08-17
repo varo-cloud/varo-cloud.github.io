@@ -1411,7 +1411,6 @@ export default {
         inviteRewardExpired: 'Invite reward expired',
         inviteRewardWaiting: 'Invite reward not unlocked',
         note: 'Historical data will remain in your account.',
-        viewInvitations: 'View invitations',
       },
       pending: {
         eyebrow: 'APPLICATION STATUS',
@@ -1481,12 +1480,8 @@ export default {
         progressTitle: 'Invite reward progress',
         progressSummary: '{registered} registered · {toppedUp} topped up · {status}',
         progressReviewing: 'Winner under review',
-        viewInvitations: 'View Invitations',
       },
       invitations: {
-        eyebrow: 'REFERRALS',
-        pageTitle: 'Invited users',
-        lead: 'Only masked user info is shown. The Winner slot goes to the first invitee who meets every requirement.',
         title: 'Invitations',
         empty: 'No friends have signed up with your link yet.',
         user: 'User',
@@ -1501,12 +1496,6 @@ export default {
         deadlineCompleted: 'Completed',
         deadlineEnded: 'Ended',
         deadlineNone: '—',
-        loadError: 'Failed to load invitations.',
-        retry: 'Retry',
-        seo: {
-          title: 'Invited users — Varo.cloud',
-          description: 'Review masked invitees, top-up progress, and Winner status for your Seed Creator referrals.',
-        },
       },
       inviteStatus: {
         waiting_for_topup: 'In window',

@@ -13,8 +13,10 @@ import {
   fetchSeedCreatorOverview,
   submitSeedCreatorApplication,
 } from '@/api/activity'
-import { parseTimestampMs } from '@/utils/time'
+import { parseTimestampMs, formatCountdown } from '@/utils/time'
+import { centsToUsd, formatUsd } from '@/utils/currency'
 import type {
+  InvitationStatus,
   ReferralInvitation,
   ReferralOverview,
   ReferralRewardStatus,
@@ -205,12 +207,58 @@ function goLogin() {
   push({ name: 'auth', query: { redirect: localePath('/activity/seed-creator') } })
 }
 
-function goInvitations() {
-  push({ name: 'seed-creator-invitations' })
-}
-
 function goHome() {
   push({ name: 'home' })
+}
+
+function statusBadgeClass(status: InvitationStatus) {
+  switch (status) {
+    case 'winner':
+      return 'invite-badge--winner'
+    case 'no_reward':
+      return 'invite-badge--muted'
+    case 'expired':
+      return 'invite-badge--expired'
+    case 'qualified':
+      return 'invite-badge--qualified'
+    default:
+      return 'invite-badge--waiting'
+  }
+}
+
+function invitationStatusLabel(status: InvitationStatus) {
+  return t(`pages.seedCreator.inviteStatus.${status}`)
+}
+
+function registeredLabel(registered: boolean) {
+  return registered
+    ? t('pages.seedCreator.invitations.yes')
+    : t('pages.seedCreator.invitations.no')
+}
+
+function topUpLabel(item: ReferralInvitation) {
+  if (item.topUpAmountCents != null && item.topUpAmountCents > 0) {
+    return formatUsd(centsToUsd(item.topUpAmountCents))
+  }
+  if (item.toppedUp) return t('pages.seedCreator.invitations.yes')
+  return t('pages.seedCreator.invitations.deadlineNone')
+}
+
+function deadlineLabel(item: ReferralInvitation) {
+  if (item.status === 'winner') return t('pages.seedCreator.invitations.deadlineCompleted')
+  if (item.status === 'no_reward') return t('pages.seedCreator.invitations.deadlineNone')
+  if (item.status === 'expired') return t('pages.seedCreator.invitations.deadlineEnded')
+
+  const countdown = formatCountdown(item.deadline)
+  if (!countdown) return t('pages.seedCreator.invitations.deadlineNone')
+  if (countdown.expired) return t('pages.seedCreator.invitations.deadlineEnded')
+  if (countdown.days <= 0) {
+    return t('pages.seedCreator.invitations.deadlineHoursOnly', { hours: countdown.hours })
+  }
+  return t('pages.seedCreator.invitations.deadlineLeft', {
+    days: countdown.days,
+    hours: countdown.hours,
+  })
 }
 
 function toggleRules() {
@@ -422,15 +470,51 @@ onMounted(loadPage)
             <div class="seed-ended__divider" />
 
             <p class="seed-ended__note">{{ t('pages.seedCreator.ended.note') }}</p>
-            <button
-              v-if="isApproved"
-              type="button"
-              class="seed-btn seed-btn--ghost seed-btn--ended"
-              @click="goInvitations"
-            >
-              {{ t('pages.seedCreator.ended.viewInvitations') }}
-            </button>
           </div>
+
+          <section
+            v-if="isApproved"
+            class="seed-invite-list"
+            aria-label="Invited users"
+          >
+            <h2 class="seed-invite-list__title">{{ t('pages.seedCreator.invitations.title') }}</h2>
+            <div class="invite-table">
+              <div class="invite-table__head" role="row">
+                <span role="columnheader">{{ t('pages.seedCreator.invitations.user') }}</span>
+                <span role="columnheader">{{ t('pages.seedCreator.invitations.registered') }}</span>
+                <span role="columnheader">{{ t('pages.seedCreator.invitations.toppedUp') }}</span>
+                <span role="columnheader">{{ t('pages.seedCreator.invitations.status') }}</span>
+                <span role="columnheader">{{ t('pages.seedCreator.invitations.deadline') }}</span>
+              </div>
+
+              <p v-if="invitations.length === 0" class="invite-table__empty">
+                {{ t('pages.seedCreator.invitations.empty') }}
+              </p>
+
+              <div
+                v-for="item in invitations"
+                :key="`${item.inviteeMasked}-${item.deadline}-${item.status}`"
+                class="invite-table__row"
+                role="row"
+              >
+                <span class="invite-table__user" role="cell">{{ item.inviteeMasked }}</span>
+                <span
+                  class="invite-table__registered"
+                  :class="{ 'invite-table__registered--yes': item.registered }"
+                  role="cell"
+                >
+                  {{ registeredLabel(item.registered) }}
+                </span>
+                <span class="invite-table__topup" role="cell">{{ topUpLabel(item) }}</span>
+                <span class="invite-table__status" role="cell">
+                  <span class="invite-badge" :class="statusBadgeClass(item.status)">
+                    {{ invitationStatusLabel(item.status) }}
+                  </span>
+                </span>
+                <span class="invite-table__deadline" role="cell">{{ deadlineLabel(item) }}</span>
+              </div>
+            </div>
+          </section>
         </section>
       </template>
 
@@ -499,9 +583,45 @@ onMounted(loadPage)
             </p>
           </section>
 
-          <button type="button" class="seed-list-btn" @click="goInvitations">
-            {{ t('pages.seedCreator.approved.viewInvitations') }}
-          </button>
+          <section class="seed-invite-list" aria-label="Invited users">
+            <h2 class="seed-invite-list__title">{{ t('pages.seedCreator.invitations.title') }}</h2>
+            <div class="invite-table">
+              <div class="invite-table__head" role="row">
+                <span role="columnheader">{{ t('pages.seedCreator.invitations.user') }}</span>
+                <span role="columnheader">{{ t('pages.seedCreator.invitations.registered') }}</span>
+                <span role="columnheader">{{ t('pages.seedCreator.invitations.toppedUp') }}</span>
+                <span role="columnheader">{{ t('pages.seedCreator.invitations.status') }}</span>
+                <span role="columnheader">{{ t('pages.seedCreator.invitations.deadline') }}</span>
+              </div>
+
+              <p v-if="invitations.length === 0" class="invite-table__empty">
+                {{ t('pages.seedCreator.invitations.empty') }}
+              </p>
+
+              <div
+                v-for="item in invitations"
+                :key="`${item.inviteeMasked}-${item.deadline}-${item.status}`"
+                class="invite-table__row"
+                role="row"
+              >
+                <span class="invite-table__user" role="cell">{{ item.inviteeMasked }}</span>
+                <span
+                  class="invite-table__registered"
+                  :class="{ 'invite-table__registered--yes': item.registered }"
+                  role="cell"
+                >
+                  {{ registeredLabel(item.registered) }}
+                </span>
+                <span class="invite-table__topup" role="cell">{{ topUpLabel(item) }}</span>
+                <span class="invite-table__status" role="cell">
+                  <span class="invite-badge" :class="statusBadgeClass(item.status)">
+                    {{ invitationStatusLabel(item.status) }}
+                  </span>
+                </span>
+                <span class="invite-table__deadline" role="cell">{{ deadlineLabel(item) }}</span>
+              </div>
+            </div>
+          </section>
         </section>
       </template>
 
@@ -994,6 +1114,115 @@ onMounted(loadPage)
   line-height: 1.5;
 }
 
+.seed-invite-list {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.seed-invite-list__title {
+  margin: 0;
+  color: #ebf2fa;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.invite-table {
+  overflow: hidden;
+  border-radius: 14px;
+  background: #0e0e13;
+}
+
+.invite-table__head,
+.invite-table__row {
+  display: grid;
+  grid-template-columns: minmax(180px, 1.4fr) 0.55fr 0.55fr 1fr 0.9fr;
+  gap: 16px;
+  align-items: center;
+  padding: 0 30px;
+}
+
+.invite-table__head {
+  height: 54px;
+  background: #13141a;
+  color: #858f9e;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.invite-table__row {
+  min-height: 76px;
+  border-top: 1px solid #1f2129;
+  color: #ebf2fa;
+  font-size: 14px;
+}
+
+.invite-table__empty {
+  margin: 0;
+  padding: 48px 30px;
+  color: #858f9e;
+  font-size: 14px;
+  text-align: center;
+}
+
+.invite-table__user {
+  font-weight: 500;
+}
+
+.invite-table__registered {
+  color: #858f9e;
+}
+
+.invite-table__registered--yes {
+  color: #00ba82;
+}
+
+.invite-table__topup {
+  color: #ebf2fa;
+}
+
+.invite-table__deadline {
+  color: #858f9e;
+}
+
+.invite-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 116px;
+  height: 32px;
+  padding: 0 16px;
+  border-radius: 16px;
+  font-size: 13px;
+  font-weight: 500;
+  white-space: nowrap;
+}
+
+.invite-badge--waiting {
+  background: #261700;
+  color: #ff9800;
+}
+
+.invite-badge--qualified {
+  background: #001a1f;
+  color: #06b6d4;
+}
+
+.invite-badge--winner {
+  background: #001c14;
+  color: #00ba82;
+}
+
+.invite-badge--muted {
+  background: #141518;
+  color: #858f9e;
+}
+
+.invite-badge--expired {
+  background: #26070d;
+  color: #ff2e58;
+}
+
 .seed-banner {
   margin-bottom: 20px;
   padding: 14px 16px;
@@ -1067,7 +1296,9 @@ onMounted(loadPage)
 
 .seed-ended {
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  align-items: center;
+  gap: 32px;
   padding-top: 40px;
 }
 
@@ -1109,12 +1340,8 @@ onMounted(loadPage)
   line-height: 1.5;
 }
 
-.seed-btn--ended {
-  width: 190px;
-  min-width: 190px;
-  height: 42px;
-  margin-top: 28px;
-  font-size: 13px;
+.seed-ended .seed-invite-list {
+  width: 100%;
 }
 
 .seed-pending {
@@ -1449,25 +1676,6 @@ onMounted(loadPage)
   color: #ebf2fa;
 }
 
-.seed-list-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  align-self: flex-start;
-  box-sizing: border-box;
-  width: 200px;
-  height: 42px;
-  padding: 0 16px;
-  border: 1px solid #262933;
-  border-radius: 8px;
-  background: #13141a;
-  color: #ebf2fa;
-  font-size: 13px;
-  font-weight: 600;
-  line-height: 1;
-  cursor: pointer;
-}
-
 @media (max-width: 1023px) {
   .seed-landing__panel {
     grid-template-columns: 1fr;
@@ -1573,8 +1781,13 @@ onMounted(loadPage)
     margin: 28px 0 24px;
   }
 
-  .seed-btn--ended {
-    width: 100%;
+  .invite-table {
+    overflow-x: auto;
+  }
+
+  .invite-table__head,
+  .invite-table__row {
+    min-width: 720px;
   }
 
   .seed-pending__card {
