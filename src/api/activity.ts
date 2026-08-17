@@ -1,6 +1,7 @@
 import { http, unwrap } from './http'
 import type {
   InvitationStatus,
+  ReferralBindResult,
   ReferralInvitation,
   ReferralOverview,
   ReferralRewardStatus,
@@ -156,8 +157,21 @@ export function fetchReferralInvitations() {
   )
 }
 
-export function bindReferralCode(code: string) {
-  return unwrap<{ bound: boolean }>(http.post('/activity/referral/bind', { code })).then(
-    (raw) => ({ bound: Boolean(raw.bound) }),
-  )
+export function bindReferralCode(code: string): Promise<ReferralBindResult> {
+  return unwrap<{
+    bound?: boolean
+    inviter_masked?: string | null
+    deadline?: string | null
+    bound_at?: string | null
+    status?: string | null
+  }>(http.post('/activity/referral/bind', { code })).then((raw): ReferralBindResult => ({
+    bound: Boolean(raw.bound ?? true),
+    inviterMasked:
+      typeof raw.inviter_masked === 'string' && raw.inviter_masked.trim()
+        ? raw.inviter_masked.trim()
+        : null,
+    deadline: raw.deadline ?? null,
+    boundAt: raw.bound_at ?? null,
+    status: raw.status ? mapInvitationStatus(raw.status) : null,
+  }))
 }

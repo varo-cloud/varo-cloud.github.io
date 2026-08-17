@@ -389,6 +389,15 @@ export interface ReferralInvitation {
   deadline: string | null
 }
 
+export interface ReferralBindResult {
+  bound: boolean
+  inviterMasked: string | null
+  deadline: string | null
+  boundAt: string | null
+  /** Invitee invitation status when the bind API provides it. */
+  status: InvitationStatus | null
+}
+
 export interface TopUpPreset {
   amountUsd: number
   bonusPercent?: number
