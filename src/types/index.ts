@@ -377,6 +377,8 @@ export interface ReferralInvitation {
   inviteeMasked: string
   registered: boolean
   toppedUp: boolean
+  /** First qualifying top-up amount in cents, when the API provides it. */
+  topUpAmountCents: number | null
   status: InvitationStatus
   deadline: string | null
 }

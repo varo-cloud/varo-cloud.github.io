@@ -12,14 +12,11 @@ import {
   fetchSeedCreatorOverview,
   submitSeedCreatorApplication,
 } from '@/api/activity'
-import { fetchWalletBonus } from '@/api/billing'
-import { centsToUsd, formatUsd } from '@/utils/currency'
-import { formatCountdown, formatTimestamp, parseTimestampMs } from '@/utils/time'
+import { formatTimestamp, parseTimestampMs } from '@/utils/time'
 import type {
-  BonusGrant,
-  InvitationStatus,
   ReferralInvitation,
   ReferralOverview,
+  ReferralRewardStatus,
   SeedCreatorMe,
   SeedCreatorOverview,
 } from '@/types'
@@ -38,8 +35,6 @@ const showRules = ref(false)
 const overview = ref<SeedCreatorOverview | null>(null)
 const referral = ref<ReferralOverview | null>(null)
 const invitations = ref<ReferralInvitation[]>([])
-const bonusGrants = ref<BonusGrant[]>([])
-const totalBonusCents = ref(0)
 
 const twitterUsername = ref('')
 const twitterUrl = ref('')
@@ -101,44 +96,66 @@ const landingRules = computed(() => {
   return Array.isArray(items) ? (items as string[]) : []
 })
 
-function invitationStatusLabel(status: InvitationStatus) {
-  return t(`pages.seedCreator.inviteStatus.${status}`)
-}
+const approvedTitle = computed(() => {
+  const rank = me.value?.seedRank
+  if (rank == null) return t('pages.seedCreator.approved.titleFallback')
+  return t('pages.seedCreator.approved.title', { rank })
+})
 
-function bonusSourceLabel(source: BonusGrant['source']) {
-  return t(`pages.seedCreator.bonus.source.${source}`)
-}
+const displayInviteUrl = computed(() => {
+  const url = referral.value?.inviteUrl
+  if (!url) return ''
+  return url.replace(/^https?:\/\//, '')
+})
 
-function bonusStatusLabel(status: BonusGrant['status']) {
-  return t(`pages.seedCreator.bonus.lotStatus.${status}`)
-}
+const invitedCount = computed(() => referral.value?.invitedCount ?? 0)
 
-function deadlineLabel(deadline: string | null) {
-  const countdown = formatCountdown(deadline)
-  if (!countdown) return '—'
-  if (countdown.expired) return t('pages.seedCreator.invitations.deadlinePassed')
-  return t('pages.seedCreator.invitations.deadlineLeft', {
-    days: countdown.days,
-    hours: countdown.hours,
-  })
-}
+const registeredCount = computed(() => invitations.value.filter((item) => item.registered).length)
 
-function grantExpiryLabel(expiresAt: string | null) {
-  const countdown = formatCountdown(expiresAt)
-  if (!countdown) return '—'
-  if (countdown.expired) return t('pages.seedCreator.bonus.expired')
-  return t('pages.seedCreator.bonus.expiresIn', {
-    days: countdown.days,
-    hours: countdown.hours,
-  })
-}
+const toppedUpCount = computed(() => invitations.value.filter((item) => item.toppedUp).length)
+
+const rewardStatus = computed<ReferralRewardStatus | null>(
+  () => me.value?.referralRewardStatus ?? referral.value?.referralRewardStatus ?? null,
+)
+
+const winnerRewardLabel = computed(() => {
+  if (rewardStatus.value === 'rewarded') return t('pages.seedCreator.approved.rewardClaimed')
+  if (rewardStatus.value === 'expired') return t('pages.seedCreator.approved.rewardExpired')
+  return t('pages.seedCreator.approved.rewardWaiting')
+})
+
+const winnerRewardTone = computed(() => {
+  if (rewardStatus.value === 'rewarded') return 'success'
+  if (rewardStatus.value === 'expired') return 'muted'
+  return 'warning'
+})
+
+const progressStatusLabel = computed(() => {
+  if (rewardStatus.value === 'rewarded') return t('pages.seedCreator.approved.rewardClaimed')
+  if (rewardStatus.value === 'expired') return t('pages.seedCreator.approved.rewardExpired')
+  if (invitations.value.some((item) => item.status === 'qualified' || item.status === 'winner')) {
+    return t('pages.seedCreator.approved.progressReviewing')
+  }
+  return t('pages.seedCreator.approved.rewardWaiting')
+})
+
+const progressPercent = computed(() => {
+  if (rewardStatus.value === 'rewarded' || invitations.value.some((item) => item.status === 'winner')) {
+    return 100
+  }
+  if (rewardStatus.value === 'expired') return 100
+  if (invitations.value.some((item) => item.status === 'qualified')) return 55
+  if (registeredCount.value === 0) return 0
+  const ratio = toppedUpCount.value / Math.max(registeredCount.value, 1)
+  return Math.min(70, Math.round(20 + ratio * 50))
+})
 
 function goLogin() {
   push({ name: 'auth', query: { redirect: localePath('/activity/seed-creator') } })
 }
 
-function goBilling() {
-  push({ name: 'billing' })
+function goInvitations() {
+  push({ name: 'seed-creator-invitations' })
 }
 
 function toggleRules() {
@@ -146,19 +163,13 @@ function toggleRules() {
 }
 
 async function loadApprovedExtras() {
-  const [referralResult, invitationResult, bonusResult] = await Promise.allSettled([
+  const [referralResult, invitationResult] = await Promise.allSettled([
     fetchReferralOverview(),
     fetchReferralInvitations(),
-    fetchWalletBonus(),
   ])
 
   referral.value = referralResult.status === 'fulfilled' ? referralResult.value : null
   invitations.value = invitationResult.status === 'fulfilled' ? invitationResult.value : []
-
-  if (bonusResult.status === 'fulfilled') {
-    bonusGrants.value = bonusResult.value.grants
-    totalBonusCents.value = bonusResult.value.totalBonusCents
-  }
 }
 
 async function loadPage() {
@@ -229,17 +240,17 @@ onMounted(loadPage)
 <template>
   <div class="seed-page">
     <div class="seed-page__inner">
-      <header class="seed-page__hero">
-        <p class="seed-page__eyebrow">{{ t('pages.seedCreator.eyebrow') }}</p>
-        <h1 class="seed-page__title">{{ t('pages.seedCreator.title') }}</h1>
-        <p class="seed-page__lead">{{ t('pages.seedCreator.lead') }}</p>
-      </header>
-
       <div v-if="loading" class="seed-page__state">
         <NSpin size="large" />
       </div>
 
       <template v-else-if="!userStore.isLoggedIn">
+        <header class="seed-page__hero">
+          <p class="seed-page__eyebrow">{{ t('pages.seedCreator.eyebrow') }}</p>
+          <h1 class="seed-page__title">{{ t('pages.seedCreator.title') }}</h1>
+          <p class="seed-page__lead">{{ t('pages.seedCreator.lead') }}</p>
+        </header>
+
         <section class="seed-landing" aria-label="Seed Creator program">
           <div class="seed-landing__panel">
             <div class="seed-landing__bonus">
@@ -292,7 +303,84 @@ onMounted(loadPage)
         <p>{{ t('pages.seedCreator.status.noCampaignHint') }}</p>
       </div>
 
+      <template v-else-if="isApproved">
+        <header class="seed-page__hero seed-page__hero--dashboard">
+          <p class="seed-page__eyebrow">{{ t('pages.seedCreator.approved.eyebrow') }}</p>
+          <h1 class="seed-page__title">{{ approvedTitle }}</h1>
+          <p class="seed-page__lead">{{ t('pages.seedCreator.approved.lead') }}</p>
+        </header>
+
+        <section class="seed-dash" aria-label="Seed Creator dashboard">
+          <div class="seed-dash__metrics">
+            <article class="seed-metric">
+              <p class="seed-metric__label">{{ t('pages.seedCreator.approved.rankLabel') }}</p>
+              <p class="seed-metric__value seed-metric__value--accent">
+                {{
+                  me?.seedRank != null
+                    ? t('pages.seedCreator.approved.rankValue', { rank: me.seedRank })
+                    : '—'
+                }}
+              </p>
+            </article>
+            <article class="seed-metric">
+              <p class="seed-metric__label">{{ t('pages.seedCreator.approved.bonusLabel') }}</p>
+              <p class="seed-metric__value seed-metric__value--success">
+                {{ t('pages.seedCreator.approved.bonusClaimed') }}
+              </p>
+            </article>
+            <article class="seed-metric">
+              <p class="seed-metric__label">{{ t('pages.seedCreator.approved.invitedLabel') }}</p>
+              <p class="seed-metric__value">
+                {{ t('pages.seedCreator.approved.invitedCount', { count: invitedCount }) }}
+              </p>
+            </article>
+            <article class="seed-metric">
+              <p class="seed-metric__label">{{ t('pages.seedCreator.approved.winnerLabel') }}</p>
+              <p class="seed-metric__value" :class="`seed-metric__value--${winnerRewardTone}`">
+                {{ winnerRewardLabel }}
+              </p>
+            </article>
+          </div>
+
+          <div v-if="referral" class="seed-invite-bar">
+            <div class="seed-invite-bar__text">
+              <p class="seed-invite-bar__label">{{ t('pages.seedCreator.approved.inviteLink') }}</p>
+              <p class="seed-invite-bar__url">{{ displayInviteUrl }}</p>
+            </div>
+            <button type="button" class="seed-btn seed-btn--compact" @click="copyInviteLink">
+              {{ t('pages.seedCreator.approved.copy') }}
+            </button>
+          </div>
+
+          <section class="seed-progress" aria-label="Invite progress">
+            <h2 class="seed-progress__title">{{ t('pages.seedCreator.approved.progressTitle') }}</h2>
+            <div class="seed-progress__track" aria-hidden="true">
+              <div class="seed-progress__fill" :style="{ width: `${progressPercent}%` }" />
+            </div>
+            <p class="seed-progress__summary">
+              {{
+                t('pages.seedCreator.approved.progressSummary', {
+                  registered: registeredCount,
+                  toppedUp: toppedUpCount,
+                  status: progressStatusLabel,
+                })
+              }}
+            </p>
+          </section>
+
+          <button type="button" class="seed-list-btn" @click="goInvitations">
+            {{ t('pages.seedCreator.approved.viewInvitations') }}
+          </button>
+        </section>
+      </template>
+
       <template v-else>
+        <header class="seed-page__hero">
+          <p class="seed-page__eyebrow">{{ t('pages.seedCreator.eyebrow') }}</p>
+          <h1 class="seed-page__title">{{ t('pages.seedCreator.title') }}</h1>
+          <p class="seed-page__lead">{{ t('pages.seedCreator.lead') }}</p>
+        </header>
+
         <section v-if="campaign" class="seed-meta" aria-label="Campaign stats">
           <article class="seed-meta__item">
             <p class="seed-meta__label">{{ t('pages.seedCreator.campaign.spots') }}</p>
@@ -318,98 +406,6 @@ onMounted(loadPage)
         <div v-if="isEnded" class="seed-banner">
           {{ t('pages.seedCreator.status.ended') }}
         </div>
-
-        <section v-if="isApproved && referral" class="seed-card">
-          <h2 class="seed-card__title">{{ t('pages.seedCreator.approved.title') }}</h2>
-          <p v-if="me?.seedRank" class="seed-card__rank">
-            {{ t('pages.seedCreator.approved.rank', { rank: me.seedRank }) }}
-          </p>
-          <p class="seed-card__bonus">{{ t('pages.seedCreator.approved.seedBonus') }}</p>
-          <p class="seed-card__reward">
-            {{
-              me?.referralRewardStatus === 'rewarded'
-                ? t('pages.seedCreator.approved.rewardClaimed')
-                : me?.referralRewardStatus === 'expired'
-                  ? t('pages.seedCreator.approved.rewardExpired')
-                  : t('pages.seedCreator.approved.rewardWaiting')
-            }}
-          </p>
-
-          <div class="seed-invite">
-            <p class="seed-invite__label">{{ t('pages.seedCreator.approved.inviteLink') }}</p>
-            <div class="seed-invite__row">
-              <code class="seed-invite__url">{{ referral.inviteUrl }}</code>
-              <button type="button" class="seed-btn" @click="copyInviteLink">
-                {{ t('pages.seedCreator.approved.copy') }}
-              </button>
-            </div>
-            <p class="seed-invite__count">
-              {{ t('pages.seedCreator.approved.inviteCount', { count: referral.invitedCount }) }}
-            </p>
-          </div>
-        </section>
-
-        <section v-if="isApproved" class="seed-card">
-          <h2 class="seed-card__title">{{ t('pages.seedCreator.invitations.title') }}</h2>
-          <p v-if="invitations.length === 0" class="seed-card__empty">
-            {{ t('pages.seedCreator.invitations.empty') }}
-          </p>
-          <div v-else class="seed-table" role="table">
-            <div class="seed-table__header" role="row">
-              <span role="columnheader">{{ t('pages.seedCreator.invitations.user') }}</span>
-              <span role="columnheader">{{ t('pages.seedCreator.invitations.registered') }}</span>
-              <span role="columnheader">{{ t('pages.seedCreator.invitations.toppedUp') }}</span>
-              <span role="columnheader">{{ t('pages.seedCreator.invitations.status') }}</span>
-              <span role="columnheader">{{ t('pages.seedCreator.invitations.deadline') }}</span>
-            </div>
-            <div
-              v-for="item in invitations"
-              :key="`${item.inviteeMasked}-${item.deadline}`"
-              class="seed-table__row"
-              role="row"
-            >
-              <span role="cell">{{ item.inviteeMasked }}</span>
-              <span role="cell">{{
-                item.registered
-                  ? t('pages.seedCreator.invitations.yes')
-                  : t('pages.seedCreator.invitations.no')
-              }}</span>
-              <span role="cell">{{
-                item.toppedUp
-                  ? t('pages.seedCreator.invitations.yes')
-                  : t('pages.seedCreator.invitations.no')
-              }}</span>
-              <span role="cell">{{ invitationStatusLabel(item.status) }}</span>
-              <span role="cell">{{ deadlineLabel(item.deadline) }}</span>
-            </div>
-          </div>
-        </section>
-
-        <section v-if="isApproved" class="seed-card">
-          <div class="seed-card__header-row">
-            <h2 class="seed-card__title">{{ t('pages.seedCreator.bonus.title') }}</h2>
-            <p class="seed-card__bonus">{{ formatUsd(centsToUsd(totalBonusCents)) }}</p>
-          </div>
-          <p class="seed-card__hint">{{ t('pages.seedCreator.bonus.hint') }}</p>
-          <p v-if="bonusGrants.length === 0" class="seed-card__empty">
-            {{ t('pages.seedCreator.bonus.empty') }}
-          </p>
-          <ul v-else class="seed-grants">
-            <li v-for="(grant, index) in bonusGrants" :key="`${grant.source}-${index}`">
-              <div>
-                <p class="seed-grants__amount">{{ formatUsd(centsToUsd(grant.remainingCents)) }}</p>
-                <p class="seed-grants__source">{{ bonusSourceLabel(grant.source) }}</p>
-              </div>
-              <div class="seed-grants__meta">
-                <span>{{ bonusStatusLabel(grant.status) }}</span>
-                <span>{{ grantExpiryLabel(grant.expiresAt) }}</span>
-              </div>
-            </li>
-          </ul>
-          <button type="button" class="seed-btn seed-btn--ghost" @click="goBilling">
-            {{ t('pages.seedCreator.bonus.goBilling') }}
-          </button>
-        </section>
 
         <div v-if="isPending" class="seed-banner">{{ t('pages.seedCreator.status.submitted') }}</div>
         <div v-else-if="isRejected" class="seed-banner seed-banner--warn">
@@ -471,6 +467,11 @@ onMounted(loadPage)
   margin-bottom: 20px;
 }
 
+.seed-page__hero--dashboard {
+  margin-bottom: 18px;
+  padding-bottom: 20px;
+}
+
 .seed-page__eyebrow {
   margin: 0 0 8px;
   color: var(--text-accent);
@@ -483,7 +484,7 @@ onMounted(loadPage)
 .seed-page__title {
   margin: 0 0 8px;
   color: #ebf2fa;
-  font-size: 38px;
+  font-size: 36px;
   font-weight: 700;
   line-height: 1.2;
 }
@@ -491,7 +492,7 @@ onMounted(loadPage)
 .seed-page__lead {
   margin: 0;
   color: #858f9e;
-  font-size: 16px;
+  font-size: 15px;
   line-height: 1.5;
 }
 
@@ -627,6 +628,118 @@ onMounted(loadPage)
   line-height: 1.6;
 }
 
+.seed-dash {
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+.seed-dash__metrics {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 20px;
+}
+
+.seed-metric {
+  min-height: 120px;
+  padding: 26px 24px;
+  border-radius: 14px;
+  background: #0e0e13;
+}
+
+.seed-metric__label {
+  margin: 0 0 18px;
+  color: #858f9e;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.seed-metric__value {
+  margin: 0;
+  color: #ebf2fa;
+  font-size: 21px;
+  font-weight: 600;
+  line-height: 1.3;
+  word-break: break-word;
+}
+
+.seed-metric__value--accent {
+  color: #06b6d4;
+}
+
+.seed-metric__value--success {
+  color: #00ba82;
+}
+
+.seed-metric__value--warning {
+  color: #ff9800;
+}
+
+.seed-metric__value--muted {
+  color: #858f9e;
+}
+
+.seed-invite-bar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  min-height: 108px;
+  padding: 24px;
+  border-radius: 14px;
+  background: #0e0e13;
+}
+
+.seed-invite-bar__text {
+  min-width: 0;
+  flex: 1;
+}
+
+.seed-invite-bar__label {
+  margin: 0 0 10px;
+  color: #858f9e;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.seed-invite-bar__url {
+  margin: 0;
+  overflow: hidden;
+  color: #ebf2fa;
+  font-size: 16px;
+  font-weight: 500;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.seed-progress__title {
+  margin: 0 0 24px;
+  color: #ebf2fa;
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.seed-progress__track {
+  height: 10px;
+  overflow: hidden;
+  border-radius: 5px;
+  background: #13141a;
+}
+
+.seed-progress__fill {
+  height: 100%;
+  border-radius: 5px;
+  background: #06b6d4;
+  transition: width 0.3s ease;
+}
+
+.seed-progress__summary {
+  margin: 18px 0 0;
+  color: #858f9e;
+  font-size: 13px;
+  line-height: 1.5;
+}
+
 .seed-meta {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
@@ -709,110 +822,10 @@ onMounted(loadPage)
   font-weight: 500;
 }
 
-.seed-card__rank,
-.seed-card__reward,
-.seed-card__hint,
-.seed-card__empty {
+.seed-card__hint {
   margin: 0 0 12px;
   color: var(--text-secondary);
   font-size: 14px;
-}
-
-.seed-card__bonus {
-  margin: 0 0 8px;
-  font-size: 24px;
-  font-weight: 600;
-}
-
-.seed-card__header-row {
-  display: flex;
-  align-items: baseline;
-  justify-content: space-between;
-  gap: 16px;
-}
-
-.seed-invite__label {
-  margin: 16px 0 8px;
-  color: var(--text-secondary);
-  font-size: 13px;
-}
-
-.seed-invite__row {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-}
-
-.seed-invite__url {
-  flex: 1;
-  overflow: auto;
-  padding: 10px 12px;
-  border-radius: 8px;
-  background: var(--bg-hover);
-  font-size: 13px;
-}
-
-.seed-invite__count {
-  margin: 12px 0 0;
-  color: var(--text-secondary);
-  font-size: 14px;
-}
-
-.seed-table {
-  overflow-x: auto;
-}
-
-.seed-table__header,
-.seed-table__row {
-  display: grid;
-  grid-template-columns: 1.2fr 0.7fr 0.7fr 1fr 1.2fr;
-  gap: 12px;
-  padding: 12px 0;
-  font-size: 13px;
-}
-
-.seed-table__header {
-  color: var(--text-secondary);
-  border-bottom: 1px solid var(--border-color);
-}
-
-.seed-table__row {
-  border-bottom: 1px solid var(--border-color);
-}
-
-.seed-grants {
-  display: grid;
-  gap: 12px;
-  margin: 0 0 16px;
-  padding: 0;
-  list-style: none;
-}
-
-.seed-grants li {
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 12px 0;
-  border-bottom: 1px solid var(--border-color);
-}
-
-.seed-grants__amount {
-  margin: 0;
-  font-size: 18px;
-  font-weight: 500;
-}
-
-.seed-grants__source,
-.seed-grants__meta {
-  color: var(--text-secondary);
-  font-size: 13px;
-}
-
-.seed-grants__meta {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 4px;
 }
 
 .seed-form {
@@ -854,6 +867,14 @@ onMounted(loadPage)
   cursor: pointer;
 }
 
+.seed-btn--compact {
+  flex-shrink: 0;
+  width: 180px;
+  min-width: 180px;
+  height: 42px;
+  font-size: 13px;
+}
+
 .seed-btn:disabled {
   opacity: 0.55;
   cursor: not-allowed;
@@ -865,6 +886,25 @@ onMounted(loadPage)
   color: #ebf2fa;
 }
 
+.seed-list-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  align-self: flex-start;
+  box-sizing: border-box;
+  width: 200px;
+  height: 42px;
+  padding: 0 16px;
+  border: 1px solid #262933;
+  border-radius: 8px;
+  background: #13141a;
+  color: #ebf2fa;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1;
+  cursor: pointer;
+}
+
 @media (max-width: 1023px) {
   .seed-landing__panel {
     grid-template-columns: 1fr;
@@ -874,6 +914,10 @@ onMounted(loadPage)
 
   .seed-landing__steps {
     gap: 12px;
+  }
+
+  .seed-dash__metrics {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
   }
 }
 
@@ -899,18 +943,19 @@ onMounted(loadPage)
     min-width: 0;
   }
 
-  .seed-meta,
-  .seed-table__header,
-  .seed-table__row,
-  .seed-invite__row {
+  .seed-dash__metrics,
+  .seed-meta {
     grid-template-columns: 1fr;
-    display: grid;
   }
 
-  .seed-invite__row {
-    display: flex;
+  .seed-invite-bar {
     flex-direction: column;
     align-items: stretch;
+  }
+
+  .seed-invite-bar__url {
+    white-space: normal;
+    word-break: break-all;
   }
 }
 </style>

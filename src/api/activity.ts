@@ -41,6 +41,7 @@ interface ApiReferralInvitation {
   invitee_masked: string
   registered: boolean
   topped_up: boolean
+  top_up_amount_cents?: number | null
   status: string
   deadline?: string | null
 }
@@ -132,6 +133,10 @@ export function fetchReferralInvitations() {
         inviteeMasked: raw.invitee_masked,
         registered: raw.registered,
         toppedUp: raw.topped_up,
+        topUpAmountCents:
+          typeof raw.top_up_amount_cents === 'number' && Number.isFinite(raw.top_up_amount_cents)
+            ? raw.top_up_amount_cents
+            : null,
         status: mapInvitationStatus(raw.status),
         deadline: raw.deadline ?? null,
       })),
