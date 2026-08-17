@@ -30,6 +30,7 @@ export type SeoRouteKey =
   | 'home'
   | 'models'
   | 'seedance'
+  | 'seedance-2.5'
   | 'minimax-h3'
   | 'model-detail'
   | 'ai-generator'
@@ -65,6 +66,10 @@ export const SEO_BY_ROUTE: Record<SeoRouteKey, SeoDefinition> = {
   seedance: {
     titleKey: 'pages.seedance.seo.title',
     descriptionKey: 'pages.seedance.seo.description',
+  },
+  'seedance-2.5': {
+    titleKey: 'pages.seedance25.seo.title',
+    descriptionKey: 'pages.seedance25.seo.description',
   },
   'minimax-h3': {
     titleKey: 'pages.minimaxH3.seo.title',

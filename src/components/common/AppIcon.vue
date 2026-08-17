@@ -39,6 +39,13 @@ const ICONS = {
   'toast-error': '/assets/icons/toast-error.svg',
   'toast-warning': '/assets/icons/toast-warning.svg',
   'toast-info': '/assets/icons/toast-info.svg',
+  'waveform-active': '/assets/icons/waveform-active.svg',
+  'mod-text-on': '/assets/icons/mod-text-on.svg',
+  'mod-image-on': '/assets/icons/mod-image-on.svg',
+  'mod-video-on': '/assets/icons/mod-video-on.svg',
+  'mod-audio-on': '/assets/icons/mod-audio-on.svg',
+  hd: '/assets/icons/hd.svg',
+  '15s': '/assets/icons/15s.svg',
   twitter: '/assets/footer/twitter.svg',
   telegram: '/assets/footer/telegram.svg',
 } as const
@@ -49,6 +56,10 @@ const props = withDefaults(
   defineProps<{
     name: AppIconName
     size?: number
+    /** Override width; falls back to `size`. */
+    width?: number
+    /** Override height; falls back to `size`. */
+    height?: number
     /** Icon color. Defaults to currentColor from parent CSS. */
     color?: string
     /** 保留 SVG 原始配色（用于 Toast 等多色图标） */
@@ -56,6 +67,8 @@ const props = withDefaults(
   }>(),
   {
     size: 16,
+    width: undefined,
+    height: undefined,
     color: undefined,
     colored: false,
   },
@@ -63,10 +76,13 @@ const props = withDefaults(
 
 const iconUrl = computed(() => assetUrl(ICONS[props.name]))
 
+const iconWidth = computed(() => props.width ?? props.size)
+const iconHeight = computed(() => props.height ?? props.size)
+
 const iconStyle = computed(() => {
   const style: Record<string, string> = {
-    width: `${props.size}px`,
-    height: `${props.size}px`,
+    width: `${iconWidth.value}px`,
+    height: `${iconHeight.value}px`,
     WebkitMaskImage: `url(${iconUrl.value})`,
     maskImage: `url(${iconUrl.value})`,
   }
@@ -83,8 +99,8 @@ const iconStyle = computed(() => {
     v-if="colored"
     class="app-icon app-icon--colored"
     :src="iconUrl"
-    :width="size"
-    :height="size"
+    :width="iconWidth"
+    :height="iconHeight"
     alt=""
     aria-hidden="true"
   />
