@@ -53,6 +53,7 @@ const isPending = computed(
 const isRejected = computed(() => me.value?.status === 'rejected')
 const showPendingStatus = computed(() => isPending.value && !editingApplication.value)
 const showRejectedStatus = computed(() => isRejected.value && !editingApplication.value)
+const showEndedStatus = computed(() => isEnded.value)
 const canSubmit = computed(() => {
   if (!userStore.isLoggedIn || isEnded.value || isApproved.value) return false
   if (isPending.value) return editingApplication.value
@@ -160,6 +161,24 @@ const winnerRewardTone = computed(() => {
   return 'warning'
 })
 
+const endedSummaryLabel = computed(() => {
+  if (!isApproved.value) return null
+  const parts: string[] = []
+  const rank = me.value?.seedRank
+  if (rank != null) {
+    parts.push(t('pages.seedCreator.ended.finalRank', { rank }))
+  }
+  parts.push(t('pages.seedCreator.ended.creatorBonusClaimed'))
+  if (rewardStatus.value === 'rewarded') {
+    parts.push(t('pages.seedCreator.ended.inviteRewardClaimed'))
+  } else if (rewardStatus.value === 'expired') {
+    parts.push(t('pages.seedCreator.ended.inviteRewardExpired'))
+  } else {
+    parts.push(t('pages.seedCreator.ended.inviteRewardWaiting'))
+  }
+  return parts.join(' · ')
+})
+
 const progressStatusLabel = computed(() => {
   if (rewardStatus.value === 'rewarded') return t('pages.seedCreator.approved.rewardClaimed')
   if (rewardStatus.value === 'expired') return t('pages.seedCreator.approved.rewardExpired')
@@ -186,6 +205,10 @@ function goLogin() {
 
 function goInvitations() {
   push({ name: 'seed-creator-invitations' })
+}
+
+function goHome() {
+  push({ name: 'home' })
 }
 
 function toggleRules() {
@@ -359,10 +382,51 @@ onMounted(loadPage)
         </button>
       </div>
 
-      <div v-else-if="noCampaign" class="seed-card seed-card--center">
-        <h2>{{ t('pages.seedCreator.status.noCampaign') }}</h2>
-        <p>{{ t('pages.seedCreator.status.noCampaignHint') }}</p>
-      </div>
+      <template v-else-if="noCampaign">
+        <header class="seed-page__hero">
+          <p class="seed-page__eyebrow">{{ t('pages.seedCreator.empty.eyebrow') }}</p>
+          <h1 class="seed-page__title">{{ t('pages.seedCreator.empty.title') }}</h1>
+          <p class="seed-page__lead">{{ t('pages.seedCreator.empty.lead') }}</p>
+        </header>
+
+        <section class="seed-empty" aria-label="No active campaign">
+          <div class="seed-empty__card">
+            <div class="seed-empty__icon" aria-hidden="true">—</div>
+            <h2 class="seed-empty__title">{{ t('pages.seedCreator.empty.cardTitle') }}</h2>
+            <p class="seed-empty__body">{{ t('pages.seedCreator.empty.cardBody') }}</p>
+            <button type="button" class="seed-btn seed-btn--ghost seed-btn--empty" @click="goHome">
+              {{ t('pages.seedCreator.empty.backHome') }}
+            </button>
+          </div>
+        </section>
+      </template>
+
+      <template v-else-if="showEndedStatus">
+        <header class="seed-page__hero">
+          <p class="seed-page__eyebrow">{{ t('pages.seedCreator.ended.eyebrow') }}</p>
+          <h1 class="seed-page__title">{{ t('pages.seedCreator.ended.title') }}</h1>
+          <p class="seed-page__lead">{{ t('pages.seedCreator.ended.lead') }}</p>
+        </header>
+
+        <section class="seed-ended" aria-label="Campaign ended">
+          <div class="seed-ended__card">
+            <h2 class="seed-ended__title">{{ t('pages.seedCreator.ended.cardTitle') }}</h2>
+            <p v-if="endedSummaryLabel" class="seed-ended__summary">{{ endedSummaryLabel }}</p>
+
+            <div class="seed-ended__divider" />
+
+            <p class="seed-ended__note">{{ t('pages.seedCreator.ended.note') }}</p>
+            <button
+              v-if="isApproved"
+              type="button"
+              class="seed-btn seed-btn--ghost seed-btn--ended"
+              @click="goInvitations"
+            >
+              {{ t('pages.seedCreator.ended.viewInvitations') }}
+            </button>
+          </div>
+        </section>
+      </template>
 
       <template v-else-if="isApproved">
         <header class="seed-page__hero seed-page__hero--dashboard">
@@ -559,11 +623,7 @@ onMounted(loadPage)
           <p class="seed-page__lead">{{ t('pages.seedCreator.form.lead') }}</p>
         </header>
 
-        <div v-if="isEnded" class="seed-banner">
-          {{ t('pages.seedCreator.status.ended') }}
-        </div>
-
-        <section v-if="canSubmit && !isEnded" class="seed-apply" aria-label="Seed Creator application">
+        <section v-if="canSubmit" class="seed-apply" aria-label="Seed Creator application">
           <form class="seed-apply__form" @submit.prevent="handleSubmit">
             <label class="seed-apply__field">
               <span>{{ t('pages.seedCreator.form.twitterUsername') }}</span>
@@ -941,12 +1001,114 @@ onMounted(loadPage)
   background: rgba(255, 152, 0, 0.12);
 }
 
-.seed-card--center {
-  padding: 20px 24px;
-  border: 1px solid var(--border-color);
-  border-radius: 16px;
-  background: var(--bg-card);
+.seed-empty {
+  display: flex;
+  justify-content: center;
+  padding-top: 46px;
+}
+
+.seed-empty__card {
+  box-sizing: border-box;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  width: 100%;
+  max-width: 700px;
+  padding: 52px 48px 48px;
+  border-radius: 18px;
+  background: #0e0e13;
   text-align: center;
+}
+
+.seed-empty__icon {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 120px;
+  height: 90px;
+  margin-bottom: 38px;
+  border-radius: 24px;
+  background: #13141a;
+  color: #858f9e;
+  font-size: 42px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.seed-empty__title {
+  margin: 0 0 12px;
+  color: #ebf2fa;
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.seed-empty__body {
+  margin: 0;
+  max-width: 440px;
+  color: #858f9e;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.seed-btn--empty {
+  width: 200px;
+  min-width: 200px;
+  height: 42px;
+  margin-top: 28px;
+  font-size: 13px;
+}
+
+.seed-ended {
+  display: flex;
+  justify-content: center;
+  padding-top: 40px;
+}
+
+.seed-ended__card {
+  box-sizing: border-box;
+  width: 100%;
+  max-width: 820px;
+  padding: 66px 72px 52px;
+  border-radius: 18px;
+  background: #0e0e13;
+}
+
+.seed-ended__title {
+  margin: 0;
+  color: #ebf2fa;
+  font-size: 28px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.seed-ended__summary {
+  margin: 12px 0 0;
+  color: #858f9e;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.seed-ended__divider {
+  width: 100%;
+  height: 1px;
+  margin: 36px 0 32px;
+  background: #1f2129;
+}
+
+.seed-ended__note {
+  margin: 0;
+  color: #858f9e;
+  font-size: 14px;
+  line-height: 1.5;
+}
+
+.seed-btn--ended {
+  width: 190px;
+  min-width: 190px;
+  height: 42px;
+  margin-top: 28px;
+  font-size: 13px;
 }
 
 .seed-pending {
@@ -1364,6 +1526,49 @@ onMounted(loadPage)
 
   .seed-pending {
     padding-top: 24px;
+  }
+
+  .seed-ended {
+    padding-top: 24px;
+  }
+
+  .seed-empty {
+    padding-top: 24px;
+  }
+
+  .seed-empty__card {
+    padding: 36px 24px 28px;
+  }
+
+  .seed-empty__icon {
+    width: 96px;
+    height: 72px;
+    margin-bottom: 28px;
+    font-size: 32px;
+  }
+
+  .seed-empty__title {
+    font-size: 20px;
+  }
+
+  .seed-btn--empty {
+    width: 100%;
+  }
+
+  .seed-ended__card {
+    padding: 36px 24px 28px;
+  }
+
+  .seed-ended__title {
+    font-size: 22px;
+  }
+
+  .seed-ended__divider {
+    margin: 28px 0 24px;
+  }
+
+  .seed-btn--ended {
+    width: 100%;
   }
 
   .seed-pending__card {
