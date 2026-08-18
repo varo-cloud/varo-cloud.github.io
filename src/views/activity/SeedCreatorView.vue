@@ -409,13 +409,14 @@ onMounted(loadPage)
       </template>
 
       <template v-else-if="!me && !isEnded">
-        <header class="seed-page__hero">
-          <p class="seed-page__eyebrow">{{ campaignName || t('pages.seedCreator.eyebrow') }}</p>
-          <h1 class="seed-page__title">{{ t('pages.seedCreator.title') }}</h1>
-          <p class="seed-page__lead">{{ t('pages.seedCreator.lead', copy) }}</p>
-        </header>
+        <template v-if="!userStore.isLoggedIn">
+          <header class="seed-page__hero">
+            <p class="seed-page__eyebrow">{{ campaignName || t('pages.seedCreator.eyebrow') }}</p>
+            <h1 class="seed-page__title">{{ t('pages.seedCreator.title') }}</h1>
+            <p class="seed-page__lead">{{ t('pages.seedCreator.lead', copy) }}</p>
+          </header>
 
-        <section class="seed-landing" aria-label="Seed Creator program">
+          <section class="seed-landing" aria-label="Seed Creator program">
           <div class="seed-landing__panel">
             <div class="seed-landing__bonus">
               <p class="seed-landing__amount">{{ copy.seedBonus }}</p>
@@ -452,9 +453,10 @@ onMounted(loadPage)
               <li v-for="rule in landingRules" :key="rule">{{ rule }}</li>
             </ul>
           </section>
-        </section>
+          </section>
+        </template>
 
-        <template v-if="userStore.isLoggedIn">
+        <template v-else>
           <header class="seed-page__hero">
             <p class="seed-page__eyebrow">{{ t('pages.seedCreator.form.eyebrow') }}</p>
             <h2 class="seed-page__title">{{ t('pages.seedCreator.form.title') }}</h2>
