@@ -1583,6 +1583,9 @@ export default {
       errorCode: '错误代码：{code}',
       backHome: '返回首页',
       contactSupport: '联系支持',
+      statusEmptyEyebrow: '好友邀请',
+      statusEmptyTitle: '暂无邀请记录',
+      statusEmptyLead: '你还没有绑定邀请。请通过好友分享的专属链接加入。',
       seo: {
         title: '好友邀请 — Varo.cloud',
         description: '通过 Seed Creator 邀请加入 Varo，完成首充即有机会获得 Bonus。',

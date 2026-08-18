@@ -1604,6 +1604,9 @@ export default {
       errorCode: 'Error code: {code}',
       backHome: 'Back to home',
       contactSupport: 'Contact support',
+      statusEmptyEyebrow: 'Friend invite',
+      statusEmptyTitle: 'No invitation yet',
+      statusEmptyLead: 'You have not bound an invite. Open the exclusive link shared by a friend to join.',
       seo: {
         title: 'Friend invite — Varo.cloud',
         description: 'Join Varo with a Seed Creator invite and earn Bonus if you are the first to top up.',

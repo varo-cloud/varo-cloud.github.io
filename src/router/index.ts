@@ -77,8 +77,14 @@ const appLayoutChildren: RouteRecordRaw[] = [
     component: () => import('@/views/activity/SeedCreatorView.vue'),
   },
   {
-    path: 'invite/:code?',
+    path: 'invite',
     name: 'invite',
+    meta: { requiresAuth: true, fullBleed: true },
+    component: () => import('@/views/activity/InviteStatusView.vue'),
+  },
+  {
+    path: 'invite/:code',
+    name: 'invite-bind',
     meta: { fullBleed: true },
     component: () => import('@/views/activity/InviteView.vue'),
   },
