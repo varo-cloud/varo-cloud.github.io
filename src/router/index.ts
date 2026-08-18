@@ -79,13 +79,13 @@ const appLayoutChildren: RouteRecordRaw[] = [
   {
     path: 'invite',
     name: 'invite',
-    meta: { requiresAuth: true, fullBleed: true },
+    meta: { requiresAuth: true, fullBleed: true, scrollHeader: true },
     component: () => import('@/views/activity/InviteStatusView.vue'),
   },
   {
     path: 'invite/:code',
     name: 'invite-bind',
-    meta: { fullBleed: true },
+    meta: { fullBleed: true, scrollHeader: true },
     component: () => import('@/views/activity/InviteView.vue'),
   },
   {

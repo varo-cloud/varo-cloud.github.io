@@ -29,6 +29,7 @@ let userMenuCloseTimer: ReturnType<typeof setTimeout> | null = null
 let modelsMenuCloseTimer: ReturnType<typeof setTimeout> | null = null
 
 const usesTransparentHeader = computed(() => route.meta.transparentHeader === true)
+const usesScrollHeader = computed(() => route.meta.scrollHeader === true)
 const isHeaderSolid = computed(() => !usesTransparentHeader.value || isScrolled.value)
 
 function updateScrollState() {
@@ -380,7 +381,11 @@ onUnmounted(() => {
 <template>
   <header
     class="app-header"
-    :class="{ 'app-header--solid': isHeaderSolid, 'app-header--transparent': !isHeaderSolid }"
+    :class="{
+      'app-header--solid': isHeaderSolid,
+      'app-header--transparent': !isHeaderSolid,
+      'app-header--scroll': usesScrollHeader,
+    }"
   >
     <div class="app-header__inner">
       <div class="app-header__left">
@@ -697,6 +702,10 @@ onUnmounted(() => {
   transition:
     background-color 0.2s ease,
     border-color 0.2s ease;
+}
+
+.app-header--scroll {
+  position: static;
 }
 
 .app-header--solid {
