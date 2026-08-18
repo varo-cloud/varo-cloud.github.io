@@ -20,7 +20,6 @@ import {
   fetchTransactions,
   fetchUsageRecords,
   fetchWalletBalance,
-  fetchWalletBonus,
   // updateAutoTopUp,
 } from '@/api/billing'
 import { useLocaleRouter } from '@/composables/useLocaleRouter'
@@ -28,12 +27,11 @@ import { AnalyticsEvents, trackEvent } from '@/analytics'
 import { useUserStore } from '@/stores/user'
 import { downloadCsv } from '@/utils/csv'
 import { assetUrl } from '@/utils/assetUrl'
-import { formatUsd, centsToUsd } from '@/utils/currency'
-import { formatCountdown, formatTimestamp } from '@/utils/time'
+import { formatUsd } from '@/utils/currency'
+import { formatTimestamp } from '@/utils/time'
 import type {
   BillingRecord,
   BillingSummary,
-  BonusGrant,
   CreditPackage,
   CreditPackageId,
   PaymentMethodId,
@@ -93,7 +91,6 @@ const loading = ref(true)
 const error = ref<string | null>(null)
 const summary = ref<BillingSummary | null>(null)
 const walletBalance = ref<WalletBalance | null>(null)
-const bonusGrants = ref<BonusGrant[]>([])
 const packages = ref<CreditPackage[]>([])
 const transactions = ref<Transaction[]>([])
 const billingRecords = ref<BillingRecord[]>([])
@@ -262,21 +259,6 @@ function billingStatusLabel(status: string | null | undefined) {
   return translated === key ? status : translated
 }
 
-function bonusSourceLabel(source: BonusGrant['source']) {
-  return t(`pages.billing.bonusSources.${source}`)
-}
-
-function bonusLotStatusLabel(status: BonusGrant['status']) {
-  return t(`pages.billing.bonusLotStatus.${status}`)
-}
-
-function bonusExpiryLabel(expiresAt: string | null) {
-  const countdown = formatCountdown(expiresAt)
-  if (!countdown) return '—'
-  if (countdown.expired) return t('pages.billing.bonusExpired')
-  return t('pages.billing.bonusExpires', { days: countdown.days, hours: countdown.hours })
-}
-
 async function loadBilling(options: { silent?: boolean } = {}) {
   if (!options.silent) {
     loading.value = true
@@ -284,14 +266,13 @@ async function loadBilling(options: { silent?: boolean } = {}) {
   }
 
   try {
-    const [summaryData, packageData, transactionData, configData, balanceData, bonusData] =
+    const [summaryData, packageData, transactionData, configData, balanceData] =
       await Promise.all([
         fetchBillingSummary(),
         fetchCreditPackages(),
         fetchTransactions(),
         fetchBillingConfig().catch(() => ({ publishableKey: '', cryptoEnabled: false })),
         fetchWalletBalance().catch(() => null),
-        fetchWalletBonus().catch(() => null),
       ])
 
     summary.value = summaryData
@@ -299,7 +280,6 @@ async function loadBilling(options: { silent?: boolean } = {}) {
     transactions.value = transactionData
     cryptoEnabled.value = configData.cryptoEnabled
     walletBalance.value = balanceData
-    bonusGrants.value = bonusData?.grants ?? []
 
     if (packageData.length > 0 && !selectedPackageId.value) {
       selectedPackageId.value = packageData[0].id
@@ -313,7 +293,6 @@ async function loadBilling(options: { silent?: boolean } = {}) {
       error.value = t('pages.billing.loadError')
       summary.value = null
       walletBalance.value = null
-      bonusGrants.value = []
       packages.value = []
       transactions.value = []
     }
@@ -645,29 +624,6 @@ onMounted(async () => {
           -->
         </section>
 
-        <section class="billing-bonus" aria-label="Bonus lots">
-          <h2 class="billing-section-title">{{ t('pages.billing.bonusSectionTitle') }}</h2>
-          <p class="billing-bonus__hint">{{ t('pages.billing.bonusSectionHint') }}</p>
-          <p v-if="bonusGrants.length === 0" class="billing-bonus__empty">
-            {{ t('pages.billing.bonusEmpty') }}
-          </p>
-          <ul v-else class="billing-bonus__list">
-            <li v-for="(grant, index) in bonusGrants" :key="`${grant.source}-${index}`">
-              <div>
-                <p class="billing-bonus__amount">{{ formatUsd(centsToUsd(grant.remainingCents)) }}</p>
-                <p class="billing-bonus__source">{{ bonusSourceLabel(grant.source) }}</p>
-              </div>
-              <div class="billing-bonus__meta">
-                <span>{{ bonusLotStatusLabel(grant.status) }}</span>
-                <span>{{
-                  t('pages.billing.bonusGranted', { amount: formatUsd(centsToUsd(grant.amountCents)) })
-                }}</span>
-                <span>{{ bonusExpiryLabel(grant.expiresAt) }}</span>
-              </div>
-            </li>
-          </ul>
-        </section>
-
         <section ref="rechargeSectionRef" class="billing-recharge" aria-label="Account recharge">
           <h2 class="billing-section-title">{{ t('pages.billing.accountRecharge') }}</h2>
 
@@ -926,6 +882,7 @@ onMounted(async () => {
               <span role="columnheader">{{ t('pages.billing.columns.paymentMethod') }}</span>
               <span role="columnheader">{{ t('pages.billing.columns.initiatedAt') }}</span>
               <span role="columnheader">{{ t('pages.billing.columns.completedAt') }}</span>
+              <span role="columnheader">{{ t('pages.billing.columns.expiresAt') }}</span>
               <span role="columnheader">{{ t('pages.billing.columns.amount') }}</span>
               <span role="columnheader">{{ t('pages.billing.columns.action') }}</span>
             </div>
@@ -1100,58 +1057,6 @@ onMounted(async () => {
   line-height: 18px;
 }
 
-.billing-bonus {
-  margin-bottom: 40px;
-}
-
-.billing-bonus__hint,
-.billing-bonus__empty {
-  margin: 0 0 16px;
-  color: var(--text-secondary);
-  font-size: 14px;
-}
-
-.billing-bonus__list {
-  margin: 0;
-  padding: 0 24px;
-  list-style: none;
-  border: 0.5px solid #2d2d38;
-  border-radius: 16px;
-  background: var(--bg-card);
-}
-
-.billing-bonus__list li {
-  display: flex;
-  justify-content: space-between;
-  gap: 16px;
-  padding: 16px 0;
-  border-bottom: 0.5px solid #2d2d38;
-}
-
-.billing-bonus__list li:last-child {
-  border-bottom: 0;
-}
-
-.billing-bonus__amount {
-  margin: 0 0 6px;
-  font-size: 20px;
-  font-weight: 500;
-}
-
-.billing-bonus__source,
-.billing-bonus__meta {
-  color: var(--text-secondary);
-  font-size: 13px;
-}
-
-.billing-bonus__meta {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 4px;
-  text-align: right;
-}
-
 .billing-summary__balance-row,
 .billing-summary__spent-row,
 .billing-summary__auto-header {
@@ -1210,7 +1115,7 @@ onMounted(async () => {
 
 .billing-panel--checkout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(240px, 300px);
+  grid-template-columns: minmax(0, 1fr) minmax(340px, 300px);
   gap: 32px 48px;
   align-items: start;
 }
@@ -1624,6 +1529,7 @@ onMounted(async () => {
     minmax(88px, 0.75fr)
     minmax(110px, 0.95fr)
     minmax(110px, 0.95fr)
+    minmax(110px, 0.95fr)
     minmax(72px, 0.6fr)
     72px;
 }
@@ -1634,7 +1540,7 @@ onMounted(async () => {
 
 .billing-table--topup .billing-table__header--topup,
 .billing-table--topup :deep(.billing-tx-row) {
-  min-width: 940px;
+  min-width: 1060px;
 }
 
 .billing-table__empty {
