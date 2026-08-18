@@ -1,4 +1,4 @@
-import { http, unwrap } from './http'
+import { http, isApiError, unwrap } from './http'
 import type {
   InvitationStatus,
   ReferralBindResult,
@@ -6,6 +6,7 @@ import type {
   ReferralOverview,
   ReferralRewardStatus,
   SeedCreatorMe,
+  SeedCreatorMeInvite,
   SeedCreatorOverview,
   SeedCreatorSubmitPayload,
   SeedStatus,
@@ -28,6 +29,13 @@ interface ApiSeedCreatorCampaign {
   starts_at?: string | null
 }
 
+interface ApiSeedCreatorMeInvite {
+  status?: string | null
+  deposit_deadline?: number | string | null
+  first_topup_at?: number | string | null
+  is_winner?: boolean | null
+}
+
 interface ApiSeedCreatorMe {
   status: string
   seed_rank?: number | null
@@ -40,6 +48,7 @@ interface ApiSeedCreatorMe {
   discord_user_id?: string | null
   submitted_at?: string | null
   reject_reason?: string | null
+  invite?: ApiSeedCreatorMeInvite | null
 }
 
 interface ApiSeedCreatorOverview {
@@ -61,6 +70,14 @@ interface ApiReferralInvitation {
   top_up_amount_cents?: number | null
   status: string
   deadline?: string | null
+}
+
+interface ApiReferralBind {
+  bound?: boolean
+  inviter_masked?: string | null
+  deadline?: string | null
+  bound_at?: string | null
+  status?: string | null
 }
 
 function mapSeedStatus(value: string): SeedStatus {
@@ -119,6 +136,16 @@ function mapCampaign(raw: ApiSeedCreatorCampaign): SeedCreatorOverview['campaign
   }
 }
 
+function mapMeInvite(raw: ApiSeedCreatorMeInvite | null | undefined): SeedCreatorMeInvite | null {
+  if (!raw) return null
+  return {
+    status: mapInvitationStatus(raw.status ?? ''),
+    depositDeadline: raw.deposit_deadline ?? null,
+    firstTopupAt: raw.first_topup_at ?? null,
+    isWinner: Boolean(raw.is_winner),
+  }
+}
+
 function mapMe(raw: ApiSeedCreatorMe | null): SeedCreatorMe | null {
   if (!raw) return null
   return {
@@ -132,6 +159,7 @@ function mapMe(raw: ApiSeedCreatorMe | null): SeedCreatorMe | null {
     discordUserId: raw.discord_user_id?.trim() || null,
     submittedAt: raw.submitted_at ?? null,
     rejectReason: raw.reject_reason?.trim() || null,
+    invite: mapMeInvite(raw.invite),
   }
 }
 
@@ -183,15 +211,19 @@ export function fetchReferralInvitations() {
   )
 }
 
-export function bindReferralCode(code: string): Promise<ReferralBindResult> {
-  return unwrap<{
-    bound?: boolean
-    inviter_masked?: string | null
-    deadline?: string | null
-    bound_at?: string | null
-    status?: string | null
-  }>(http.post('/activity/referral/bind', { code })).then((raw): ReferralBindResult => ({
-    bound: Boolean(raw.bound ?? true),
+function mapReferralBindResult(raw: ApiReferralBind | null | undefined, defaultBound: boolean): ReferralBindResult {
+  if (!raw) {
+    return {
+      bound: false,
+      inviterMasked: null,
+      deadline: null,
+      boundAt: null,
+      status: null,
+    }
+  }
+
+  return {
+    bound: Boolean(raw.bound ?? defaultBound),
     inviterMasked:
       typeof raw.inviter_masked === 'string' && raw.inviter_masked.trim()
         ? raw.inviter_masked.trim()
@@ -199,5 +231,23 @@ export function bindReferralCode(code: string): Promise<ReferralBindResult> {
     deadline: raw.deadline ?? null,
     boundAt: raw.bound_at ?? null,
     status: raw.status ? mapInvitationStatus(raw.status) : null,
-  }))
+  }
+}
+
+export function bindReferralCode(code: string): Promise<ReferralBindResult> {
+  return unwrap<ApiReferralBind>(http.post('/activity/referral/bind', { code })).then((raw) =>
+    mapReferralBindResult(raw, true),
+  )
+}
+
+/** Current user's invitation as invitee. 404/unbound → null. */
+export async function fetchMyInvitation(): Promise<ReferralBindResult | null> {
+  try {
+    const raw = await unwrap<ApiReferralBind | null>(http.get('/activity/referral/invitation'))
+    const result = mapReferralBindResult(raw, false)
+    return result.bound || result.status || result.boundAt ? result : null
+  } catch (err) {
+    if (isApiError(err) && (err.code === 404 || err.code === 400)) return null
+    throw err
+  }
 }

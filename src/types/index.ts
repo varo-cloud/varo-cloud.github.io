@@ -362,6 +362,14 @@ export interface SeedCreatorCampaign {
   endsAt: string | null
 }
 
+/** Present when the current user is an invitee of a Seed Creator. */
+export interface SeedCreatorMeInvite {
+  status: InvitationStatus
+  depositDeadline: number | string | null
+  firstTopupAt: number | string | null
+  isWinner: boolean
+}
+
 export interface SeedCreatorMe {
   status: SeedStatus
   seedRank: number | null
@@ -373,6 +381,8 @@ export interface SeedCreatorMe {
   discordUserId: string | null
   submittedAt: string | null
   rejectReason: string | null
+  /** Null for Seed Creators; set when this user was invited. */
+  invite: SeedCreatorMeInvite | null
 }
 
 export interface SeedCreatorOverview {

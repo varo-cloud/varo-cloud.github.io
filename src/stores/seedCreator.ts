@@ -5,9 +5,9 @@ import { isApiError } from '@/api/http'
 import { useUserStore } from '@/stores/user'
 
 /**
- * Tracks whether the logged-in user has joined the Seed Creator campaign
- * (`me` present on overview). Used to gate the avatar-menu entry — the
- * activity itself is invite-only via ops-shared links, not global nav.
+ * Tracks whether the logged-in user is a Seed Creator (`me` present and
+ * `me.invite` null). Invitees also get a `me` object with `invite` set, and
+ * should not see the Seed Creator avatar-menu entry.
  */
 export const useSeedCreatorStore = defineStore('seedCreator', () => {
   const participated = ref(false)
@@ -34,7 +34,7 @@ export const useSeedCreatorStore = defineStore('seedCreator', () => {
     refreshPromise = (async () => {
       try {
         const data = await fetchSeedCreatorOverview()
-        participated.value = data.me != null
+        participated.value = data.me != null && data.me.invite == null
       } catch (err) {
         if (isApiError(err) && err.code === 404) {
           participated.value = false

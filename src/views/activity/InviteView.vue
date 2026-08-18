@@ -5,8 +5,9 @@ import { useI18n } from 'vue-i18n'
 import { NSpin } from 'naive-ui'
 import { useLocaleRouter } from '@/composables/useLocaleRouter'
 import { useUserStore } from '@/stores/user'
+import { useInviteeStore } from '@/stores/invitee'
 import { isApiError } from '@/api/http'
-import { bindReferralCode, fetchSeedCreatorOverview } from '@/api/activity'
+import { bindReferralCode, fetchMyInvitation, fetchSeedCreatorOverview } from '@/api/activity'
 import { fetchWalletBonus } from '@/api/billing'
 import {
   clearPendingInviteCode,
@@ -24,6 +25,7 @@ const route = useRoute()
 const { push, localePath } = useLocaleRouter()
 const { t } = useI18n()
 const userStore = useUserStore()
+const inviteeStore = useInviteeStore()
 
 const phase = ref<InvitePhase>(userStore.isLoggedIn ? 'binding' : 'guest')
 const campaign = ref<SeedCreatorCampaign | null>(null)
@@ -131,7 +133,7 @@ const SUPPORT_MAILTO = 'mailto:support@varo.cloud'
 function goLogin() {
   const target = code.value
     ? localePath(`/invite/${encodeURIComponent(code.value)}`)
-    : localePath('/activity/seed-creator')
+    : localePath('/invite')
   push({ name: 'auth', query: { redirect: target } })
 }
 
@@ -145,6 +147,10 @@ function goCreate() {
 
 function goHome() {
   push({ name: 'home' })
+}
+
+function goActivity() {
+  push({ name: 'seed-creator' })
 }
 
 function contactSupport() {
@@ -231,6 +237,7 @@ async function detectWinner(): Promise<boolean> {
 }
 
 async function enterBoundPhase(result: ReferralBindResult | null) {
+  inviteeStore.markInvited()
   applyBindResult(result)
   const isWinner = await detectWinner()
   if (isWinner) return
@@ -245,16 +252,43 @@ async function enterBoundPhase(result: ReferralBindResult | null) {
   startCountdown()
 }
 
+async function restoreBoundInvitation() {
+  try {
+    const result = await fetchMyInvitation()
+    if (result) {
+      await enterBoundPhase(result)
+      return
+    }
+  } catch {
+    // Invitation lookup is optional when visiting /invite without a code.
+  }
+
+  const isWinner = await detectWinner()
+  if (isWinner) {
+    inviteeStore.markInvited()
+    return
+  }
+  phase.value = 'guest'
+}
+
 async function bindCode() {
   const inviteCode = code.value
+  const campaignPromise = loadCampaign()
+
   if (!inviteCode) {
-    loadingCampaign.value = false
-    setBindError(null, 'INVITE_INVALID')
+    if (!userStore.isLoggedIn) {
+      phase.value = 'guest'
+      await campaignPromise
+      return
+    }
+
+    phase.value = 'binding'
+    await campaignPromise
+    await restoreBoundInvitation()
     return
   }
 
   savePendingInviteCode(inviteCode)
-  const campaignPromise = loadCampaign()
 
   if (!userStore.isLoggedIn) {
     phase.value = 'guest'
@@ -308,12 +342,17 @@ onUnmounted(stopCountdown)
           </ol>
 
           <div class="invite-guest__actions">
-            <button type="button" class="invite-btn" @click="goLogin">
-              {{ t('pages.invite.login') }}
+            <template v-if="!userStore.isLoggedIn">
+              <button type="button" class="invite-btn" @click="goLogin">
+                {{ t('pages.invite.login') }}
+              </button>
+              <p v-if="displayCode" class="invite-guest__hint">
+                {{ t('pages.invite.loginHint', { code: displayCode }) }}
+              </p>
+            </template>
+            <button v-else type="button" class="invite-btn invite-btn--ghost" @click="goActivity">
+              {{ t('pages.invite.goActivity') }}
             </button>
-            <p v-if="displayCode" class="invite-guest__hint">
-              {{ t('pages.invite.loginHint', { code: displayCode }) }}
-            </p>
           </div>
         </section>
       </template>

@@ -48,6 +48,7 @@ export default {
     generations: 'Generations',
     docs: 'Docs',
     seedCreator: 'Seed Creator',
+    invite: 'Friend invite',
   },
   footer: {
     navLabel: 'Footer',

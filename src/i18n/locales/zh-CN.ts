@@ -48,6 +48,7 @@ export default {
     generations: '生成历史',
     docs: '文档',
     seedCreator: '种子计划',
+    invite: '好友邀请',
   },
   footer: {
     navLabel: '页脚',

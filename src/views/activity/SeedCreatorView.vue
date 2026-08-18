@@ -312,7 +312,7 @@ async function loadPage() {
   try {
     const data = await fetchSeedCreatorOverview()
     overview.value = data
-    if (data.me) {
+    if (data.me && data.me.invite == null) {
       seedCreatorStore.markParticipated()
     }
     if (data.me?.status === 'rejected' || data.me?.status === 'submitted' || data.me?.status === 'under_review') {

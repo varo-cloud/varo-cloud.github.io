@@ -4,6 +4,7 @@ import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
 import { useUserStore } from '@/stores/user'
 import { useSeedCreatorStore } from '@/stores/seedCreator'
+import { useInviteeStore } from '@/stores/invitee'
 import VaroCloudLogo from '@/components/common/VaroCloudLogo.vue'
 import AppIcon from '@/components/common/AppIcon.vue'
 import { useLocaleRouter } from '@/composables/useLocaleRouter'
@@ -15,6 +16,7 @@ const { push, localePath, switchLocale, currentLocale } = useLocaleRouter()
 const { t } = useI18n()
 const userStore = useUserStore()
 const seedCreatorStore = useSeedCreatorStore()
+const inviteeStore = useInviteeStore()
 
 // const headerSearch = ref('')
 const isScrolled = ref(false)
@@ -68,6 +70,10 @@ const userMenuOptions = computed((): UserMenuOption[] => {
 
   if (seedCreatorStore.participated) {
     options.push({ label: t('nav.seedCreator'), key: 'seed-creator', icon: 'check-circle' })
+  }
+
+  if (inviteeStore.invited) {
+    options.push({ label: t('nav.invite'), key: 'invite', icon: 'add-line' })
   }
 
   if (isAdmin.value) {
@@ -253,7 +259,8 @@ function handleUserMenuSelect(key: string) {
     key === 'billing' ||
     key === 'api-keys' ||
     key === 'generations' ||
-    key === 'seed-creator'
+    key === 'seed-creator' ||
+    key === 'invite'
   ) {
     goTo(key === 'deposit' ? 'billing' : key)
   }
@@ -317,9 +324,11 @@ watch(
   (loggedIn) => {
     if (loggedIn) {
       void seedCreatorStore.refresh()
+      void inviteeStore.refresh()
       return
     }
     seedCreatorStore.reset()
+    inviteeStore.reset()
   },
   { immediate: true },
 )
