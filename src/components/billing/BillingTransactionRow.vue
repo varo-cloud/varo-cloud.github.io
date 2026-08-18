@@ -48,6 +48,11 @@ const completedLabel = computed(() => {
   return formatTimestamp(props.item.completedAt, locale.value, 'compactDatetime')
 })
 
+const expiresLabel = computed(() => {
+  if (!isBonus.value || !props.item.expiresAt) return '—'
+  return formatTimestamp(props.item.expiresAt, locale.value, 'compactDatetime')
+})
+
 const amountLabel = computed(() => {
   const prefix = props.item.amountUsd >= 0 ? '' : '-'
   return `${prefix}${formatUsd(Math.abs(props.item.amountUsd))}`
@@ -84,6 +89,7 @@ const paymentMethodLabel = computed(() => {
     <span class="billing-tx-row__payment" role="cell">{{ paymentMethodLabel }}</span>
     <span class="billing-tx-row__time" role="cell">{{ initiatedLabel }}</span>
     <span class="billing-tx-row__time" role="cell">{{ completedLabel }}</span>
+    <span class="billing-tx-row__time" role="cell">{{ expiresLabel }}</span>
     <span class="billing-tx-row__amount" role="cell">{{ amountLabel }}</span>
     <span class="billing-tx-row__action" role="cell">
       <button type="button" class="billing-tx-row__view-btn" @click="emit('view', item)">
@@ -101,6 +107,7 @@ const paymentMethodLabel = computed(() => {
     minmax(88px, 0.75fr)
     minmax(80px, 0.7fr)
     minmax(88px, 0.75fr)
+    minmax(110px, 0.95fr)
     minmax(110px, 0.95fr)
     minmax(110px, 0.95fr)
     minmax(72px, 0.6fr)

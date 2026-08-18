@@ -234,7 +234,12 @@ function handleUserMenuSelect(key: string) {
   userMenuOpen.value = false
 
   if (key === 'logout') {
-    void userStore.logout()
+    const requiresAuth = route.meta.requiresAuth === true
+    void userStore.logout().then(() => {
+      if (requiresAuth) {
+        void push({ name: 'home' })
+      }
+    })
     return
   }
 
