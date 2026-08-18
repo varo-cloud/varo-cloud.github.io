@@ -1,4 +1,4 @@
-import { http, isApiError, unwrap } from './http'
+import { http, unwrap } from './http'
 import type {
   InvitationStatus,
   ReferralBindResult,
@@ -238,16 +238,4 @@ export function bindReferralCode(code: string): Promise<ReferralBindResult> {
   return unwrap<ApiReferralBind>(http.post('/activity/referral/bind', { code })).then((raw) =>
     mapReferralBindResult(raw, true),
   )
-}
-
-/** Current user's invitation as invitee. 404/unbound → null. */
-export async function fetchMyInvitation(): Promise<ReferralBindResult | null> {
-  try {
-    const raw = await unwrap<ApiReferralBind | null>(http.get('/activity/referral/invitation'))
-    const result = mapReferralBindResult(raw, false)
-    return result.bound || result.status || result.boundAt ? result : null
-  } catch (err) {
-    if (isApiError(err) && (err.code === 404 || err.code === 400)) return null
-    throw err
-  }
 }

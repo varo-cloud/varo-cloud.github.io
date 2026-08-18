@@ -5,9 +5,8 @@ import { isApiError } from '@/api/http'
 import { useUserStore } from '@/stores/user'
 
 /**
- * Tracks whether the logged-in user is a Seed Creator (`me` present and
- * `me.invite` null). Invitees also get a `me` object with `invite` set, and
- * should not see the Seed Creator avatar-menu entry.
+ * Gates the avatar-menu Seed Creator entry: `me` present and `me.invite` null.
+ * Invitees also get a `me` object with `invite` set, and should not see this entry.
  */
 export const useSeedCreatorStore = defineStore('seedCreator', () => {
   const participated = ref(false)

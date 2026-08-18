@@ -172,6 +172,10 @@ export interface UserProfile {
   balanceUsd: number
   /** Maps from API field `created_at` — 13-digit Unix timestamp (ms) */
   createdAt: number
+  /** Own Seed Creator invite code — null when not a Seed Creator */
+  inviteCode: string | null
+  /** Invite code this user was invited with — null when not an invitee */
+  invitedCode: string | null
 }
 
 export interface OtpRequestPayload {

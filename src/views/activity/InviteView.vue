@@ -5,9 +5,8 @@ import { useI18n } from 'vue-i18n'
 import { NSpin } from 'naive-ui'
 import { useLocaleRouter } from '@/composables/useLocaleRouter'
 import { useUserStore } from '@/stores/user'
-import { useInviteeStore } from '@/stores/invitee'
 import { isApiError } from '@/api/http'
-import { bindReferralCode, fetchMyInvitation, fetchSeedCreatorOverview } from '@/api/activity'
+import { bindReferralCode, fetchSeedCreatorOverview } from '@/api/activity'
 import { fetchWalletBonus } from '@/api/billing'
 import {
   clearPendingInviteCode,
@@ -17,7 +16,14 @@ import {
 import { campaignCopyParams } from '@/utils/campaign'
 import { centsToUsd, formatUsd } from '@/utils/currency'
 import { formatCountdownClock, parseTimestampMs } from '@/utils/time'
-import type { BonusGrant, InvitationStatus, ReferralBindResult, SeedCreatorCampaign } from '@/types'
+import type {
+  BonusGrant,
+  InvitationStatus,
+  ReferralBindResult,
+  SeedCreatorCampaign,
+  SeedCreatorMe,
+  SeedCreatorMeInvite,
+} from '@/types'
 
 type InvitePhase = 'guest' | 'binding' | 'waiting' | 'winner' | 'no_reward' | 'error'
 
@@ -25,16 +31,16 @@ const route = useRoute()
 const { push, localePath } = useLocaleRouter()
 const { t } = useI18n()
 const userStore = useUserStore()
-const inviteeStore = useInviteeStore()
 
 const phase = ref<InvitePhase>(userStore.isLoggedIn ? 'binding' : 'guest')
 const campaign = ref<SeedCreatorCampaign | null>(null)
+const me = ref<SeedCreatorMe | null>(null)
 const loadingCampaign = ref(true)
 const errorCode = ref('INVITE_NOT_ELIGIBLE')
 const inviteeBonus = ref<BonusGrant | null>(null)
 const inviterMasked = ref<string | null>(null)
 const boundAt = ref<string | null>(null)
-const deadline = ref<string | null>(null)
+const deadline = ref<string | number | null>(null)
 const inviteStatus = ref<InvitationStatus | null>(null)
 const showRules = ref(false)
 const nowMs = ref(Date.now())
@@ -176,10 +182,10 @@ function toggleRules() {
   showRules.value = !showRules.value
 }
 
-function padDeadlineFallback(fromIso: string | null) {
+function padDeadlineFallback(fromValue: string | number | null) {
   const minutes = campaign.value?.depositWindowMinutes
-  if (minutes == null || minutes <= 0) return fromIso
-  const baseMs = parseTimestampMs(fromIso) ?? Date.now()
+  if (minutes == null || minutes <= 0) return fromValue
+  const baseMs = parseTimestampMs(fromValue) ?? Date.now()
   return new Date(baseMs + minutes * 60 * 1000).toISOString()
 }
 
@@ -187,11 +193,18 @@ async function loadCampaign() {
   try {
     const data = await fetchSeedCreatorOverview()
     campaign.value = data.campaign
+    me.value = data.me
   } catch {
     campaign.value = null
+    me.value = null
   } finally {
     loadingCampaign.value = false
   }
+}
+
+function applyInvite(invite: SeedCreatorMeInvite) {
+  deadline.value = invite.depositDeadline
+  inviteStatus.value = invite.status
 }
 
 function applyBindResult(result: ReferralBindResult | null) {
@@ -236,13 +249,21 @@ async function detectWinner(): Promise<boolean> {
   return false
 }
 
-async function enterBoundPhase(result: ReferralBindResult | null) {
-  inviteeStore.markInvited()
-  applyBindResult(result)
+async function enterBoundPhase(result: ReferralBindResult | null, invite?: SeedCreatorMeInvite | null) {
+  if (invite) applyInvite(invite)
+  else applyBindResult(result)
+
+  if (invite?.isWinner || invite?.status === 'winner' || result?.status === 'winner') {
+    await detectWinner()
+    stopCountdown()
+    phase.value = 'winner'
+    return
+  }
+
   const isWinner = await detectWinner()
   if (isWinner) return
 
-  if (result?.status === 'no_reward' || inviteStatus.value === 'no_reward') {
+  if (result?.status === 'no_reward' || invite?.status === 'no_reward' || inviteStatus.value === 'no_reward') {
     stopCountdown()
     phase.value = 'no_reward'
     return
@@ -253,21 +274,14 @@ async function enterBoundPhase(result: ReferralBindResult | null) {
 }
 
 async function restoreBoundInvitation() {
-  try {
-    const result = await fetchMyInvitation()
-    if (result) {
-      await enterBoundPhase(result)
-      return
-    }
-  } catch {
-    // Invitation lookup is optional when visiting /invite without a code.
+  const invite = me.value?.invite
+  if (invite) {
+    await enterBoundPhase(null, invite)
+    return
   }
 
   const isWinner = await detectWinner()
-  if (isWinner) {
-    inviteeStore.markInvited()
-    return
-  }
+  if (isWinner) return
   phase.value = 'guest'
 }
 
@@ -302,11 +316,13 @@ async function bindCode() {
     const result = await bindReferralCode(inviteCode)
     await campaignPromise
     clearPendingInviteCode()
+    await userStore.loadProfile()
     await enterBoundPhase(result)
   } catch (err) {
     await campaignPromise
     if (isApiError(err) && err.code === 409) {
       clearPendingInviteCode()
+      await userStore.loadProfile()
       await enterBoundPhase(null)
       return
     }

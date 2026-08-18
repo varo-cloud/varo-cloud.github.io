@@ -59,6 +59,13 @@ interface ApiUserProfile {
   role: string
   balance_usd: number
   created_at: number
+  invite_code?: string | null
+  invited_code?: string | null
+}
+
+function optionalCode(value: string | null | undefined): string | null {
+  const trimmed = typeof value === 'string' ? value.trim() : ''
+  return trimmed || null
 }
 
 function mapUserProfile(raw: ApiUserProfile): UserProfile {
@@ -72,6 +79,8 @@ function mapUserProfile(raw: ApiUserProfile): UserProfile {
     role,
     balanceUsd: raw.balance_usd,
     createdAt: raw.created_at,
+    inviteCode: optionalCode(raw.invite_code),
+    invitedCode: optionalCode(raw.invited_code),
   }
 }
 
