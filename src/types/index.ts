@@ -348,8 +348,17 @@ export type InvitationStatus =
 export interface SeedCreatorCampaign {
   id: string
   state: CampaignState
+  name: string | null
   seedCap: number
   seedApproved: number
+  seedBonusCents: number | null
+  rewardInviterCents: number | null
+  rewardInviteeCents: number | null
+  bonusTtlMinutes: number | null
+  depositWindowMinutes: number | null
+  minDepositCents: number | null
+  budgetCapCents: number | null
+  startsAt: string | null
   endsAt: string | null
 }
 

@@ -17,6 +17,15 @@ interface ApiSeedCreatorCampaign {
   seed_cap: number
   seed_approved: number
   ends_at?: string | null
+  name?: string | null
+  seed_bonus_cents?: number | null
+  reward_inviter_cents?: number | null
+  reward_invitee_cents?: number | null
+  bonus_ttl_minutes?: number | null
+  deposit_window_minutes?: number | null
+  min_deposit_cents?: number | null
+  budget_cap_cents?: number | null
+  starts_at?: string | null
 }
 
 interface ApiSeedCreatorMe {
@@ -87,6 +96,29 @@ function mapInvitationStatus(value: string): InvitationStatus {
   return 'waiting_for_topup'
 }
 
+function optionalFiniteNumber(value: unknown): number | null {
+  return typeof value === 'number' && Number.isFinite(value) ? value : null
+}
+
+function mapCampaign(raw: ApiSeedCreatorCampaign): SeedCreatorOverview['campaign'] {
+  return {
+    id: raw.id,
+    state: raw.state === 'ended' ? 'ended' : raw.state === 'draft' ? 'draft' : 'active',
+    name: typeof raw.name === 'string' && raw.name.trim() ? raw.name.trim() : null,
+    seedCap: raw.seed_cap,
+    seedApproved: raw.seed_approved,
+    seedBonusCents: optionalFiniteNumber(raw.seed_bonus_cents),
+    rewardInviterCents: optionalFiniteNumber(raw.reward_inviter_cents),
+    rewardInviteeCents: optionalFiniteNumber(raw.reward_invitee_cents),
+    bonusTtlMinutes: optionalFiniteNumber(raw.bonus_ttl_minutes),
+    depositWindowMinutes: optionalFiniteNumber(raw.deposit_window_minutes),
+    minDepositCents: optionalFiniteNumber(raw.min_deposit_cents),
+    budgetCapCents: optionalFiniteNumber(raw.budget_cap_cents),
+    startsAt: raw.starts_at ?? null,
+    endsAt: raw.ends_at ?? null,
+  }
+}
+
 function mapMe(raw: ApiSeedCreatorMe | null): SeedCreatorMe | null {
   if (!raw) return null
   return {
@@ -106,13 +138,7 @@ function mapMe(raw: ApiSeedCreatorMe | null): SeedCreatorMe | null {
 export function fetchSeedCreatorOverview() {
   return unwrap<ApiSeedCreatorOverview>(http.get('/activity/seed-creator')).then(
     (raw): SeedCreatorOverview => ({
-      campaign: {
-        id: raw.campaign.id,
-        state: raw.campaign.state === 'ended' ? 'ended' : raw.campaign.state === 'draft' ? 'draft' : 'active',
-        seedCap: raw.campaign.seed_cap,
-        seedApproved: raw.campaign.seed_approved,
-        endsAt: raw.campaign.ends_at ?? null,
-      },
+      campaign: mapCampaign(raw.campaign),
       me: mapMe(raw.me),
     }),
   )
