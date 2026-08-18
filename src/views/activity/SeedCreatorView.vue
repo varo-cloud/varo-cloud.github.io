@@ -14,6 +14,7 @@ import {
   submitSeedCreatorApplication,
 } from '@/api/activity'
 import { parseTimestampMs, formatCountdown } from '@/utils/time'
+import { campaignCopyParams } from '@/utils/campaign'
 import { centsToUsd, formatUsd } from '@/utils/currency'
 import type {
   InvitationStatus,
@@ -49,6 +50,8 @@ const formConfirmed = ref(false)
 
 const campaign = computed(() => overview.value?.campaign ?? null)
 const me = computed<SeedCreatorMe | null>(() => overview.value?.me ?? null)
+const copy = computed(() => campaignCopyParams(campaign.value, t))
+const campaignName = computed(() => campaign.value?.name?.trim() || '')
 const isEnded = computed(() => campaign.value?.state === 'ended')
 const isApproved = computed(() => me.value?.status === 'approved')
 const isPending = computed(
@@ -92,13 +95,16 @@ const landingSteps = computed(() => [
   t('pages.seedCreator.landing.steps.social'),
   t('pages.seedCreator.landing.steps.review'),
   t('pages.seedCreator.landing.steps.invite'),
-  t('pages.seedCreator.landing.steps.reward'),
+  t('pages.seedCreator.landing.steps.reward', copy.value),
 ])
 
-const landingRules = computed(() => {
-  const items = tm('pages.seedCreator.landing.rules')
-  return Array.isArray(items) ? (items as string[]) : []
-})
+const landingRules = computed(() => [
+  t('pages.seedCreator.landing.rules.seed', copy.value),
+  t('pages.seedCreator.landing.rules.inviteQuota', copy.value),
+  t('pages.seedCreator.landing.rules.winner', copy.value),
+  t('pages.seedCreator.landing.rules.reward', copy.value),
+  t('pages.seedCreator.landing.rules.bonus', copy.value),
+])
 
 const formTips = computed(() => {
   const items = tm('pages.seedCreator.form.tips')
@@ -172,9 +178,9 @@ const endedSummaryLabel = computed(() => {
   if (rank != null) {
     parts.push(t('pages.seedCreator.ended.finalRank', { rank }))
   }
-  parts.push(t('pages.seedCreator.ended.creatorBonusClaimed'))
+  parts.push(t('pages.seedCreator.ended.creatorBonusClaimed', copy.value))
   if (rewardStatus.value === 'rewarded') {
-    parts.push(t('pages.seedCreator.ended.inviteRewardClaimed'))
+    parts.push(t('pages.seedCreator.ended.inviteRewardClaimed', copy.value))
   } else if (rewardStatus.value === 'expired') {
     parts.push(t('pages.seedCreator.ended.inviteRewardExpired'))
   } else {
@@ -303,12 +309,6 @@ async function loadPage() {
   noCampaign.value = false
   editingApplication.value = false
 
-  if (!userStore.isLoggedIn) {
-    overview.value = null
-    loading.value = false
-    return
-  }
-
   try {
     const data = await fetchSeedCreatorOverview()
     overview.value = data
@@ -382,53 +382,6 @@ onMounted(loadPage)
         <NSpin size="large" />
       </div>
 
-      <template v-else-if="!userStore.isLoggedIn">
-        <header class="seed-page__hero">
-          <p class="seed-page__eyebrow">{{ t('pages.seedCreator.eyebrow') }}</p>
-          <h1 class="seed-page__title">{{ t('pages.seedCreator.title') }}</h1>
-          <p class="seed-page__lead">{{ t('pages.seedCreator.lead') }}</p>
-        </header>
-
-        <section class="seed-landing" aria-label="Seed Creator program">
-          <div class="seed-landing__panel">
-            <div class="seed-landing__bonus">
-              <p class="seed-landing__amount">{{ t('pages.seedCreator.landing.bonusAmount') }}</p>
-              <p class="seed-landing__label">{{ t('pages.seedCreator.landing.bonusLabel') }}</p>
-              <p class="seed-landing__rule">{{ t('pages.seedCreator.landing.bonusRule') }}</p>
-            </div>
-            <ol class="seed-landing__steps">
-              <li v-for="(step, index) in landingSteps" :key="step">
-                <span class="seed-landing__step-index">{{ String(index + 1).padStart(2, '0') }}</span>
-                <span class="seed-landing__step-text">{{ step }}</span>
-              </li>
-            </ol>
-          </div>
-
-          <div class="seed-landing__actions">
-            <button type="button" class="seed-btn" @click="goLogin">
-              {{ t('pages.seedCreator.join') }}
-            </button>
-            <button
-              type="button"
-              class="seed-btn seed-btn--ghost"
-              :aria-expanded="showRules"
-              @click="toggleRules"
-            >
-              {{ t('pages.seedCreator.viewRules') }}
-            </button>
-          </div>
-
-          <p class="seed-landing__fineprint">{{ t('pages.seedCreator.landing.finePrint') }}</p>
-
-          <section v-if="showRules" class="seed-landing__rules" :aria-label="t('pages.seedCreator.landing.rulesTitle')">
-            <h2 class="seed-landing__rules-title">{{ t('pages.seedCreator.landing.rulesTitle') }}</h2>
-            <ul>
-              <li v-for="rule in landingRules" :key="rule">{{ rule }}</li>
-            </ul>
-          </section>
-        </section>
-      </template>
-
       <div v-else-if="error" class="seed-page__state">
         <p class="seed-page__error">{{ error }}</p>
         <button type="button" class="seed-btn seed-btn--ghost" @click="loadPage">
@@ -455,9 +408,125 @@ onMounted(loadPage)
         </section>
       </template>
 
+      <template v-else-if="!me && !isEnded">
+        <header class="seed-page__hero">
+          <p class="seed-page__eyebrow">{{ campaignName || t('pages.seedCreator.eyebrow') }}</p>
+          <h1 class="seed-page__title">{{ t('pages.seedCreator.title') }}</h1>
+          <p class="seed-page__lead">{{ t('pages.seedCreator.lead', copy) }}</p>
+        </header>
+
+        <section class="seed-landing" aria-label="Seed Creator program">
+          <div class="seed-landing__panel">
+            <div class="seed-landing__bonus">
+              <p class="seed-landing__amount">{{ copy.seedBonus }}</p>
+              <p class="seed-landing__label">{{ t('pages.seedCreator.landing.bonusLabel') }}</p>
+              <p class="seed-landing__rule">{{ t('pages.seedCreator.landing.bonusRule', copy) }}</p>
+            </div>
+            <ol class="seed-landing__steps">
+              <li v-for="(step, index) in landingSteps" :key="step">
+                <span class="seed-landing__step-index">{{ String(index + 1).padStart(2, '0') }}</span>
+                <span class="seed-landing__step-text">{{ step }}</span>
+              </li>
+            </ol>
+          </div>
+
+          <div class="seed-landing__actions">
+            <button v-if="!userStore.isLoggedIn" type="button" class="seed-btn" @click="goLogin">
+              {{ t('pages.seedCreator.join') }}
+            </button>
+            <button
+              type="button"
+              class="seed-btn seed-btn--ghost"
+              :aria-expanded="showRules"
+              @click="toggleRules"
+            >
+              {{ t('pages.seedCreator.viewRules') }}
+            </button>
+          </div>
+
+          <p class="seed-landing__fineprint">{{ t('pages.seedCreator.landing.finePrint', copy) }}</p>
+
+          <section v-if="showRules" class="seed-landing__rules" :aria-label="t('pages.seedCreator.landing.rulesTitle')">
+            <h2 class="seed-landing__rules-title">{{ t('pages.seedCreator.landing.rulesTitle') }}</h2>
+            <ul>
+              <li v-for="rule in landingRules" :key="rule">{{ rule }}</li>
+            </ul>
+          </section>
+        </section>
+
+        <template v-if="userStore.isLoggedIn">
+          <header class="seed-page__hero">
+            <p class="seed-page__eyebrow">{{ t('pages.seedCreator.form.eyebrow') }}</p>
+            <h2 class="seed-page__title">{{ t('pages.seedCreator.form.title') }}</h2>
+            <p class="seed-page__lead">{{ t('pages.seedCreator.form.lead') }}</p>
+          </header>
+
+          <section class="seed-apply" aria-label="Seed Creator application">
+            <form class="seed-apply__form" @submit.prevent="handleSubmit">
+              <label class="seed-apply__field">
+                <span>{{ t('pages.seedCreator.form.twitterUsername') }}</span>
+                <input
+                  v-model="twitterUsername"
+                  type="text"
+                  maxlength="100"
+                  autocomplete="off"
+                  :placeholder="t('pages.seedCreator.form.placeholderTwitterUsername')"
+                />
+              </label>
+              <label class="seed-apply__field">
+                <span>{{ t('pages.seedCreator.form.twitterUrl') }}</span>
+                <input
+                  v-model="twitterUrl"
+                  type="text"
+                  maxlength="500"
+                  autocomplete="off"
+                  :placeholder="t('pages.seedCreator.form.placeholderTwitterUrl')"
+                />
+              </label>
+              <div class="seed-apply__row">
+                <label class="seed-apply__field">
+                  <span>{{ t('pages.seedCreator.form.discordUsername') }}</span>
+                  <input
+                    v-model="discordUsername"
+                    type="text"
+                    maxlength="100"
+                    autocomplete="off"
+                    :placeholder="t('pages.seedCreator.form.placeholderDiscordUsername')"
+                  />
+                </label>
+                <label class="seed-apply__field">
+                  <span>{{ t('pages.seedCreator.form.discordUserId') }}</span>
+                  <input
+                    v-model="discordUserId"
+                    type="text"
+                    maxlength="64"
+                    autocomplete="off"
+                    :placeholder="t('pages.seedCreator.form.placeholderDiscordUserId')"
+                  />
+                </label>
+              </div>
+              <label class="seed-apply__confirm">
+                <input v-model="formConfirmed" type="checkbox" />
+                <span>{{ t('pages.seedCreator.form.confirm') }}</span>
+              </label>
+              <button type="submit" class="seed-btn seed-btn--block" :disabled="!canSubmitForm">
+                {{ t('pages.seedCreator.form.submit') }}
+              </button>
+            </form>
+
+            <aside class="seed-apply__aside" :aria-label="t('pages.seedCreator.form.tipsTitle')">
+              <h2 class="seed-apply__tips-title">{{ t('pages.seedCreator.form.tipsTitle') }}</h2>
+              <ul class="seed-apply__tips">
+                <li v-for="tip in formTips" :key="tip">{{ tip }}</li>
+              </ul>
+            </aside>
+          </section>
+        </template>
+      </template>
+
       <template v-else-if="showEndedStatus">
         <header class="seed-page__hero">
-          <p class="seed-page__eyebrow">{{ t('pages.seedCreator.ended.eyebrow') }}</p>
+          <p class="seed-page__eyebrow">{{ campaignName || t('pages.seedCreator.ended.eyebrow') }}</p>
           <h1 class="seed-page__title">{{ t('pages.seedCreator.ended.title') }}</h1>
           <p class="seed-page__lead">{{ t('pages.seedCreator.ended.lead') }}</p>
         </header>
@@ -522,7 +591,7 @@ onMounted(loadPage)
         <header class="seed-page__hero seed-page__hero--dashboard">
           <p class="seed-page__eyebrow">{{ t('pages.seedCreator.approved.eyebrow') }}</p>
           <h1 class="seed-page__title">{{ approvedTitle }}</h1>
-          <p class="seed-page__lead">{{ t('pages.seedCreator.approved.lead') }}</p>
+          <p class="seed-page__lead">{{ t('pages.seedCreator.approved.lead', copy) }}</p>
         </header>
 
         <section class="seed-dash" aria-label="Seed Creator dashboard">
@@ -540,7 +609,7 @@ onMounted(loadPage)
             <article class="seed-metric">
               <p class="seed-metric__label">{{ t('pages.seedCreator.approved.bonusLabel') }}</p>
               <p class="seed-metric__value seed-metric__value--success">
-                {{ t('pages.seedCreator.approved.bonusClaimed') }}
+                {{ t('pages.seedCreator.approved.bonusClaimed', copy) }}
               </p>
             </article>
             <article class="seed-metric">

@@ -2,30 +2,32 @@
 import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { useRoute } from 'vue-router'
 import { useI18n } from 'vue-i18n'
+import { NSpin } from 'naive-ui'
 import { useLocaleRouter } from '@/composables/useLocaleRouter'
 import { useUserStore } from '@/stores/user'
 import { isApiError } from '@/api/http'
-import { bindReferralCode } from '@/api/activity'
+import { bindReferralCode, fetchSeedCreatorOverview } from '@/api/activity'
 import { fetchWalletBonus } from '@/api/billing'
 import {
   clearPendingInviteCode,
   readPendingInviteCode,
   savePendingInviteCode,
 } from '@/utils/pendingInvite'
+import { campaignCopyParams } from '@/utils/campaign'
 import { centsToUsd, formatUsd } from '@/utils/currency'
 import { formatCountdownClock, parseTimestampMs } from '@/utils/time'
-import type { BonusGrant, InvitationStatus, ReferralBindResult } from '@/types'
+import type { BonusGrant, InvitationStatus, ReferralBindResult, SeedCreatorCampaign } from '@/types'
 
 type InvitePhase = 'guest' | 'binding' | 'waiting' | 'winner' | 'no_reward' | 'error'
 
-const THREE_DAYS_MS = 3 * 24 * 60 * 60 * 1000
-
 const route = useRoute()
 const { push, localePath } = useLocaleRouter()
-const { t, tm } = useI18n()
+const { t } = useI18n()
 const userStore = useUserStore()
 
-const phase = ref<InvitePhase>('binding')
+const phase = ref<InvitePhase>(userStore.isLoggedIn ? 'binding' : 'guest')
+const campaign = ref<SeedCreatorCampaign | null>(null)
+const loadingCampaign = ref(true)
 const errorCode = ref('INVITE_NOT_ELIGIBLE')
 const inviteeBonus = ref<BonusGrant | null>(null)
 const inviterMasked = ref<string | null>(null)
@@ -44,17 +46,22 @@ const code = computed(() => {
 
 const displayCode = computed(() => code.value.toUpperCase())
 
+const copy = computed(() => campaignCopyParams(campaign.value, t))
+
 const guestSteps = computed(() => [
   t('pages.invite.steps.register'),
   t('pages.invite.steps.bind'),
-  t('pages.invite.steps.topup'),
-  t('pages.invite.steps.reward'),
+  t('pages.invite.steps.topup', copy.value),
+  t('pages.invite.steps.reward', copy.value),
 ])
 
-const waitingRules = computed(() => {
-  const items = tm('pages.invite.waitingRules')
-  return Array.isArray(items) ? (items as string[]) : []
-})
+const waitingRules = computed(() => [
+  t('pages.invite.waitingRules.window', copy.value),
+  t('pages.invite.waitingRules.singlePayment'),
+  t('pages.invite.waitingRules.winnerSlot'),
+  t('pages.invite.waitingRules.reward', copy.value),
+  t('pages.invite.waitingRules.bonus', copy.value),
+])
 
 const countdownParts = computed(() => formatCountdownClock(deadline.value, nowMs.value))
 
@@ -92,16 +99,22 @@ const waitingMetaLabel = computed(() => {
   return null
 })
 
-const winnerAmountUsd = computed(() => centsToUsd(inviteeBonus.value?.amountCents ?? 1000))
+const winnerAmountUsd = computed(() =>
+  centsToUsd(inviteeBonus.value?.amountCents ?? campaign.value?.rewardInviteeCents ?? 0),
+)
 
 const winnerAmountLabel = computed(() => `+${formatUsd(winnerAmountUsd.value)}`)
 
 const winnerExpireDays = computed(() => {
   const ms = parseTimestampMs(inviteeBonus.value?.expiresAt)
-  if (ms == null) return 14
-  const diffMs = ms - nowMs.value
-  if (diffMs <= 0) return 0
-  return Math.max(1, Math.ceil(diffMs / (24 * 60 * 60 * 1000)))
+  if (ms != null) {
+    const diffMs = ms - nowMs.value
+    if (diffMs <= 0) return 0
+    return Math.max(1, Math.ceil(diffMs / (24 * 60 * 60 * 1000)))
+  }
+  const ttlMinutes = campaign.value?.bonusTtlMinutes
+  if (ttlMinutes == null || ttlMinutes <= 0) return 0
+  return Math.max(1, Math.round(ttlMinutes / (24 * 60)))
 })
 
 const winnerHintLabel = computed(() =>
@@ -158,8 +171,21 @@ function toggleRules() {
 }
 
 function padDeadlineFallback(fromIso: string | null) {
+  const minutes = campaign.value?.depositWindowMinutes
+  if (minutes == null || minutes <= 0) return fromIso
   const baseMs = parseTimestampMs(fromIso) ?? Date.now()
-  return new Date(baseMs + THREE_DAYS_MS).toISOString()
+  return new Date(baseMs + minutes * 60 * 1000).toISOString()
+}
+
+async function loadCampaign() {
+  try {
+    const data = await fetchSeedCreatorOverview()
+    campaign.value = data.campaign
+  } catch {
+    campaign.value = null
+  } finally {
+    loadingCampaign.value = false
+  }
 }
 
 function applyBindResult(result: ReferralBindResult | null) {
@@ -222,14 +248,17 @@ async function enterBoundPhase(result: ReferralBindResult | null) {
 async function bindCode() {
   const inviteCode = code.value
   if (!inviteCode) {
+    loadingCampaign.value = false
     setBindError(null, 'INVITE_INVALID')
     return
   }
 
   savePendingInviteCode(inviteCode)
+  const campaignPromise = loadCampaign()
 
   if (!userStore.isLoggedIn) {
     phase.value = 'guest'
+    await campaignPromise
     return
   }
 
@@ -237,9 +266,11 @@ async function bindCode() {
 
   try {
     const result = await bindReferralCode(inviteCode)
+    await campaignPromise
     clearPendingInviteCode()
     await enterBoundPhase(result)
   } catch (err) {
+    await campaignPromise
     if (isApiError(err) && err.code === 409) {
       clearPendingInviteCode()
       await enterBoundPhase(null)
@@ -257,11 +288,15 @@ onUnmounted(stopCountdown)
 <template>
   <div class="invite-page">
     <div class="invite-page__inner">
-      <template v-if="phase === 'guest'">
+      <div v-if="loadingCampaign && phase === 'guest'" class="invite-page__state">
+        <NSpin size="large" />
+      </div>
+
+      <template v-else-if="phase === 'guest'">
         <header class="invite-page__hero">
           <p class="invite-page__eyebrow">{{ t('pages.invite.eyebrow') }}</p>
           <h1 class="invite-page__title">{{ t('pages.invite.title') }}</h1>
-          <p class="invite-page__lead">{{ t('pages.invite.lead') }}</p>
+          <p class="invite-page__lead">{{ t('pages.invite.lead', copy) }}</p>
         </header>
 
         <section class="invite-guest" aria-label="Friend invitation">
@@ -322,7 +357,7 @@ onUnmounted(stopCountdown)
             <div class="invite-waiting__metric">
               <p class="invite-waiting__label">{{ t('pages.invite.topupLabel') }}</p>
               <p class="invite-waiting__value invite-waiting__value--accent">
-                {{ t('pages.invite.topupAmount') }}
+                {{ t('pages.invite.topupAmount', copy) }}
               </p>
             </div>
           </div>
@@ -391,7 +426,7 @@ onUnmounted(stopCountdown)
         <header class="invite-page__hero">
           <p class="invite-page__eyebrow">{{ t('pages.invite.noRewardEyebrow') }}</p>
           <h1 class="invite-page__title">{{ t('pages.invite.noRewardTitle') }}</h1>
-          <p class="invite-page__lead">{{ t('pages.invite.noRewardLead') }}</p>
+          <p class="invite-page__lead">{{ t('pages.invite.noRewardLead', copy) }}</p>
         </header>
 
         <section class="invite-missed" aria-label="Condition completed without reward">
@@ -456,6 +491,15 @@ onUnmounted(stopCountdown)
   max-width: 1200px;
   margin: 0 auto;
   padding: calc(var(--app-header-height) + 32px) 24px 64px;
+}
+
+.invite-page__state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 16px;
+  min-height: 240px;
 }
 
 .invite-page__hero {
