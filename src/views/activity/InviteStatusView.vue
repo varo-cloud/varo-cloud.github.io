@@ -77,7 +77,7 @@ function goBilling() {
 }
 
 function goCreate() {
-  push({ name: 'seedance' })
+  push({ name: 'models' })
 }
 
 function goHome() {
