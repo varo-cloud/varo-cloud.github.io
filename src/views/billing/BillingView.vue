@@ -105,8 +105,9 @@ const purchasing = ref(false)
 const checkoutProcessing = ref(false)
 const mockPaying = ref(false)
 const viewingTransaction = ref<Transaction | null>(null)
-/** False when invitee can no longer earn invite Bonus; null when N/A (not invitee / winner / load failed). */
-const inviteRewardEligible = ref<boolean | null>(null)
+/** Invite-bonus tip on recharge: slot taken vs already participated; null when N/A. */
+type InviteBonusHint = 'slot_unavailable' | 'already_claimed' | null
+const inviteBonusHint = ref<InviteBonusHint>(null)
 
 // const autoTopUpEnabled = ref(false)
 // const autoTopUpThresholdNumber = ref(5)
@@ -205,7 +206,17 @@ const historyEmpty = computed(() =>
     : !billingRecordsLoading.value && billingRecords.value.length === 0,
 )
 
-const showInviteBonusUnavailable = computed(() => inviteRewardEligible.value === false)
+const showInviteBonusHint = computed(() => inviteBonusHint.value != null)
+
+const inviteBonusHintText = computed(() => {
+  if (inviteBonusHint.value === 'already_claimed') {
+    return t('pages.billing.inviteBonusAlreadyClaimed')
+  }
+  if (inviteBonusHint.value === 'slot_unavailable') {
+    return t('pages.billing.inviteBonusUnavailable')
+  }
+  return ''
+})
 
 function packageLabel(id: CreditPackageId) {
   const key = `pages.billing.topUpDetail.packages.${id}`
@@ -268,13 +279,23 @@ async function loadInviteBonusHint() {
   try {
     const data = await fetchSeedCreatorOverview()
     const invite = data.me?.invite
-    if (!invite || invite.isWinner || invite.status === 'winner') {
-      inviteRewardEligible.value = null
+    if (!invite) {
+      inviteBonusHint.value = null
       return
     }
-    inviteRewardEligible.value = invite.rewardEligible
+    // Already won or already topped up under this invite — cannot claim again.
+    if (invite.isWinner || invite.status === 'winner' || invite.status === 'no_reward') {
+      inviteBonusHint.value = 'already_claimed'
+      return
+    }
+    // Bound invitee, but Winner slot is already taken.
+    if (invite.rewardEligible === false) {
+      inviteBonusHint.value = 'slot_unavailable'
+      return
+    }
+    inviteBonusHint.value = null
   } catch {
-    inviteRewardEligible.value = null
+    inviteBonusHint.value = null
   }
 }
 
@@ -316,7 +337,7 @@ async function loadBilling(options: { silent?: boolean } = {}) {
       walletBalance.value = null
       packages.value = []
       transactions.value = []
-      inviteRewardEligible.value = null
+      inviteBonusHint.value = null
     }
   } finally {
     if (!options.silent) {
@@ -650,11 +671,11 @@ onMounted(async () => {
           <h2 class="billing-section-title">{{ t('pages.billing.accountRecharge') }}</h2>
 
           <p
-            v-if="showInviteBonusUnavailable"
+            v-if="showInviteBonusHint"
             class="billing-invite-hint"
             role="status"
           >
-            {{ t('pages.billing.inviteBonusUnavailable') }}
+            {{ inviteBonusHintText }}
           </p>
 
           <div class="billing-recharge__grid">
