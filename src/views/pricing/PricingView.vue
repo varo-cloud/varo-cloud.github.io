@@ -245,11 +245,13 @@ onMounted(() => {
       </div>
     </section>
 
-    <section class="pricing-content">
+    <section class="pricing-content" aria-labelledby="pricing-compare-title">
       <div class="pricing-content__inner">
         <div class="pricing-layout-header">
           <div class="pricing-sidebar-header">
-            <span class="pricing-sidebar-header__title">{{ t('pages.models.sidebar.title') }}</span>
+            <h2 id="pricing-compare-title" class="pricing-sidebar-header__title">
+              {{ t('pages.pricing.compareTitle') }}
+            </h2>
             <button
               v-if="hasActiveFilters"
               type="button"
@@ -283,6 +285,9 @@ onMounted(() => {
             :selected-category="selectedCategory"
             :selected-capability="selectedCapability"
             :total-count="unfilteredTotal"
+            publisher-title-key="pages.pricing.sidebar.publisher"
+            type-title-key="pages.pricing.sidebar.type"
+            capability-title-key="pages.pricing.sidebar.capability"
             @update:selected-publisher="selectPublisher"
             @update:selected-category="selectCategory"
             @update:selected-capability="selectCapability"
@@ -375,7 +380,7 @@ onMounted(() => {
 .pricing-hero__overlay {
   position: absolute;
   inset: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.15);
   pointer-events: none;
 }
 
@@ -444,10 +449,11 @@ onMounted(() => {
 }
 
 .pricing-sidebar-header__title {
+  margin: 0;
   color: #222;
   font-size: 16px;
   font-weight: 500;
-  line-height: 16px;
+  line-height: 1.3;
 }
 
 .pricing-sidebar-header__clear {

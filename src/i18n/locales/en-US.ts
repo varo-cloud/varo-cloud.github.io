@@ -71,7 +71,7 @@ export default {
       },
       featured: {
         eyebrow: 'New · Day-0 SOTA Access',
-        title: 'Featured Models',
+        title: 'Explore Featured Generative AI Models',
         subtitle: 'Industry-leading AI models, ready for production — every launch, available on day zero.',
         viewMore: 'View More',
         fallbackName: 'Featured Model',
@@ -87,7 +87,7 @@ export default {
       },
       creators: {
         eyebrow: 'For Creators',
-        title: 'Create Without the Complexity',
+        title: 'AI Creation Without the Complexity',
         subtitle: 'Full power of AI media generation to your desktop — no code, no setup, just create.',
         ctaPrimary: 'Get Started',
         ctaSecondary: 'Contact Sales',
@@ -128,7 +128,7 @@ export default {
         viewMore: 'View More Models',
       },
       showcase: {
-        title: 'What people are Creating',
+        title: 'Explore What people are Creating',
         subtitle:
           'See what the Varo community is creating and explore the most popular image, video, and audio models users are choosing for their latest projects.',
         itemMeta: '{count} models',
@@ -143,9 +143,9 @@ export default {
         ctaSecondary: 'Contact Sales',
       },
       seo: {
-        title: 'Varo.cloud — The Generative AI Cloud for Creators',
+        title: 'Generative AI Cloud for Image, Video & Audio | Varo.cloud',
         description:
-          'Access leading generative AI models in one cloud — image, video, audio, and language — with production APIs, creator tools, and cost-efficient pricing.',
+          'Access 500+ generative AI models for image, video, audio and more in one cloud. Build faster with unified APIs, lower costs and day-zero model access.',
       },
     },
     models: {
@@ -172,11 +172,11 @@ export default {
         capability: 'Capability',
       },
       sidebar: {
-        title: 'Categories',
-        publisher: 'Publisher',
+        title: 'Explore Leading AI Models',
+        publisher: 'AI Models by Publisher',
         baseModel: 'Base Model',
-        type: 'Model Type',
-        capability: 'Capabilities',
+        type: 'AI Models by Type',
+        capability: 'AI Models by Capability',
         more: 'More',
         clear: 'Clear',
       },
@@ -213,7 +213,7 @@ export default {
       expandAll: 'Expand all {count}',
       collapseAll: 'Collapse',
       tabs: {
-        latest: 'Latest Models',
+        latest: 'Latest AI Models',
         favourite: 'Favourite Models',
         recent: 'Recently Used',
       },
@@ -227,13 +227,14 @@ export default {
         'edit-video': 'Edit Video',
       },
       seo: {
-        title: 'AI Models — Varo.cloud',
+        title: 'AI Models for Video, Image, Audio & More | Varo.cloud',
         detailTitle: '{name} — Varo.cloud',
         description:
-          'Browse production-ready video, image, audio, and language models on Varo.cloud with unified pricing and APIs.',
+          'Explore leading AI models for video, image, text, audio and multimodal creation. Compare capabilities, pricing and use cases, and find the right model on Varo.cloud.',
       },
     },
     aiGenerator: {
+      title: 'AI Video Generator',
       model: 'Model',
       hot: 'HOT',
       new: 'NEW',
@@ -242,8 +243,9 @@ export default {
       modelLoadError: 'Failed to load model. Please try again.',
       emptyModels: 'No models available.',
       seo: {
-        title: 'AI Generator — Varo.cloud',
-        description: 'Generate images, video, and more with Varo.cloud AI models — no infrastructure setup.',
+        title: 'AI Video Generator – Text to Video AI | Varo.cloud',
+        description:
+          'Generate AI videos from text with Varo.cloud. Choose leading video models, customize duration and resolution, and create videos with synchronized voice, SFX and music.',
       },
     },
     modelDetail: {
@@ -484,6 +486,7 @@ export default {
     pricing: {
       title: 'Pricing',
       heroTitle: 'Simple, Transparent AI Model Pricing',
+      compareTitle: 'Compare AI Model Pricing',
       heroSubtitle:
         'Simple, pay-as-you-go pricing for every model—only pay for what you use and scale with predictable costs.',
       startFrom: 'Start from',
@@ -505,10 +508,15 @@ export default {
         price: 'Our Price(USD)',
         discount: 'Discount',
       },
+      sidebar: {
+        publisher: 'AI Model Pricing by Publisher',
+        type: 'AI Model Pricing by Type',
+        capability: 'AI Model Pricing by Capability',
+      },
       seo: {
-        title: 'Pricing — Varo.cloud',
+        title: 'AI Model Pricing – Image & Video Generation APIs | Varo.cloud',
         description:
-          'Simple, transparent pay-as-you-go pricing for every AI model on Varo.cloud—only pay for what you use.',
+          'Compare transparent, pay-as-you-go pricing for leading AI image and video models. Explore Seedance, MiniMax, Kling, OpenAI and more on Varo.cloud.',
       },
     },
     billing: {
@@ -647,7 +655,7 @@ export default {
     },
     developers: {
       hero: {
-        title: "One API for the world's top models",
+        title: "One API for the World's Top AI Models",
         subtitle:
           "Access the world's leading AI models through one unified, OpenAI-compatible API. Build and manage projects, trigger deployments, and automate cloud workflows without juggling provider-specific keys, SDKs, or data formats.",
         cta: 'API Reference',
@@ -661,12 +669,12 @@ export default {
         previewAlt: 'Sample generative output from the Varo.cloud API',
       },
       howItWorks: {
-        title: 'How it Works',
+        title: 'How It Works',
         subtitle: 'Getting from zero to your first generation takes just three steps',
         stepLabel: 'Step {n}',
         steps: [
           {
-            title: 'Create your account',
+            title: 'Create Your Account',
             bodyBefore: 'Sign in at ',
             linkText: 'varo.cloud/auth',
             linkHref: 'auth',
@@ -676,7 +684,7 @@ export default {
             bodyAfter: '.',
           },
           {
-            title: 'Top up & create a key',
+            title: 'Top Up & Create an API Key',
             bodyBefore:
               'Add funds from Billing, then create a key on API Keys. Keys start with sk_live_ and show once. See ',
             linkText: 'Authentication',
@@ -684,7 +692,7 @@ export default {
             bodyAfter: '.',
           },
           {
-            title: 'Generate',
+            title: 'Generate with Leading AI Models',
             body:
               "Run a model from the AI Generator or call POST /v1/generations and poll until done. Every model's API tab has HTTP/Python/JS examples.",
           },
@@ -727,9 +735,9 @@ export default {
         ],
       },
       seo: {
-        title: 'Developers — Varo.cloud API for Top AI Models',
+        title: 'Generative AI API for Top AI Models | Varo.cloud',
         description:
-          'Build with one OpenAI-compatible API for the world’s leading AI models. Get started with Varo.cloud authentication, generations, and code examples.',
+          'Access leading image, video, audio and language models through one unified, OpenAI-compatible API. Build faster without managing multiple providers, SDKs or keys.',
       },
     },
     seedance: {
@@ -895,9 +903,9 @@ export default {
         ],
       },
       seo: {
-        title: 'Seedance 2.0 API — Cinematic AI Video Generation | Varo.cloud',
+        title: 'Seedance 2.0 API – AI Video Generation | Varo.cloud',
         description:
-          'Access ByteDance Seedance 2.0 on Varo Cloud: text-to-video, image-to-video, and multimodal reference APIs with native audio, subject consistency, and production-ready scaling.',
+          'Access the Seedance 2.0 API for cinematic AI video generation from text, images, video and audio. Build production-ready video experiences with Varo.cloud.',
       },
     },
     seedance25: {
@@ -1302,9 +1310,9 @@ export default {
         ],
       },
       seo: {
-        title: 'MiniMax H3 API — Omni-Modal AI Video Generation | Varo.cloud',
+        title: 'MiniMax H3 API - Omni-Modal AI Video Generation | Varo.cloud',
         description:
-          'Access MiniMax H3 on Varo Cloud: open-weight omni-modal video API with text, image, video, and audio references, native stereo sound, up to 2K, and production-ready scaling.',
+          'Access the MiniMax H3 API for omni-modal AI video generation from text, images, video and audio. Create up to 2K videos with native stereo sound on Varo.cloud.',
       },
     },
     docs: {
