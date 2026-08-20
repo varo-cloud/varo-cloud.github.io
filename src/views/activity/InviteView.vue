@@ -25,7 +25,7 @@ import type {
   SeedCreatorMeInvite,
 } from '@/types'
 
-type InvitePhase = 'guest' | 'binding' | 'waiting' | 'winner' | 'no_reward' | 'error'
+type InvitePhase = 'guest' | 'binding' | 'waiting' | 'slot_unavailable' | 'winner' | 'no_reward' | 'error'
 
 const route = useRoute()
 const { push, localePath } = useLocaleRouter()
@@ -269,6 +269,13 @@ async function enterBoundPhase(result: ReferralBindResult | null, invite?: SeedC
     return
   }
 
+  // Inviter already has a Winner (or reward otherwise closed) before this user tops up.
+  if (invite && !invite.rewardEligible) {
+    stopCountdown()
+    phase.value = 'slot_unavailable'
+    return
+  }
+
   phase.value = 'waiting'
   startCountdown()
 }
@@ -283,6 +290,11 @@ async function restoreBoundInvitation() {
   const isWinner = await detectWinner()
   if (isWinner) return
   phase.value = 'guest'
+}
+
+async function refreshInviteAfterBind() {
+  await loadCampaign()
+  return me.value?.invite ?? null
 }
 
 async function bindCode() {
@@ -317,13 +329,16 @@ async function bindCode() {
     await campaignPromise
     clearPendingInviteCode()
     await userStore.loadProfile()
-    await enterBoundPhase(result)
+    // Re-fetch so me.invite.reward_eligible is available (bind response does not include it).
+    const invite = await refreshInviteAfterBind()
+    await enterBoundPhase(result, invite)
   } catch (err) {
     await campaignPromise
     if (isApiError(err) && err.code === 409) {
       clearPendingInviteCode()
       await userStore.loadProfile()
-      await enterBoundPhase(null)
+      const invite = await refreshInviteAfterBind()
+      await enterBoundPhase(null, invite)
       return
     }
 
@@ -469,6 +484,34 @@ onUnmounted(stopCountdown)
                   {{ t('pages.invite.viewBalance') }}
                 </button>
                 <button type="button" class="invite-btn invite-btn--ghost invite-btn--create" @click="goCreate">
+                  {{ t('pages.invite.startCreate') }}
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+      </template>
+
+      <template v-else-if="phase === 'slot_unavailable'">
+        <header class="invite-page__hero">
+          <p class="invite-page__eyebrow">{{ t('pages.invite.slotUnavailableEyebrow') }}</p>
+          <h1 class="invite-page__title">{{ t('pages.invite.slotUnavailableTitle') }}</h1>
+          <p class="invite-page__lead">{{ t('pages.invite.slotUnavailableLead', copy) }}</p>
+        </header>
+
+        <section class="invite-missed" aria-label="Invite bonus unavailable">
+          <div class="invite-missed__card">
+            <div class="invite-missed__icon" aria-hidden="true">
+              <span class="invite-missed__dot" />
+            </div>
+            <div class="invite-missed__copy">
+              <h2 class="invite-missed__status">{{ t('pages.invite.slotUnavailableStatus') }}</h2>
+              <p class="invite-missed__hint">{{ t('pages.invite.slotUnavailableHint') }}</p>
+              <div class="invite-missed__actions">
+                <button type="button" class="invite-btn invite-btn--ghost invite-btn--billing" @click="goBilling">
+                  {{ t('pages.invite.viewBilling') }}
+                </button>
+                <button type="button" class="invite-btn invite-btn--create" @click="goCreate">
                   {{ t('pages.invite.startCreate') }}
                 </button>
               </div>

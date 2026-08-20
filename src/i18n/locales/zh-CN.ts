@@ -544,6 +544,8 @@ export default {
       off: '关闭',
       topUp: '充值',
       accountRecharge: '账户充值',
+      inviteBonusUnavailable:
+        '该邀请的 Winner 名额已满，本次充值不会获得邀请 Bonus；充值金额仍会正常计入账户余额。',
       choosePackage: '选择套餐',
       customAmount: '自定义金额',
       customAmountInput: '自定义充值金额（USD）',
@@ -1569,6 +1571,12 @@ export default {
       noRewardLead: '你已完成充值条件，但该邀请的唯一 {inviteeReward} 名额已由更早达标的用户获得。',
       noRewardStatus: '条件已达标 · 无奖励',
       noRewardHint: '本次充值正常计入账户余额，不影响产品使用；只是不会产生邀请 Bonus。',
+      slotUnavailableEyebrow: 'Reward Unavailable',
+      slotUnavailableTitle: '该邀请已无法获得 Bonus',
+      slotUnavailableLead:
+        '该邀请链接下的唯一 Winner 名额已被其他用户获得，你充值后不会再获得 {inviteeReward} Bonus。',
+      slotUnavailableStatus: '邀请名额已满 · 无 Bonus',
+      slotUnavailableHint: '你仍可正常充值并使用产品；本次充值不会产生邀请 Bonus。',
       viewBilling: '查看账单',
       goTopup: '去充值',
       goActivity: '查看活动页',

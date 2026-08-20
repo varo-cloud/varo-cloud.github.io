@@ -408,7 +408,7 @@ onMounted(loadPage)
         </section>
       </template>
 
-      <template v-else-if="!me && !isEnded">
+      <template v-else-if="!me && !isEnded && !userStore.isLoggedIn">
         <header class="seed-page__hero">
           <p class="seed-page__eyebrow">{{ campaignName || t('pages.seedCreator.eyebrow') }}</p>
           <h1 class="seed-page__title">{{ t('pages.seedCreator.title') }}</h1>
@@ -431,7 +431,7 @@ onMounted(loadPage)
           </div>
 
           <div class="seed-landing__actions">
-            <button v-if="!userStore.isLoggedIn" type="button" class="seed-btn" @click="goLogin">
+            <button type="button" class="seed-btn" @click="goLogin">
               {{ t('pages.seedCreator.join') }}
             </button>
             <button
@@ -453,75 +453,75 @@ onMounted(loadPage)
             </ul>
           </section>
         </section>
+      </template>
 
-        <template v-if="userStore.isLoggedIn">
-          <header class="seed-page__hero">
-            <p class="seed-page__eyebrow">{{ t('pages.seedCreator.form.eyebrow') }}</p>
-            <h2 class="seed-page__title">{{ t('pages.seedCreator.form.title') }}</h2>
-            <p class="seed-page__lead">{{ t('pages.seedCreator.form.lead') }}</p>
-          </header>
+      <template v-else-if="!me && !isEnded && userStore.isLoggedIn">
+        <header class="seed-page__hero">
+          <p class="seed-page__eyebrow">{{ t('pages.seedCreator.form.eyebrow') }}</p>
+          <h1 class="seed-page__title">{{ t('pages.seedCreator.form.title') }}</h1>
+          <p class="seed-page__lead">{{ t('pages.seedCreator.form.lead') }}</p>
+        </header>
 
-          <section class="seed-apply" aria-label="Seed Creator application">
-            <form class="seed-apply__form" @submit.prevent="handleSubmit">
+        <section class="seed-apply" aria-label="Seed Creator application">
+          <form class="seed-apply__form" @submit.prevent="handleSubmit">
+            <label class="seed-apply__field">
+              <span>{{ t('pages.seedCreator.form.twitterUsername') }}</span>
+              <input
+                v-model="twitterUsername"
+                type="text"
+                maxlength="100"
+                autocomplete="off"
+                :placeholder="t('pages.seedCreator.form.placeholderTwitterUsername')"
+              />
+            </label>
+            <label class="seed-apply__field">
+              <span>{{ t('pages.seedCreator.form.twitterUrl') }}</span>
+              <input
+                v-model="twitterUrl"
+                type="text"
+                maxlength="500"
+                autocomplete="off"
+                :placeholder="t('pages.seedCreator.form.placeholderTwitterUrl')"
+              />
+            </label>
+            <div class="seed-apply__row">
               <label class="seed-apply__field">
-                <span>{{ t('pages.seedCreator.form.twitterUsername') }}</span>
+                <span>{{ t('pages.seedCreator.form.discordUsername') }}</span>
                 <input
-                  v-model="twitterUsername"
+                  v-model="discordUsername"
                   type="text"
                   maxlength="100"
                   autocomplete="off"
-                  :placeholder="t('pages.seedCreator.form.placeholderTwitterUsername')"
+                  :placeholder="t('pages.seedCreator.form.placeholderDiscordUsername')"
                 />
               </label>
               <label class="seed-apply__field">
-                <span>{{ t('pages.seedCreator.form.twitterUrl') }}</span>
+                <span>{{ t('pages.seedCreator.form.discordUserId') }}</span>
                 <input
-                  v-model="twitterUrl"
+                  v-model="discordUserId"
                   type="text"
-                  maxlength="500"
+                  maxlength="64"
                   autocomplete="off"
-                  :placeholder="t('pages.seedCreator.form.placeholderTwitterUrl')"
+                  :placeholder="t('pages.seedCreator.form.placeholderDiscordUserId')"
                 />
               </label>
-              <div class="seed-apply__row">
-                <label class="seed-apply__field">
-                  <span>{{ t('pages.seedCreator.form.discordUsername') }}</span>
-                  <input
-                    v-model="discordUsername"
-                    type="text"
-                    maxlength="100"
-                    autocomplete="off"
-                    :placeholder="t('pages.seedCreator.form.placeholderDiscordUsername')"
-                  />
-                </label>
-                <label class="seed-apply__field">
-                  <span>{{ t('pages.seedCreator.form.discordUserId') }}</span>
-                  <input
-                    v-model="discordUserId"
-                    type="text"
-                    maxlength="64"
-                    autocomplete="off"
-                    :placeholder="t('pages.seedCreator.form.placeholderDiscordUserId')"
-                  />
-                </label>
-              </div>
-              <label class="seed-apply__confirm">
-                <input v-model="formConfirmed" type="checkbox" />
-                <span>{{ t('pages.seedCreator.form.confirm') }}</span>
-              </label>
-              <button type="submit" class="seed-btn seed-btn--block" :disabled="!canSubmitForm">
-                {{ t('pages.seedCreator.form.submit') }}
-              </button>
-            </form>
+            </div>
+            <label class="seed-apply__confirm">
+              <input v-model="formConfirmed" type="checkbox" />
+              <span>{{ t('pages.seedCreator.form.confirm') }}</span>
+            </label>
+            <button type="submit" class="seed-btn seed-btn--block" :disabled="!canSubmitForm">
+              {{ t('pages.seedCreator.form.submit') }}
+            </button>
+          </form>
 
-            <aside class="seed-apply__aside" :aria-label="t('pages.seedCreator.form.tipsTitle')">
-              <h2 class="seed-apply__tips-title">{{ t('pages.seedCreator.form.tipsTitle') }}</h2>
-              <ul class="seed-apply__tips">
-                <li v-for="tip in formTips" :key="tip">{{ tip }}</li>
-              </ul>
-            </aside>
-          </section>
-        </template>
+          <aside class="seed-apply__aside" :aria-label="t('pages.seedCreator.form.tipsTitle')">
+            <h2 class="seed-apply__tips-title">{{ t('pages.seedCreator.form.tipsTitle') }}</h2>
+            <ul class="seed-apply__tips">
+              <li v-for="tip in formTips" :key="tip">{{ tip }}</li>
+            </ul>
+          </aside>
+        </section>
       </template>
 
       <template v-else-if="showEndedStatus">
