@@ -10,7 +10,7 @@ import { centsToUsd, formatUsd } from '@/utils/currency'
 import { formatCountdownClock, parseTimestampMs } from '@/utils/time'
 import type { BonusGrant, InvitationStatus, SeedCreatorCampaign, SeedCreatorMeInvite } from '@/types'
 
-type StatusPhase = 'loading' | 'waiting' | 'winner' | 'no_reward' | 'empty'
+type StatusPhase = 'loading' | 'waiting' | 'slot_unavailable' | 'winner' | 'no_reward' | 'empty'
 
 const { push } = useLocaleRouter()
 const { t } = useI18n()
@@ -152,6 +152,12 @@ async function resolveStatus(invite: SeedCreatorMeInvite | null) {
     return
   }
 
+  if (!invite.rewardEligible) {
+    stopCountdown()
+    phase.value = 'slot_unavailable'
+    return
+  }
+
   phase.value = 'waiting'
   startCountdown()
 }
@@ -250,6 +256,34 @@ onUnmounted(stopCountdown)
                   {{ t('pages.invite.viewBalance') }}
                 </button>
                 <button type="button" class="invite-btn invite-btn--ghost invite-btn--create" @click="goCreate">
+                  {{ t('pages.invite.startCreate') }}
+                </button>
+              </div>
+            </div>
+          </div>
+        </section>
+      </template>
+
+      <template v-else-if="phase === 'slot_unavailable'">
+        <header class="invite-page__hero">
+          <p class="invite-page__eyebrow">{{ t('pages.invite.slotUnavailableEyebrow') }}</p>
+          <h1 class="invite-page__title">{{ t('pages.invite.slotUnavailableTitle') }}</h1>
+          <p class="invite-page__lead">{{ t('pages.invite.slotUnavailableLead', copy) }}</p>
+        </header>
+
+        <section class="invite-missed" aria-label="Invite bonus unavailable">
+          <div class="invite-missed__card">
+            <div class="invite-missed__icon" aria-hidden="true">
+              <span class="invite-missed__dot" />
+            </div>
+            <div class="invite-missed__copy">
+              <h2 class="invite-missed__status">{{ t('pages.invite.slotUnavailableStatus') }}</h2>
+              <p class="invite-missed__hint">{{ t('pages.invite.slotUnavailableHint') }}</p>
+              <div class="invite-missed__actions">
+                <button type="button" class="invite-btn invite-btn--ghost invite-btn--billing" @click="goBilling">
+                  {{ t('pages.invite.viewBilling') }}
+                </button>
+                <button type="button" class="invite-btn invite-btn--create" @click="goCreate">
                   {{ t('pages.invite.startCreate') }}
                 </button>
               </div>

@@ -24,7 +24,7 @@ const userStore = useUserStore()
 const phase = ref<BindPhase>(userStore.isLoggedIn ? 'binding' : 'guest')
 const campaign = ref<SeedCreatorCampaign | null>(null)
 const loadingCampaign = ref(true)
-const errorCode = ref('INVITE_NOT_ELIGIBLE')
+const errorMessage = ref('')
 
 const code = computed(() =>
   typeof route.params.code === 'string' ? route.params.code.trim() : '',
@@ -39,8 +39,6 @@ const guestSteps = computed(() => [
   t('pages.invite.steps.topup', copy.value),
   t('pages.invite.steps.reward', copy.value),
 ])
-
-const errorCodeLabel = computed(() => t('pages.invite.errorCode', { code: errorCode.value }))
 
 const SUPPORT_MAILTO = 'mailto:support@varo.cloud'
 
@@ -59,18 +57,12 @@ function contactSupport() {
   window.location.href = SUPPORT_MAILTO
 }
 
-function resolveInviteErrorCode(err: unknown): string {
-  if (isApiError(err)) {
-    const match = err.message.match(/\b([A-Z][A-Z0-9_]{2,})\b/)
-    if (match?.[1]) return match[1]
-    if (err.code === 400) return 'INVITE_NOT_ELIGIBLE'
-    if (err.code === 404) return 'INVITE_INVALID'
-  }
-  return 'INVITE_NOT_ELIGIBLE'
-}
-
 function setBindError(err: unknown, fallbackCode = 'INVITE_NOT_ELIGIBLE') {
-  errorCode.value = err == null ? fallbackCode : resolveInviteErrorCode(err)
+  if (isApiError(err) && err.message.trim()) {
+    errorMessage.value = err.message.trim()
+  } else {
+    errorMessage.value = t('pages.invite.errorCode', { code: fallbackCode })
+  }
   phase.value = 'error'
 }
 
@@ -207,7 +199,7 @@ onMounted(bindCode)
             <div class="invite-error__copy">
               <h2 class="invite-error__status">{{ t('pages.invite.errorStatus') }}</h2>
               <p class="invite-error__hint">{{ t('pages.invite.errorHint') }}</p>
-              <p class="invite-error__code">{{ errorCodeLabel }}</p>
+              <p class="invite-error__code">{{ errorMessage }}</p>
               <div class="invite-error__actions">
                 <button type="button" class="invite-btn invite-btn--ghost invite-btn--home" @click="goHome">
                   {{ t('pages.invite.backHome') }}

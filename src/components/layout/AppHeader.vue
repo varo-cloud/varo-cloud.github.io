@@ -36,12 +36,19 @@ function updateScrollState() {
   isScrolled.value = window.scrollY > 0
 }
 
-const navItems = computed(() => [
-  { label: t('nav.aiGenerator'), name: 'ai-generator' },
-  { label: t('nav.seedCreator'), name: 'seed-creator' },
-  { label: t('nav.pricing'), name: 'pricing' },
-  { label: t('nav.developers'), name: 'developers' },
-])
+const navItems = computed(() => {
+  // Invitees should open invite status, not the Seed Creator application page.
+  const campaignNav = userStore.profile?.invitedCode
+    ? { label: t('nav.invite'), name: 'invite' }
+    : { label: t('nav.seedCreator'), name: 'seed-creator' }
+
+  return [
+    { label: t('nav.aiGenerator'), name: 'ai-generator' },
+    campaignNav,
+    { label: t('nav.pricing'), name: 'pricing' },
+    { label: t('nav.developers'), name: 'developers' },
+  ]
+})
 
 const modelsMenuItems = computed(() => [
   { label: t('nav.allModels'), name: 'models' },
@@ -158,6 +165,9 @@ function isActive(name: string) {
       route.name === 'seedance-2.5' ||
       route.name === 'minimax-h3'
     )
+  }
+  if (name === 'invite') {
+    return route.name === 'invite' || route.name === 'invite-bind'
   }
   return route.name === name
 }

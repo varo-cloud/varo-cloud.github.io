@@ -52,19 +52,23 @@ const formConfirmed = ref(false)
 
 const campaign = computed(() => overview.value?.campaign ?? null)
 const me = computed<SeedCreatorMe | null>(() => overview.value?.me ?? null)
+/** Bound invitee — should use /invite, not the Seed Creator application UI. */
+const isInvitee = computed(() => me.value?.invite != null)
 const copy = computed(() => campaignCopyParams(campaign.value, t))
 const campaignName = computed(() => campaign.value?.name?.trim() || '')
 const isEnded = computed(() => campaign.value?.state === 'ended')
-const isApproved = computed(() => me.value?.status === 'approved')
+const isApproved = computed(() => !isInvitee.value && me.value?.status === 'approved')
 const isPending = computed(
-  () => me.value?.status === 'submitted' || me.value?.status === 'under_review',
+  () =>
+    !isInvitee.value &&
+    (me.value?.status === 'submitted' || me.value?.status === 'under_review'),
 )
-const isRejected = computed(() => me.value?.status === 'rejected')
+const isRejected = computed(() => !isInvitee.value && me.value?.status === 'rejected')
 const showPendingStatus = computed(() => isPending.value && !editingApplication.value)
 const showRejectedStatus = computed(() => isRejected.value && !editingApplication.value)
-const showEndedStatus = computed(() => isEnded.value)
+const showEndedStatus = computed(() => isEnded.value && !isInvitee.value)
 const canSubmit = computed(() => {
-  if (!userStore.isLoggedIn || isEnded.value || isApproved.value) return false
+  if (!userStore.isLoggedIn || isEnded.value || isApproved.value || isInvitee.value) return false
   if (isPending.value) return editingApplication.value
   return !me.value
 })
@@ -392,6 +396,13 @@ async function loadPage() {
   try {
     const data = await fetchSeedCreatorOverview()
     overview.value = data
+
+    // Invitees belong on the invite status page, not the Seed Creator application flow.
+    if (data.me?.invite != null) {
+      await push({ name: 'invite', replace: true })
+      return
+    }
+
     if (data.me && data.me.invite == null) {
       seedCreatorStore.markParticipated()
     }
