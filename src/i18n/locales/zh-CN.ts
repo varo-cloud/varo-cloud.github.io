@@ -562,6 +562,8 @@ export default {
       accountRecharge: '账户充值',
       inviteBonusUnavailable:
         '该邀请的 Winner 名额已满，本次充值不会获得邀请 Bonus；充值金额仍会正常计入账户余额。',
+      inviteBonusAlreadyClaimed:
+        '你已参与过本活动，无法重复领取邀请 Bonus；本次充值金额仍会正常计入账户余额。',
       choosePackage: '选择套餐',
       customAmount: '自定义金额',
       customAmountInput: '自定义充值金额（USD）',

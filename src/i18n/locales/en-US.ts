@@ -566,6 +566,8 @@ export default {
       accountRecharge: 'Account Recharge',
       inviteBonusUnavailable:
         'The Winner slot for this invite is already taken. This top-up will not earn invite Bonus; funds still credit your balance as usual.',
+      inviteBonusAlreadyClaimed:
+        'You have already participated in this campaign and cannot claim invite Bonus again. This top-up still credits your balance as usual.',
       choosePackage: 'Choose a package',
       customAmount: 'Custom amount',
       customAmountInput: 'Custom top-up amount (USD)',
