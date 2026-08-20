@@ -22,6 +22,7 @@ import {
   fetchWalletBalance,
   // updateAutoTopUp,
 } from '@/api/billing'
+import { fetchSeedCreatorOverview } from '@/api/activity'
 import { useLocaleRouter } from '@/composables/useLocaleRouter'
 import { AnalyticsEvents, trackEvent } from '@/analytics'
 import { useUserStore } from '@/stores/user'
@@ -104,6 +105,8 @@ const purchasing = ref(false)
 const checkoutProcessing = ref(false)
 const mockPaying = ref(false)
 const viewingTransaction = ref<Transaction | null>(null)
+/** False when invitee can no longer earn invite Bonus; null when N/A (not invitee / winner / load failed). */
+const inviteRewardEligible = ref<boolean | null>(null)
 
 // const autoTopUpEnabled = ref(false)
 // const autoTopUpThresholdNumber = ref(5)
@@ -202,6 +205,8 @@ const historyEmpty = computed(() =>
     : !billingRecordsLoading.value && billingRecords.value.length === 0,
 )
 
+const showInviteBonusUnavailable = computed(() => inviteRewardEligible.value === false)
+
 function packageLabel(id: CreditPackageId) {
   const key = `pages.billing.topUpDetail.packages.${id}`
   const translated = t(key)
@@ -259,6 +264,20 @@ function billingStatusLabel(status: string | null | undefined) {
   return translated === key ? status : translated
 }
 
+async function loadInviteBonusHint() {
+  try {
+    const data = await fetchSeedCreatorOverview()
+    const invite = data.me?.invite
+    if (!invite || invite.isWinner || invite.status === 'winner') {
+      inviteRewardEligible.value = null
+      return
+    }
+    inviteRewardEligible.value = invite.rewardEligible
+  } catch {
+    inviteRewardEligible.value = null
+  }
+}
+
 async function loadBilling(options: { silent?: boolean } = {}) {
   if (!options.silent) {
     loading.value = true
@@ -285,6 +304,8 @@ async function loadBilling(options: { silent?: boolean } = {}) {
       selectedPackageId.value = packageData[0].id
     }
 
+    void loadInviteBonusHint()
+
     // autoTopUpEnabled.value = summaryData.autoTopUp.enabled
     // autoTopUpThresholdNumber.value = summaryData.autoTopUp.thresholdUsd
     // autoTopUpAmountNumber.value = summaryData.autoTopUp.topUpAmountUsd
@@ -295,6 +316,7 @@ async function loadBilling(options: { silent?: boolean } = {}) {
       walletBalance.value = null
       packages.value = []
       transactions.value = []
+      inviteRewardEligible.value = null
     }
   } finally {
     if (!options.silent) {
@@ -626,6 +648,14 @@ onMounted(async () => {
 
         <section ref="rechargeSectionRef" class="billing-recharge" aria-label="Account recharge">
           <h2 class="billing-section-title">{{ t('pages.billing.accountRecharge') }}</h2>
+
+          <p
+            v-if="showInviteBonusUnavailable"
+            class="billing-invite-hint"
+            role="status"
+          >
+            {{ t('pages.billing.inviteBonusUnavailable') }}
+          </p>
 
           <div class="billing-recharge__grid">
             <div class="billing-panel billing-panel--checkout">
@@ -1105,6 +1135,17 @@ onMounted(async () => {
 
 .billing-recharge {
   margin-bottom: 40px;
+}
+
+.billing-invite-hint {
+  margin: -8px 0 20px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 0.5px solid rgba(255, 152, 0, 0.35);
+  background: rgba(255, 152, 0, 0.08);
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 1.5;
 }
 
 .billing-recharge__grid {

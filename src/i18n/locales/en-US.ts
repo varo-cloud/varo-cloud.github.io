@@ -550,6 +550,8 @@ export default {
       off: 'Off',
       topUp: 'Top Up',
       accountRecharge: 'Account Recharge',
+      inviteBonusUnavailable:
+        'The Winner slot for this invite is already taken. This top-up will not earn invite Bonus; funds still credit your balance as usual.',
       choosePackage: 'Choose a package',
       customAmount: 'Custom amount',
       customAmountInput: 'Custom top-up amount (USD)',
@@ -1531,9 +1533,9 @@ export default {
         },
       },
       seo: {
-        title: 'Seed Creator Program — Varo.cloud',
+        title: 'Seed Creator Program｜Earn Bonus for Creating — Varo.cloud',
         description:
-          'Become a Varo Seed Creator: verify social accounts for Bonus, then invite a friend to unlock rewards for both of you.',
+          'Join the Varo Seed Creator program: pass X / Discord review to earn Early Creator Bonus, then invite friends to unlock rewards for both of you when they complete their first top-up. Apply now.',
       },
     },
     invite: {
@@ -1590,6 +1592,13 @@ export default {
       noRewardStatus: 'Qualified · No reward',
       noRewardHint:
         'This top-up still credits your account balance and does not affect product usage — it simply does not earn invite Bonus.',
+      slotUnavailableEyebrow: 'Reward Unavailable',
+      slotUnavailableTitle: 'Invite Bonus is no longer available',
+      slotUnavailableLead:
+        'The only Winner slot for this invite has already been claimed. Topping up will not earn you {inviteeReward} Bonus.',
+      slotUnavailableStatus: 'Winner slot taken · No Bonus',
+      slotUnavailableHint:
+        'You can still top up and use the product normally — this invite simply will not grant Bonus.',
       viewBilling: 'View billing',
       goTopup: 'Top up',
       goActivity: 'View campaign',

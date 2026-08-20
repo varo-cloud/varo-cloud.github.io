@@ -34,6 +34,7 @@ interface ApiSeedCreatorMeInvite {
   deposit_deadline?: number | string | null
   first_topup_at?: number | string | null
   is_winner?: boolean | null
+  reward_eligible?: boolean | null
 }
 
 interface ApiSeedCreatorMe {
@@ -138,11 +139,18 @@ function mapCampaign(raw: ApiSeedCreatorCampaign): SeedCreatorOverview['campaign
 
 function mapMeInvite(raw: ApiSeedCreatorMeInvite | null | undefined): SeedCreatorMeInvite | null {
   if (!raw) return null
+  const status = mapInvitationStatus(raw.status ?? '')
+  const isWinner = Boolean(raw.is_winner)
+  const rewardEligible =
+    typeof raw.reward_eligible === 'boolean'
+      ? raw.reward_eligible
+      : status === 'waiting_for_topup' && !isWinner
   return {
-    status: mapInvitationStatus(raw.status ?? ''),
+    status,
     depositDeadline: raw.deposit_deadline ?? null,
     firstTopupAt: raw.first_topup_at ?? null,
-    isWinner: Boolean(raw.is_winner),
+    isWinner,
+    rewardEligible,
   }
 }
 

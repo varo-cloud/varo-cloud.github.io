@@ -156,6 +156,22 @@ const ROUTES = [
     waitText: '一个 API，接入全球顶尖模型',
   },
   {
+    path: '/activity/seed-creator',
+    outFile: join('activity', 'seed-creator.html'),
+    ready: '[data-seo-ready="seed-creator"]',
+    titleIncludes: 'Seed Creator',
+    contentReady: '[data-seo-content-ready="seed-creator"]',
+    contentItem: '.seed-landing__step-text, .seed-empty__title, .seed-page__error',
+  },
+  {
+    path: '/zh-CN/activity/seed-creator',
+    outFile: join('zh-CN', 'activity', 'seed-creator.html'),
+    ready: '[data-seo-ready="seed-creator"]',
+    titleIncludes: 'Seed Creator',
+    contentReady: '[data-seo-content-ready="seed-creator"]',
+    contentItem: '.seed-landing__step-text, .seed-empty__title, .seed-page__error',
+  },
+  {
     path: '/ai-generator',
     outFile: 'ai-generator.html',
     ready: '[data-seo-ready="ai-generator"]',

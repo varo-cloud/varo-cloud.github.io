@@ -372,6 +372,11 @@ export interface SeedCreatorMeInvite {
   depositDeadline: number | string | null
   firstTopupAt: number | string | null
   isWinner: boolean
+  /**
+   * Whether topping up now can still earn invitee Bonus.
+   * False when the inviter already has a Winner (even if this user has not topped up yet).
+   */
+  rewardEligible: boolean
 }
 
 export interface SeedCreatorMe {
