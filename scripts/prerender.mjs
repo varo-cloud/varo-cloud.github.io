@@ -146,14 +146,14 @@ const ROUTES = [
     outFile: 'developers.html',
     ready: '[data-seo-ready="developers"]',
     waitSelector: '#developers-hero-title',
-    waitText: "One API for the world's top models",
+    waitText: "One API for the World's Top AI Models",
   },
   {
     path: '/zh-CN/developers',
     outFile: join('zh-CN', 'developers.html'),
     ready: '[data-seo-ready="developers"]',
     waitSelector: '#developers-hero-title',
-    waitText: '一个 API，接入全球顶尖模型',
+    waitText: '一个 API，接入全球顶尖 AI 模型',
   },
   {
     path: '/activity/seed-creator',
@@ -175,14 +175,14 @@ const ROUTES = [
     path: '/ai-generator',
     outFile: 'ai-generator.html',
     ready: '[data-seo-ready="ai-generator"]',
-    titleIncludes: 'AI Generator',
+    titleIncludes: 'AI Video Generator',
     contentReady: '[data-seo-content-ready="ai-generator"]',
   },
   {
     path: '/zh-CN/ai-generator',
     outFile: join('zh-CN', 'ai-generator.html'),
     ready: '[data-seo-ready="ai-generator"]',
-    titleIncludes: 'AI 生成器',
+    titleIncludes: 'AI 视频生成器',
     contentReady: '[data-seo-content-ready="ai-generator"]',
   },
   {
