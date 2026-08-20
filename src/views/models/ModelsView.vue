@@ -396,8 +396,15 @@ onMounted(() => {
       </div>
     </section>
 
-    <section class="models-list" aria-labelledby="models-explore-title">
+    <section class="models-list">
       <div class="models-list__inner">
+        <div class="visually-hidden">
+          <h2>{{ t('pages.models.seo.h2Explore') }}</h2>
+          <h2>{{ t('pages.models.seo.h2Latest') }}</h2>
+          <h3>{{ t('pages.models.seo.h3Publisher') }}</h3>
+          <h3>{{ t('pages.models.seo.h3Type') }}</h3>
+          <h3>{{ t('pages.models.seo.h3Capability') }}</h3>
+        </div>
         <label class="models-search">
           <img :src="assetUrl('/assets/models/search.svg')" alt="" aria-hidden="true" />
           <input
@@ -416,9 +423,7 @@ onMounted(() => {
 
         <div class="models-layout-header has-sidebar">
           <div class="models-sidebar-header">
-            <h2 id="models-explore-title" class="models-sidebar-header__title">
-              {{ t('pages.models.sidebar.title') }}
-            </h2>
+            <span class="models-sidebar-header__title">{{ t('pages.models.sidebar.title') }}</span>
             <button
               v-if="hasActiveFilters"
               type="button"
@@ -431,9 +436,6 @@ onMounted(() => {
           </div>
 
           <div class="models-main-header">
-            <h2 id="models-latest-title" class="visually-hidden">
-              {{ t('pages.models.tabs.latest') }}
-            </h2>
             <div class="models-tabs" role="tablist" :aria-label="t('pages.models.filterLabel')">
               <button
                 v-for="tab in tabOptions"
@@ -658,11 +660,10 @@ onMounted(() => {
 }
 
 .models-sidebar-header__title {
-  margin: 0;
   color: #222;
   font-size: 16px;
   font-weight: 500;
-  line-height: 1.3;
+  line-height: 16px;
 }
 
 .visually-hidden {

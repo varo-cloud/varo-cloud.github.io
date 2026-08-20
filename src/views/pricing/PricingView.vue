@@ -245,13 +245,17 @@ onMounted(() => {
       </div>
     </section>
 
-    <section class="pricing-content" aria-labelledby="pricing-compare-title">
+    <section class="pricing-content">
       <div class="pricing-content__inner">
+        <div class="visually-hidden">
+          <h2>{{ t('pages.pricing.seo.h2Compare') }}</h2>
+          <h3>{{ t('pages.pricing.seo.h3Publisher') }}</h3>
+          <h3>{{ t('pages.pricing.seo.h3Type') }}</h3>
+          <h3>{{ t('pages.pricing.seo.h3Capability') }}</h3>
+        </div>
         <div class="pricing-layout-header">
           <div class="pricing-sidebar-header">
-            <h2 id="pricing-compare-title" class="pricing-sidebar-header__title">
-              {{ t('pages.pricing.compareTitle') }}
-            </h2>
+            <span class="pricing-sidebar-header__title">{{ t('pages.models.sidebar.title') }}</span>
             <button
               v-if="hasActiveFilters"
               type="button"
@@ -285,9 +289,6 @@ onMounted(() => {
             :selected-category="selectedCategory"
             :selected-capability="selectedCapability"
             :total-count="unfilteredTotal"
-            publisher-title-key="pages.pricing.sidebar.publisher"
-            type-title-key="pages.pricing.sidebar.type"
-            capability-title-key="pages.pricing.sidebar.capability"
             @update:selected-publisher="selectPublisher"
             @update:selected-category="selectCategory"
             @update:selected-capability="selectCapability"
@@ -449,11 +450,22 @@ onMounted(() => {
 }
 
 .pricing-sidebar-header__title {
-  margin: 0;
   color: #222;
   font-size: 16px;
   font-weight: 500;
-  line-height: 1.3;
+  line-height: 16px;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .pricing-sidebar-header__clear {
