@@ -79,7 +79,7 @@ export default {
       },
       featured: {
         eyebrow: '新品 · Day-0 SOTA 即用',
-        title: '探索精选生成式 AI 模型',
+        title: '精选模型',
         subtitle: '业界领先的 AI 模型，开箱即可用于生产——每一次发布，零日可用。',
         viewMore: '查看更多',
         fallbackName: '精选模型',
@@ -95,7 +95,7 @@ export default {
       },
       creators: {
         eyebrow: '面向创作者',
-        title: 'AI 创作，不必复杂',
+        title: '创作，不必复杂',
         subtitle: '把 AI 媒体生成能力带到桌面——无需编程，无需复杂配置，打开即可开始创作。',
         ctaPrimary: '立即开始',
         ctaSecondary: '联系销售',
@@ -136,7 +136,7 @@ export default {
         viewMore: '查看更多模型',
       },
       showcase: {
-        title: '探索用户正在创作的内容',
+        title: '用户正在使用 Varo.cloud 创作什么？',
         subtitle: '探索用户在最新项目中最常使用的热门图像、视频和音频模型。',
         itemMeta: '{count} 个模型',
         pagination: '作品展示分页',
@@ -152,6 +152,9 @@ export default {
         title: '图像、视频与音频生成式 AI 云 | Varo.cloud',
         description:
           '在一个云中接入 500+ 生成式 AI 模型，覆盖图像、视频、音频等。统一 API、更低成本与 Day-0 模型接入，助你更快构建。',
+        h2Featured: '探索精选生成式 AI 模型',
+        h2Creators: 'AI 创作，不必复杂',
+        h2Showcase: '探索用户正在创作的内容',
       },
     },
     models: {
@@ -178,11 +181,11 @@ export default {
         capability: '能力',
       },
       sidebar: {
-        title: '探索领先 AI 模型',
-        publisher: '按发布方浏览 AI 模型',
+        title: '分类',
+        publisher: '发布方',
         baseModel: '基座模型',
-        type: '按类型浏览 AI 模型',
-        capability: '按能力浏览 AI 模型',
+        type: '模型类型',
+        capability: '能力纬度',
         more: '更多',
         clear: '清除',
       },
@@ -219,7 +222,7 @@ export default {
       expandAll: '展开全部{count}个',
       collapseAll: '收起',
       tabs: {
-        latest: '最新 AI 模型',
+        latest: '最新模型',
         favourite: '收藏模型',
         recent: '最近使用',
       },
@@ -237,6 +240,11 @@ export default {
         detailTitle: '{name} — Varo.cloud',
         description:
           '探索领先的视频、图像、文本、音频与多模态 AI 模型。对比能力、价格与用例，在 Varo.cloud 找到合适的模型。',
+        h2Explore: '探索领先 AI 模型',
+        h2Latest: '最新 AI 模型',
+        h3Publisher: '按发布方浏览 AI 模型',
+        h3Type: '按类型浏览 AI 模型',
+        h3Capability: '按能力浏览 AI 模型',
       },
     },
     aiGenerator: {
@@ -491,7 +499,6 @@ export default {
     pricing: {
       title: '价格',
       heroTitle: '简单、透明的 AI 模型定价',
-      compareTitle: '对比 AI 模型价格',
       heroSubtitle: '所有模型均采用简单的按量付费——仅为实际使用付费，成本清晰可预测，轻松扩展业务。',
       startFrom: '起价',
       inputPrice: '输入价格',
@@ -512,15 +519,14 @@ export default {
         price: '我们的价格（USD）',
         discount: '折扣',
       },
-      sidebar: {
-        publisher: '按发布方查看 AI 模型价格',
-        type: '按类型查看 AI 模型价格',
-        capability: '按能力查看 AI 模型价格',
-      },
       seo: {
         title: 'AI 模型定价 – 图像与视频生成 API | Varo.cloud',
         description:
           '对比领先 AI 图像与视频模型的透明按量定价。在 Varo.cloud 探索 Seedance、MiniMax、Kling、OpenAI 等模型价格。',
+        h2Compare: '对比 AI 模型价格',
+        h3Publisher: '按发布方查看 AI 模型价格',
+        h3Type: '按类型查看 AI 模型价格',
+        h3Capability: '按能力查看 AI 模型价格',
       },
     },
     billing: {

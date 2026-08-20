@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { fetchModels } from '@/api/models'
 import { modelToPricingItem } from '@/utils/pricing'
 import type { PricingItem } from '@/types'
@@ -12,6 +13,7 @@ import HomePricing from '@/components/home/HomePricing.vue'
 import HomeShowcase from '@/components/home/HomeShowcase.vue'
 import HomeCta from '@/components/home/HomeCta.vue'
 
+const { t } = useI18n()
 const PRICING_LIMIT = 5
 
 const pricingItems = ref<PricingItem[]>([])
@@ -36,6 +38,11 @@ onMounted(() => {
 
 <template>
   <div class="home-page" data-home-ready data-seo-ready="home">
+    <div class="visually-hidden">
+      <h2>{{ t('pages.home.seo.h2Featured') }}</h2>
+      <h2>{{ t('pages.home.seo.h2Creators') }}</h2>
+      <h2>{{ t('pages.home.seo.h2Showcase') }}</h2>
+    </div>
     <HomeHero />
     <HomeFeatured />
     <HomeDevelopers />
@@ -54,5 +61,17 @@ onMounted(() => {
   overflow-x: clip;
   background: #fff;
   color: #222;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 </style>

@@ -79,7 +79,7 @@ export default {
       },
       featured: {
         eyebrow: 'New · Day-0 SOTA Access',
-        title: 'Explore Featured Generative AI Models',
+        title: 'Featured Models',
         subtitle: 'Industry-leading AI models, ready for production — every launch, available on day zero.',
         viewMore: 'View More',
         fallbackName: 'Featured Model',
@@ -95,7 +95,7 @@ export default {
       },
       creators: {
         eyebrow: 'For Creators',
-        title: 'AI Creation Without the Complexity',
+        title: 'Create Without the Complexity',
         subtitle: 'Full power of AI media generation to your desktop — no code, no setup, just create.',
         ctaPrimary: 'Get Started',
         ctaSecondary: 'Contact Sales',
@@ -136,7 +136,7 @@ export default {
         viewMore: 'View More Models',
       },
       showcase: {
-        title: 'Explore What people are Creating',
+        title: 'What people are Creating',
         subtitle:
           'See what the Varo community is creating and explore the most popular image, video, and audio models users are choosing for their latest projects.',
         itemMeta: '{count} models',
@@ -154,6 +154,9 @@ export default {
         title: 'Generative AI Cloud for Image, Video & Audio | Varo.cloud',
         description:
           'Access 500+ generative AI models for image, video, audio and more in one cloud. Build faster with unified APIs, lower costs and day-zero model access.',
+        h2Featured: 'Explore Featured Generative AI Models',
+        h2Creators: 'AI Creation Without the Complexity',
+        h2Showcase: 'Explore What people are Creating',
       },
     },
     models: {
@@ -180,11 +183,11 @@ export default {
         capability: 'Capability',
       },
       sidebar: {
-        title: 'Explore Leading AI Models',
-        publisher: 'AI Models by Publisher',
+        title: 'Categories',
+        publisher: 'Publisher',
         baseModel: 'Base Model',
-        type: 'AI Models by Type',
-        capability: 'AI Models by Capability',
+        type: 'Model Type',
+        capability: 'Capabilities',
         more: 'More',
         clear: 'Clear',
       },
@@ -221,7 +224,7 @@ export default {
       expandAll: 'Expand all {count}',
       collapseAll: 'Collapse',
       tabs: {
-        latest: 'Latest AI Models',
+        latest: 'Latest Models',
         favourite: 'Favourite Models',
         recent: 'Recently Used',
       },
@@ -239,6 +242,11 @@ export default {
         detailTitle: '{name} — Varo.cloud',
         description:
           'Explore leading AI models for video, image, text, audio and multimodal creation. Compare capabilities, pricing and use cases, and find the right model on Varo.cloud.',
+        h2Explore: 'Explore Leading AI Models',
+        h2Latest: 'Latest AI Models',
+        h3Publisher: 'AI Models by Publisher',
+        h3Type: 'AI Models by Type',
+        h3Capability: 'AI Models by Capability',
       },
     },
     aiGenerator: {
@@ -494,7 +502,6 @@ export default {
     pricing: {
       title: 'Pricing',
       heroTitle: 'Simple, Transparent AI Model Pricing',
-      compareTitle: 'Compare AI Model Pricing',
       heroSubtitle:
         'Simple, pay-as-you-go pricing for every model—only pay for what you use and scale with predictable costs.',
       startFrom: 'Start from',
@@ -516,15 +523,14 @@ export default {
         price: 'Our Price(USD)',
         discount: 'Discount',
       },
-      sidebar: {
-        publisher: 'AI Model Pricing by Publisher',
-        type: 'AI Model Pricing by Type',
-        capability: 'AI Model Pricing by Capability',
-      },
       seo: {
         title: 'AI Model Pricing – Image & Video Generation APIs | Varo.cloud',
         description:
           'Compare transparent, pay-as-you-go pricing for leading AI image and video models. Explore Seedance, MiniMax, Kling, OpenAI and more on Varo.cloud.',
+        h2Compare: 'Compare AI Model Pricing',
+        h3Publisher: 'AI Model Pricing by Publisher',
+        h3Type: 'AI Model Pricing by Type',
+        h3Capability: 'AI Model Pricing by Capability',
       },
     },
     billing: {
