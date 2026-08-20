@@ -175,6 +175,19 @@ function goTo(name: string) {
   push({ name })
 }
 
+/** On invite-bind, keep the invite code in the post-login redirect (same as page CTA). */
+function goLogin() {
+  if (route.name === 'invite-bind') {
+    const code = typeof route.params.code === 'string' ? route.params.code.trim() : ''
+    const target = code
+      ? localePath(`/invite/${encodeURIComponent(code)}`)
+      : localePath('/invite')
+    push({ name: 'auth', query: { redirect: target } })
+    return
+  }
+  push({ name: 'auth' })
+}
+
 function openModelsMenu() {
   if (modelsMenuCloseTimer) {
     clearTimeout(modelsMenuCloseTimer)
@@ -556,7 +569,7 @@ onUnmounted(() => {
           v-else
           type="button"
           class="app-header__login-btn"
-          @click="push({ name: 'auth' })"
+          @click="goLogin"
         >
           {{ t('common.login') }}
         </button>
