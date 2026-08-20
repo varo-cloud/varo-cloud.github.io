@@ -79,7 +79,7 @@ export default {
       },
       featured: {
         eyebrow: '新品 · Day-0 SOTA 即用',
-        title: '精选模型',
+        title: '探索精选生成式 AI 模型',
         subtitle: '业界领先的 AI 模型，开箱即可用于生产——每一次发布，零日可用。',
         viewMore: '查看更多',
         fallbackName: '精选模型',
@@ -95,7 +95,7 @@ export default {
       },
       creators: {
         eyebrow: '面向创作者',
-        title: '创作，不必复杂',
+        title: 'AI 创作，不必复杂',
         subtitle: '把 AI 媒体生成能力带到桌面——无需编程，无需复杂配置，打开即可开始创作。',
         ctaPrimary: '立即开始',
         ctaSecondary: '联系销售',
@@ -136,7 +136,7 @@ export default {
         viewMore: '查看更多模型',
       },
       showcase: {
-        title: '用户正在使用 Varo.cloud 创作什么？',
+        title: '探索用户正在创作的内容',
         subtitle: '探索用户在最新项目中最常使用的热门图像、视频和音频模型。',
         itemMeta: '{count} 个模型',
         pagination: '作品展示分页',
@@ -149,9 +149,9 @@ export default {
         ctaSecondary: '联系销售',
       },
       seo: {
-        title: 'Varo.cloud — 面向创作者的生成式 AI 云',
+        title: '图像、视频与音频生成式 AI 云 | Varo.cloud',
         description:
-          '在一个云中接入领先的生成式 AI 模型——图像、视频、音频与语言——提供生产级 API、创作者工具与高性价比计费。',
+          '在一个云中接入 500+ 生成式 AI 模型，覆盖图像、视频、音频等。统一 API、更低成本与 Day-0 模型接入，助你更快构建。',
       },
     },
     models: {
@@ -178,11 +178,11 @@ export default {
         capability: '能力',
       },
       sidebar: {
-        title: '分类',
-        publisher: '发布方',
+        title: '探索领先 AI 模型',
+        publisher: '按发布方浏览 AI 模型',
         baseModel: '基座模型',
-        type: '模型类型',
-        capability: '能力纬度',
+        type: '按类型浏览 AI 模型',
+        capability: '按能力浏览 AI 模型',
         more: '更多',
         clear: '清除',
       },
@@ -219,7 +219,7 @@ export default {
       expandAll: '展开全部{count}个',
       collapseAll: '收起',
       tabs: {
-        latest: '最新模型',
+        latest: '最新 AI 模型',
         favourite: '收藏模型',
         recent: '最近使用',
       },
@@ -233,12 +233,14 @@ export default {
         'edit-video': '视频编辑',
       },
       seo: {
-        title: 'AI 模型 — Varo.cloud',
+        title: '视频、图像、音频等 AI 模型 | Varo.cloud',
         detailTitle: '{name} — Varo.cloud',
-        description: '在 Varo.cloud 浏览可用于生产的视频、图像、音频与语言模型，统一计费与 API。',
+        description:
+          '探索领先的视频、图像、文本、音频与多模态 AI 模型。对比能力、价格与用例，在 Varo.cloud 找到合适的模型。',
       },
     },
     aiGenerator: {
+      title: 'AI 视频生成器',
       model: '模型',
       hot: 'HOT',
       new: 'NEW',
@@ -247,8 +249,9 @@ export default {
       modelLoadError: '加载模型失败，请重试。',
       emptyModels: '暂无可用模型。',
       seo: {
-        title: 'AI 生成器 — Varo.cloud',
-        description: '使用 Varo.cloud AI 模型生成图像、视频等内容——无需自建基础设施。',
+        title: 'AI 视频生成器 – 文生视频 AI | Varo.cloud',
+        description:
+          '在 Varo.cloud 用文本生成 AI 视频。选择领先视频模型，自定义时长与分辨率，生成带同步语音、音效与背景音乐的视频。',
       },
     },
     modelDetail: {
@@ -488,6 +491,7 @@ export default {
     pricing: {
       title: '价格',
       heroTitle: '简单、透明的 AI 模型定价',
+      compareTitle: '对比 AI 模型价格',
       heroSubtitle: '所有模型均采用简单的按量付费——仅为实际使用付费，成本清晰可预测，轻松扩展业务。',
       startFrom: '起价',
       inputPrice: '输入价格',
@@ -508,9 +512,15 @@ export default {
         price: '我们的价格（USD）',
         discount: '折扣',
       },
+      sidebar: {
+        publisher: '按发布方查看 AI 模型价格',
+        type: '按类型查看 AI 模型价格',
+        capability: '按能力查看 AI 模型价格',
+      },
       seo: {
-        title: '价格 — Varo.cloud',
-        description: 'Varo.cloud 提供简单透明的按量计费，所有 AI 模型只用多少付多少。',
+        title: 'AI 模型定价 – 图像与视频生成 API | Varo.cloud',
+        description:
+          '对比领先 AI 图像与视频模型的透明按量定价。在 Varo.cloud 探索 Seedance、MiniMax、Kling、OpenAI 等模型价格。',
       },
     },
     billing: {
@@ -672,7 +682,7 @@ export default {
     },
     developers: {
       hero: {
-        title: '一个 API，接入全球顶尖模型',
+        title: '一个 API，接入全球顶尖 AI 模型',
         subtitle:
           '通过统一且兼容 OpenAI的 API，调用全球领先的 AI 模型。无需维护不同供应商的 API Key、SDK 或数据格式，在Varo Cloud集中创建和管理项目、模型部署并自动化云端工作流程。',
         cta: 'API 参考',
@@ -701,14 +711,14 @@ export default {
             bodyAfter: '。',
           },
           {
-            title: '充值并创建密钥',
+            title: '充值并创建 API 密钥',
             bodyBefore: '在「账单」中充值，然后在「API 密钥」页面创建密钥。密钥以 sk_live_ 开头，且仅显示一次。详见 ',
             linkText: '身份验证',
             linkHref: 'https://docs.varo.cloud/setup/authentication',
             bodyAfter: '。',
           },
           {
-            title: '开始生成',
+            title: '使用领先 AI 模型生成',
             body:
               '在 AI 生成器中运行模型，或调用 POST /v1/generations 并轮询直至完成。每个模型的 API 标签页都提供 HTTP / Python / JS 示例。',
           },
@@ -751,9 +761,9 @@ export default {
         ],
       },
       seo: {
-        title: '开发者 — Varo.cloud 顶尖 AI 模型 API',
+        title: '顶尖 AI 模型的生成式 AI API | Varo.cloud',
         description:
-          '用一套兼容 OpenAI 的 API 接入全球领先 AI 模型。从身份验证、生成任务到代码示例，快速开始使用 Varo.cloud。',
+          '通过一套统一、兼容 OpenAI 的 API 接入领先的图像、视频、音频与语言模型。无需管理多家供应商、SDK 或密钥，更快完成构建。',
       },
     },
     seedance: {
@@ -916,9 +926,9 @@ export default {
         ],
       },
       seo: {
-        title: 'Seedance 2.0 API — 电影级 AI 视频生成 | Varo.cloud',
+        title: 'Seedance 2.0 API – AI 视频生成 | Varo.cloud',
         description:
-          '在 Varo Cloud 使用字节跳动 Seedance 2.0：文生视频、图生视频与多模态参考 API，支持原生音频、主体一致性与生产级扩缩。',
+          '接入 Seedance 2.0 API，从文本、图像、视频与音频生成电影级 AI 视频。在 Varo.cloud 构建可投入生产的视频体验。',
       },
     },
     seedance25: {
@@ -1323,9 +1333,9 @@ export default {
         ],
       },
       seo: {
-        title: 'MiniMax H3 API — 全模态 AI 视频生成 | Varo.cloud',
+        title: 'MiniMax H3 API - 全模态 AI 视频生成 | Varo.cloud',
         description:
-          '在 Varo Cloud 使用 MiniMax H3：开源权重全模态视频 API，支持文本、图像、视频与音频参考、原生立体声音频、最高 2K，以及生产级扩缩。',
+          '接入 MiniMax H3 API，从文本、图像、视频与音频进行全模态 AI 视频生成。在 Varo.cloud 创建最高 2K、带原生立体声的视频。',
       },
     },
     docs: {

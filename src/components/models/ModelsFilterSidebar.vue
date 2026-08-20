@@ -12,17 +12,27 @@ type MobileFilterOption = {
   label: string
 }
 
-const props = defineProps<{
-  publishers: PublisherFacetItem[]
-  baseModels: BaseModelFacetItem[]
-  categories: FacetItem[]
-  capabilities: FacetItem[]
-  selectedPublisher: string | null
-  selectedBaseModel: string | null
-  selectedCategory: string | null
-  selectedCapability: string | null
-  totalCount: number
-}>()
+const props = withDefaults(
+  defineProps<{
+    publishers: PublisherFacetItem[]
+    baseModels: BaseModelFacetItem[]
+    categories: FacetItem[]
+    capabilities: FacetItem[]
+    selectedPublisher: string | null
+    selectedBaseModel: string | null
+    selectedCategory: string | null
+    selectedCapability: string | null
+    totalCount: number
+    publisherTitleKey?: string
+    typeTitleKey?: string
+    capabilityTitleKey?: string
+  }>(),
+  {
+    publisherTitleKey: 'pages.models.sidebar.publisher',
+    typeTitleKey: 'pages.models.sidebar.type',
+    capabilityTitleKey: 'pages.models.sidebar.capability',
+  },
+)
 
 const emit = defineEmits<{
   'update:selectedPublisher': [value: string | null]
@@ -134,7 +144,7 @@ onBeforeUnmount(() => {
     <div class="models-filter-sidebar__desktop">
       <div class="models-filter-sidebar__sections">
         <section v-if="publishers.length > 0" class="models-filter-section">
-          <h3 class="models-filter-section__title">{{ t('pages.models.sidebar.publisher') }}</h3>
+          <h3 class="models-filter-section__title">{{ t(publisherTitleKey) }}</h3>
           <ul class="models-filter-list">
             <li>
               <button
@@ -252,7 +262,7 @@ onBeforeUnmount(() => {
         </section>
 
         <section v-if="categories.length > 0" class="models-filter-section">
-          <h3 class="models-filter-section__title">{{ t('pages.models.sidebar.type') }}</h3>
+          <h3 class="models-filter-section__title">{{ t(typeTitleKey) }}</h3>
           <ul class="models-filter-list">
             <li>
               <button
@@ -304,7 +314,7 @@ onBeforeUnmount(() => {
         </section>
 
         <section v-if="capabilities.length > 0" class="models-filter-section">
-          <h3 class="models-filter-section__title">{{ t('pages.models.sidebar.capability') }}</h3>
+          <h3 class="models-filter-section__title">{{ t(capabilityTitleKey) }}</h3>
           <ul class="models-filter-list">
             <li>
               <button
@@ -359,7 +369,7 @@ onBeforeUnmount(() => {
 
     <div ref="mobileRootRef" class="models-filter-sidebar__mobile">
       <div v-if="publishers.length > 0" class="models-filter-select">
-        <span class="models-filter-select__label">{{ t('pages.models.sidebar.publisher') }}</span>
+        <span class="models-filter-select__label">{{ t(publisherTitleKey) }}</span>
         <div class="models-filter-select__menu">
           <button
             type="button"
@@ -437,7 +447,7 @@ onBeforeUnmount(() => {
       </div>
 
       <div v-if="categories.length > 0" class="models-filter-select">
-        <span class="models-filter-select__label">{{ t('pages.models.sidebar.type') }}</span>
+        <span class="models-filter-select__label">{{ t(typeTitleKey) }}</span>
         <div class="models-filter-select__menu">
           <button
             type="button"
@@ -476,7 +486,7 @@ onBeforeUnmount(() => {
       </div>
 
       <div v-if="capabilities.length > 0" class="models-filter-select">
-        <span class="models-filter-select__label">{{ t('pages.models.sidebar.capability') }}</span>
+        <span class="models-filter-select__label">{{ t(capabilityTitleKey) }}</span>
         <div class="models-filter-select__menu">
           <button
             type="button"
@@ -538,7 +548,7 @@ onBeforeUnmount(() => {
   color: #222;
   font-size: 14px;
   font-weight: 500;
-  line-height: 16px;
+  line-height: 1.3;
 }
 
 .models-filter-list {

@@ -224,6 +224,7 @@ onMounted(() => {
     data-seo-ready="ai-generator"
     :data-seo-content-ready="listLoading ? undefined : 'ai-generator'"
   >
+    <h1 class="visually-hidden">{{ t('pages.aiGenerator.title') }}</h1>
     <div v-if="listLoading" class="ai-generator-page__state">
       <NSpin size="large" />
     </div>
@@ -317,6 +318,18 @@ onMounted(() => {
   border-radius: 16px;
   color: #9b9dab;
   font-size: 14px;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 @media (max-width: 1023px) {

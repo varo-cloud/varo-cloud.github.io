@@ -396,7 +396,7 @@ onMounted(() => {
       </div>
     </section>
 
-    <section class="models-list">
+    <section class="models-list" aria-labelledby="models-explore-title">
       <div class="models-list__inner">
         <label class="models-search">
           <img :src="assetUrl('/assets/models/search.svg')" alt="" aria-hidden="true" />
@@ -416,7 +416,9 @@ onMounted(() => {
 
         <div class="models-layout-header has-sidebar">
           <div class="models-sidebar-header">
-            <span class="models-sidebar-header__title">{{ t('pages.models.sidebar.title') }}</span>
+            <h2 id="models-explore-title" class="models-sidebar-header__title">
+              {{ t('pages.models.sidebar.title') }}
+            </h2>
             <button
               v-if="hasActiveFilters"
               type="button"
@@ -429,6 +431,9 @@ onMounted(() => {
           </div>
 
           <div class="models-main-header">
+            <h2 id="models-latest-title" class="visually-hidden">
+              {{ t('pages.models.tabs.latest') }}
+            </h2>
             <div class="models-tabs" role="tablist" :aria-label="t('pages.models.filterLabel')">
               <button
                 v-for="tab in tabOptions"
@@ -653,10 +658,23 @@ onMounted(() => {
 }
 
 .models-sidebar-header__title {
+  margin: 0;
   color: #222;
   font-size: 16px;
   font-weight: 500;
-  line-height: 16px;
+  line-height: 1.3;
+}
+
+.visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .models-sidebar-header__clear {
