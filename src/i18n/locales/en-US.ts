@@ -1533,9 +1533,9 @@ export default {
         },
       },
       seo: {
-        title: 'Seed Creator Program — Varo.cloud',
+        title: 'Seed Creator Program｜Earn Bonus for Creating — Varo.cloud',
         description:
-          'Become a Varo Seed Creator: verify social accounts for Bonus, then invite a friend to unlock rewards for both of you.',
+          'Join the Varo Seed Creator program: pass X / Discord review to earn Early Creator Bonus, then invite friends to unlock rewards for both of you when they complete their first top-up. Apply now.',
       },
     },
     invite: {

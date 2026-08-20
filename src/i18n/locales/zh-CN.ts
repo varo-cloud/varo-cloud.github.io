@@ -1517,8 +1517,9 @@ export default {
         },
       },
       seo: {
-        title: 'Seed Creator 种子计划 — Varo.cloud',
-        description: '成为 Varo Seed Creator：完成社交验证获得 Bonus，邀请好友完成首充即可解锁双方奖励。',
+        title: 'Seed Creator 种子计划｜创作赚 Bonus — Varo.cloud',
+        description:
+          '加入 Varo Seed Creator 种子计划：完成 X / Discord 审核即可获得 Early Creator Bonus，邀请好友完成首充解锁双方奖励。立即申请成为种子创作者。',
       },
     },
     invite: {

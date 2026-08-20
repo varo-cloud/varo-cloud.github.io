@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { computed, onMounted, ref } from 'vue'
 import { useI18n } from 'vue-i18n'
+import { useHead } from '@unhead/vue'
 import { NSpin } from 'naive-ui'
 import { useAppMessage } from '@/composables/useAppMessage'
 import { useLocaleRouter } from '@/composables/useLocaleRouter'
@@ -16,6 +17,7 @@ import {
 import { parseTimestampMs, formatCountdown } from '@/utils/time'
 import { campaignCopyParams } from '@/utils/campaign'
 import { centsToUsd, formatUsd } from '@/utils/currency'
+import { absoluteUrl, SITE_NAME } from '@/seo/config'
 import type {
   InvitationStatus,
   ReferralInvitation,
@@ -83,6 +85,84 @@ const canSubmitForm = computed(
 
 const canResubmitRejected = computed(
   () => isRejected.value && !isEnded.value && formFilled.value && !submitting.value,
+)
+
+const pageUrl = computed(() => absoluteUrl(localePath('/activity/seed-creator')))
+
+const jsonLdGraph = computed(() => {
+  const graph: Record<string, unknown>[] = [
+    {
+      '@type': 'WebPage',
+      name: t('pages.seedCreator.seo.title'),
+      description: t('pages.seedCreator.seo.description'),
+      url: pageUrl.value,
+      isPartOf: {
+        '@type': 'WebSite',
+        name: SITE_NAME,
+        url: absoluteUrl('/'),
+      },
+    },
+  ]
+
+  if (campaign.value && !noCampaign.value) {
+    const eventName = campaignName.value || t('pages.seedCreator.eyebrow')
+    const event: Record<string, unknown> = {
+      '@type': 'Event',
+      name: eventName,
+      description: t('pages.seedCreator.seo.description'),
+      url: pageUrl.value,
+      eventAttendanceMode: 'https://schema.org/OnlineEventAttendanceMode',
+      eventStatus:
+        campaign.value.state === 'ended'
+          ? 'https://schema.org/EventEnded'
+          : 'https://schema.org/EventScheduled',
+      organizer: {
+        '@type': 'Organization',
+        name: SITE_NAME,
+        url: absoluteUrl('/'),
+      },
+      location: {
+        '@type': 'VirtualLocation',
+        url: pageUrl.value,
+      },
+    }
+
+    if (campaign.value.startsAt) event.startDate = campaign.value.startsAt
+    if (campaign.value.endsAt) event.endDate = campaign.value.endsAt
+
+    if (campaign.value.seedBonusCents != null && campaign.value.seedBonusCents > 0) {
+      event.offers = {
+        '@type': 'Offer',
+        name: t('pages.seedCreator.landing.bonusLabel'),
+        description: t('pages.seedCreator.landing.bonusRule', copy.value),
+        price: String(centsToUsd(campaign.value.seedBonusCents)),
+        priceCurrency: 'USD',
+        availability:
+          campaign.value.state === 'active'
+            ? 'https://schema.org/InStock'
+            : 'https://schema.org/SoldOut',
+        url: pageUrl.value,
+      }
+    }
+
+    graph.push(event)
+  }
+
+  return graph
+})
+
+useHead(
+  computed(() => ({
+    script: [
+      {
+        type: 'application/ld+json',
+        innerHTML: JSON.stringify({
+          '@context': 'https://schema.org',
+          '@graph': jsonLdGraph.value,
+        }),
+      },
+    ],
+  })),
 )
 
 const rejectReasonLabel = computed(() => {
@@ -376,7 +456,11 @@ onMounted(loadPage)
 </script>
 
 <template>
-  <div class="seed-page">
+  <div
+    class="seed-page"
+    data-seo-ready="seed-creator"
+    :data-seo-content-ready="loading ? undefined : 'seed-creator'"
+  >
     <div class="seed-page__inner">
       <div v-if="loading" class="seed-page__state">
         <NSpin size="large" />
@@ -392,7 +476,9 @@ onMounted(loadPage)
       <template v-else-if="noCampaign">
         <header class="seed-page__hero">
           <p class="seed-page__eyebrow">{{ t('pages.seedCreator.empty.eyebrow') }}</p>
-          <h1 class="seed-page__title">{{ t('pages.seedCreator.empty.title') }}</h1>
+          <h1 id="seed-creator-hero-title" class="seed-page__title">
+            {{ t('pages.seedCreator.empty.title') }}
+          </h1>
           <p class="seed-page__lead">{{ t('pages.seedCreator.empty.lead') }}</p>
         </header>
 
@@ -411,7 +497,9 @@ onMounted(loadPage)
       <template v-else-if="!me && !isEnded && !userStore.isLoggedIn">
         <header class="seed-page__hero">
           <p class="seed-page__eyebrow">{{ campaignName || t('pages.seedCreator.eyebrow') }}</p>
-          <h1 class="seed-page__title">{{ t('pages.seedCreator.title') }}</h1>
+          <h1 id="seed-creator-hero-title" class="seed-page__title">
+            {{ t('pages.seedCreator.title') }}
+          </h1>
           <p class="seed-page__lead">{{ t('pages.seedCreator.lead', copy) }}</p>
         </header>
 

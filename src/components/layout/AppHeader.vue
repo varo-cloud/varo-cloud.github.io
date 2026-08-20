@@ -37,6 +37,7 @@ function updateScrollState() {
 
 const navItems = computed(() => [
   { label: t('nav.aiGenerator'), name: 'ai-generator' },
+  { label: t('nav.seedCreator'), name: 'seed-creator' },
   { label: t('nav.pricing'), name: 'pricing' },
   { label: t('nav.developers'), name: 'developers' },
 ])
