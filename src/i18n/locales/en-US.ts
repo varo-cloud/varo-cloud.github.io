@@ -251,9 +251,9 @@ export default {
       modelLoadError: 'Failed to load model. Please try again.',
       emptyModels: 'No models available.',
       seo: {
-        title: 'AI Video Generator – Text to Video AI | Varo.cloud',
+        title: 'Multimodal AI Video Generator – Text, Image & Reference to Video | Varo.cloud',
         description:
-          'Generate AI videos from text with Varo.cloud. Choose leading video models, customize duration and resolution, and create videos with synchronized voice, SFX and music.',
+          'Create AI videos from text prompts, images, and references with Varo.cloud. Access leading AI video models, customize output settings, and generate high-quality videos with synchronized audio.'
       },
     },
     modelDetail: {

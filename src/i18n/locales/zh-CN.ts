@@ -249,9 +249,9 @@ export default {
       modelLoadError: '加载模型失败，请重试。',
       emptyModels: '暂无可用模型。',
       seo: {
-        title: 'AI 视频生成器 – 文生视频 AI | Varo.cloud',
+        title: '多模态 AI 视频生成器 – 文生、图生与参考生视频 | Varo.cloud',
         description:
-          '在 Varo.cloud 用文本生成 AI 视频。选择领先视频模型，自定义时长与分辨率，生成带同步语音、音效与背景音乐的视频。',
+          '在 Varo.cloud 用文本提示词、图片和参考素材创建 AI 视频。使用领先 AI 视频模型，自定义输出设置，生成带同步音频的高质量视频。',
       },
     },
     modelDetail: {
