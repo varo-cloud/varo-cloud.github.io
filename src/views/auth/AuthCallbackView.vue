@@ -10,6 +10,7 @@ import AppHeader from '@/components/layout/AppHeader.vue'
 import AppFooter from '@/components/layout/AppFooter.vue'
 import { setLastAuthMethod } from '@/utils/lastAuthMethod'
 import { clearOAuthPending, readOAuthPending } from '@/utils/oauth'
+import { resolvePostLoginPath } from '@/utils/pendingInvite'
 
 const route = useRoute()
 const { replace, localePath } = useLocaleRouter()
@@ -55,7 +56,7 @@ onMounted(async () => {
     }
     trackEvent(AnalyticsEvents.LOGIN_COMPLETE, { method: pending.provider })
 
-    const returnTo = pending.returnTo
+    const returnTo = resolvePostLoginPath(localePath, pending.returnTo)
     clearOAuthPending()
     replace(returnTo || { name: 'models' })
   } catch (err) {

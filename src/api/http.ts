@@ -14,6 +14,21 @@ export const http = axios.create({
   timeout: 15000,
 })
 
+/** Business / HTTP error from the API envelope (`code` is HTTP status or 0). */
+export class ApiError extends Error {
+  readonly code: number
+
+  constructor(message: string, code: number) {
+    super(message)
+    this.name = 'ApiError'
+    this.code = code
+  }
+}
+
+export function isApiError(error: unknown): error is ApiError {
+  return error instanceof ApiError
+}
+
 interface RetryableRequestConfig extends InternalAxiosRequestConfig {
   _retry?: boolean
 }
@@ -116,11 +131,11 @@ http.interceptors.response.use(
       if (!isAuthExemptUrl(config.url)) {
         await handleUnauthorizedSession()
       }
-      return Promise.reject(new Error(payload.message || 'Unauthorized'))
+      return Promise.reject(new ApiError(payload.message || 'Unauthorized', 401))
     }
 
     if (payload.code !== 0) {
-      return Promise.reject(new Error(payload.message || 'Request failed'))
+      return Promise.reject(new ApiError(payload.message || 'Request failed', payload.code))
     }
     return response
   },
@@ -139,7 +154,12 @@ http.interceptors.response.use(
       }
     }
 
-    return Promise.reject(new Error(resolveHttpErrorMessage(error)))
+    return Promise.reject(
+      new ApiError(
+        resolveHttpErrorMessage(error),
+        payload?.code ?? error.response?.status ?? 0,
+      ),
+    )
   },
 )
 

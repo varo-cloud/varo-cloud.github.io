@@ -88,6 +88,8 @@ function buildDevProfile() {
     role: 'admin' as const,
     balance_usd: getAccountBalanceUsd(),
     created_at: Date.now(),
+    invite_code: null,
+    invited_code: null,
   }
 }
 
@@ -104,6 +106,8 @@ function getOrCreateUser(email: string): UserProfile {
     role: 'user',
     balanceUsd: 0,
     createdAt: Date.now(),
+    inviteCode: null,
+    invitedCode: null,
   }
   users.set(normalized, user)
   return user
@@ -294,6 +298,8 @@ export default [
               role: user.role,
               balance_usd: getAccountBalanceUsd(),
               created_at: user.createdAt,
+              invite_code: user.inviteCode,
+              invited_code: user.invitedCode,
             })
           }
         }

@@ -7,6 +7,7 @@ import AppFooter from './AppFooter.vue'
 const route = useRoute()
 
 const isFullBleed = computed(() => route.meta.fullBleed === true)
+const usesScrollHeader = computed(() => route.meta.scrollHeader === true)
 const isLightPage = computed(() => route.meta.lightPage === true)
 </script>
 
@@ -14,7 +15,7 @@ const isLightPage = computed(() => route.meta.lightPage === true)
   <div
     class="app-layout"
     :class="{
-      'app-layout--full-bleed': isFullBleed,
+      'app-layout--full-bleed': isFullBleed && !usesScrollHeader,
       'app-layout--light': isLightPage,
     }"
   >

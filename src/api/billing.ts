@@ -3,16 +3,57 @@ import type {
   BillingConfig,
   BillingRecord,
   BillingSummary,
+  BonusGrant,
+  BonusGrantSource,
+  BonusLotStatus,
   CheckoutSessionResult,
   CreateCheckoutPayload,
   CreditPackage,
   Transaction,
   TransactionProvider,
+  WalletBalance,
+  WalletBonus,
   // UpdateAutoTopUpPayload,
 } from '@/types'
 
 interface ApiBillingBalance {
+  cash?: number
+  bonus?: number
+  bonus_expires_at?: string | null
+  total?: number
   balance_usd?: number
+}
+
+interface ApiBonusGrant {
+  source: string
+  amount_cents: number
+  remaining_cents: number
+  expires_at?: string | null
+  status: string
+}
+
+interface ApiWalletBonus {
+  total_bonus_cents: number
+  grants: ApiBonusGrant[]
+}
+
+function mapBonusSource(value: string): BonusGrantSource {
+  if (
+    value === 'seed_bonus' ||
+    value === 'inviter_reward' ||
+    value === 'invitee_reward' ||
+    value === 'manual'
+  ) {
+    return value
+  }
+  return 'manual'
+}
+
+function mapBonusLotStatus(value: string): BonusLotStatus {
+  if (value === 'active' || value === 'depleted' || value === 'expired' || value === 'frozen') {
+    return value
+  }
+  return 'active'
 }
 
 interface ApiUsageRecord {
@@ -59,7 +100,7 @@ interface ApiBillingConfig {
 
 interface ApiTransaction {
   id: string
-  provider?: string
+  provider?: string | null
   amount_usd?: number
   status?: string
   created_at?: string | number
@@ -69,6 +110,9 @@ interface ApiTransaction {
   receipt_url?: string | null
   fee_usd?: number | null
   type?: string
+  source?: string | null
+  amount_remaining_usd?: number | null
+  expires_at?: string | number | null
   amountUsd?: number
   description?: string
   createdAt?: number
@@ -78,6 +122,8 @@ interface ApiTransaction {
   receiptUrl?: string | null
   feeUsd?: number | null
   providerCamel?: TransactionProvider
+  amountRemainingUsd?: number | null
+  expiresAt?: string | number | null
 }
 
 function parseTimestamp(value: string | number | undefined): number {
@@ -138,18 +184,34 @@ function mapBillingRecord(raw: ApiBillingRecord): BillingRecord {
   }
 }
 
-function mapTransactionProvider(value: string | undefined): TransactionProvider | undefined {
+function mapTransactionProvider(
+  value: string | null | undefined,
+): TransactionProvider | undefined {
   if (value === 'stripe' || value === 'nowpayments') return value
   return undefined
 }
 
+function mapTransactionType(value: string | undefined): Transaction['type'] {
+  if (value === 'bonus' || value === 'usage' || value === 'topup') return value
+  return 'topup'
+}
+
+function mapOptionalTimestamp(value: string | number | null | undefined): number | null {
+  if (value == null || value === '') return null
+  return parseTimestamp(value)
+}
+
 function mapTransaction(raw: ApiTransaction): Transaction {
+  const type = mapTransactionType(raw.type)
+  const source = raw.source != null ? mapBonusSource(raw.source) : null
+  const defaultDescription = type === 'bonus' ? 'Bonus' : 'Top Up'
+
   if (raw.amountUsd != null) {
     return {
       id: raw.id,
-      type: (raw.type as Transaction['type']) ?? 'topup',
+      type,
       amountUsd: raw.amountUsd,
-      description: raw.description ?? 'Top Up',
+      description: raw.description ?? defaultDescription,
       createdAt: raw.createdAt ?? Date.now(),
       status: raw.status as Transaction['status'],
       provider: raw.providerCamel ?? mapTransactionProvider(raw.provider),
@@ -158,22 +220,28 @@ function mapTransaction(raw: ApiTransaction): Transaction {
       completedAt: raw.completedAt ?? null,
       receiptUrl: raw.receiptUrl ?? null,
       feeUsd: raw.feeUsd ?? null,
+      source,
+      amountRemainingUsd: raw.amountRemainingUsd ?? null,
+      expiresAt: mapOptionalTimestamp(raw.expiresAt),
     }
   }
 
   return {
     id: raw.id,
-    type: 'topup',
+    type,
     amountUsd: raw.amount_usd ?? 0,
-    description: 'Top Up',
+    description: defaultDescription,
     createdAt: parseTimestamp(raw.created_at),
     status: raw.status as Transaction['status'],
     provider: mapTransactionProvider(raw.provider),
     paymentMethod: raw.payment_method ?? null,
     paymentDetail: raw.payment_detail ?? null,
-    completedAt: raw.completed_at != null ? parseTimestamp(raw.completed_at) : null,
+    completedAt: mapOptionalTimestamp(raw.completed_at),
     receiptUrl: raw.receipt_url ?? null,
     feeUsd: raw.fee_usd ?? null,
+    source,
+    amountRemainingUsd: raw.amount_remaining_usd ?? null,
+    expiresAt: mapOptionalTimestamp(raw.expires_at),
   }
 }
 
@@ -199,14 +267,47 @@ export async function fetchBillingSummary(): Promise<BillingSummary> {
     const raw = await unwrap<ApiBillingSummary>(http.get('/billing/summary'))
     return mapBillingSummary(raw)
   } catch {
-    const balance = await unwrap<ApiBillingBalance>(http.get('/billing/balance'))
+    const balance = await fetchWalletBalance()
     return {
-      balanceUsd: balance.balance_usd ?? 0,
+      balanceUsd: balance.totalUsd,
       monthSpendUsd: 0,
       totalTopupUsd: 0,
       totalSpentUsd: 0,
     }
   }
+}
+
+export function fetchWalletBalance() {
+  return unwrap<ApiBillingBalance>(http.get('/billing/balance')).then(
+    (raw): WalletBalance => {
+      const cashUsd = raw.cash ?? 0
+      const bonusUsd = raw.bonus ?? 0
+      const totalUsd = raw.total ?? raw.balance_usd ?? cashUsd + bonusUsd
+      return {
+        cashUsd,
+        bonusUsd,
+        bonusExpiresAt: raw.bonus_expires_at ?? null,
+        totalUsd,
+      }
+    },
+  )
+}
+
+export function fetchWalletBonus() {
+  return unwrap<ApiWalletBonus>(http.get('/wallet/bonus')).then(
+    (raw): WalletBonus => ({
+      totalBonusCents: raw.total_bonus_cents,
+      grants: (raw.grants ?? []).map(
+        (item): BonusGrant => ({
+          source: mapBonusSource(item.source),
+          amountCents: item.amount_cents,
+          remainingCents: item.remaining_cents,
+          expiresAt: item.expires_at ?? null,
+          status: mapBonusLotStatus(item.status),
+        }),
+      ),
+    }),
+  )
 }
 
 export function fetchCreditPackages() {

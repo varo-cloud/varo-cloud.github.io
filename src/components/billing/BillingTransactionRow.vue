@@ -3,7 +3,7 @@ import { computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { formatUsd } from '@/utils/currency'
 import { formatTimestamp } from '@/utils/time'
-import type { TopUpTransactionStatus, Transaction } from '@/types'
+import type { Transaction, TransactionStatus } from '@/types'
 
 const props = defineProps<{
   item: Transaction
@@ -15,9 +15,29 @@ const emit = defineEmits<{
 
 const { t, locale } = useI18n()
 
-const status = computed<TopUpTransactionStatus>(() => props.item.status ?? 'completed')
+const isBonus = computed(() => props.item.type === 'bonus')
 
-const statusLabel = computed(() => t(`pages.billing.topUpDetail.statuses.${status.value}`))
+const status = computed<TransactionStatus>(() => {
+  if (props.item.status) return props.item.status
+  return isBonus.value ? 'active' : 'completed'
+})
+
+const statusLabel = computed(() => {
+  if (isBonus.value) {
+    return t(`pages.billing.bonusLotStatus.${status.value}`)
+  }
+  return t(`pages.billing.topUpDetail.statuses.${status.value}`)
+})
+
+const descriptionLabel = computed(() => {
+  if (isBonus.value) {
+    if (props.item.source) {
+      return t(`pages.billing.bonusSources.${props.item.source}`)
+    }
+    return t('pages.billing.styles.bonus')
+  }
+  return props.item.description
+})
 
 const initiatedLabel = computed(() =>
   formatTimestamp(props.item.createdAt, locale.value, 'compactDatetime'),
@@ -26,6 +46,11 @@ const initiatedLabel = computed(() =>
 const completedLabel = computed(() => {
   if (!props.item.completedAt) return '—'
   return formatTimestamp(props.item.completedAt, locale.value, 'compactDatetime')
+})
+
+const expiresLabel = computed(() => {
+  if (!isBonus.value || !props.item.expiresAt) return '—'
+  return formatTimestamp(props.item.expiresAt, locale.value, 'compactDatetime')
 })
 
 const amountLabel = computed(() => {
@@ -51,7 +76,7 @@ const paymentMethodLabel = computed(() => {
 
 <template>
   <div class="billing-tx-row" role="row">
-    <span class="billing-tx-row__desc" role="cell">{{ item.description }}</span>
+    <span class="billing-tx-row__desc" role="cell">{{ descriptionLabel }}</span>
     <span class="billing-tx-row__status" role="cell">
       <span
         class="billing-tx-row__status-badge"
@@ -64,6 +89,7 @@ const paymentMethodLabel = computed(() => {
     <span class="billing-tx-row__payment" role="cell">{{ paymentMethodLabel }}</span>
     <span class="billing-tx-row__time" role="cell">{{ initiatedLabel }}</span>
     <span class="billing-tx-row__time" role="cell">{{ completedLabel }}</span>
+    <span class="billing-tx-row__time" role="cell">{{ expiresLabel }}</span>
     <span class="billing-tx-row__amount" role="cell">{{ amountLabel }}</span>
     <span class="billing-tx-row__action" role="cell">
       <button type="button" class="billing-tx-row__view-btn" @click="emit('view', item)">
@@ -81,6 +107,7 @@ const paymentMethodLabel = computed(() => {
     minmax(88px, 0.75fr)
     minmax(80px, 0.7fr)
     minmax(88px, 0.75fr)
+    minmax(110px, 0.95fr)
     minmax(110px, 0.95fr)
     minmax(110px, 0.95fr)
     minmax(72px, 0.6fr)
@@ -115,7 +142,8 @@ const paymentMethodLabel = computed(() => {
   white-space: nowrap;
 }
 
-.billing-tx-row__status-badge--completed {
+.billing-tx-row__status-badge--completed,
+.billing-tx-row__status-badge--active {
   background: rgba(0, 187, 131, 0.12);
   color: #00bb83;
 }
@@ -125,9 +153,15 @@ const paymentMethodLabel = computed(() => {
   color: #ff9800;
 }
 
-.billing-tx-row__status-badge--partial {
+.billing-tx-row__status-badge--partial,
+.billing-tx-row__status-badge--frozen {
   background: rgba(255, 152, 0, 0.12);
   color: #ff9800;
+}
+
+.billing-tx-row__status-badge--depleted {
+  background: rgba(255, 255, 255, 0.06);
+  color: var(--text-secondary);
 }
 
 .billing-tx-row__status-badge--failed,

@@ -19,8 +19,10 @@ import {
   fetchCreditPackages,
   fetchTransactions,
   fetchUsageRecords,
+  fetchWalletBalance,
   // updateAutoTopUp,
 } from '@/api/billing'
+import { fetchSeedCreatorOverview } from '@/api/activity'
 import { useLocaleRouter } from '@/composables/useLocaleRouter'
 import { AnalyticsEvents, trackEvent } from '@/analytics'
 import { useUserStore } from '@/stores/user'
@@ -36,6 +38,7 @@ import type {
   PaymentMethodId,
   TopUpSelectionId,
   Transaction,
+  WalletBalance,
 } from '@/types'
 
 type HistoryTab = 'topup' | 'billing'
@@ -88,6 +91,7 @@ const userStore = useUserStore()
 const loading = ref(true)
 const error = ref<string | null>(null)
 const summary = ref<BillingSummary | null>(null)
+const walletBalance = ref<WalletBalance | null>(null)
 const packages = ref<CreditPackage[]>([])
 const transactions = ref<Transaction[]>([])
 const billingRecords = ref<BillingRecord[]>([])
@@ -101,6 +105,9 @@ const purchasing = ref(false)
 const checkoutProcessing = ref(false)
 const mockPaying = ref(false)
 const viewingTransaction = ref<Transaction | null>(null)
+/** Invite-bonus tip on recharge: slot taken vs already participated; null when N/A. */
+type InviteBonusHint = 'slot_unavailable' | 'already_claimed' | null
+const inviteBonusHint = ref<InviteBonusHint>(null)
 
 // const autoTopUpEnabled = ref(false)
 // const autoTopUpThresholdNumber = ref(5)
@@ -190,7 +197,7 @@ const mockCheckoutDisplayAmountUsd = computed(() => {
 // )
 
 const topUpTransactions = computed(() =>
-  transactions.value.filter((item) => item.type === 'topup'),
+  transactions.value.filter((item) => item.type === 'topup' || item.type === 'bonus'),
 )
 
 const historyEmpty = computed(() =>
@@ -198,6 +205,18 @@ const historyEmpty = computed(() =>
     ? topUpTransactions.value.length === 0
     : !billingRecordsLoading.value && billingRecords.value.length === 0,
 )
+
+const showInviteBonusHint = computed(() => inviteBonusHint.value != null)
+
+const inviteBonusHintText = computed(() => {
+  if (inviteBonusHint.value === 'already_claimed') {
+    return t('pages.billing.inviteBonusAlreadyClaimed')
+  }
+  if (inviteBonusHint.value === 'slot_unavailable') {
+    return t('pages.billing.inviteBonusUnavailable')
+  }
+  return ''
+})
 
 function packageLabel(id: CreditPackageId) {
   const key = `pages.billing.topUpDetail.packages.${id}`
@@ -256,6 +275,30 @@ function billingStatusLabel(status: string | null | undefined) {
   return translated === key ? status : translated
 }
 
+async function loadInviteBonusHint() {
+  try {
+    const data = await fetchSeedCreatorOverview()
+    const invite = data.me?.invite
+    if (!invite) {
+      inviteBonusHint.value = null
+      return
+    }
+    // Already won or already topped up under this invite — cannot claim again.
+    if (invite.isWinner || invite.status === 'winner' || invite.status === 'no_reward') {
+      inviteBonusHint.value = 'already_claimed'
+      return
+    }
+    // Bound invitee, but Winner slot is already taken.
+    if (invite.rewardEligible === false) {
+      inviteBonusHint.value = 'slot_unavailable'
+      return
+    }
+    inviteBonusHint.value = null
+  } catch {
+    inviteBonusHint.value = null
+  }
+}
+
 async function loadBilling(options: { silent?: boolean } = {}) {
   if (!options.silent) {
     loading.value = true
@@ -263,21 +306,26 @@ async function loadBilling(options: { silent?: boolean } = {}) {
   }
 
   try {
-    const [summaryData, packageData, transactionData, configData] = await Promise.all([
-      fetchBillingSummary(),
-      fetchCreditPackages(),
-      fetchTransactions(),
-      fetchBillingConfig().catch(() => ({ publishableKey: '', cryptoEnabled: false })),
-    ])
+    const [summaryData, packageData, transactionData, configData, balanceData] =
+      await Promise.all([
+        fetchBillingSummary(),
+        fetchCreditPackages(),
+        fetchTransactions(),
+        fetchBillingConfig().catch(() => ({ publishableKey: '', cryptoEnabled: false })),
+        fetchWalletBalance().catch(() => null),
+      ])
 
     summary.value = summaryData
     packages.value = packageData
     transactions.value = transactionData
     cryptoEnabled.value = configData.cryptoEnabled
+    walletBalance.value = balanceData
 
     if (packageData.length > 0 && !selectedPackageId.value) {
       selectedPackageId.value = packageData[0].id
     }
+
+    void loadInviteBonusHint()
 
     // autoTopUpEnabled.value = summaryData.autoTopUp.enabled
     // autoTopUpThresholdNumber.value = summaryData.autoTopUp.thresholdUsd
@@ -286,8 +334,10 @@ async function loadBilling(options: { silent?: boolean } = {}) {
     if (!options.silent) {
       error.value = t('pages.billing.loadError')
       summary.value = null
+      walletBalance.value = null
       packages.value = []
       transactions.value = []
+      inviteBonusHint.value = null
     }
   } finally {
     if (!options.silent) {
@@ -562,28 +612,40 @@ onMounted(async () => {
 
         <section class="billing-summary" aria-label="Billing summary">
           <article class="billing-summary__card billing-summary__card--balance">
-            <p class="billing-summary__label">{{ t('pages.billing.cashBalance') }}</p>
+            <p class="billing-summary__label">{{ t('pages.billing.totalBalance') }}</p>
             <div class="billing-summary__balance-row">
-              <p class="billing-summary__value">{{ formatUsd(summary.balanceUsd) }}</p>
+              <p class="billing-summary__value">
+                {{ formatUsd(walletBalance?.totalUsd ?? summary.balanceUsd) }}
+              </p>
               <button type="button" class="billing-summary__topup-btn" @click="scrollToRecharge">
                 {{ t('pages.billing.topUp') }}
               </button>
             </div>
+            <p v-if="walletBalance" class="billing-summary__split">
+              {{
+                t('pages.billing.bonusSplitHint', {
+                  cash: formatUsd(walletBalance.cashUsd),
+                  bonus: formatUsd(walletBalance.bonusUsd),
+                })
+              }}
+            </p>
+          </article>
+
+          <article class="billing-summary__card">
+            <p class="billing-summary__label">{{ t('pages.billing.cashBalance') }}</p>
+            <p class="billing-summary__value">
+              {{ formatUsd(walletBalance?.cashUsd ?? summary.balanceUsd) }}
+            </p>
+          </article>
+
+          <article class="billing-summary__card">
+            <p class="billing-summary__label">{{ t('pages.billing.bonusBalance') }}</p>
+            <p class="billing-summary__value">{{ formatUsd(walletBalance?.bonusUsd ?? 0) }}</p>
           </article>
 
           <article class="billing-summary__card">
             <p class="billing-summary__label">{{ t('pages.billing.spentThisMonth') }}</p>
             <p class="billing-summary__value">{{ formatUsd(summary.monthSpendUsd) }}</p>
-          </article>
-
-          <article class="billing-summary__card">
-            <p class="billing-summary__label">{{ t('pages.billing.totalTopup') }}</p>
-            <p class="billing-summary__value">{{ formatUsd(summary.totalTopupUsd) }}</p>
-          </article>
-
-          <article class="billing-summary__card">
-            <p class="billing-summary__label">{{ t('pages.billing.totalSpent') }}</p>
-            <p class="billing-summary__value">{{ formatUsd(summary.totalSpentUsd) }}</p>
           </article>
 
           <!-- Auto top-up summary card — re-enable when feature ships
@@ -607,6 +669,14 @@ onMounted(async () => {
 
         <section ref="rechargeSectionRef" class="billing-recharge" aria-label="Account recharge">
           <h2 class="billing-section-title">{{ t('pages.billing.accountRecharge') }}</h2>
+
+          <p
+            v-if="showInviteBonusHint"
+            class="billing-invite-hint"
+            role="status"
+          >
+            {{ inviteBonusHintText }}
+          </p>
 
           <div class="billing-recharge__grid">
             <div class="billing-panel billing-panel--checkout">
@@ -863,6 +933,7 @@ onMounted(async () => {
               <span role="columnheader">{{ t('pages.billing.columns.paymentMethod') }}</span>
               <span role="columnheader">{{ t('pages.billing.columns.initiatedAt') }}</span>
               <span role="columnheader">{{ t('pages.billing.columns.completedAt') }}</span>
+              <span role="columnheader">{{ t('pages.billing.columns.expiresAt') }}</span>
               <span role="columnheader">{{ t('pages.billing.columns.amount') }}</span>
               <span role="columnheader">{{ t('pages.billing.columns.action') }}</span>
             </div>
@@ -1030,6 +1101,13 @@ onMounted(async () => {
   color: var(--text-primary);
 }
 
+.billing-summary__split {
+  margin: 12px 0 0;
+  color: var(--text-secondary);
+  font-size: 13px;
+  line-height: 18px;
+}
+
 .billing-summary__balance-row,
 .billing-summary__spent-row,
 .billing-summary__auto-header {
@@ -1080,6 +1158,17 @@ onMounted(async () => {
   margin-bottom: 40px;
 }
 
+.billing-invite-hint {
+  margin: -8px 0 20px;
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 0.5px solid rgba(255, 152, 0, 0.35);
+  background: rgba(255, 152, 0, 0.08);
+  color: var(--text-secondary);
+  font-size: 14px;
+  line-height: 1.5;
+}
+
 .billing-recharge__grid {
   display: grid;
   grid-template-columns: minmax(0, 1fr);
@@ -1088,7 +1177,7 @@ onMounted(async () => {
 
 .billing-panel--checkout {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(240px, 300px);
+  grid-template-columns: minmax(0, 1fr) minmax(340px, 300px);
   gap: 32px 48px;
   align-items: start;
 }
@@ -1502,6 +1591,7 @@ onMounted(async () => {
     minmax(88px, 0.75fr)
     minmax(110px, 0.95fr)
     minmax(110px, 0.95fr)
+    minmax(110px, 0.95fr)
     minmax(72px, 0.6fr)
     72px;
 }
@@ -1512,7 +1602,7 @@ onMounted(async () => {
 
 .billing-table--topup .billing-table__header--topup,
 .billing-table--topup :deep(.billing-tx-row) {
-  min-width: 940px;
+  min-width: 1060px;
 }
 
 .billing-table__empty {

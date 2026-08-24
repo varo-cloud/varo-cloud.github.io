@@ -27,17 +27,26 @@ let userMenuCloseTimer: ReturnType<typeof setTimeout> | null = null
 let modelsMenuCloseTimer: ReturnType<typeof setTimeout> | null = null
 
 const usesTransparentHeader = computed(() => route.meta.transparentHeader === true)
+const usesScrollHeader = computed(() => route.meta.scrollHeader === true)
 const isHeaderSolid = computed(() => !usesTransparentHeader.value || isScrolled.value)
 
 function updateScrollState() {
   isScrolled.value = window.scrollY > 0
 }
 
-const navItems = computed(() => [
-  { label: t('nav.aiGenerator'), name: 'ai-generator' },
-  { label: t('nav.pricing'), name: 'pricing' },
-  { label: t('nav.developers'), name: 'developers' },
-])
+const navItems = computed(() => {
+  // Invitees should open invite status, not the Seed Creator application page.
+  const campaignNav = userStore.profile?.invitedCode
+    ? { label: t('nav.invite'), name: 'invite' }
+    : { label: t('nav.seedCreator'), name: 'seed-creator' }
+
+  return [
+    { label: t('nav.aiGenerator'), name: 'ai-generator' },
+    campaignNav,
+    { label: t('nav.pricing'), name: 'pricing' },
+    { label: t('nav.developers'), name: 'developers' },
+  ]
+})
 
 const modelsMenuItems = computed(() => [
   { label: t('nav.allModels'), name: 'models' },
@@ -147,6 +156,9 @@ function isActive(name: string) {
       route.name === 'minimax-h3'
     )
   }
+  if (name === 'invite') {
+    return route.name === 'invite' || route.name === 'invite-bind'
+  }
   return route.name === name
 }
 
@@ -161,6 +173,19 @@ const isModelsNavActive = computed(
 
 function goTo(name: string) {
   push({ name })
+}
+
+/** On invite-bind, keep the invite code in the post-login redirect (same as page CTA). */
+function goLogin() {
+  if (route.name === 'invite-bind') {
+    const code = typeof route.params.code === 'string' ? route.params.code.trim() : ''
+    const target = code
+      ? localePath(`/invite/${encodeURIComponent(code)}`)
+      : localePath('/invite')
+    push({ name: 'auth', query: { redirect: target } })
+    return
+  }
+  push({ name: 'auth' })
 }
 
 function openModelsMenu() {
@@ -228,7 +253,12 @@ function handleUserMenuSelect(key: string) {
   userMenuOpen.value = false
 
   if (key === 'logout') {
-    void userStore.logout()
+    const requiresAuth = route.meta.requiresAuth === true
+    void userStore.logout().then(() => {
+      if (requiresAuth) {
+        void push({ name: 'home' })
+      }
+    })
     return
   }
 
@@ -237,7 +267,12 @@ function handleUserMenuSelect(key: string) {
     return
   }
 
-  if (key === 'deposit' || key === 'billing' || key === 'api-keys' || key === 'generations') {
+  if (
+    key === 'deposit' ||
+    key === 'billing' ||
+    key === 'api-keys' ||
+    key === 'generations'
+  ) {
     goTo(key === 'deposit' ? 'billing' : key)
   }
 }
@@ -346,7 +381,11 @@ onUnmounted(() => {
 <template>
   <header
     class="app-header"
-    :class="{ 'app-header--solid': isHeaderSolid, 'app-header--transparent': !isHeaderSolid }"
+    :class="{
+      'app-header--solid': isHeaderSolid,
+      'app-header--transparent': !isHeaderSolid,
+      'app-header--scroll': usesScrollHeader,
+    }"
   >
     <div class="app-header__inner">
       <div class="app-header__left">
@@ -530,7 +569,7 @@ onUnmounted(() => {
           v-else
           type="button"
           class="app-header__login-btn"
-          @click="push({ name: 'auth' })"
+          @click="goLogin"
         >
           {{ t('common.login') }}
         </button>
@@ -663,6 +702,10 @@ onUnmounted(() => {
   transition:
     background-color 0.2s ease,
     border-color 0.2s ease;
+}
+
+.app-header--scroll {
+  position: static;
 }
 
 .app-header--solid {

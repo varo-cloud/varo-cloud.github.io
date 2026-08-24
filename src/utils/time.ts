@@ -62,3 +62,60 @@ export function formatRelativeTimestamp(timestamp: number, locale: string): stri
 
   return rtf.format(Math.round(diffSec / 86400), 'day')
 }
+
+/** Remaining calendar-style countdown until an ISO / timestamp deadline. */
+export function formatCountdown(deadline: string | number | null | undefined): {
+  expired: boolean
+  days: number
+  hours: number
+} | null {
+  if (deadline == null || deadline === '') return null
+  const ms = typeof deadline === 'number' ? toMillis(deadline) : Date.parse(deadline)
+  if (!Number.isFinite(ms)) return null
+
+  const diffMs = ms - Date.now()
+  if (diffMs <= 0) return { expired: true, days: 0, hours: 0 }
+
+  const totalHours = Math.floor(diffMs / (60 * 60 * 1000))
+  return {
+    expired: false,
+    days: Math.floor(totalHours / 24),
+    hours: totalHours % 24,
+  }
+}
+
+/** Remaining countdown with day + clock parts until an ISO / timestamp deadline. */
+export function formatCountdownClock(
+  deadline: string | number | null | undefined,
+  nowMs = Date.now(),
+): {
+  expired: boolean
+  days: number
+  hours: number
+  minutes: number
+  seconds: number
+} | null {
+  if (deadline == null || deadline === '') return null
+  const ms = typeof deadline === 'number' ? toMillis(deadline) : Date.parse(deadline)
+  if (!Number.isFinite(ms)) return null
+
+  const diffMs = ms - nowMs
+  if (diffMs <= 0) {
+    return { expired: true, days: 0, hours: 0, minutes: 0, seconds: 0 }
+  }
+
+  const totalSec = Math.floor(diffMs / SECOND_MS)
+  return {
+    expired: false,
+    days: Math.floor(totalSec / 86400),
+    hours: Math.floor((totalSec % 86400) / 3600),
+    minutes: Math.floor((totalSec % 3600) / 60),
+    seconds: totalSec % 60,
+  }
+}
+
+export function parseTimestampMs(value: string | number | null | undefined): number | null {
+  if (value == null || value === '') return null
+  const ms = typeof value === 'number' ? toMillis(value) : Date.parse(value)
+  return Number.isFinite(ms) ? ms : null
+}

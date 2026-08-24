@@ -172,6 +172,10 @@ export interface UserProfile {
   balanceUsd: number
   /** Maps from API field `created_at` — 13-digit Unix timestamp (ms) */
   createdAt: number
+  /** Own Seed Creator invite code — null when not a Seed Creator */
+  inviteCode: string | null
+  /** Invite code this user was invited with — null when not an invitee */
+  invitedCode: string | null
 }
 
 export interface OtpRequestPayload {
@@ -259,9 +263,15 @@ export interface CreateApiKeyResult {
   createdAt: number
 }
 
-export type TransactionType = 'topup' | 'usage'
+export type TransactionType = 'topup' | 'usage' | 'bonus'
 
 export type TopUpTransactionStatus = 'pending' | 'completed' | 'failed' | 'expired' | 'partial'
+
+export type BonusGrantSource = 'seed_bonus' | 'inviter_reward' | 'invitee_reward' | 'manual'
+
+export type BonusLotStatus = 'active' | 'depleted' | 'expired' | 'frozen'
+
+export type TransactionStatus = TopUpTransactionStatus | BonusLotStatus
 
 export type TransactionProvider = 'stripe' | 'nowpayments'
 
@@ -271,13 +281,17 @@ export interface Transaction {
   amountUsd: number
   description: string
   createdAt: number
-  status?: TopUpTransactionStatus
+  status?: TransactionStatus
   provider?: TransactionProvider
   paymentMethod?: string | null
   paymentDetail?: string | null
   completedAt?: number | null
   receiptUrl?: string | null
   feeUsd?: number | null
+  /** Bonus grant source; only present when type === 'bonus' */
+  source?: BonusGrantSource | null
+  amountRemainingUsd?: number | null
+  expiresAt?: number | null
 }
 
 export interface BalanceInfo {
@@ -295,6 +309,127 @@ export interface BillingSummary {
   monthSpendUsd: number
   totalTopupUsd: number
   totalSpentUsd: number
+}
+
+export interface WalletBalance {
+  cashUsd: number
+  bonusUsd: number
+  bonusExpiresAt: string | null
+  totalUsd: number
+}
+
+export interface BonusGrant {
+  source: BonusGrantSource
+  amountCents: number
+  remainingCents: number
+  expiresAt: string | null
+  status: BonusLotStatus
+}
+
+export interface WalletBonus {
+  totalBonusCents: number
+  grants: BonusGrant[]
+}
+
+export type CampaignState = 'draft' | 'active' | 'ended'
+
+export type SeedStatus =
+  | 'submitted'
+  | 'under_review'
+  | 'approved'
+  | 'rejected'
+  | 'cancelled'
+
+export type ReferralRewardStatus = 'waiting_for_winner' | 'rewarded' | 'expired'
+
+export type InvitationStatus =
+  | 'waiting_for_topup'
+  | 'qualified'
+  | 'winner'
+  | 'no_reward'
+  | 'expired'
+
+export interface SeedCreatorCampaign {
+  id: string
+  state: CampaignState
+  name: string | null
+  seedCap: number
+  seedApproved: number
+  seedBonusCents: number | null
+  rewardInviterCents: number | null
+  rewardInviteeCents: number | null
+  bonusTtlMinutes: number | null
+  depositWindowMinutes: number | null
+  minDepositCents: number | null
+  budgetCapCents: number | null
+  startsAt: string | null
+  endsAt: string | null
+}
+
+/** Present when the current user is an invitee of a Seed Creator. */
+export interface SeedCreatorMeInvite {
+  status: InvitationStatus
+  depositDeadline: number | string | null
+  firstTopupAt: number | string | null
+  isWinner: boolean
+  /**
+   * Whether topping up now can still earn invitee Bonus.
+   * False when the inviter already has a Winner (even if this user has not topped up yet).
+   */
+  rewardEligible: boolean
+}
+
+export interface SeedCreatorMe {
+  status: SeedStatus
+  seedRank: number | null
+  inviteCode: string | null
+  referralRewardStatus: ReferralRewardStatus | null
+  twitterUsername: string | null
+  twitterUrl: string | null
+  discordUsername: string | null
+  discordUserId: string | null
+  submittedAt: string | null
+  rejectReason: string | null
+  /** Null for Seed Creators; set when this user was invited. */
+  invite: SeedCreatorMeInvite | null
+}
+
+export interface SeedCreatorOverview {
+  campaign: SeedCreatorCampaign
+  me: SeedCreatorMe | null
+}
+
+export interface SeedCreatorSubmitPayload {
+  twitterUsername?: string
+  twitterUrl?: string
+  discordUsername?: string
+  discordUserId?: string
+}
+
+export interface ReferralOverview {
+  inviteCode: string
+  inviteUrl: string
+  invitedCount: number
+  referralRewardStatus: ReferralRewardStatus
+}
+
+export interface ReferralInvitation {
+  inviteeMasked: string
+  registered: boolean
+  toppedUp: boolean
+  /** First qualifying top-up amount in cents, when the API provides it. */
+  topUpAmountCents: number | null
+  status: InvitationStatus
+  deadline: string | null
+}
+
+export interface ReferralBindResult {
+  bound: boolean
+  inviterMasked: string | null
+  deadline: string | null
+  boundAt: string | null
+  /** Invitee invitation status when the bind API provides it. */
+  status: InvitationStatus | null
 }
 
 export interface TopUpPreset {

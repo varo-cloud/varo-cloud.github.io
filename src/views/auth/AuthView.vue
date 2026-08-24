@@ -15,6 +15,7 @@ import {
   type AuthLoginMethod,
 } from '@/utils/lastAuthMethod'
 import { startOAuthLogin } from '@/utils/oauth'
+import { resolvePostLoginPath } from '@/utils/pendingInvite'
 import type { OAuthProvider } from '@/types'
 
 const route = useRoute()
@@ -22,6 +23,14 @@ const { push, replace, localePath } = useLocaleRouter()
 const { t, locale } = useI18n()
 const message = useAppMessage()
 const userStore = useUserStore()
+
+function queryRedirect(): string | null {
+  return typeof route.query.redirect === 'string' ? route.query.redirect : null
+}
+
+function afterLoginDestination() {
+  return resolvePostLoginPath(localePath, queryRedirect()) || { name: 'models' as const }
+}
 
 const email = ref('')
 const otpCode = ref('')
@@ -184,8 +193,7 @@ async function handleLogin() {
       setAnalyticsUserId(userStore.profile.id)
     }
     trackEvent(AnalyticsEvents.LOGIN_COMPLETE, { method: 'email' })
-    const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : null
-    push(redirect || { name: 'models' })
+    push(afterLoginDestination())
   } catch (err) {
     resetTurnstile()
     error.value = resolveErrorMessage(err, t('pages.auth.verifyError'))
@@ -198,7 +206,7 @@ async function handleOAuthLogin(provider: OAuthProvider) {
   loading.value = true
   oauthError.value = null
   try {
-    const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : null
+    const redirect = resolvePostLoginPath(localePath, queryRedirect())
     await startOAuthLogin(provider, {
       callbackPath: localePath('/auth/callback'),
       returnTo: redirect,
@@ -225,8 +233,7 @@ onMounted(() => {
   lastAuthMethod.value = getLastAuthMethod()
 
   if (userStore.isLoggedIn) {
-    const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : null
-    replace(redirect || { name: 'models' })
+    replace(afterLoginDestination())
   }
 })
 
