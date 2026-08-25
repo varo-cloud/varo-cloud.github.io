@@ -214,13 +214,25 @@ export function getArrayItemProperty(
 }
 
 function isStringValueInvalid(value: string, property: SchemaProperty): boolean {
-  const trimmed = value.trim()
-  if (!trimmed) return false
+  if (!value.trim()) return false
 
-  const length = trimmed.length
+  const length = value.length
   if (property.minLength !== undefined && length < property.minLength) return true
   if (property.maxLength !== undefined && length > property.maxLength) return true
   return false
+}
+
+/** 字符串字段的长度约束错误文案 key；无长度问题时返回 null */
+export function getStringLengthErrorKey(
+  value: unknown,
+  property: SchemaProperty,
+): 'fieldMaxLength' | 'fieldMinLength' | null {
+  if (typeof value !== 'string' || !value.trim()) return null
+
+  const length = value.length
+  if (property.maxLength !== undefined && length > property.maxLength) return 'fieldMaxLength'
+  if (property.minLength !== undefined && length < property.minLength) return 'fieldMinLength'
+  return null
 }
 
 function isArrayValueInvalid(value: unknown[], property: SchemaProperty): boolean {

@@ -6,6 +6,7 @@ defineProps<{
   required?: boolean
   description?: string
   counter?: string
+  counterWarn?: boolean
   invalid?: boolean
 }>()
 </script>
@@ -31,7 +32,13 @@ defineProps<{
         </template>
         <span class="schema-field-label__tooltip">{{ description }}</span>
       </NTooltip>
-      <span v-if="counter" class="schema-field-label__counter">{{ counter }}</span>
+      <span
+        v-if="counter"
+        class="schema-field-label__counter"
+        :class="{ 'schema-field-label__counter--warn': counterWarn }"
+      >
+        {{ counter }}
+      </span>
     </div>
   </div>
 </template>
@@ -56,7 +63,8 @@ defineProps<{
 }
 
 .schema-field-label--invalid .schema-field-label__text,
-.schema-field-label--invalid .schema-field-label__req {
+.schema-field-label--invalid .schema-field-label__req,
+.schema-field-label--invalid .schema-field-label__counter {
   color: #f87171;
 }
 
@@ -74,6 +82,10 @@ defineProps<{
   font-size: 12px;
   font-weight: 500;
   color: #9b9dab;
+}
+
+.schema-field-label__counter--warn {
+  color: #f87171;
 }
 
 .schema-field-label__tooltip {

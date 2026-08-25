@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { nextTick, onMounted, type ComponentPublicInstance } from 'vue'
+import { computed, nextTick, onMounted, type ComponentPublicInstance } from 'vue'
 import { useAutoHeightTextarea } from '@/composables/useAutoHeightTextarea'
 import SchemaFieldLabel from '../SchemaFieldLabel.vue'
 import SchemaFieldError from '../SchemaFieldError.vue'
@@ -12,12 +12,22 @@ const props = defineProps<{
   description?: string
   placeholder?: string
   rows?: number
+  maxLength?: number
   invalid?: boolean
   errorMessage?: string
 }>()
 
 const autoHeight = useAutoHeightTextarea(model, props.rows)
 const { syncHeight, emptyRows } = autoHeight
+
+const charCounter = computed(() => {
+  if (props.maxLength === undefined) return undefined
+  return `${model.value.length}/${props.maxLength}`
+})
+
+const overMaxLength = computed(
+  () => props.maxLength !== undefined && model.value.length > props.maxLength,
+)
 
 function bindTextareaRef(el: Element | ComponentPublicInstance | null) {
   autoHeight.textareaRef.value = el instanceof HTMLTextAreaElement ? el : null
@@ -33,13 +43,15 @@ onMounted(() => nextTick(syncHeight))
       :label="label"
       :required="required"
       :description="description"
+      :counter="charCounter"
+      :counter-warn="overMaxLength"
       :invalid="invalid"
     />
     <div class="prompt-field__wrap">
       <textarea
         :ref="bindTextareaRef"
         v-model="model"
-        class="prompt-field__input"
+        class="prompt-field__input scrollbar-subtle"
         :rows="emptyRows"
         :placeholder="placeholder"
         :aria-invalid="invalid || undefined"
@@ -65,10 +77,12 @@ onMounted(() => nextTick(syncHeight))
 
 .prompt-field__input {
   width: 100%;
-  overflow: hidden;
+  max-height: calc(1.4em * 12);
+  overflow-x: hidden;
+  overflow-y: auto;
   border: none;
   background: transparent;
-  resize: vertical;
+  resize: none;
   font-family: inherit;
   font-size: 14px;
   line-height: 1.4;

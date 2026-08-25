@@ -7,6 +7,7 @@ import {
   getArrayItemProperty,
   getFieldLabel,
   getSelectOptions,
+  getStringLengthErrorKey,
   hasUsableMultiPrompt,
   resolveSchemaFields,
 } from '@/utils/schema-form'
@@ -60,6 +61,18 @@ function errorMessageForField(key: string): string {
   ) {
     return t('pages.modelDetail.fields.multiPrompt.exclusiveWithPrompt')
   }
+
+  const field = fields.value.find((item) => item.key === key)
+  if (field) {
+    const lengthError = getStringLengthErrorKey(model.value[key], field.property)
+    if (lengthError === 'fieldMaxLength' && field.property.maxLength !== undefined) {
+      return t('pages.modelDetail.fieldMaxLength', { max: field.property.maxLength })
+    }
+    if (lengthError === 'fieldMinLength' && field.property.minLength !== undefined) {
+      return t('pages.modelDetail.fieldMinLength', { min: field.property.minLength })
+    }
+  }
+
   return fieldErrorMessage.value
 }
 
@@ -109,6 +122,7 @@ function fieldLabel(key: string, property: SchemaProperty) {
         :description="field.property.description"
         :placeholder="field.property['x-placeholder']"
         :rows="field.property['x-ui-rows']"
+        :max-length="field.property.maxLength"
         :invalid="isFieldInvalid(field.key)"
         :error-message="errorMessageForField(field.key)"
       />
