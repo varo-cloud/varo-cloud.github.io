@@ -286,6 +286,8 @@ export default {
       schemaUnavailable: '该模型暂无输入 Schema，无法使用 Playground。',
       requiredFieldsMissing: '请填写所有必填字段。',
       fieldRequired: '请填写此字段',
+      fieldMaxLength: '不能超过 {max} 个字符',
+      fieldMinLength: '至少需要 {min} 个字符',
       invalidJsonInput: 'JSON 格式无效，请修正后再运行。',
       copyCode: '复制',
       copyTaskId: '复制任务 ID',

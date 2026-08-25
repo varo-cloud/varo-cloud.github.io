@@ -288,6 +288,8 @@ export default {
       schemaUnavailable: 'Input schema is unavailable for this model.',
       requiredFieldsMissing: 'Please fill in all required fields.',
       fieldRequired: 'This field is required',
+      fieldMaxLength: 'Must be at most {max} characters',
+      fieldMinLength: 'Must be at least {min} characters',
       invalidJsonInput: 'Invalid JSON. Please fix the input before running.',
       copyCode: 'Copy',
       copyTaskId: 'Copy Task ID',
