@@ -47,6 +47,15 @@ const aboutMosaicItems: AboutMosaicItem[] = [
   { type: 'image', src: 'https://assets.varo.cloud/uploads/92b074390e2c4e3cb8d6d66ac66e608a.jpg' },
 ]
 
+const showcaseStripImages = [
+  'https://assets.varo.cloud/uploads/20741c8abd5d4957ab5a899cb98018b9.jpg',
+  'https://assets.varo.cloud/uploads/299681960e5f41a7b0be1e19bc58c3bd.jpg',
+  'https://assets.varo.cloud/uploads/82c7548e6e6e48c18f26fa264789b8a9.jpg',
+  'https://assets.varo.cloud/uploads/da5fa66120a24a1aa6d144cfa89409c5.jpg',
+  'https://assets.varo.cloud/uploads/56e4d146f0564433a8ac280f374b1697.jpg',
+  'https://assets.varo.cloud/uploads/8601cf2821e44a3aaeef9f855a843722.jpg',
+] as const
+
 const whyJoinItems = computed(() => [
   {
     icon: 'star-smile-fill' as AppIconName,
@@ -343,9 +352,20 @@ function scrollTo(id: string) {
     </section>
 
     <!-- Showcase strip -->
-    <section class="scl-strip" aria-hidden="true">
-      <div class="scl-strip__track">
-        <div v-for="n in 6" :key="n" class="scl-strip__item media-skeleton" />
+    <section class="scl-strip" aria-label="Creator showcase">
+      <div class="scl-strip__rail">
+        <div class="scl-strip__track">
+          <div
+            v-for="copy in 2"
+            :key="`showcase-copy-${copy}`"
+            class="scl-strip__set"
+            :aria-hidden="copy === 2"
+          >
+            <div v-for="(src, index) in showcaseStripImages" :key="`showcase-${copy}-${index}`" class="scl-strip__item">
+              <img class="scl-strip__img" :src="src" alt="" loading="lazy" decoding="async" />
+            </div>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -1045,22 +1065,63 @@ function scrollTo(id: string) {
 /* Showcase strip */
 .scl-strip {
   margin-top: 100px;
+}
+
+.scl-strip__rail {
   overflow: hidden;
 }
 
 .scl-strip__track {
   display: flex;
-  gap: 24px;
   width: max-content;
-  padding: 0 16px;
+  animation: scl-strip-marquee 40s linear infinite;
+}
+
+.scl-strip__rail:hover .scl-strip__track {
+  animation-play-state: paused;
+}
+
+.scl-strip__set {
+  display: flex;
+  gap: 24px;
+  padding-right: 24px;
 }
 
 .scl-strip__item {
-  width: min(322px, 70vw);
+  flex: 0 0 322px;
+  width: 322px;
   height: 188px;
   border-radius: 24px;
   border: 1px solid #eee;
-  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.scl-strip__img {
+  display: block;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  object-position: center;
+}
+
+@keyframes scl-strip-marquee {
+  from {
+    transform: translateX(0);
+  }
+  to {
+    transform: translateX(-50%);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .scl-strip__rail {
+    overflow-x: auto;
+    scrollbar-width: thin;
+  }
+
+  .scl-strip__track {
+    animation: none;
+  }
 }
 
 /* Benefits */
@@ -1438,6 +1499,12 @@ function scrollTo(id: string) {
 
   .scl-intro {
     padding-top: 48px;
+  }
+
+  .scl-strip__item {
+    flex: 0 0 min(322px, 70vw);
+    width: min(322px, 70vw);
+    height: 160px;
   }
 
   .scl-why-grid,
