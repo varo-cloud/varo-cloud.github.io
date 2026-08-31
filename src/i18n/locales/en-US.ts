@@ -1397,6 +1397,195 @@ export default {
           reward: 'The Winner receives {inviteeReward} Bonus, and the inviter receives {inviterReward} Bonus.',
           bonus: 'Bonus cannot be withdrawn or refunded. Valid for {bonusTtl} after claim, and no later than campaign end.',
         },
+        hero: {
+          title: 'Create with the future of AI video',
+          subtitle:
+            'Explore cinematic video generation and beyond — all on one unified cloud platform.',
+        },
+        intro: {
+          title: 'Varo Cloud Seed Creator Program',
+          lead: 'Create early. Shape what comes next.',
+          body: 'Join a limited group of early Varo creators, get free credits to explore leading AI models, and help shape the platform through real feedback, feature requests, and model voting.',
+        },
+        cta: {
+          getStarted: 'Get Started',
+          learnMore: 'Learn More',
+          applyNow: 'Apply Now',
+          invite: 'Invite a Creator',
+        },
+        about: {
+          eyebrow: 'About the Program',
+          title: 'More Than Early Access',
+          lead: 'Become a creator who helps build Varo Cloud.',
+          body: 'Designed for creators who actively use generative AI and want a direct voice in how Varo evolves—from the models we add to the workflows and features we build next. The original program is limited to {seedCap} creators, reinforcing exclusivity and closer collaboration with the founding team.',
+          statSlots: 'Limited spots',
+          statCredit: 'Starter credit',
+          statInvite: 'Invite per creator',
+        },
+        whyJoin: {
+          eyebrow: 'Why Join',
+          title: 'Why Join the Seed Creator Program',
+          lead: 'Seed Creators receive more than platform access—they get credits to start creating, priority support, early model access, and opportunities to influence Varo Cloud’s product roadmap.',
+          items: {
+            earlyAccess: {
+              title: 'Early Access',
+              body: 'Be first to try new models and features before public release.',
+            },
+            credits: {
+              title: 'Free Credits',
+              body: '{seedBonus} starter credit to begin creating from day one.',
+            },
+            community: {
+              title: 'Community',
+              body: 'Join a private creator community and connect with the Varo team.',
+            },
+            feedback: {
+              title: 'Feedback',
+              body: 'Shape the roadmap through direct feedback and feature voting.',
+            },
+            rewards: {
+              title: 'Rewards',
+              body: 'Earn additional bonuses through the invite program.',
+            },
+          },
+          ctaTitle: 'Ready to create early?',
+          ctaBody: 'Limited to {seedCap} creators. Apply now and secure your spot in the program.',
+        },
+        benefits: {
+          eyebrow: 'Seed Creator Benefits',
+          title: 'What You Get as a Seed Creator',
+          lead: "Seed Creators receive more than platform access—they get credits to start creating, priority support, early model access, and opportunities to influence Varo Cloud's product roadmap.",
+          creditLabel: 'Starter Credit',
+          cards: {
+            credit: {
+              title: '{seedBonus} Starter Credit',
+              body: 'Start creating from day one.',
+            },
+            support: {
+              title: 'Priority Support',
+              body: 'Faster feedback for bugs and product requests.',
+            },
+            community: {
+              title: 'Private Creator Community',
+              body: 'Connect directly with the Varo team.',
+            },
+            access: {
+              title: 'Early Model Access',
+              body: 'Try new creative AI capabilities sooner.',
+            },
+          },
+        },
+        how: {
+          eyebrow: 'How it Works',
+          title: 'Join in Three Simple Steps',
+          lead: 'Getting started is simple—join the Varo community, submit your creator information, receive your credits after approval, and start exploring the platform.',
+          step1Title: 'Follow & Join',
+          step1Before: 'Follow ',
+          xLink: 'Varo on X',
+          step1Mid: ' and join the ',
+          discordLink: 'official Discord',
+          step1After: '.',
+          step2Title: 'Apply & Get Approved',
+          step2Body: 'Submit your creator information through the campaign page.',
+          step3Title: 'Create & Share Feedback',
+          step3Body: "Use your credits, explore Varo, and tell the team what works—and what doesn't.",
+          bonusTitle: 'Early Creator Bonus',
+          bonusLabel: '{seedBonus} EARLY CREATOR BONUS',
+          check1: 'Follow Varo on X & Discord',
+          check2: 'Submit your creator info',
+          check3: 'First {seedCap} to pass review → {seedBonus}',
+        },
+        invite: {
+          eyebrow: 'Invite Program',
+          title: 'Bring One Creator with You',
+          lead: 'Invite someone whose feedback you trust.',
+          body: 'Each Seed Creator receives one exclusive invite. Bring another creator into Varo and unlock {inviterReward} additional credits when they join and complete the qualifying activity.',
+          howTitle: 'How it Works',
+          badge: '{inviterReward} bonus for each side',
+          flow1: 'Invite a creator',
+          flow2: 'Friend joins & tops up ≥ {minDeposit}',
+          flow3: 'Both get {inviterReward} Bonus',
+        },
+        rulesSection: {
+          eyebrow: 'Program Rules',
+          title: 'Keep It Simple. Keep It Fair.',
+          lead: 'Clear rules designed to protect the creator community.',
+        },
+        rulesList: {
+          seed: 'The first {seedCap} creators who pass X and Discord verification become Seed Creators and receive a {seedBonus} Bonus.',
+          inviteQuota: 'Each Seed Creator may invite multiple friends, but can earn only one invite reward.',
+          winner:
+            'The invitee must make a single top-up of at least {minDeposit} within {depositWindow} of signup.',
+          reward: 'Once qualified, both the invitee and inviter receive a {inviteeReward} Bonus.',
+          bonus:
+            'Bonuses are non-withdrawable, non-refundable, and valid for {bonusTtl} or until the campaign ends, whichever comes first.',
+        },
+        platform: {
+          eyebrow: 'One unified platform',
+          title: 'One Cloud. More Creative Possibilities.',
+          body: "Explore image, video, and audio models without jumping between platforms. Use your Seed Creator credits across Varo Cloud's unified generative AI platform and experiment with leading models such as Seedance, MiniMax H3, Wan, and more through one account and workflow.",
+          tags: {
+            seedance: 'Seedance',
+            minimax: 'MiniMax H3',
+            wan: 'Wan',
+            more: 'More',
+          },
+          modalities: {
+            image: { title: 'Image', body: 'Photo-real & art' },
+            video: { title: 'Video', body: 'Cinematic motion' },
+            audio: { title: 'Audio', body: 'Voice & sound' },
+          },
+        },
+        faq: {
+          title: 'Seed Creator Program FAQ',
+          items: {
+            professional: {
+              question: '1. Do I need to be a professional creator to join?',
+              answer:
+                'No. Whether you create AI content professionally or occasionally, you’re welcome to apply as long as you actively use AI tools and are willing to share genuine feedback.',
+            },
+            followers: {
+              question: '2. Do I need a large following on X?',
+              answer:
+                'No. Follower count is not a requirement. We care more about authentic activity, interest in AI creation, and meaningful product feedback.',
+            },
+            benefits: {
+              question: '3. What do I get as a Seed Creator?',
+              answer:
+                'The first 30 creators who pass X and Discord verification will become Seed Creators and receive a $20 Bonus, plus access to creator benefits and direct product feedback channels.',
+            },
+            'after-bonus': {
+              question: '4. What happens after I use my $20 Bonus?',
+              answer:
+                'You can continue using Varo Cloud by topping up your account. You may also earn an additional $10 Bonus through a qualifying invite.',
+            },
+            'invite-count': {
+              question: '5. Can I invite more than one friend?',
+              answer:
+                'Yes. You may invite multiple friends, but you can earn the invite reward only once during this campaign.',
+            },
+            'invite-reward': {
+              question: '6. How does the invite reward work?',
+              answer:
+                'Your invitee must make a single top-up of at least $10 within 3 days of signup. Once qualified, both you and the invitee will receive a $10 Bonus.',
+            },
+            'bonus-ttl': {
+              question: '7. How long are campaign bonuses valid?',
+              answer:
+                'Bonuses are non-withdrawable and non-refundable. They are valid for 14 days after being claimed or until the campaign ends, whichever comes first.',
+            },
+            permanent: {
+              question: '8. Is Seed Creator status permanent?',
+              answer:
+                'Yes. Once accepted, your Seed Creator status remains active unless you violate Varo Cloud’s community or campaign rules.',
+            },
+            feedback: {
+              question: '9. What if I find a bug or have product feedback?',
+              answer:
+                "Share it directly with the Varo team through the designated Discord feedback channel or varocloudbusiness{'@'}gmail.com. Seed Creators are encouraged to report bugs, suggest features, and help shape future product updates.",
+            },
+          },
+        },
       },
       steps: {
         register: 'Sign up / log in to Varo',
@@ -1551,9 +1740,9 @@ export default {
         },
       },
       seo: {
-        title: 'Seed Creator Program｜Earn Bonus for Creating — Varo.cloud',
+        title: 'Varo Cloud Seed Creator Program｜Early Access & Free Credits — Varo.cloud',
         description:
-          'Join the Varo Seed Creator program: pass X / Discord review to earn Early Creator Bonus, then invite friends to unlock rewards for both of you when they complete their first top-up. Apply now.',
+          'Join the limited Varo Cloud Seed Creator Program. Get starter credits, early model access, priority support, and invite rewards. Create early and help shape the future of AI video on one unified cloud platform.',
       },
     },
     invite: {

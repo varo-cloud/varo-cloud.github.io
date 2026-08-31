@@ -3,12 +3,14 @@ import { computed } from 'vue'
 import { useRoute } from 'vue-router'
 import AppHeader from './AppHeader.vue'
 import AppFooter from './AppFooter.vue'
+import { usePageShell } from '@/composables/usePageShell'
 
 const route = useRoute()
+const { lightPage: shellLightPage } = usePageShell()
 
 const isFullBleed = computed(() => route.meta.fullBleed === true)
 const usesScrollHeader = computed(() => route.meta.scrollHeader === true)
-const isLightPage = computed(() => route.meta.lightPage === true)
+const isLightPage = shellLightPage
 </script>
 
 <template>
