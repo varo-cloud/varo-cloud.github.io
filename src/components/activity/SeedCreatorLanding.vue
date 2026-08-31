@@ -43,8 +43,8 @@ const aboutMosaicItems: AboutMosaicItem[] = [
     src: 'https://assets.varo.cloud/uploads/eb28eb061a3d477cb2b8ca96aa6d4c15.mp4',
     poster: 'https://assets.varo.cloud/uploads/7d3a40ce6e0c4927a1081051a1fd0006.jpg',
   },
-  { type: 'image', src: 'https://assets.varo.cloud/uploads/1a8de56978c445548eb979924d9d42c4.jpg' },
-  { type: 'image', src: 'https://assets.varo.cloud/uploads/92b074390e2c4e3cb8d6d66ac66e608a.jpg' },
+  { type: 'image', src: 'https://assets.varo.cloud/uploads/784490cccea848b4ab6bf5cca3e83d75.jpeg' },
+  { type: 'image', src: 'https://assets.varo.cloud/uploads/b00f0bfaf37d43719941a5fa204c0f1c.jpeg' },
 ]
 
 const showcaseStripImages = [
@@ -81,6 +81,13 @@ const inviteMosaicItems: AboutMosaicItem[] = [
   { type: 'image', src: 'https://assets.varo.cloud/uploads/68b9d5fe9f4b4e6d8aeb0b3a63e27634.jpg' },
   { type: 'image', src: 'https://assets.varo.cloud/uploads/5ad68a23e59947d98e9f33bee96b6594.jpg' },
 ]
+
+/** Platform mosaic: tall left + two right cells. */
+const platformMosaicImages = [
+  'https://assets.varo.cloud/uploads/1a8de56978c445548eb979924d9d42c4.jpg',
+  'https://assets.varo.cloud/uploads/92b074390e2c4e3cb8d6d66ac66e608a.jpg',
+  'https://assets.varo.cloud/uploads/be9591a43e494ae7966133a3982f29aa.jpg',
+] as const
 
 const whyJoinItems = computed(() => [
   {
@@ -375,7 +382,7 @@ function scrollTo(id: string) {
               <AppIcon :name="item.icon" :size="24" color="#06b6d4" />
             </div>
             <h3 class="scl-why-card__title">{{ item.title }}</h3>
-            <p class="scl-why-card__body">{{ item.body }}</p>
+            <p class="scl-why-card__body" v-html="item.body" />
           </article>
           <article class="scl-why-card scl-why-card--cta">
             <div class="scl-icon-slot" aria-hidden="true">
@@ -384,9 +391,7 @@ function scrollTo(id: string) {
             <h3 class="scl-why-card__title">
               {{ t('pages.seedCreator.landing.whyJoin.ctaTitle') }}
             </h3>
-            <p class="scl-why-card__body">
-              {{ t('pages.seedCreator.landing.whyJoin.ctaBody', copy) }}
-            </p>
+            <p class="scl-why-card__body" v-html="t('pages.seedCreator.landing.whyJoin.ctaBody', copy)" />
             <button type="button" class="scl-link-cta" @click="emit('getStarted')">
               {{ t('pages.seedCreator.landing.cta.applyNow') }}
             </button>
@@ -415,7 +420,7 @@ function scrollTo(id: string) {
 
     <!-- Benefits -->
     <section class="scl-section" aria-labelledby="seed-benefits-title">
-      <div class="scl-inner scl-split scl-split--reverse">
+      <div class="scl-inner scl-split scl-split--benefits">
         <div class="scl-mosaic scl-mosaic--5 scl-mosaic--benefits" aria-hidden="true">
           <div
             v-for="(item, index) in benefitsMosaicItems"
@@ -473,71 +478,77 @@ function scrollTo(id: string) {
 
     <!-- How it works -->
     <section class="scl-section" aria-labelledby="seed-how-title">
-      <div class="scl-inner scl-split">
-        <div class="scl-split__copy">
-          <p class="scl-eyebrow">{{ t('pages.seedCreator.landing.how.eyebrow') }}</p>
-          <h2 id="seed-how-title" class="scl-h2 scl-h2--left">
-            {{ t('pages.seedCreator.landing.how.title') }}
-          </h2>
-          <p class="scl-body">{{ t('pages.seedCreator.landing.how.lead') }}</p>
-          <ol class="scl-steps">
-            <li v-for="(step, index) in howSteps" :key="step.title" class="scl-steps__item">
-              <span class="scl-steps__index" aria-hidden="true">
-                {{ String(index + 1).padStart(2, '0') }}
-              </span>
-              <div>
-                <h3 class="scl-steps__title">{{ step.title }}</h3>
-                <p v-if="index === 0" class="scl-steps__body">
-                  {{ t('pages.seedCreator.landing.how.step1Before') }}
-                  <a :href="xUrl" target="_blank" rel="noopener noreferrer">{{
-                    t('pages.seedCreator.landing.how.xLink')
-                  }}</a>
-                  {{ t('pages.seedCreator.landing.how.step1Mid') }}
-                  <a :href="discordUrl" target="_blank" rel="noopener noreferrer">{{
-                    t('pages.seedCreator.landing.how.discordLink')
-                  }}</a>
-                  {{ t('pages.seedCreator.landing.how.step1After') }}
-                </p>
-                <p v-else class="scl-steps__body">{{ step.body }}</p>
-              </div>
-            </li>
-          </ol>
-          <button type="button" class="scl-btn scl-btn--primary" @click="emit('getStarted')">
-            {{ t('pages.seedCreator.landing.cta.applyNow') }}
-          </button>
-        </div>
-        <aside class="scl-bonus-card" :aria-label="t('pages.seedCreator.landing.how.bonusTitle')">
-          <p class="scl-bonus-card__title">
-            {{ t('pages.seedCreator.landing.how.bonusTitle') }}
-          </p>
-          <p class="scl-bonus-card__amount">{{ copy.seedBonus }}</p>
-          <p class="scl-bonus-card__label">
-            {{ t('pages.seedCreator.landing.how.bonusLabel', copy) }}
-          </p>
-          <div class="scl-bonus-card__media" aria-hidden="true">
-            <img
-              v-for="src in howBonusImages"
-              :key="src"
-              class="scl-bonus-card__img"
-              :src="src"
-              alt=""
-              loading="lazy"
-              decoding="async"
-            />
+      <div class="scl-inner scl-how">
+        <p class="scl-eyebrow">{{ t('pages.seedCreator.landing.how.eyebrow') }}</p>
+        <div class="scl-how__row">
+          <div class="scl-split__copy">
+            <h2 id="seed-how-title" class="scl-h2 scl-h2--left">
+              {{ t('pages.seedCreator.landing.how.title') }}
+            </h2>
+            <p class="scl-body">{{ t('pages.seedCreator.landing.how.lead') }}</p>
+            <ol class="scl-steps">
+              <li v-for="(step, index) in howSteps" :key="step.title" class="scl-steps__item">
+                <span class="scl-steps__index" aria-hidden="true">
+                  {{ String(index + 1).padStart(2, '0') }}
+                </span>
+                <div class="scl-steps__content">
+                  <h3 class="scl-steps__title">{{ step.title }}</h3>
+                  <p v-if="index === 0" class="scl-steps__body">
+                    {{ t('pages.seedCreator.landing.how.step1Before') }}
+                    <a :href="xUrl" target="_blank" rel="noopener noreferrer">{{
+                      t('pages.seedCreator.landing.how.xLink')
+                    }}</a>
+                    {{ t('pages.seedCreator.landing.how.step1Mid') }}
+                    <a :href="discordUrl" target="_blank" rel="noopener noreferrer">{{
+                      t('pages.seedCreator.landing.how.discordLink')
+                    }}</a>
+                    {{ t('pages.seedCreator.landing.how.step1After') }}
+                  </p>
+                  <p v-else class="scl-steps__body">{{ step.body }}</p>
+                </div>
+              </li>
+            </ol>
           </div>
-          <ul class="scl-bonus-card__list">
-            <li v-for="item in howChecklist" :key="item">
-              <span class="scl-check" aria-hidden="true" />
-              <span>{{ item }}</span>
-            </li>
-          </ul>
-        </aside>
+          <aside class="scl-bonus-card" :aria-label="t('pages.seedCreator.landing.how.bonusTitle')">
+            <div class="scl-bonus-card__main">
+              <div class="scl-bonus-card__intro">
+                <p class="scl-bonus-card__title">
+                  {{ t('pages.seedCreator.landing.how.bonusTitle') }}
+                </p>
+                <p class="scl-bonus-card__amount">{{ copy.seedBonus }}</p>
+                <p class="scl-bonus-card__label">
+                  {{ t('pages.seedCreator.landing.how.bonusLabel', copy) }}
+                </p>
+              </div>
+              <ul class="scl-bonus-card__list">
+                <li v-for="item in howChecklist" :key="item">
+                  <AppIcon name="check" :size="16" color="#06b6d4" aria-hidden="true" />
+                  <span>{{ item }}</span>
+                </li>
+              </ul>
+            </div>
+            <div class="scl-bonus-card__media" aria-hidden="true">
+              <img
+                v-for="src in howBonusImages"
+                :key="src"
+                class="scl-bonus-card__img"
+                :src="src"
+                alt=""
+                loading="lazy"
+                decoding="async"
+              />
+            </div>
+          </aside>
+        </div>
+        <button type="button" class="scl-btn scl-btn--primary scl-how__cta" @click="emit('getStarted')">
+          {{ t('pages.seedCreator.landing.cta.applyNow') }}
+        </button>
       </div>
     </section>
 
     <!-- Invite -->
     <section class="scl-section" aria-labelledby="seed-invite-title">
-      <div class="scl-inner scl-split">
+      <div class="scl-inner scl-split scl-split--invite">
         <div class="scl-mosaic scl-mosaic--5 scl-mosaic--invite" aria-hidden="true">
           <div
             v-for="(item, index) in inviteMosaicItems"
@@ -587,7 +598,7 @@ function scrollTo(id: string) {
             <div class="scl-invite-flow">
               <div v-for="(item, index) in inviteFlow" :key="index" class="scl-invite-flow__item">
                 <div class="scl-icon-slot scl-icon-slot--sm" aria-hidden="true">
-                  <AppIcon :name="item.icon" :size="20" color="#06b6d4" />
+                  <AppIcon :name="item.icon" :size="24" color="#06b6d4" />
                 </div>
                 <p>{{ item.text }}</p>
               </div>
@@ -623,7 +634,7 @@ function scrollTo(id: string) {
 
     <!-- Platform -->
     <section class="scl-section" aria-labelledby="seed-platform-title">
-      <div class="scl-inner scl-split">
+      <div class="scl-inner scl-split scl-split--platform">
         <div class="scl-split__copy">
           <p class="scl-eyebrow">{{ t('pages.seedCreator.landing.platform.eyebrow') }}</p>
           <h2 id="seed-platform-title" class="scl-h2 scl-h2--left">
@@ -647,10 +658,34 @@ function scrollTo(id: string) {
             </div>
           </dl>
         </div>
-        <div class="scl-mosaic scl-mosaic--3" aria-hidden="true">
-          <div class="scl-mosaic__cell scl-mosaic__cell--tall media-skeleton" />
-          <div class="scl-mosaic__cell media-skeleton" />
-          <div class="scl-mosaic__cell media-skeleton" />
+        <div class="scl-mosaic scl-mosaic--3 scl-mosaic--platform" aria-hidden="true">
+          <div class="scl-mosaic__cell scl-mosaic__cell--tall">
+            <img
+              class="scl-mosaic__img"
+              :src="platformMosaicImages[0]"
+              alt=""
+              loading="lazy"
+              decoding="async"
+            />
+          </div>
+          <div class="scl-mosaic__cell">
+            <img
+              class="scl-mosaic__img"
+              :src="platformMosaicImages[1]"
+              alt=""
+              loading="lazy"
+              decoding="async"
+            />
+          </div>
+          <div class="scl-mosaic__cell">
+            <img
+              class="scl-mosaic__img"
+              :src="platformMosaicImages[2]"
+              alt=""
+              loading="lazy"
+              decoding="async"
+            />
+          </div>
         </div>
       </div>
     </section>
@@ -710,7 +745,7 @@ function scrollTo(id: string) {
   width: 100%;
   max-width: 1360px;
   margin: 0 auto;
-  padding: 0 16px;
+  padding: 0;
 }
 
 .scl-inner--narrow {
@@ -743,6 +778,8 @@ function scrollTo(id: string) {
 }
 
 .scl-h2--left {
+  font-size: 40px;
+  line-height: 40px;
   text-align: left;
 }
 
@@ -967,6 +1004,36 @@ function scrollTo(id: string) {
   min-width: 0;
 }
 
+.scl-split--platform {
+  grid-template-columns: 759px minmax(0, 578px);
+  justify-content: space-between;
+  gap: 24px;
+}
+
+.scl-split--platform .scl-split__copy {
+  width: 759px;
+  max-width: 100%;
+}
+
+.scl-split--platform .scl-h2--left {
+  white-space: nowrap;
+}
+
+/* Mosaic columns are 668px — equal 1fr tracks were too narrow and ate the gap */
+.scl-split--invite,
+.scl-split--benefits {
+  grid-template-columns: minmax(0, 668px) minmax(0, 1fr);
+  gap: 48px;
+}
+
+.scl-split--invite .scl-mosaic--invite,
+.scl-split--benefits .scl-mosaic--benefits {
+  width: 668px;
+  max-width: 100%;
+  min-width: 0;
+  justify-self: start;
+}
+
 /* Stats */
 .scl-stats {
   display: flex;
@@ -1015,7 +1082,28 @@ function scrollTo(id: string) {
 }
 
 .scl-stats--modalities {
-  margin-top: 40px;
+  margin-top: 30px;
+}
+
+.scl-stats--modalities .scl-stats__item {
+  min-width: 125px;
+  padding-right: 20px;
+  margin-right: 20px;
+}
+
+.scl-stats--modalities .scl-stats__item:not(:last-child)::after {
+  top: 0;
+  height: 61px;
+}
+
+.scl-stats--modalities .scl-stats__value--sm {
+  font-size: 24px;
+  line-height: 32px;
+}
+
+.scl-stats--modalities .scl-stats__label {
+  margin-top: 8px;
+  line-height: 20px;
 }
 
 /* Mosaic placeholders */
@@ -1160,6 +1248,44 @@ function scrollTo(id: string) {
   grid-row: 1 / 3;
 }
 
+/* Platform — Figma: 322×366 | 232×171×2 */
+.scl-mosaic--platform {
+  position: relative;
+  width: 578px;
+  max-width: 100%;
+  height: 366px;
+  min-height: 0;
+  display: block;
+  gap: 0;
+}
+
+.scl-mosaic--platform .scl-mosaic__cell {
+  position: absolute;
+  min-height: 0;
+}
+
+.scl-mosaic--platform .scl-mosaic__cell--tall {
+  left: 0;
+  top: 0;
+  width: 322px;
+  height: 366px;
+  grid-row: auto;
+}
+
+.scl-mosaic--platform .scl-mosaic__cell:nth-child(2) {
+  left: 346px;
+  top: 0;
+  width: 232px;
+  height: 171px;
+}
+
+.scl-mosaic--platform .scl-mosaic__cell:nth-child(3) {
+  left: 346px;
+  top: 195px;
+  width: 232px;
+  height: 171px;
+}
+
 .scl-mosaic__cell {
   position: relative;
   border-radius: 24px;
@@ -1209,6 +1335,11 @@ function scrollTo(id: string) {
   font-size: 16px;
   font-weight: 700;
   line-height: 1.5;
+}
+
+.scl-why-card__body :deep(strong) {
+  color: #06b6d4;
+  font-weight: 600;
 }
 
 .scl-why-card__body {
@@ -1283,7 +1414,7 @@ function scrollTo(id: string) {
 
 /* Benefits */
 .scl-credit-chip {
-  margin-top: 40px;
+  margin-top: 20px;
   width: fit-content;
   min-width: 206px;
   padding: 16px 20px;
@@ -1316,9 +1447,9 @@ function scrollTo(id: string) {
 .scl-benefit-card {
   display: flex;
   gap: 12px;
-  align-items: flex-start;
-  min-height: 88px;
-  padding: 16px 20px;
+  align-items: center;
+  height: 88px;
+  padding: 10px 20px;
   border: 1px solid #eee;
   border-radius: 24px;
 }
@@ -1332,19 +1463,41 @@ function scrollTo(id: string) {
 }
 
 .scl-benefit-card__body {
-  margin: 4px 0 0;
+  margin: 0;
   color: #222;
   font-size: 14px;
   font-weight: 400;
-  line-height: 1.4;
+  line-height: 20px;
 }
 
 /* Steps */
+.scl-how {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.scl-how > .scl-eyebrow {
+  margin-bottom: 0;
+}
+
+.scl-how__row {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: 48px;
+  align-items: start;
+}
+
+.scl-how__cta {
+  align-self: flex-start;
+  margin-top: 12px;
+}
+
 .scl-steps {
   display: flex;
   flex-direction: column;
   gap: 16px;
-  margin: 40px 0 32px;
+  margin: 40px 0 0;
   padding: 0;
   list-style: none;
 }
@@ -1352,7 +1505,8 @@ function scrollTo(id: string) {
 .scl-steps__item {
   display: flex;
   gap: 12px;
-  align-items: flex-start;
+  align-items: center;
+  min-height: 88px;
 }
 
 .scl-steps__index {
@@ -1363,10 +1517,18 @@ function scrollTo(id: string) {
   height: 36px;
   flex-shrink: 0;
   border-radius: 50%;
-  background: #06b6d4;
+  background: #222;
   color: #fff;
   font-size: 16px;
   font-weight: 700;
+  line-height: 24px;
+}
+
+.scl-steps__content {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
 }
 
 .scl-steps__title {
@@ -1374,31 +1536,49 @@ function scrollTo(id: string) {
   color: #222;
   font-size: 18px;
   font-weight: 700;
-  line-height: 1.33;
+  line-height: 24px;
 }
 
 .scl-steps__body {
-  margin: 4px 0 0;
+  margin: 0;
   color: #222;
   font-size: 14px;
   font-weight: 400;
-  line-height: 1.4;
+  line-height: 20px;
 }
 
 .scl-steps__body a {
   color: #06b6d4;
   text-decoration: underline;
   text-decoration-style: dotted;
-  text-underline-offset: 2px;
+  text-underline-offset: 3px;
+  text-decoration-thickness: from-font;
 }
 
 .scl-bonus-card {
-  position: relative;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 310px);
+  gap: 24px;
+  align-items: stretch;
   min-height: 432px;
-  padding: 48px 24px 24px;
+  padding: 24px;
   border-radius: 24px;
   background: rgba(6, 182, 212, 0.1);
   overflow: hidden;
+}
+
+.scl-bonus-card__main {
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  gap: 24px;
+  min-width: 0;
+}
+
+.scl-bonus-card__intro {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
 }
 
 .scl-bonus-card__title {
@@ -1406,31 +1586,32 @@ function scrollTo(id: string) {
   color: #222;
   font-size: 18px;
   font-weight: 700;
+  line-height: 24px;
 }
 
 .scl-bonus-card__amount {
-  margin: 20px 0 0;
+  margin: 0;
   color: #06b6d4;
   font-size: 40px;
   font-weight: 700;
-  line-height: 1;
+  line-height: 40px;
 }
 
 .scl-bonus-card__label {
-  margin: 20px 0 0;
+  margin: 0;
   color: #929ca5;
   font-size: 16px;
   font-weight: 600;
+  line-height: 24px;
 }
 
 .scl-bonus-card__media {
-  position: absolute;
-  top: 24px;
-  right: 24px;
   display: flex;
   flex-direction: column;
   gap: 24px;
-  width: min(310px, 48%);
+  width: 100%;
+  max-width: 310px;
+  justify-self: end;
 }
 
 .scl-bonus-card__img {
@@ -1447,9 +1628,10 @@ function scrollTo(id: string) {
   flex-direction: column;
   gap: 24px;
   max-width: 235px;
-  margin: 120px 0 0;
+  margin: 0;
   padding: 0;
   list-style: none;
+  font-weight: 500;
 }
 
 .scl-bonus-card__list li {
@@ -1459,23 +1641,33 @@ function scrollTo(id: string) {
   color: #222;
   font-size: 16px;
   font-weight: 500;
-  line-height: 1.25;
+  line-height: 20px;
+}
+
+.scl-bonus-card__list li > :first-child {
+  flex-shrink: 0;
+  margin-top: 2px;
 }
 
 /* Invite */
 .scl-invite-box {
-  margin: 40px 0 24px;
-  padding: 24px;
+  display: flex;
+  flex-direction: column;
+  gap: 26px;
+  margin: 30px 0 30px;
+  min-height: 140px;
+  padding: 24px 20px;
   border-radius: 24px;
   background: #f8f8f8;
+  box-sizing: border-box;
 }
 
 .scl-invite-box__head {
   display: flex;
   flex-wrap: wrap;
+  align-items: center;
   justify-content: space-between;
   gap: 8px;
-  margin-bottom: 24px;
 }
 
 .scl-invite-box__title {
@@ -1483,6 +1675,7 @@ function scrollTo(id: string) {
   color: #222;
   font-size: 16px;
   font-weight: 700;
+  line-height: 24px;
 }
 
 .scl-invite-box__badge {
@@ -1490,6 +1683,7 @@ function scrollTo(id: string) {
   color: #06b6d4;
   font-size: 14px;
   font-weight: 500;
+  line-height: 20px;
 }
 
 .scl-invite-flow {
@@ -1501,7 +1695,7 @@ function scrollTo(id: string) {
 .scl-invite-flow__item {
   display: flex;
   gap: 12px;
-  align-items: flex-start;
+  align-items: center;
 }
 
 .scl-invite-flow__item p {
@@ -1509,7 +1703,7 @@ function scrollTo(id: string) {
   color: #222;
   font-size: 16px;
   font-weight: 500;
-  line-height: 1.4;
+  line-height: 24px;
 }
 
 /* Rules */
@@ -1546,19 +1740,20 @@ function scrollTo(id: string) {
   display: flex;
   flex-wrap: wrap;
   gap: 12px;
-  margin-top: 40px;
+  margin-top: 30px;
 }
 
 .scl-tag {
   display: inline-flex;
   align-items: center;
+  justify-content: center;
   padding: 8px 12px;
   border-radius: 30px;
   background: #06b6d4;
   color: #ebf4fb;
   font-size: 14px;
   font-weight: 500;
-  line-height: 1.15;
+  line-height: 16px;
 }
 
 .scl-tag--muted {
@@ -1618,8 +1813,19 @@ function scrollTo(id: string) {
 }
 
 @media (max-width: 1100px) {
-  .scl-split {
+  .scl-split,
+  .scl-how__row {
     grid-template-columns: 1fr;
+  }
+
+  .scl-split--platform,
+  .scl-split--invite,
+  .scl-split--benefits {
+    grid-template-columns: 1fr;
+  }
+
+  .scl-split--platform .scl-h2--left {
+    white-space: normal;
   }
 
   .scl-mosaic--about {
@@ -1634,24 +1840,32 @@ function scrollTo(id: string) {
     margin-inline: auto;
   }
 
+  .scl-mosaic--platform {
+    margin-inline: auto;
+  }
+
   .scl-why-grid {
     grid-template-columns: 1fr 1fr;
   }
 
+  .scl-bonus-card {
+    grid-template-columns: 1fr;
+    min-height: 0;
+  }
+
   .scl-bonus-card__media {
-    position: static;
-    width: 100%;
+    max-width: none;
     flex-direction: row;
-    margin-top: 24px;
+    order: -1;
   }
 
   .scl-bonus-card__img {
     height: 140px;
+    flex: 1;
   }
 
   .scl-bonus-card__list {
     max-width: none;
-    margin-top: 32px;
   }
 }
 
@@ -1715,6 +1929,15 @@ function scrollTo(id: string) {
     gap: 12px;
   }
 
+  .scl-mosaic--platform {
+    position: static;
+    width: 100%;
+    height: auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
   .scl-mosaic--about .scl-mosaic__cell {
     position: static;
     width: auto !important;
@@ -1730,6 +1953,13 @@ function scrollTo(id: string) {
   }
 
   .scl-mosaic--invite .scl-mosaic__cell {
+    position: static;
+    width: auto !important;
+    height: auto !important;
+    min-height: 120px;
+  }
+
+  .scl-mosaic--platform .scl-mosaic__cell {
     position: static;
     width: auto !important;
     height: auto !important;

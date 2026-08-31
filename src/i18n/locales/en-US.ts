@@ -1433,7 +1433,7 @@ export default {
             },
             credits: {
               title: 'Free Credits',
-              body: '{seedBonus} starter credit to begin creating from day one.',
+              body: '<strong>{seedBonus}</strong> starter credit to begin creating from day one.',
             },
             community: {
               title: 'Community',
@@ -1449,7 +1449,7 @@ export default {
             },
           },
           ctaTitle: 'Ready to create early?',
-          ctaBody: 'Limited to {seedCap} creators. Apply now and secure your spot in the program.',
+          ctaBody: 'Limited to <strong>{seedCap}</strong> creators. Apply now and secure your spot in the program.',
         },
         benefits: {
           eyebrow: 'Seed Creator Benefits',
@@ -1554,12 +1554,12 @@ export default {
             benefits: {
               question: '3. What do I get as a Seed Creator?',
               answer:
-                'The first 30 creators who pass X and Discord verification will become Seed Creators and receive a $20 Bonus, plus access to creator benefits and direct product feedback channels.',
+                'The first {seedCap} creators who pass X and Discord verification will become Seed Creators and receive a {seedBonus} Bonus, plus access to creator benefits and direct product feedback channels.',
             },
             'after-bonus': {
-              question: '4. What happens after I use my $20 Bonus?',
+              question: '4. What happens after I use my {seedBonus} Bonus?',
               answer:
-                'You can continue using Varo Cloud by topping up your account. You may also earn an additional $10 Bonus through a qualifying invite.',
+                'You can continue using Varo Cloud by topping up your account. You may also earn an additional {inviterReward} Bonus through a qualifying invite.',
             },
             'invite-count': {
               question: '5. Can I invite more than one friend?',
@@ -1569,12 +1569,12 @@ export default {
             'invite-reward': {
               question: '6. How does the invite reward work?',
               answer:
-                'Your invitee must make a single top-up of at least $10 within 3 days of signup. Once qualified, both you and the invitee will receive a $10 Bonus.',
+                'Your invitee must make a single top-up of at least {minDeposit} within {depositWindow} of signup. Once qualified, both you and the invitee will receive a {inviteeReward} Bonus.',
             },
             'bonus-ttl': {
               question: '7. How long are campaign bonuses valid?',
               answer:
-                'Bonuses are non-withdrawable and non-refundable. They are valid for 14 days after being claimed or until the campaign ends, whichever comes first.',
+                'Bonuses are non-withdrawable and non-refundable. They are valid for {bonusTtl} after being claimed or until the campaign ends, whichever comes first.',
             },
             permanent: {
               question: '8. Is Seed Creator status permanent?',

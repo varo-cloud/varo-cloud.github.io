@@ -1422,7 +1422,7 @@ export default {
             },
             credits: {
               title: '免费额度',
-              body: '{seedBonus} 起步额度，从第一天就能开创作。',
+              body: '<strong>{seedBonus}</strong> 起步额度，从第一天就能开创作。',
             },
             community: {
               title: '创作者社区',
@@ -1438,7 +1438,7 @@ export default {
             },
           },
           ctaTitle: '准备好提前创作了吗？',
-          ctaBody: '限量 {seedCap} 名。立即申请，锁定你的名额。',
+          ctaBody: '限量 <strong>{seedCap}</strong> 名。立即申请，锁定你的名额。',
         },
         benefits: {
           eyebrow: 'Seed Creator 权益',
@@ -1540,12 +1540,12 @@ export default {
             benefits: {
               question: '3. 成为 Seed Creator 能获得什么？',
               answer:
-                '前 30 名通过 X 与 Discord 验证的创作者将成为 Seed Creator，获得 $20 Bonus，并享有创作者权益与直接产品反馈通道。',
+                '前 {seedCap} 名通过 X 与 Discord 验证的创作者将成为 Seed Creator，获得 {seedBonus} Bonus，并享有创作者权益与直接产品反馈通道。',
             },
             'after-bonus': {
-              question: '4. $20 Bonus 用完之后呢？',
+              question: '4. {seedBonus} Bonus 用完之后呢？',
               answer:
-                '你可以充值继续使用 Varo Cloud。也可以通过达标邀请再获得额外 $10 Bonus。',
+                '你可以充值继续使用 Varo Cloud。也可以通过达标邀请再获得额外 {inviterReward} Bonus。',
             },
             'invite-count': {
               question: '5. 可以邀请多位好友吗？',
@@ -1554,12 +1554,12 @@ export default {
             'invite-reward': {
               question: '6. 邀请奖励如何结算？',
               answer:
-                '被邀请人须在注册后 3 天内完成单笔充值至少 $10。达标后，你与被邀请人各获得 $10 Bonus。',
+                '被邀请人须在注册后 {depositWindow} 内完成单笔充值至少 {minDeposit}。达标后，你与被邀请人各获得 {inviteeReward} Bonus。',
             },
             'bonus-ttl': {
               question: '7. 活动 Bonus 有效期多久？',
               answer:
-                'Bonus 不可提现、不可退款。领取后 14 天内有效，或至活动结束（以较早者为准）。',
+                'Bonus 不可提现、不可退款。领取后 {bonusTtl} 内有效，或至活动结束（以较早者为准）。',
             },
             permanent: {
               question: '8. Seed Creator 身份是永久的吗？',
