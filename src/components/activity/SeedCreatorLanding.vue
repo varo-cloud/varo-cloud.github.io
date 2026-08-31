@@ -56,6 +56,34 @@ const showcaseStripImages = [
   'https://assets.varo.cloud/uploads/8601cf2821e44a3aaeef9f855a843722.jpg',
 ] as const
 
+const benefitsMosaicItems: AboutMosaicItem[] = [
+  {
+    type: 'video',
+    src: 'https://assets.varo.cloud/uploads/d609aeea5d2947d1b6904ff19f70a919.mp4',
+    poster: 'https://assets.varo.cloud/uploads/be3a029489be4ca5ad017f15c33e4997.jpg',
+  },
+  { type: 'image', src: 'https://assets.varo.cloud/uploads/5eb2d238872f492ba525535c4dea1110.jpg' },
+  {
+    type: 'video',
+    src: 'https://assets.varo.cloud/uploads/eb28eb061a3d477cb2b8ca96aa6d4c15.mp4',
+    poster: 'https://assets.varo.cloud/uploads/31b00123cf7944e1b1e022fb97e8b02a.jpg',
+  },
+  { type: 'image', src: 'https://assets.varo.cloud/uploads/b8c7a4bdf177495a897b6040f9a0c6af.jpg' },
+  { type: 'image', src: 'https://assets.varo.cloud/uploads/c4356996c10a46aba4ee01627ddf2f76.jpg' },
+]
+
+const inviteMosaicItems: AboutMosaicItem[] = [
+  { type: 'image', src: 'https://assets.varo.cloud/uploads/3d7a7fbe19b04ea5ae8fa464edb57f77.jpg' },
+  { type: 'image', src: 'https://assets.varo.cloud/uploads/5ee871da8ca248e4b3461536ba76a6cf.jpg' },
+  {
+    type: 'video',
+    src: 'https://assets.varo.cloud/uploads/eb28eb061a3d477cb2b8ca96aa6d4c15.mp4',
+    poster: 'https://assets.varo.cloud/uploads/31b00123cf7944e1b1e022fb97e8b02a.jpg',
+  },
+  { type: 'image', src: 'https://assets.varo.cloud/uploads/68b9d5fe9f4b4e6d8aeb0b3a63e27634.jpg' },
+  { type: 'image', src: 'https://assets.varo.cloud/uploads/5ad68a23e59947d98e9f33bee96b6594.jpg' },
+]
+
 const whyJoinItems = computed(() => [
   {
     icon: 'star-smile-fill' as AppIconName,
@@ -86,22 +114,31 @@ const whyJoinItems = computed(() => [
 
 const benefitCards = computed(() => [
   {
+    icon: 'bank-card-line' as AppIconName,
     title: t('pages.seedCreator.landing.benefits.cards.credit.title', props.copy),
     body: t('pages.seedCreator.landing.benefits.cards.credit.body'),
   },
   {
+    icon: 'headphone-line' as AppIconName,
     title: t('pages.seedCreator.landing.benefits.cards.support.title'),
     body: t('pages.seedCreator.landing.benefits.cards.support.body'),
   },
   {
+    icon: 'team-line' as AppIconName,
     title: t('pages.seedCreator.landing.benefits.cards.community.title'),
     body: t('pages.seedCreator.landing.benefits.cards.community.body'),
   },
   {
+    icon: 'sparkling-line' as AppIconName,
     title: t('pages.seedCreator.landing.benefits.cards.access.title'),
     body: t('pages.seedCreator.landing.benefits.cards.access.body'),
   },
 ])
+
+const howBonusImages = [
+  'https://assets.varo.cloud/uploads/291911efe2c94a4e8771683a24d93d4c.jpg',
+  'https://assets.varo.cloud/uploads/32c148bbd50d416dba5a6f37615169ef.jpg',
+] as const
 
 const howSteps = computed(() => [
   {
@@ -125,9 +162,18 @@ const howChecklist = computed(() => [
 ])
 
 const inviteFlow = computed(() => [
-  t('pages.seedCreator.landing.invite.flow1'),
-  t('pages.seedCreator.landing.invite.flow2', props.copy),
-  t('pages.seedCreator.landing.invite.flow3', props.copy),
+  {
+    icon: 'user-add-fill' as AppIconName,
+    text: t('pages.seedCreator.landing.invite.flow1'),
+  },
+  {
+    icon: 'gift-fill' as AppIconName,
+    text: t('pages.seedCreator.landing.invite.flow2', props.copy),
+  },
+  {
+    icon: 'sparkling-fill' as AppIconName,
+    text: t('pages.seedCreator.landing.invite.flow3', props.copy),
+  },
 ])
 
 const rules = computed(() => [
@@ -372,12 +418,33 @@ function scrollTo(id: string) {
     <!-- Benefits -->
     <section class="scl-section" aria-labelledby="seed-benefits-title">
       <div class="scl-inner scl-split scl-split--reverse">
-        <div class="scl-mosaic scl-mosaic--5" aria-hidden="true">
-          <div class="scl-mosaic__cell scl-mosaic__cell--lg media-skeleton" />
-          <div class="scl-mosaic__cell media-skeleton" />
-          <div class="scl-mosaic__cell media-skeleton" />
-          <div class="scl-mosaic__cell media-skeleton" />
-          <div class="scl-mosaic__cell media-skeleton" />
+        <div class="scl-mosaic scl-mosaic--5 scl-mosaic--benefits" aria-hidden="true">
+          <div
+            v-for="(item, index) in benefitsMosaicItems"
+            :key="item.type === 'video' ? item.src : item.src"
+            class="scl-mosaic__cell"
+            :class="{ 'scl-mosaic__cell--lg': index === 0 }"
+          >
+            <video
+              v-if="item.type === 'video'"
+              class="scl-mosaic__img"
+              :src="item.src"
+              :poster="item.poster"
+              autoplay
+              muted
+              loop
+              playsinline
+              preload="metadata"
+            />
+            <img
+              v-else
+              class="scl-mosaic__img"
+              :src="item.src"
+              alt=""
+              loading="lazy"
+              decoding="async"
+            />
+          </div>
         </div>
         <div class="scl-split__copy">
           <p class="scl-eyebrow">{{ t('pages.seedCreator.landing.benefits.eyebrow') }}</p>
@@ -393,7 +460,9 @@ function scrollTo(id: string) {
           </div>
           <div class="scl-benefit-grid">
             <article v-for="card in benefitCards" :key="card.title" class="scl-benefit-card">
-              <div class="scl-icon-slot scl-icon-slot--sm" aria-hidden="true" />
+              <div class="scl-icon-slot scl-icon-slot--sm" aria-hidden="true">
+                <AppIcon :name="card.icon" :size="20" color="#06b6d4" />
+              </div>
               <div>
                 <h3 class="scl-benefit-card__title">{{ card.title }}</h3>
                 <p class="scl-benefit-card__body">{{ card.body }}</p>
@@ -448,8 +517,15 @@ function scrollTo(id: string) {
             {{ t('pages.seedCreator.landing.how.bonusLabel', copy) }}
           </p>
           <div class="scl-bonus-card__media" aria-hidden="true">
-            <div class="scl-bonus-card__img media-skeleton" />
-            <div class="scl-bonus-card__img media-skeleton" />
+            <img
+              v-for="src in howBonusImages"
+              :key="src"
+              class="scl-bonus-card__img"
+              :src="src"
+              alt=""
+              loading="lazy"
+              decoding="async"
+            />
           </div>
           <ul class="scl-bonus-card__list">
             <li v-for="item in howChecklist" :key="item">
@@ -464,12 +540,33 @@ function scrollTo(id: string) {
     <!-- Invite -->
     <section class="scl-section" aria-labelledby="seed-invite-title">
       <div class="scl-inner scl-split">
-        <div class="scl-mosaic scl-mosaic--5" aria-hidden="true">
-          <div class="scl-mosaic__cell scl-mosaic__cell--lg media-skeleton" />
-          <div class="scl-mosaic__cell media-skeleton" />
-          <div class="scl-mosaic__cell media-skeleton" />
-          <div class="scl-mosaic__cell media-skeleton" />
-          <div class="scl-mosaic__cell media-skeleton" />
+        <div class="scl-mosaic scl-mosaic--5 scl-mosaic--invite" aria-hidden="true">
+          <div
+            v-for="(item, index) in inviteMosaicItems"
+            :key="item.type === 'video' ? item.src : item.src"
+            class="scl-mosaic__cell"
+            :class="{ 'scl-mosaic__cell--lg': index === 0 }"
+          >
+            <video
+              v-if="item.type === 'video'"
+              class="scl-mosaic__img"
+              :src="item.src"
+              :poster="item.poster"
+              autoplay
+              muted
+              loop
+              playsinline
+              preload="metadata"
+            />
+            <img
+              v-else
+              class="scl-mosaic__img"
+              :src="item.src"
+              alt=""
+              loading="lazy"
+              decoding="async"
+            />
+          </div>
         </div>
         <div class="scl-split__copy">
           <p class="scl-eyebrow">{{ t('pages.seedCreator.landing.invite.eyebrow') }}</p>
@@ -491,8 +588,10 @@ function scrollTo(id: string) {
             </div>
             <div class="scl-invite-flow">
               <div v-for="(item, index) in inviteFlow" :key="index" class="scl-invite-flow__item">
-                <div class="scl-icon-slot scl-icon-slot--sm" aria-hidden="true" />
-                <p>{{ item }}</p>
+                <div class="scl-icon-slot scl-icon-slot--sm" aria-hidden="true">
+                  <AppIcon :name="item.icon" :size="20" color="#06b6d4" />
+                </div>
+                <p>{{ item.text }}</p>
               </div>
             </div>
           </div>
@@ -733,6 +832,9 @@ function scrollTo(id: string) {
 }
 
 .scl-icon-slot--sm {
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 36px;
   height: 36px;
   border-radius: 40px;
@@ -989,6 +1091,63 @@ function scrollTo(id: string) {
 .scl-mosaic--about .scl-mosaic__cell:nth-child(5) {
   left: 346px;
   top: 290px;
+  width: 322px;
+  height: 181px;
+}
+
+/* Benefits / Invite — Figma: 412×286 | 232×131×2 | 322×181×2 */
+.scl-mosaic--benefits,
+.scl-mosaic--invite {
+  position: relative;
+  width: 668px;
+  max-width: 100%;
+  height: 491px;
+  min-height: 0;
+  display: block;
+}
+
+.scl-mosaic--benefits .scl-mosaic__cell,
+.scl-mosaic--invite .scl-mosaic__cell {
+  position: absolute;
+  min-height: 0;
+}
+
+.scl-mosaic--benefits .scl-mosaic__cell--lg,
+.scl-mosaic--invite .scl-mosaic__cell--lg {
+  left: 0;
+  top: 0;
+  width: 412px;
+  height: 286px;
+}
+
+.scl-mosaic--benefits .scl-mosaic__cell:nth-child(2),
+.scl-mosaic--invite .scl-mosaic__cell:nth-child(2) {
+  left: 436px;
+  top: 0;
+  width: 232px;
+  height: 131px;
+}
+
+.scl-mosaic--benefits .scl-mosaic__cell:nth-child(3),
+.scl-mosaic--invite .scl-mosaic__cell:nth-child(3) {
+  left: 436px;
+  top: 155px;
+  width: 232px;
+  height: 131px;
+}
+
+.scl-mosaic--benefits .scl-mosaic__cell:nth-child(4),
+.scl-mosaic--invite .scl-mosaic__cell:nth-child(4) {
+  left: 0;
+  top: 310px;
+  width: 322px;
+  height: 181px;
+}
+
+.scl-mosaic--benefits .scl-mosaic__cell:nth-child(5),
+.scl-mosaic--invite .scl-mosaic__cell:nth-child(5) {
+  left: 346px;
+  top: 310px;
   width: 322px;
   height: 181px;
 }
@@ -1277,9 +1436,12 @@ function scrollTo(id: string) {
 }
 
 .scl-bonus-card__img {
+  display: block;
   width: 100%;
   height: 180px;
   border-radius: 24px;
+  object-fit: cover;
+  object-position: center;
 }
 
 .scl-bonus-card__list {
@@ -1466,6 +1628,14 @@ function scrollTo(id: string) {
     margin-inline: auto;
   }
 
+  .scl-mosaic--benefits {
+    margin-inline: auto;
+  }
+
+  .scl-mosaic--invite {
+    margin-inline: auto;
+  }
+
   .scl-why-grid {
     grid-template-columns: 1fr 1fr;
   }
@@ -1529,7 +1699,39 @@ function scrollTo(id: string) {
     gap: 12px;
   }
 
+  .scl-mosaic--benefits {
+    position: static;
+    width: 100%;
+    height: auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
+  .scl-mosaic--invite {
+    position: static;
+    width: 100%;
+    height: auto;
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+  }
+
   .scl-mosaic--about .scl-mosaic__cell {
+    position: static;
+    width: auto !important;
+    height: auto !important;
+    min-height: 120px;
+  }
+
+  .scl-mosaic--benefits .scl-mosaic__cell {
+    position: static;
+    width: auto !important;
+    height: auto !important;
+    min-height: 120px;
+  }
+
+  .scl-mosaic--invite .scl-mosaic__cell {
     position: static;
     width: auto !important;
     height: auto !important;
