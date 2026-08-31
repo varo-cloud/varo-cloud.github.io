@@ -1387,6 +1387,192 @@ export default {
           reward: 'Winner 获得 {inviteeReward} Bonus，邀请人获得 {inviterReward} Bonus。',
           bonus: 'Bonus 不可提现、不可退款；领取后 {bonusTtl}内有效，且不晚于活动结束。',
         },
+        hero: {
+          title: '用 AI 视频的未来去创作',
+          subtitle: '探索电影级视频生成与更多能力——都在同一朵云上。',
+        },
+        intro: {
+          title: 'Varo Cloud 种子计划',
+          lead: '更早创作，共同定义下一步。',
+          body: '加入限量早期创作者计划，领取免费额度体验领先 AI 模型，并通过真实反馈、功能建议与模型投票，一起塑造 Varo 平台。',
+        },
+        cta: {
+          getStarted: '立即开始',
+          learnMore: '了解更多',
+          applyNow: '立即申请',
+          invite: '邀请创作者',
+        },
+        about: {
+          eyebrow: '关于计划',
+          title: '不止于抢先体验',
+          lead: '成为帮助打造 Varo Cloud 的创作者。',
+          body: '面向持续使用生成式 AI、并希望直接参与产品演进的创作者——从模型选型到工作流与功能路线。首期名额限定 {seedCap} 人，强调稀缺性与和创始团队更紧密的协作。',
+          statSlots: '限量名额',
+          statCredit: '起步额度',
+          statInvite: '每人邀请名额',
+        },
+        whyJoin: {
+          eyebrow: '为什么加入',
+          title: '为什么加入种子计划',
+          lead: 'Seed Creator 获得的不只是平台访问权——还有起步额度、优先支持、模型抢先体验，以及影响 Varo Cloud 产品路线的机会。',
+          items: {
+            earlyAccess: {
+              title: '抢先体验',
+              body: '在公开上线前，率先试用新模型与新功能。',
+            },
+            credits: {
+              title: '免费额度',
+              body: '<strong>{seedBonus}</strong> 起步额度，从第一天就能开创作。',
+            },
+            community: {
+              title: '创作者社区',
+              body: '加入私密创作者社群，直接连接 Varo 团队。',
+            },
+            feedback: {
+              title: '产品反馈',
+              body: '通过直接反馈与功能投票，参与路线图决策。',
+            },
+            rewards: {
+              title: '邀请奖励',
+              body: '通过邀请计划获得额外 Bonus。',
+            },
+          },
+          ctaTitle: '准备好提前创作了吗？',
+          ctaBody: '限量 <strong>{seedCap}</strong> 名。立即申请，锁定你的名额。',
+        },
+        benefits: {
+          eyebrow: 'Seed Creator 权益',
+          title: '成为 Seed Creator 你将获得',
+          lead: 'Seed Creator 获得的不只是平台访问权——还有起步额度、优先支持、模型抢先体验，以及影响 Varo Cloud 产品路线的机会。',
+          creditLabel: '起步额度',
+          cards: {
+            credit: {
+              title: '{seedBonus} 起步额度',
+              body: '从第一天就开始创作。',
+            },
+            support: {
+              title: '优先支持',
+              body: 'Bug 与产品建议更快获得回应。',
+            },
+            community: {
+              title: '私密创作者社区',
+              body: '直接连接 Varo 团队。',
+            },
+            access: {
+              title: '模型抢先体验',
+              body: '更早试用新的创作 AI 能力。',
+            },
+          },
+        },
+        how: {
+          eyebrow: '如何参与',
+          title: '三步加入种子计划',
+          lead: '流程很简单——加入 Varo 社区，提交创作者信息，审核通过后领取额度，然后开始探索平台。',
+          step1Title: '关注并加入',
+          step1Before: '关注 ',
+          xLink: 'Varo 的 X',
+          step1Mid: '，并加入 ',
+          discordLink: '官方 Discord',
+          step1After: '。',
+          step2Title: '申请并通过审核',
+          step2Body: '在活动页提交你的创作者信息。',
+          step3Title: '创作并分享反馈',
+          step3Body: '使用额度探索 Varo，告诉团队什么好用、什么需要改进。',
+          bonusTitle: '早期创作者 Bonus',
+          bonusLabel: '{seedBonus} EARLY CREATOR BONUS',
+          check1: '关注 Varo 的 X 与 Discord',
+          check2: '提交创作者信息',
+          check3: '前 {seedCap} 名通过审核 → {seedBonus}',
+        },
+        invite: {
+          eyebrow: '邀请计划',
+          title: '再带一位创作者同行',
+          lead: '邀请一位你信任其反馈的创作者。',
+          body: '每位 Seed Creator 拥有 1 个专属邀请名额。邀请另一位创作者加入 Varo，并在其完成达标行为后，双方解锁 {inviterReward} 额外额度。',
+          howTitle: '如何运作',
+          badge: '双方各得 {inviterReward}',
+          flow1: '邀请一位创作者',
+          flow2: '好友加入并充值 ≥ {minDeposit}',
+          flow3: '双方各得 {inviterReward} Bonus',
+        },
+        rulesSection: {
+          eyebrow: '活动规则',
+          title: '规则简单，公平透明',
+          lead: '清晰规则，用于保护创作者社区。',
+        },
+        rulesList: {
+          seed: '前 <strong>{seedCap}</strong> 名通过 X 与 Discord 验证的创作者成为 Seed Creator，并获得 <strong>{seedBonus}</strong> Bonus。',
+          inviteQuota: '每位 Seed Creator 可邀请多人，但仅能获得 <strong>1 次</strong>邀请奖励。',
+          winner:
+            '被邀请人须在注册后 <strong>{depositWindow}</strong> 内完成单笔充值 ≥ <strong>{minDeposit}</strong>。',
+          reward: '达标后，被邀请人与邀请人各获得 <strong>{inviteeReward}</strong> Bonus。',
+          bonus: 'Bonus 不可提现、不可退款；领取后 <strong>{bonusTtl}</strong> 内有效，且不晚于活动结束。',
+        },
+        platform: {
+          eyebrow: '统一云平台',
+          title: '一朵云，更多创作可能',
+          body: '无需在多个平台间切换，即可探索图像、视频与音频模型。用 Seed Creator 额度畅玩 Varo Cloud 统一生成式 AI 平台，通过同一账号与工作流体验 Seedance、MiniMax H3、Wan 等领先模型。',
+          tags: {
+            seedance: 'Seedance',
+            minimax: 'MiniMax H3',
+            wan: 'Wan',
+            more: '更多',
+          },
+          modalities: {
+            image: { title: '图像', body: '写实与艺术' },
+            video: { title: '视频', body: '电影级动态' },
+            audio: { title: '音频', body: '人声与音效' },
+          },
+        },
+        faq: {
+          title: '种子计划常见问题',
+          items: {
+            professional: {
+              question: '1. 必须是专业创作者才能参加吗？',
+              answer:
+                '不需要。无论你是专业创作还是偶尔用 AI 做内容，只要你在积极使用 AI 工具，并愿意提供真实反馈，都欢迎申请。',
+            },
+            followers: {
+              question: '2. X 上需要很大粉丝量吗？',
+              answer:
+                '不需要。粉丝数不是硬性条件。我们更看重真实活跃度、对 AI 创作的兴趣，以及有价值的产品反馈。',
+            },
+            benefits: {
+              question: '3. 成为 Seed Creator 能获得什么？',
+              answer:
+                '前 {seedCap} 名通过 X 与 Discord 验证的创作者将成为 Seed Creator，获得 {seedBonus} Bonus，并享有创作者权益与直接产品反馈通道。',
+            },
+            'after-bonus': {
+              question: '4. {seedBonus} Bonus 用完之后呢？',
+              answer:
+                '你可以充值继续使用 Varo Cloud。也可以通过达标邀请再获得额外 {inviterReward} Bonus。',
+            },
+            'invite-count': {
+              question: '5. 可以邀请多位好友吗？',
+              answer: '可以。你可以邀请多人，但本次活动中邀请奖励仅能获得一次。',
+            },
+            'invite-reward': {
+              question: '6. 邀请奖励如何结算？',
+              answer:
+                '被邀请人须在注册后 {depositWindow} 内完成单笔充值至少 {minDeposit}。达标后，你与被邀请人各获得 {inviteeReward} Bonus。',
+            },
+            'bonus-ttl': {
+              question: '7. 活动 Bonus 有效期多久？',
+              answer:
+                'Bonus 不可提现、不可退款。领取后 {bonusTtl} 内有效，或至活动结束（以较早者为准）。',
+            },
+            permanent: {
+              question: '8. Seed Creator 身份是永久的吗？',
+              answer:
+                '是的。一旦通过，Seed Creator 身份将持续有效，除非你违反 Varo Cloud 社区或活动规则。',
+            },
+            feedback: {
+              question: '9. 发现 Bug 或有产品建议怎么办？',
+              answer:
+                "请通过指定的 Discord 反馈频道或 varocloudbusiness{'@'}gmail.com 直接联系 Varo 团队。我们鼓励 Seed Creator 报告 Bug、提出功能建议，并帮助塑造后续产品更新。",
+            },
+          },
+        },
       },
       steps: {
         register: '注册 / 登录 Varo',
@@ -1537,9 +1723,9 @@ export default {
         },
       },
       seo: {
-        title: 'Seed Creator 种子计划｜创作赚 Bonus — Varo.cloud',
+        title: 'Varo Cloud 种子计划｜抢先体验与免费额度 — Varo.cloud',
         description:
-          '加入 Varo Seed Creator 种子计划：完成 X / Discord 审核即可获得 Early Creator Bonus，邀请好友完成首充解锁双方奖励。立即申请成为种子创作者。',
+          '加入限量 Varo Cloud 种子计划：领取起步额度、抢先体验模型、优先支持与邀请奖励。更早创作，在统一云平台共同塑造 AI 视频的未来。',
       },
     },
     invite: {

@@ -6,11 +6,13 @@ import { useUserStore } from '@/stores/user'
 import VaroCloudLogo from '@/components/common/VaroCloudLogo.vue'
 import AppIcon from '@/components/common/AppIcon.vue'
 import { useLocaleRouter } from '@/composables/useLocaleRouter'
+import { usePageShell } from '@/composables/usePageShell'
 import { formatUsd } from '@/utils/currency'
 import type { LocaleType } from '@/i18n'
 
 const route = useRoute()
 const { push, localePath, switchLocale, currentLocale } = useLocaleRouter()
+const { transparentHeader: shellTransparentHeader } = usePageShell()
 const { t } = useI18n()
 const userStore = useUserStore()
 
@@ -26,7 +28,7 @@ const modelsMenuRef = ref<HTMLElement | null>(null)
 let userMenuCloseTimer: ReturnType<typeof setTimeout> | null = null
 let modelsMenuCloseTimer: ReturnType<typeof setTimeout> | null = null
 
-const usesTransparentHeader = computed(() => route.meta.transparentHeader === true)
+const usesTransparentHeader = shellTransparentHeader
 const usesScrollHeader = computed(() => route.meta.scrollHeader === true)
 const isHeaderSolid = computed(() => !usesTransparentHeader.value || isScrolled.value)
 

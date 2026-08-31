@@ -167,7 +167,7 @@ const ROUTES = [
     path: '/zh-CN/activity/seed-creator',
     outFile: join('zh-CN', 'activity', 'seed-creator.html'),
     ready: '[data-seo-ready="seed-creator"]',
-    titleIncludes: 'Seed Creator',
+    titleIncludes: '种子计划',
     contentReady: '[data-seo-content-ready="seed-creator"]',
     contentItem: '.seed-landing__step-text, .seed-empty__title, .seed-page__error',
   },

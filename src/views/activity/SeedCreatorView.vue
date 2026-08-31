@@ -1,10 +1,11 @@
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref, watch } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { useHead } from '@unhead/vue'
 import { NSpin } from 'naive-ui'
 import { useAppMessage } from '@/composables/useAppMessage'
 import { useLocaleRouter } from '@/composables/useLocaleRouter'
+import { usePageShell } from '@/composables/usePageShell'
 import { useUserStore } from '@/stores/user'
 import { isApiError } from '@/api/http'
 import {
@@ -17,6 +18,7 @@ import { parseTimestampMs, formatCountdown } from '@/utils/time'
 import { campaignCopyParams } from '@/utils/campaign'
 import { centsToUsd, formatUsd } from '@/utils/currency'
 import { absoluteUrl, SITE_NAME } from '@/seo/config'
+import SeedCreatorLanding from '@/components/activity/SeedCreatorLanding.vue'
 import type {
   InvitationStatus,
   ReferralInvitation,
@@ -28,6 +30,7 @@ import type {
 
 const { t, tm } = useI18n()
 const { push, localePath } = useLocaleRouter()
+const { setPageShell, clearPageShell } = usePageShell()
 const message = useAppMessage()
 const userStore = useUserStore()
 
@@ -35,7 +38,6 @@ const loading = ref(true)
 const submitting = ref(false)
 const error = ref<string | null>(null)
 const noCampaign = ref(false)
-const showRules = ref(false)
 const editingApplication = ref(false)
 
 const overview = ref<SeedCreatorOverview | null>(null)
@@ -173,20 +175,35 @@ const rejectReasonLabel = computed(() => {
   return t('pages.seedCreator.rejected.reasonFallback')
 })
 
-const landingSteps = computed(() => [
-  t('pages.seedCreator.landing.steps.social'),
-  t('pages.seedCreator.landing.steps.review'),
-  t('pages.seedCreator.landing.steps.invite'),
-  t('pages.seedCreator.landing.steps.reward', copy.value),
-])
+const showGuestLanding = computed(
+  () =>
+    !loading.value &&
+    !error.value &&
+    !noCampaign.value &&
+    !me.value &&
+    !isEnded.value &&
+    !userStore.isLoggedIn,
+)
 
-const landingRules = computed(() => [
-  t('pages.seedCreator.landing.rules.seed', copy.value),
-  t('pages.seedCreator.landing.rules.inviteQuota', copy.value),
-  t('pages.seedCreator.landing.rules.winner', copy.value),
-  t('pages.seedCreator.landing.rules.reward', copy.value),
-  t('pages.seedCreator.landing.rules.bonus', copy.value),
-])
+/** Guest marketing landing: transparent header over hero. Logged-in form/dashboard: solid. */
+const useTransparentShell = computed(
+  () =>
+    !userStore.isLoggedIn &&
+    !me.value &&
+    !isEnded.value &&
+    !noCampaign.value &&
+    (loading.value || showGuestLanding.value),
+)
+
+watch(
+  useTransparentShell,
+  (transparent) => {
+    setPageShell({ transparentHeader: transparent })
+  },
+  { immediate: true },
+)
+
+onUnmounted(clearPageShell)
 
 const formTips = computed(() => {
   const items = tm('pages.seedCreator.form.tips')
@@ -349,10 +366,6 @@ function deadlineLabel(item: ReferralInvitation) {
   })
 }
 
-function toggleRules() {
-  showRules.value = !showRules.value
-}
-
 function fillFormFromMe() {
   twitterUsername.value = me.value?.twitterUsername ?? ''
   twitterUrl.value = me.value?.twitterUrl ?? ''
@@ -463,10 +476,17 @@ onMounted(loadPage)
 <template>
   <div
     class="seed-page"
+    :class="{ 'seed-page--landing': showGuestLanding }"
     data-seo-ready="seed-creator"
     :data-seo-content-ready="loading ? undefined : 'seed-creator'"
   >
-    <div class="seed-page__inner">
+    <SeedCreatorLanding
+      v-if="showGuestLanding"
+      :copy="copy"
+      @get-started="goLogin"
+    />
+
+    <div v-else class="seed-page__inner">
       <div v-if="loading" class="seed-page__state">
         <NSpin size="large" />
       </div>
@@ -496,55 +516,6 @@ onMounted(loadPage)
               {{ t('pages.seedCreator.empty.backHome') }}
             </button>
           </div>
-        </section>
-      </template>
-
-      <template v-else-if="!me && !isEnded && !userStore.isLoggedIn">
-        <header class="seed-page__hero">
-          <p class="seed-page__eyebrow">{{ campaignName || t('pages.seedCreator.eyebrow') }}</p>
-          <h1 id="seed-creator-hero-title" class="seed-page__title">
-            {{ t('pages.seedCreator.title') }}
-          </h1>
-          <p class="seed-page__lead">{{ t('pages.seedCreator.lead', copy) }}</p>
-        </header>
-
-          <section class="seed-landing" aria-label="Seed Creator program">
-          <div class="seed-landing__panel">
-            <div class="seed-landing__bonus">
-              <p class="seed-landing__amount">{{ copy.seedBonus }}</p>
-              <p class="seed-landing__label">{{ t('pages.seedCreator.landing.bonusLabel') }}</p>
-              <p class="seed-landing__rule">{{ t('pages.seedCreator.landing.bonusRule', copy) }}</p>
-            </div>
-            <ol class="seed-landing__steps">
-              <li v-for="(step, index) in landingSteps" :key="step">
-                <span class="seed-landing__step-index">{{ String(index + 1).padStart(2, '0') }}</span>
-                <span class="seed-landing__step-text">{{ step }}</span>
-              </li>
-            </ol>
-          </div>
-
-          <div class="seed-landing__actions">
-            <button type="button" class="seed-btn" @click="goLogin">
-              {{ t('pages.seedCreator.join') }}
-            </button>
-            <button
-              type="button"
-              class="seed-btn seed-btn--ghost"
-              :aria-expanded="showRules"
-              @click="toggleRules"
-            >
-              {{ t('pages.seedCreator.viewRules') }}
-            </button>
-          </div>
-
-          <p class="seed-landing__fineprint">{{ t('pages.seedCreator.landing.finePrint', copy) }}</p>
-
-          <section v-if="showRules" class="seed-landing__rules" :aria-label="t('pages.seedCreator.landing.rulesTitle')">
-            <h2 class="seed-landing__rules-title">{{ t('pages.seedCreator.landing.rulesTitle') }}</h2>
-            <ul>
-              <li v-for="rule in landingRules" :key="rule">{{ rule }}</li>
-            </ul>
-          </section>
         </section>
       </template>
 
@@ -993,6 +964,10 @@ onMounted(loadPage)
   min-height: calc(100vh - 140px);
 }
 
+.seed-page--landing {
+  min-height: 100vh;
+}
+
 .seed-page__inner {
   max-width: 1200px;
   margin: 0 auto;
@@ -1044,124 +1019,6 @@ onMounted(loadPage)
 .seed-page__error {
   margin: 0;
   color: var(--text-secondary);
-}
-
-.seed-landing {
-  display: flex;
-  flex-direction: column;
-  gap: 34px;
-  padding-top: 20px;
-}
-
-.seed-landing__panel {
-  display: grid;
-  grid-template-columns: minmax(240px, 348px) minmax(0, 1fr);
-  gap: 48px;
-  align-items: center;
-  min-height: 280px;
-  padding: 48px 52px;
-  border-radius: 16px;
-  background: #0e0e13;
-}
-
-.seed-landing__bonus {
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-
-.seed-landing__amount {
-  margin: 0;
-  color: #ebf2fa;
-  font-size: 64px;
-  font-weight: 700;
-  line-height: 1.2;
-}
-
-.seed-landing__label {
-  margin: 0;
-  color: var(--text-accent);
-  font-size: 13px;
-  font-weight: 600;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-}
-
-.seed-landing__rule {
-  margin: 16px 0 0;
-  color: #ebf2fa;
-  font-size: 15px;
-  font-weight: 500;
-}
-
-.seed-landing__steps {
-  display: grid;
-  grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: 22px 40px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
-}
-
-.seed-landing__steps li {
-  display: flex;
-  align-items: center;
-  gap: 24px;
-  min-height: 70px;
-  padding: 0 20px;
-  border-radius: 10px;
-  background: #13141a;
-}
-
-.seed-landing__step-index {
-  flex-shrink: 0;
-  color: var(--text-accent);
-  font-size: 13px;
-  font-weight: 600;
-}
-
-.seed-landing__step-text {
-  color: #ebf2fa;
-  font-size: 14px;
-  font-weight: 500;
-  line-height: 1.4;
-}
-
-.seed-landing__actions {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 16px;
-}
-
-.seed-landing__fineprint {
-  margin: -18px 0 0;
-  color: #858f9e;
-  font-size: 13px;
-  line-height: 1.5;
-}
-
-.seed-landing__rules {
-  padding: 24px;
-  border: 1px solid #262933;
-  border-radius: 12px;
-  background: #13141a;
-}
-
-.seed-landing__rules-title {
-  margin: 0 0 12px;
-  color: #ebf2fa;
-  font-size: 16px;
-  font-weight: 600;
-}
-
-.seed-landing__rules ul {
-  display: grid;
-  gap: 10px;
-  margin: 0;
-  padding: 0 0 0 18px;
-  color: #858f9e;
-  font-size: 14px;
-  line-height: 1.6;
 }
 
 .seed-dash {
@@ -1839,15 +1696,7 @@ onMounted(loadPage)
 }
 
 @media (max-width: 1023px) {
-  .seed-landing__panel {
-    grid-template-columns: 1fr;
-    gap: 32px;
-    padding: 32px 24px;
-  }
 
-  .seed-landing__steps {
-    gap: 12px;
-  }
 
   .seed-dash__metrics {
     grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -1863,17 +1712,8 @@ onMounted(loadPage)
     font-size: 28px;
   }
 
-  .seed-landing__amount {
-    font-size: 48px;
-  }
 
-  .seed-landing__steps {
-    grid-template-columns: 1fr;
-  }
 
-  .seed-landing__actions {
-    flex-direction: column;
-  }
 
   .seed-btn {
     width: 100%;
