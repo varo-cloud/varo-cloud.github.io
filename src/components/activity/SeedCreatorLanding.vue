@@ -617,7 +617,7 @@ function scrollTo(id: string) {
         <ul class="scl-rules">
           <li v-for="(rule, index) in rules" :key="index" class="scl-rules__item">
             <span class="scl-check" aria-hidden="true" />
-            <span>{{ rule }}</span>
+            <span v-html="rule" />
           </li>
         </ul>
       </div>

@@ -1501,11 +1501,12 @@ export default {
           lead: '清晰规则，用于保护创作者社区。',
         },
         rulesList: {
-          seed: '前 {seedCap} 名通过 X 与 Discord 验证的创作者成为 Seed Creator，并获得 {seedBonus} Bonus。',
-          inviteQuota: '每位 Seed Creator 可邀请多人，但仅能获得 1 次邀请奖励。',
-          winner: '被邀请人须在注册后 {depositWindow}内完成单笔充值 ≥ {minDeposit}。',
-          reward: '达标后，被邀请人与邀请人各获得 {inviteeReward} Bonus。',
-          bonus: 'Bonus 不可提现、不可退款；领取后 {bonusTtl}内有效，且不晚于活动结束。',
+          seed: '前 <strong>{seedCap}</strong> 名通过 X 与 Discord 验证的创作者成为 Seed Creator，并获得 <strong>{seedBonus}</strong> Bonus。',
+          inviteQuota: '每位 Seed Creator 可邀请多人，但仅能获得 <strong>1 次</strong>邀请奖励。',
+          winner:
+            '被邀请人须在注册后 <strong>{depositWindow}</strong> 内完成单笔充值 ≥ <strong>{minDeposit}</strong>。',
+          reward: '达标后，被邀请人与邀请人各获得 <strong>{inviteeReward}</strong> Bonus。',
+          bonus: 'Bonus 不可提现、不可退款；领取后 <strong>{bonusTtl}</strong> 内有效，且不晚于活动结束。',
         },
         platform: {
           eyebrow: '统一云平台',

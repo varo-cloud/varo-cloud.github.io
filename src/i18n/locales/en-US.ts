@@ -1512,13 +1512,15 @@ export default {
           lead: 'Clear rules designed to protect the creator community.',
         },
         rulesList: {
-          seed: 'The first {seedCap} creators who pass X and Discord verification become Seed Creators and receive a {seedBonus} Bonus.',
-          inviteQuota: 'Each Seed Creator may invite multiple friends, but can earn only one invite reward.',
+          seed: 'The first <strong>{seedCap}</strong> creators who pass X and Discord verification become Seed Creators and receive a <strong>{seedBonus}</strong> Bonus.',
+          inviteQuota:
+            'Each Seed Creator may invite multiple friends, but can earn only <strong>one</strong> invite reward.',
           winner:
-            'The invitee must make a single top-up of at least {minDeposit} within {depositWindow} of signup.',
-          reward: 'Once qualified, both the invitee and inviter receive a {inviteeReward} Bonus.',
+            'The invitee must make a single top-up of at least <strong>{minDeposit}</strong> within <strong>{depositWindow}</strong> of signup.',
+          reward:
+            'Once qualified, both the invitee and inviter receive a <strong>{inviteeReward}</strong> Bonus.',
           bonus:
-            'Bonuses are non-withdrawable, non-refundable, and valid for {bonusTtl} or until the campaign ends, whichever comes first.',
+            'Bonuses are non-withdrawable, non-refundable, and valid for <strong>{bonusTtl}</strong> or until the campaign ends, whichever comes first.',
         },
         platform: {
           eyebrow: 'One unified platform',
