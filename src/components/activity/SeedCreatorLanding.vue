@@ -64,9 +64,8 @@ const benefitsMosaicItems: AboutMosaicItem[] = [
   },
   { type: 'image', src: 'https://assets.varo.cloud/uploads/5eb2d238872f492ba525535c4dea1110.jpg' },
   {
-    type: 'video',
-    src: 'https://assets.varo.cloud/uploads/eb28eb061a3d477cb2b8ca96aa6d4c15.mp4',
-    poster: 'https://assets.varo.cloud/uploads/31b00123cf7944e1b1e022fb97e8b02a.jpg',
+    type: 'image',
+    src: 'https://assets.varo.cloud/uploads/37d0e945cf714ae6b45eb09b1c22737d.jpg',
   },
   { type: 'image', src: 'https://assets.varo.cloud/uploads/b8c7a4bdf177495a897b6040f9a0c6af.jpg' },
   { type: 'image', src: 'https://assets.varo.cloud/uploads/c4356996c10a46aba4ee01627ddf2f76.jpg' },
@@ -76,9 +75,8 @@ const inviteMosaicItems: AboutMosaicItem[] = [
   { type: 'image', src: 'https://assets.varo.cloud/uploads/3d7a7fbe19b04ea5ae8fa464edb57f77.jpg' },
   { type: 'image', src: 'https://assets.varo.cloud/uploads/5ee871da8ca248e4b3461536ba76a6cf.jpg' },
   {
-    type: 'video',
-    src: 'https://assets.varo.cloud/uploads/eb28eb061a3d477cb2b8ca96aa6d4c15.mp4',
-    poster: 'https://assets.varo.cloud/uploads/31b00123cf7944e1b1e022fb97e8b02a.jpg',
+    type: 'image',
+    src: 'https://assets.varo.cloud/uploads/73a93410e2f249acbb2dc5a490033b9e.jpg',
   },
   { type: 'image', src: 'https://assets.varo.cloud/uploads/68b9d5fe9f4b4e6d8aeb0b3a63e27634.jpg' },
   { type: 'image', src: 'https://assets.varo.cloud/uploads/5ad68a23e59947d98e9f33bee96b6594.jpg' },
