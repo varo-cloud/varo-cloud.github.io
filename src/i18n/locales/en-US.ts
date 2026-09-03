@@ -43,6 +43,7 @@ export default {
     aiGenerator: 'AI Generator',
     pricing: 'Pricing',
     developers: 'Developers',
+    blog: 'Blog',
     apiKeys: 'API Keys',
     billing: 'Billing',
     generations: 'Generations',

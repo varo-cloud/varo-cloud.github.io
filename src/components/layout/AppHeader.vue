@@ -36,9 +36,15 @@ function updateScrollState() {
   isScrolled.value = window.scrollY > 0
 }
 
-const navItems = computed(() => {
+const BLOG_URL = 'https://varocloud.medium.com/'
+
+type NavItem =
+  | { label: string; name: string; href?: undefined }
+  | { label: string; href: string; name?: undefined }
+
+const navItems = computed((): NavItem[] => {
   // Invitees should open invite status, not the Seed Creator application page.
-  const campaignNav = userStore.profile?.invitedCode
+  const campaignNav: NavItem = userStore.profile?.invitedCode
     ? { label: t('nav.invite'), name: 'invite' }
     : { label: t('nav.seedCreator'), name: 'seed-creator' }
 
@@ -47,6 +53,7 @@ const navItems = computed(() => {
     campaignNav,
     { label: t('nav.pricing'), name: 'pricing' },
     { label: t('nav.developers'), name: 'developers' },
+    { label: t('nav.blog'), href: BLOG_URL },
   ]
 })
 
@@ -436,18 +443,28 @@ onUnmounted(() => {
             </div>
           </div>
 
-          <button
-            v-for="item in navItems"
-            :key="item.name"
-            type="button"
-            class="app-header__nav-item"
-            :class="{
-              'is-active': isActive(item.name),
-            }"
-            @click="goTo(item.name)"
-          >
-            {{ item.label }}
-          </button>
+          <template v-for="item in navItems" :key="item.name ?? item.href">
+            <a
+              v-if="item.href"
+              :href="item.href"
+              class="app-header__nav-item"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              {{ item.label }}
+            </a>
+            <button
+              v-else
+              type="button"
+              class="app-header__nav-item"
+              :class="{
+                'is-active': isActive(item.name),
+              }"
+              @click="goTo(item.name)"
+            >
+              {{ item.label }}
+            </button>
+          </template>
         </nav>
       </div>
 
@@ -676,16 +693,27 @@ onUnmounted(() => {
               {{ t('nav.minimaxH3') }}
             </button>
 
-            <button
-              v-for="item in navItems"
-              :key="item.name"
-              type="button"
-              class="app-header__mobile-nav-item"
-              :class="{ 'is-active': isActive(item.name) }"
-              @click="goToFromMobile(item.name)"
-            >
-              {{ item.label }}
-            </button>
+            <template v-for="item in navItems" :key="item.name ?? item.href">
+              <a
+                v-if="item.href"
+                :href="item.href"
+                class="app-header__mobile-nav-item"
+                target="_blank"
+                rel="noopener noreferrer"
+                @click="closeMobileMenu"
+              >
+                {{ item.label }}
+              </a>
+              <button
+                v-else
+                type="button"
+                class="app-header__mobile-nav-item"
+                :class="{ 'is-active': isActive(item.name) }"
+                @click="goToFromMobile(item.name)"
+              >
+                {{ item.label }}
+              </button>
+            </template>
           </nav>
         </div>
       </Transition>
@@ -833,6 +861,7 @@ onUnmounted(() => {
   line-height: 14px;
   white-space: nowrap;
   outline: none;
+  text-decoration: none;
 }
 
 .app-header__nav-item.is-active {
@@ -1148,10 +1177,12 @@ onUnmounted(() => {
   font-weight: 600;
   line-height: 1.2;
   text-align: left;
+  text-decoration: none;
   outline: none;
   transition:
     background 0.15s ease,
     color 0.15s ease;
+  box-sizing: border-box;
 }
 
 .app-header__mobile-nav-item.is-active {
