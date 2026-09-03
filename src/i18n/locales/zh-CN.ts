@@ -43,6 +43,7 @@ export default {
     aiGenerator: 'AI 生成器',
     pricing: '价格',
     developers: '开发者',
+    blog: '博客',
     apiKeys: 'API 密钥',
     billing: '账单',
     generations: '生成历史',
